@@ -1,0 +1,22 @@
+import { z } from "zod";
+import { BaseStyleSchema } from "../style/baseStyle";
+
+export const BlockInstanceSchema = z.object({
+  id: z.string().min(1),
+  type: z.string().min(1),
+  props: z.record(z.string(), z.any()).default({}),
+  style: BaseStyleSchema.optional(),
+});
+
+export const PageLayoutSchema = z.object({
+  version: z.number().int().min(1),
+  sections: z.array(
+    z.object({
+      id: z.string().min(1),
+      blocks: z.array(BlockInstanceSchema),
+    })
+  ),
+});
+
+export type BlockInstance = z.infer<typeof BlockInstanceSchema>;
+export type PageLayout = z.infer<typeof PageLayoutSchema>;

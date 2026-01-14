@@ -1,0 +1,14 @@
+{
+  "name": "@acme/db-mongo",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "mongodb": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.28",
+    "typescript": "^5.9.3"
+  }
+}

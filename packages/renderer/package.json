@@ -1,0 +1,21 @@
+{
+  "name": "@acme/renderer",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "@acme/blocks": "workspace:*",
+    "@acme/schemas": "workspace:*",
+    "@types/node": "^25.0.7",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19"
+  }
+}
