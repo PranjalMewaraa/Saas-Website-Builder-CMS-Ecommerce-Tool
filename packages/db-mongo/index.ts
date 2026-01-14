@@ -32,3 +32,6 @@ export * from "./pages.repo";
 export * from "./stylePresets.repo";
 export * from "./snapshots.repo";
 export * from "./sites.preview";
+export * from "./assets.repo";
+export * from "./forms.repo";
+export * from "./formSubmission.repo";

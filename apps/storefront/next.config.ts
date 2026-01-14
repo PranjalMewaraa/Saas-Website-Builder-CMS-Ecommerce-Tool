@@ -9,6 +9,14 @@ const nextConfig = {
     "../../packages/db-mongo",
     "../../packages/core",
   ],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;

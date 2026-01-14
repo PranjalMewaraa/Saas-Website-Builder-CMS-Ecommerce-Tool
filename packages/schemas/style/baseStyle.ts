@@ -26,6 +26,8 @@ export const BgSchema = z.object({
       direction: z.enum(["to-r", "to-l", "to-b", "to-t"]).optional(),
     })
     .optional(),
+  imageAssetId: z.string().min(1).optional(),
+
   imageUrl: z.string().url().optional(),
   overlayColor: z.string().optional(),
   overlayOpacity: z.coerce.number().min(0).max(1).optional(),

@@ -7,10 +7,12 @@ const navItems = [
   { href: "/content", label: "Content" },
   { href: "/content/theme", label: "Theme" },
   { href: "/content/menus", label: "Menus" },
+  { href: "/content/assets", label: "Assets" },
   { href: "/content/pages/home", label: "Pages" },
   { href: "/content/presets", label: "Presets" },
   { href: "/content/publish", label: "Publish" },
   { href: "/content/preview", label: "Preview" },
+  { href: "/content/forms", label: "Forms" },
 ];
 
 function isActive(pathname: string, href: string) {

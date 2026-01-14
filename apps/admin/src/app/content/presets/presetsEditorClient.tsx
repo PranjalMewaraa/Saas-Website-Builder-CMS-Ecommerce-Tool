@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import EditorModeToggle from "../_component/EditorModeToggle";
 import { useEditorMode } from "../_component/useEditorMode";
+import { useAssetsMap } from "../_component/useAssetsMap";
+import ImageField from "../_component/ImageField";
+import BackgroundPreviewCard from "../_component/BackgroundPreviewCard";
+import StylePreviewCard from "../_component/StylePreviewCard";
 
 function safeJsonParse(text: string) {
   try {
@@ -40,6 +44,7 @@ export default function PresetsEditorClient({
   const [target, setTarget] = useState("");
   const [style, setStyle] = useState<any>(emptyStyle);
   const [jsonText, setJsonText] = useState("");
+  const { assetsMap } = useAssetsMap(siteId);
 
   useEffect(() => {
     (async () => {
@@ -169,6 +174,8 @@ export default function PresetsEditorClient({
                 setStyle(next);
                 setJsonText(JSON.stringify(next, null, 2));
               }}
+              siteId={siteId}
+              assetsMap={assetsMap}
             />
           ) : (
             <div className="space-y-2">
@@ -208,9 +215,13 @@ export default function PresetsEditorClient({
 function StyleForm({
   value,
   onChange,
+  siteId,
+  assetsMap,
 }: {
   value: any;
   onChange: (v: any) => void;
+  siteId: string;
+  assetsMap: any;
 }) {
   const v = value ?? {};
   const pad = v.padding ?? {};
@@ -225,6 +236,15 @@ function StyleForm({
       cur = cur[parts[i]] ?? (cur[parts[i]] = {});
     cur[parts[parts.length - 1]] = newVal;
     onChange(next);
+  }
+  let previewBg = bg;
+  let resolvedBg = bg;
+  if (
+    bg.type === "image" &&
+    bg.imageAssetId &&
+    assetsMap?.[bg.imageAssetId]?.url
+  ) {
+    resolvedBg = { ...bg, imageUrl: assetsMap[bg.imageAssetId].url };
   }
 
   return (
@@ -321,13 +341,49 @@ function StyleForm({
       ) : null}
 
       {bg.type === "image" ? (
-        <Field
-          label="Image URL"
-          value={bg.imageUrl || ""}
-          onChange={(x: any) => set("bg.imageUrl", x)}
-          placeholder="https://..."
-        />
+        <div className="space-y-2">
+          <ImageField
+            siteId={siteId}
+            label="Background Image"
+            assetIdValue={bg.imageAssetId || ""}
+            altValue={bg.imageAlt || ""} // optional, ok to keep
+            onChangeAssetId={(v) => set("bg.imageAssetId", v)}
+            onChangeAlt={(v) => set("bg.imageAlt", v)}
+            assetsMap={assetsMap}
+          />
+
+          <div className="grid md:grid-cols-2 gap-3">
+            <Field
+              label="Overlay Color"
+              value={bg.overlayColor || ""}
+              onChange={(v: any) => set("bg.overlayColor", v)}
+              placeholder="#000000 or rgba(0,0,0,0.4) or var(--color-dark)"
+            />
+
+            <label className="space-y-1 block">
+              <div className="text-sm opacity-70">Overlay Opacity (0–1)</div>
+              <input
+                className="w-full"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={bg.overlayOpacity ?? 0.35}
+                onChange={(e) =>
+                  set("bg.overlayOpacity", Number(e.target.value))
+                }
+              />
+              <div className="text-xs opacity-60">
+                {bg.overlayOpacity ?? 0.35}
+              </div>
+            </label>
+          </div>
+        </div>
       ) : null}
+      <StylePreviewCard
+        style={{ ...v, bg: resolvedBg }}
+        title="Preset Style Preview"
+      />
 
       <div className="grid md:grid-cols-3 gap-3">
         <NumberField

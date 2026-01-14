@@ -4,16 +4,25 @@ import { deepMerge } from "./deep-merge";
 export function computeFinalStyle(args: {
   style?: { presetId?: string; overrides?: any };
   presets?: Record<string, { style: any }>;
+  assets?: Record<string, { url: string }>;
 }) {
-  // start with defaults from schema
   const defaults = BaseStyleSchema.parse({});
 
-  // apply preset first (if exists)
   const presetId = args.style?.presetId;
   const presetStyle = presetId ? args.presets?.[presetId]?.style : undefined;
-
-  // then apply overrides
   const overrides = args.style?.overrides;
 
-  return deepMerge(deepMerge(defaults, presetStyle), overrides);
+  const merged = deepMerge(deepMerge(defaults, presetStyle), overrides);
+
+  // NEW: resolve bg.imageAssetId -> bg.imageUrl
+  const bg = merged.bg;
+  if (
+    bg?.type === "image" &&
+    bg.imageAssetId &&
+    args.assets?.[bg.imageAssetId]?.url
+  ) {
+    merged.bg.imageUrl = args.assets[bg.imageAssetId].url;
+  }
+
+  return merged;
 }

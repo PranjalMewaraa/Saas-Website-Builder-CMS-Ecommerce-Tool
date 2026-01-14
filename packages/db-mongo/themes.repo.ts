@@ -8,6 +8,11 @@ export type ThemeDoc = {
   draft_tokens: Record<string, string>;
   published_tokens: Record<string, string>;
   created_at: Date;
+  brand?: {
+    logoAssetId?: string;
+    logoAlt?: string;
+  };
+
   updated_at: Date;
 };
 
@@ -32,6 +37,8 @@ export async function getOrCreateTheme(tenant_id: string, site_id: string) {
       "--color-text": "#111827",
     },
     published_tokens: {},
+    brand: { logoAssetId: "", logoAlt: "" },
+
     created_at: new Date(),
     updated_at: new Date(),
   };
@@ -49,6 +56,18 @@ export async function updateThemeDraftTokens(
   await col.updateOne(
     { tenant_id, site_id },
     { $set: { draft_tokens: tokens, updated_at: new Date() } },
+    { upsert: true }
+  );
+}
+export async function updateThemeBrand(
+  tenant_id: string,
+  site_id: string,
+  brand: { logoAssetId?: string; logoAlt?: string }
+) {
+  const col = await themesCollection();
+  await col.updateOne(
+    { tenant_id, site_id },
+    { $set: { brand, updated_at: new Date() } },
     { upsert: true }
   );
 }

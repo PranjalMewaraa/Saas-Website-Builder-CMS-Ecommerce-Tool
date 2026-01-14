@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import EditorModeToggle from "../_component/EditorModeToggle";
 import { useEditorMode } from "../_component/useEditorMode";
+import { useAssetsMap } from "../_component/useAssetsMap";
+import ImageField from "../_component/ImageField";
 
 function safeJsonParse(text: string) {
   try {
@@ -23,6 +25,11 @@ export default function ThemeEditorClient({
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState<Record<string, string>>({});
   const [jsonText, setJsonText] = useState("");
+  const { assetsMap } = useAssetsMap(siteId);
+  const [brand, setBrand] = useState<{
+    logoAssetId?: string;
+    logoAlt?: string;
+  }>({ logoAssetId: "", logoAlt: "" });
 
   useEffect(() => {
     (async () => {
@@ -32,6 +39,9 @@ export default function ThemeEditorClient({
       );
       const data = await res.json();
       const t = data.theme?.draft_tokens || {};
+      const b = data.theme?.brand || { logoAssetId: "", logoAlt: "" };
+      setBrand(b);
+
       setTokens(t);
       setJsonText(JSON.stringify(t, null, 2));
       setLoading(false);
@@ -49,11 +59,11 @@ export default function ThemeEditorClient({
     [tokens]
   );
 
-  async function save(nextTokens: Record<string, string>) {
+  async function save(nextTokens: Record<string, string>, nextBrand: any) {
     await fetch(`/api/admin/theme?site_id=${encodeURIComponent(siteId)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tokens: nextTokens }),
+      body: JSON.stringify({ tokens: nextTokens, brand: nextBrand }),
     });
   }
 
@@ -91,6 +101,18 @@ export default function ThemeEditorClient({
               value={common.light}
               onChange={(v) => updateToken("--color-light", v)}
             />
+            <div className="border rounded p-4 space-y-3">
+              <div className="font-medium">Brand</div>
+              <ImageField
+                siteId={siteId}
+                label="Global Brand Logo"
+                assetIdValue={brand.logoAssetId || ""}
+                altValue={brand.logoAlt || ""}
+                onChangeAssetId={(v) => setBrand({ ...brand, logoAssetId: v })}
+                onChangeAlt={(v) => setBrand({ ...brand, logoAlt: v })}
+                assetsMap={assetsMap}
+              />
+            </div>
           </div>
 
           <div className="text-sm opacity-70">Custom tokens (advanced)</div>
@@ -106,7 +128,8 @@ export default function ThemeEditorClient({
             <button
               className="bg-black text-white px-3 py-2 rounded"
               onClick={async () => {
-                await save(tokens);
+                await save(tokens, brand);
+
                 alert("Saved theme draft ✅");
               }}
               type="button"
@@ -129,7 +152,7 @@ export default function ThemeEditorClient({
               const parsed = safeJsonParse(jsonText);
               if (!parsed.ok) return alert(parsed.error);
               setTokens(parsed.value);
-              await save(parsed.value);
+              await save(parsed.value, brand);
               alert("Saved theme draft ✅");
             }}
             type="button"

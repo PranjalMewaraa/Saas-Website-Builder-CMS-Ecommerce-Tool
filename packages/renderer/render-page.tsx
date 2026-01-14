@@ -53,6 +53,7 @@ async function BlockRenderer({
   const finalStyle = computeFinalStyle({
     style: block.style,
     presets: ctx.snapshot.stylePresets,
+    assets: ctx.snapshot.assets,
   });
 
   const { outerClass, innerClass, outerStyle, innerStyle } =
@@ -74,6 +75,21 @@ async function BlockRenderer({
   }
 
   const props = safeProps(def.schema, block.props);
+  // Resolve asset references for any block that uses imageAssetId
+  if (props.imageAssetId && ctx.snapshot.assets?.[props.imageAssetId]) {
+    const a = ctx.snapshot.assets[props.imageAssetId];
+    props.imageUrl = props.imageUrl || a.url;
+    props.imageAlt = props.imageAlt || a.alt || "";
+  }
+  if (props.logoAssetId && ctx.snapshot.assets?.[props.logoAssetId]) {
+    const a = ctx.snapshot.assets[props.logoAssetId];
+    props.logoUrl = props.logoUrl || a.url;
+    props.logoAlt = props.logoAlt || a.alt || "Logo";
+  }
+  if (!props.logoUrl && ctx.snapshot.brand?.logoUrl) {
+    props.logoUrl = ctx.snapshot.brand.logoUrl;
+    props.logoAlt = props.logoAlt || ctx.snapshot.brand.logoAlt || "Logo";
+  }
 
   // menu binding
   if (block.type.startsWith("Header/") || block.type.startsWith("Footer/")) {
@@ -95,6 +111,39 @@ async function BlockRenderer({
       <div className={outerClass} style={outerStyle}>
         <div className={innerClass} style={innerStyle}>
           <Comp {...props} tenantId={ctx.tenantId} storeId={ctx.storeId} />
+        </div>
+      </div>
+    );
+  }
+  if (block.type.startsWith("Form/")) {
+    const formId = props.formId;
+    const form = ctx.snapshot.forms?.[formId];
+    const Comp = def.render;
+
+    if (!form?.schema) {
+      return (
+        <div className={outerClass} style={outerStyle}>
+          <div className={innerClass} style={innerStyle}>
+            <div className="border rounded p-3 text-sm">
+              Missing form schema: {formId}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const isPreview = !!ctx.snapshot.is_draft;
+
+    return (
+      <div className={outerClass} style={outerStyle}>
+        <div className={innerClass} style={innerStyle}>
+          <Comp
+            {...props}
+            schema={form.schema}
+            handle={ctx.snapshot.handle}
+            mode={isPreview ? "preview" : "published"}
+            previewToken={ctx.snapshot.previewToken}
+          />
         </div>
       </div>
     );

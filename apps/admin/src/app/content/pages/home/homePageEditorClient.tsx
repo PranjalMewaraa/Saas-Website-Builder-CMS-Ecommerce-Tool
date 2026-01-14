@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import EditorModeToggle from "../../_component/EditorModeToggle";
 import { useEditorMode } from "../../_component/useEditorMode";
+import AssetPickerModal from "../../_component/AssetPickerModal";
+import ImageField from "../../_component/ImageField";
+import { useAssetsMap } from "../../_component/useAssetsMap";
+import BackgroundPreviewCard from "../../_component/BackgroundPreviewCard";
+import StylePreviewCard from "../../_component/StylePreviewCard";
 
 function safeJsonParse(text: string) {
   try {
@@ -17,6 +22,7 @@ const BLOCK_TYPES = [
   "Hero/V1",
   "ProductGrid/V1",
   "Footer/V1",
+  "Form/V1",
 ] as const;
 
 export default function HomePageEditorClient({
@@ -27,6 +33,7 @@ export default function HomePageEditorClient({
   urlMode?: string;
 }) {
   const { mode, setMode } = useEditorMode("form", urlMode);
+  const { assetsMap } = useAssetsMap(siteId);
 
   const [page, setPage] = useState<any>(null);
   const [presets, setPresets] = useState<any[]>([]);
@@ -143,6 +150,7 @@ export default function HomePageEditorClient({
             {blocks.map((b: any, idx: number) => (
               <BlockCard
                 key={b.id}
+                siteId={siteId}
                 block={b}
                 index={idx}
                 total={blocks.length}
@@ -150,6 +158,7 @@ export default function HomePageEditorClient({
                 onChange={(nextBlock) => updateBlock(idx, nextBlock)}
                 onMove={(dir) => moveBlock(idx, dir)}
                 onDelete={() => deleteBlock(idx)}
+                assetsMap={assetsMap}
               />
             ))}
             {blocks.length === 0 ? (
@@ -224,10 +233,14 @@ function defaultPropsFor(type: string) {
     };
   if (type === "ProductGrid/V1")
     return { title: "Featured Products", limit: 8 };
+  if (type === "Form/V1")
+    return { formId: "form_contact", title: "Contact us", submitText: "Send" };
+
   return {};
 }
 
 function BlockCard({
+  siteId,
   block,
   index,
   total,
@@ -235,7 +248,9 @@ function BlockCard({
   onChange,
   onMove,
   onDelete,
+  assetsMap,
 }: {
+  siteId: string;
   block: any;
   index: number;
   total: number;
@@ -243,8 +258,13 @@ function BlockCard({
   onChange: (b: any) => void;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
+  assetsMap: Record<string, any>;
 }) {
   const [localJsonMode, setLocalJsonMode] = useState(false);
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false);
+  const [bgPickerOpen, setBgPickerOpen] = useState(false);
+  const [logoPickerOpen, setLogoPickerOpen] = useState(false);
+
   const [propsJson, setPropsJson] = useState(
     JSON.stringify(block.props ?? {}, null, 2)
   );
@@ -286,7 +306,23 @@ function BlockCard({
     next.style.presetId = id || undefined;
     onChange(next);
   }
+  const overrides = block.style?.overrides ?? {};
+  const bg = overrides.bg ?? { type: "none" };
 
+  // resolve bg.imageAssetId -> bg.imageUrl using assetsMap for preview
+  let resolvedBg = bg;
+  if (
+    bg.type === "image" &&
+    bg.imageAssetId &&
+    assetsMap?.[bg.imageAssetId]?.url
+  ) {
+    resolvedBg = { ...bg, imageUrl: assetsMap[bg.imageAssetId].url };
+  }
+
+  const previewStyle = {
+    ...overrides,
+    bg: resolvedBg,
+  };
   return (
     <div className="border rounded p-3">
       <div className="flex items-center justify-between gap-2">
@@ -377,6 +413,12 @@ function BlockCard({
               type={block.type}
               props={block.props ?? {}}
               setProp={setProp}
+              assetPickerOpen={assetPickerOpen}
+              setAssetPickerOpen={setAssetPickerOpen}
+              siteId={siteId}
+              setLogoPickerOpen={setLogoPickerOpen}
+              logoPickerOpen={logoPickerOpen}
+              assetsMap={assetsMap}
             />
           </div>
 
@@ -439,6 +481,65 @@ function BlockCard({
                 placeholder="var(--color-text) or #111"
               />
             </div>
+            <AssetPickerModal
+              siteId={siteId}
+              open={assetPickerOpen}
+              onClose={() => setAssetPickerOpen(false)}
+              onPick={(asset) => {
+                setProp("imageAssetId", asset._id);
+                if (!block.props?.imageAlt)
+                  setProp("imageAlt", asset.alt || "");
+              }}
+            />
+            <Select
+              label="BG Type"
+              value={block.style?.overrides?.bg?.type ?? "none"}
+              onChange={(v: string) => {
+                setStyle("bg.type", v);
+                if (v !== "image") {
+                  // optional cleanup
+                  // setStyle("bg.imageAssetId", undefined);
+                  // setStyle("bg.imageUrl", undefined);
+                }
+              }}
+              options={["none", "solid", "gradient", "image"]}
+            />
+
+            {(block.style?.overrides?.bg?.type ?? "none") === "image" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                <Field
+                  label="Overlay Color"
+                  value={block.style?.overrides?.bg?.overlayColor ?? ""}
+                  onChange={(v: any) => setStyle("bg.overlayColor", v)}
+                  placeholder="#000000 or rgba(0,0,0,0.4)"
+                />
+
+                <label className="space-y-1 block">
+                  <div className="text-sm opacity-70">
+                    Overlay Opacity (0–1)
+                  </div>
+                  <input
+                    className="w-full"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={block.style?.overrides?.bg?.overlayOpacity ?? 0.35}
+                    onChange={(e) =>
+                      setStyle("bg.overlayOpacity", Number(e.target.value))
+                    }
+                  />
+                  <div className="text-xs opacity-60">
+                    {block.style?.overrides?.bg?.overlayOpacity ?? 0.35}
+                  </div>
+                </label>
+              </div>
+            ) : null}
+
+            <StylePreviewCard
+              style={previewStyle}
+              title="Block Style Preview"
+            />
 
             <div className="grid grid-cols-2 gap-2">
               <NumberField
@@ -460,7 +561,17 @@ function BlockCard({
   );
 }
 
-function BlockPropsForm({ type, props, setProp }: any) {
+function BlockPropsForm({
+  type,
+  props,
+  setProp,
+  setAssetPickerOpen,
+  assetPickerOpen,
+  setLogoPickerOpen,
+  siteId,
+  logoPickerOpen,
+  assetsMap,
+}: any) {
   if (type === "Header/V1") {
     return (
       <div className="space-y-2">
@@ -470,6 +581,34 @@ function BlockPropsForm({ type, props, setProp }: any) {
           onChange={(v: any) => setProp("menuId", v)}
           placeholder="menu_main"
         />
+
+        <div className="border rounded p-2 space-y-2">
+          <div className="text-sm opacity-70">Logo</div>
+
+          <div className="flex gap-2">
+            <input
+              className="border rounded p-2 w-full font-mono text-sm"
+              value={props.logoAssetId || ""}
+              onChange={(e) => setProp("logoAssetId", e.target.value)}
+              placeholder="logoAssetId (pick from Assets)"
+            />
+            <button
+              className="border rounded px-3 py-2 text-sm"
+              type="button"
+              onClick={() => setLogoPickerOpen(true)}
+            >
+              Pick
+            </button>
+          </div>
+
+          <Field
+            label="logoAlt"
+            value={props.logoAlt || ""}
+            onChange={(v: any) => setProp("logoAlt", v)}
+            placeholder="Logo alt text"
+          />
+        </div>
+
         <Field
           label="ctaText"
           value={props.ctaText || ""}
@@ -482,19 +621,69 @@ function BlockPropsForm({ type, props, setProp }: any) {
           onChange={(v: any) => setProp("ctaHref", v)}
           placeholder="/products"
         />
+
+        <ImageField
+          siteId={siteId}
+          label="Header Logo"
+          assetIdValue={props.logoAssetId || ""}
+          altValue={props.logoAlt || ""}
+          onChangeAssetId={(v) => setProp("logoAssetId", v)}
+          onChangeAlt={(v) => setProp("logoAlt", v)}
+          assetsMap={assetsMap}
+        />
       </div>
     );
   }
-  if (type === "Footer/V1") {
+  if (type === "Form/V1") {
     return (
-      <Field
-        label="menuId"
-        value={props.menuId || ""}
-        onChange={(v: any) => setProp("menuId", v)}
-        placeholder="menu_footer"
-      />
+      <div className="space-y-2">
+        <Field
+          label="formId"
+          value={props.formId || ""}
+          onChange={(v: any) => setProp("formId", v)}
+          placeholder="form_contact"
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+          placeholder="Contact us"
+        />
+        <Field
+          label="submitText"
+          value={props.submitText || ""}
+          onChange={(v: any) => setProp("submitText", v)}
+          placeholder="Send"
+        />
+        <div className="text-xs opacity-60">
+          Create forms in Content → Forms. Publish or generate preview to test.
+        </div>
+      </div>
     );
   }
+
+  if (type === "Footer/V1") {
+    return (
+      <div className="space-y-2">
+        <Field
+          label="menuId"
+          value={props.menuId || ""}
+          onChange={(v: any) => setProp("menuId", v)}
+          placeholder="menu_footer"
+        />
+        <ImageField
+          siteId={siteId}
+          label="Footer Logo"
+          assetIdValue={props.logoAssetId || ""}
+          altValue={props.logoAlt || ""}
+          onChangeAssetId={(v) => setProp("logoAssetId", v)}
+          onChangeAlt={(v) => setProp("logoAlt", v)}
+          assetsMap={assetsMap}
+        />
+      </div>
+    );
+  }
+
   if (type === "Hero/V1") {
     return (
       <div className="space-y-2">
@@ -522,9 +711,46 @@ function BlockPropsForm({ type, props, setProp }: any) {
           onChange={(v: any) => setProp("ctaHref", v)}
           placeholder="/products"
         />
+
+        <div className="border rounded p-2 space-y-2">
+          <div className="text-sm opacity-70">Hero Image</div>
+
+          <div className="flex gap-2">
+            <input
+              className="border rounded p-2 w-full font-mono text-sm"
+              value={props.imageAssetId || ""}
+              onChange={(e) => setProp("imageAssetId", e.target.value)}
+              placeholder="imageAssetId (pick from Assets)"
+            />
+            <button
+              className="border rounded px-3 py-2 text-sm"
+              type="button"
+              onClick={() => setAssetPickerOpen(true)}
+            >
+              Pick
+            </button>
+          </div>
+          <ImageField
+            siteId={siteId}
+            label="Hero Logo"
+            assetIdValue={props.logoAssetId || ""}
+            altValue={props.logoAlt || ""}
+            onChangeAssetId={(v) => setProp("logoAssetId", v)}
+            onChangeAlt={(v) => setProp("logoAlt", v)}
+            assetsMap={assetsMap}
+          />
+
+          <Field
+            label="imageAlt"
+            value={props.imageAlt || ""}
+            onChange={(v: any) => setProp("imageAlt", v)}
+            placeholder="Alt text for SEO"
+          />
+        </div>
       </div>
     );
   }
+
   if (type === "ProductGrid/V1") {
     return (
       <div className="space-y-2">

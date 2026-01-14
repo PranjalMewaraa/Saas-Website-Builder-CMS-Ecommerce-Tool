@@ -75,7 +75,19 @@ export function resolveWrapperStyle(style: Style) {
     outerStyle.background = `linear-gradient(${dirToDeg(dir)}, ${bg.gradient.from}, ${bg.gradient.to})`;
   }
   if (bg.type === "image" && bg.imageUrl) {
-    outerStyle.backgroundImage = `url(${bg.imageUrl})`;
+    const overlayColor = bg.overlayColor;
+    const overlayOpacity =
+      typeof bg.overlayOpacity === "number" ? bg.overlayOpacity : 0.35;
+
+    if (overlayColor) {
+      // If overlayColor is hex, apply opacity properly.
+      // If it's rgba()/rgb()/var(), we use it as-is (opacity may not apply).
+      const overlay = toOverlay(overlayColor, overlayOpacity);
+      outerStyle.backgroundImage = `linear-gradient(${overlay}, ${overlay}), url(${bg.imageUrl})`;
+    } else {
+      outerStyle.backgroundImage = `url(${bg.imageUrl})`;
+    }
+
     outerStyle.backgroundSize = "cover";
     outerStyle.backgroundPosition = "center";
   }
@@ -96,4 +108,33 @@ function dirToDeg(dir: string) {
   if (dir === "to-l") return "270deg";
   if (dir === "to-b") return "180deg";
   return "0deg";
+}
+function toOverlay(color: string, opacity: number) {
+  // If hex, convert to rgba with opacity
+  if (color.startsWith("#")) return hexToRgba(color, opacity);
+
+  // If already rgba, use it (ignore opacity slider; user controls alpha in rgba)
+  if (color.startsWith("rgba(")) return color;
+
+  // If rgb(), we can’t safely inject alpha without parsing; use as-is
+  // If var(--token), use as-is (recommend user use rgba token if needed)
+  return color;
+}
+
+function hexToRgba(hex: string, opacity: number) {
+  const clean = hex.replace("#", "").trim();
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+
+  const a = Math.max(0, Math.min(1, opacity));
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }

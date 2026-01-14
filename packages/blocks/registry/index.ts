@@ -2,7 +2,8 @@ import HeaderV1 from "../Header/HeaderV1";
 import HeroV1 from "../Hero/HeroV1";
 import FooterV1 from "../Footer/FooterV1";
 import ProductGridV1 from "../ProductGrid/ProductGridV1";
-
+import { FormV1Schema } from "../../schemas";
+import FormV1 from "../Form/FormV1";
 import {
   HeaderV1Schema,
   HeroV1Schema,
@@ -21,6 +22,11 @@ export const BLOCKS: Record<
     type: "ProductGrid/V1",
     schema: ProductGridV1Schema,
     render: ProductGridV1,
+  },
+  "form/V1": {
+    type: "form/V1",
+    schema: FormV1Schema,
+    render: FormV1,
   },
 };
 
