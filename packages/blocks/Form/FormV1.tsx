@@ -36,6 +36,7 @@ export default function FormV1(props: {
     }
 
     const hp = String(fd.get("_hp") || "");
+    const ts = Number(fd.get("_ts") || 0) || Date.now();
 
     const payload: any = {
       handle: props.handle,
@@ -43,6 +44,7 @@ export default function FormV1(props: {
       data,
       hp,
     };
+    payload.ts = ts;
 
     if (props.mode === "preview") payload.token = props.previewToken;
 
@@ -89,6 +91,7 @@ export default function FormV1(props: {
             tabIndex={-1}
             autoComplete="off"
           />
+          <input name="_ts" type="hidden" value={Date.now()} />
 
           {fields.map((f: any) => (
             <div key={f.id} className="space-y-1">

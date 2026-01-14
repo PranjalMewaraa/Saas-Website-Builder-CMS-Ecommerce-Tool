@@ -35,3 +35,4 @@ export * from "./sites.preview";
 export * from "./assets.repo";
 export * from "./forms.repo";
 export * from "./formSubmission.repo";
+export * from "./rateLimit.repo";

@@ -42,6 +42,12 @@ export default function SubmissionsClient({
       </button>
 
       {loading ? <div className="opacity-70">Loading…</div> : null}
+      <a
+        className="border rounded px-3 py-2 text-sm inline-block"
+        href={`/api/admin/forms/submissions/export?site_id=${encodeURIComponent(siteId)}&form_id=${encodeURIComponent(formId)}&limit=2000`}
+      >
+        Download CSV
+      </a>
 
       <div className="space-y-2">
         {rows.map((r) => (
