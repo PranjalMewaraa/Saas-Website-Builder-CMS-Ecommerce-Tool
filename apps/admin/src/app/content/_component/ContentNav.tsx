@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const navItems = [
-  { href: "/content", label: "Content" },
-  { href: "/content/theme", label: "Theme" },
-  { href: "/content/menus", label: "Menus" },
-  { href: "/content/assets", label: "Assets" },
-  { href: "/content/pages/home", label: "Pages" },
-  { href: "/content/presets", label: "Presets" },
-  { href: "/content/publish", label: "Publish" },
-  { href: "/content/preview", label: "Preview" },
-  { href: "/content/forms", label: "Forms" },
+  { href: "/content", label: "Dashboard" },
+  { href: "/content/pages/home", label: "Pages" }, // Highest priority: core structure & hierarchy
+  // General content/posts/entries overview
+  { href: "/content/theme", label: "Theme" }, // Design & appearance – often early in workflow
+  { href: "/content/menus", label: "Menus" }, // Navigation structure – closely tied to pages
+  { href: "/content/assets", label: "Assets" }, // Media library – used across pages/content
+  { href: "/content/forms", label: "Forms" }, // Functional/interactive elements
+  { href: "/content/presets", label: "Presets" }, // Templates/shortcuts – mid-to-late
+  { href: "/content/preview", label: "Preview" }, // Testing/viewing changes
+  { href: "/content/publish", label: "Publish" }, // Final action – usually last
 ];
 
 function isActive(pathname: string, href: string) {
