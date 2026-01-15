@@ -940,10 +940,10 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     </div>
   );
 }
-
 function defaultProps(type: string) {
   if (type === "Header/V1")
     return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
+  if (type === "Footer/V1") return { menuId: "menu_footer" };
   if (type === "Hero")
     return {
       headline: "Headline",
@@ -951,10 +951,40 @@ function defaultProps(type: string) {
       ctaText: "Browse",
       ctaHref: "/products",
     };
+  if (type === "Hero")
+    return {
+      variant: "basic", // basic | image | video
+      headline: "Headline",
+      subhead: "Subhead",
+      ctaText: "Browse",
+      ctaHref: "/products",
+      secondaryCtaText: "",
+      secondaryCtaHref: "",
+      align: "left",
+      contentWidth: "xl",
+      minHeight: 520,
+      bg: {
+        type: "none", // none | image | video
+        overlayColor: "#000000",
+        overlayOpacity: 0.45,
+        imageAssetId: "",
+        imageUrl: "",
+        imageAlt: "",
+        videoAssetId: "",
+        videoUrl: "",
+        posterAssetId: "",
+        posterUrl: "",
+        videoAutoplay: true,
+        videoMuted: true,
+        videoLoop: true,
+        videoControls: false,
+        videoPreload: "metadata",
+      },
+    };
+
   if (type === "ProductGrid/V1")
     return { title: "Featured Products", limit: 8 };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
   if (type === "Form/V1")
-    return { formId: "form_contact", title: "Contact us", submitText: "Send" };
+    return { formId: "", title: "Contact us", submitText: "Send" };
   return {};
 }

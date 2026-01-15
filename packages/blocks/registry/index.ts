@@ -23,6 +23,7 @@ export const BLOCKS: Record<
 
   // ✅ NEW: single scalable hero block
   Hero: { type: "Hero", schema: HeroSchema, render: Hero },
+  "Hero/V1": { type: "Hero/V1", schema: HeroSchema, render: Hero },
 
   "Footer/V1": { type: "Footer/V1", schema: FooterV1Schema, render: FooterV1 },
 

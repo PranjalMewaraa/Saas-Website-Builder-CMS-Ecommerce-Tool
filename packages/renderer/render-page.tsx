@@ -149,7 +149,7 @@ async function BlockRenderer({
     props.logoAlt = props.logoAlt || ctx.snapshot.brand.logoAlt || "Logo";
   }
   // ✅ Resolve nested bg assets for unified Hero block
-  if (block.type === "Hero" || block.type === "Hero") {
+  if (block.type === "Hero" || block.type === "Hero/V1") {
     if (props?.bg && ctx.snapshot.assets) {
       const assets = ctx.snapshot.assets;
 
