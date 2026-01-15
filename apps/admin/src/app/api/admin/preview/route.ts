@@ -9,6 +9,7 @@ import {
   ensureSitePreviewToken,
   setDraftSnapshotId,
   getMongoDb,
+  listForms, // ✅ add
 } from "@acme/db-mongo";
 import { listAssetsForSnapshot } from "@acme/db-mongo";
 
@@ -29,13 +30,12 @@ export async function POST(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
-  const handleParam = searchParams.get("handle") || "demo-site"; // MVP default
 
   await requireModule({ tenant_id, site_id, module: "builder" });
 
   const db = await getMongoDb();
 
-  // ✅ FIX: typed collection so _id can be string/ObjectId without TS overload errors
+  // typed collection so _id can be string/ObjectId without TS overload errors
   const sitesCol = db.collection<SiteDocLoose>("sites");
 
   const site = await sitesCol.findOne({ _id: site_id as any, tenant_id });
@@ -56,13 +56,16 @@ export async function POST(req: Request) {
   const presets = await listStylePresets(tenant_id, site_id);
   const assets = await listAssetsForSnapshot(tenant_id, site_id);
 
+  // ✅ include forms in snapshot
+  const forms = await listForms(tenant_id, site_id);
+
   const snapshot_id = newDraftSnapshotId(site_id);
 
   const snapshot: any = {
     _id: snapshot_id,
     tenant_id,
     site_id,
-    handle: site.handle, // ✅ add handle to snapshot
+    handle: site.handle,
 
     is_draft: true,
     version: Date.now(),
@@ -71,6 +74,11 @@ export async function POST(req: Request) {
 
     assets,
     previewToken: token,
+
+    // ✅ FORMS INCLUDED (draft schema)
+    forms: Object.fromEntries(
+      forms.map((f: any) => [f._id, { name: f.name, schema: f.draft_schema }])
+    ),
 
     theme: { tokens: theme.draft_tokens },
     stylePresets: Object.fromEntries(
@@ -91,8 +99,11 @@ export async function POST(req: Request) {
   await createSnapshot(snapshot);
   await setDraftSnapshotId(tenant_id, site_id, snapshot_id);
 
-  const previewUrl = `http://localhost:3002/preview?handle=${encodeURIComponent(
-    handleParam
+  // ✅ IMPORTANT: preview page lives in storefront (usually :3002)
+  const storefrontOrigin =
+    process.env.STOREFRONT_ORIGIN || "http://localhost:3000";
+  const previewUrl = `${storefrontOrigin}/preview?handle=${encodeURIComponent(
+    site.handle
   )}&token=${encodeURIComponent(token)}`;
 
   return NextResponse.json({ ok: true, snapshot_id, previewUrl });

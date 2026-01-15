@@ -16,7 +16,6 @@ export default async function ThemePage({
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Theme</h1>
       <ThemeEditorClient siteId={siteId} urlMode={mode} />
     </div>
   );

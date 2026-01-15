@@ -1,11 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Save,
+  Trash2,
+  Layout,
+  Palette,
+  Sliders,
+  Square,
+  Type,
+} from "lucide-react";
 import EditorModeToggle from "../_component/EditorModeToggle";
 import { useEditorMode } from "../_component/useEditorMode";
 import { useAssetsMap } from "../_component/useAssetsMap";
 import ImageField from "../_component/ImageField";
-import BackgroundPreviewCard from "../_component/BackgroundPreviewCard";
 import StylePreviewCard from "../_component/StylePreviewCard";
 
 function safeJsonParse(text: string) {
@@ -37,17 +48,27 @@ export default function PresetsEditorClient({
   urlMode?: string;
 }) {
   const { mode, setMode } = useEditorMode("form", urlMode);
-
   const [presets, setPresets] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
   const [style, setStyle] = useState<any>(emptyStyle);
   const [jsonText, setJsonText] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
+    "idle"
+  );
+  const [loading, setLoading] = useState(true);
+
   const { assetsMap } = useAssetsMap(siteId);
+
+  const [layoutOpen, setLayoutOpen] = useState(true);
+  const [spacingOpen, setSpacingOpen] = useState(false);
+  const [bgOpen, setBgOpen] = useState(false);
+  const [effectsOpen, setEffectsOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       const res = await fetch(
         `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
         { cache: "no-store" }
@@ -55,7 +76,10 @@ export default function PresetsEditorClient({
       const data = await res.json();
       const list = data.presets ?? [];
       setPresets(list);
-      if (list.length > 0) setSelectedId(list[0]._id);
+      if (list.length > 0 && !selectedId) {
+        setSelectedId(list[0]._id);
+      }
+      setLoading(false);
     })();
   }, [siteId]);
 
@@ -70,9 +94,10 @@ export default function PresetsEditorClient({
     setTarget(selected.target || "");
     setStyle(selected.style || emptyStyle);
     setJsonText(JSON.stringify(selected.style || emptyStyle, null, 2));
-  }, [selectedId]);
+  }, [selected]);
 
   async function savePreset() {
+    setSaveStatus("saving");
     const _id = selectedId || `preset_${Date.now()}`;
     await fetch(
       `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
@@ -82,356 +107,561 @@ export default function PresetsEditorClient({
         body: JSON.stringify({ _id, name, target, style }),
       }
     );
-    alert("Saved preset ✅");
-    // reload list
+    setSaveStatus("success");
+    setTimeout(() => setSaveStatus("idle"), 2200);
+
     const res = await fetch(
       `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
       { cache: "no-store" }
     );
     const data = await res.json();
-    const list = data.presets ?? [];
-    setPresets(list);
+    setPresets(data.presets ?? []);
     setSelectedId(_id);
   }
 
-  return (
-    <div className="grid md:grid-cols-[280px_1fr] gap-4">
-      <div className="border rounded p-3 space-y-2">
-        <div className="font-medium">Presets</div>
-        <button
-          className="w-full border rounded px-3 py-2 text-sm"
-          onClick={() => {
-            const id = `preset_${Date.now()}`;
-            setSelectedId(id);
-            setName("New Preset");
-            setTarget("");
-            setStyle(emptyStyle);
-            setJsonText(JSON.stringify(emptyStyle, null, 2));
-          }}
-          type="button"
-        >
-          + New Preset
-        </button>
+  function createNewPreset() {
+    const id = `preset_${Date.now()}`;
+    setSelectedId(id);
+    setName("New Preset");
+    setTarget("");
+    setStyle(emptyStyle);
+    setJsonText(JSON.stringify(emptyStyle, null, 2));
+  }
 
-        <div className="space-y-1">
-          {presets.map((p) => (
-            <button
-              key={p._id}
-              className={`w-full text-left border rounded px-3 py-2 text-sm ${p._id === selectedId ? "bg-black text-white" : ""}`}
-              onClick={() => setSelectedId(p._id)}
-              type="button"
-            >
-              {p.name}
-              <div className="text-xs opacity-70">{p._id}</div>
-            </button>
-          ))}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <p>Loading presets...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm opacity-70">
-            Site: <b>{siteId}</b>
-          </div>
-          <EditorModeToggle mode={mode} setMode={setMode} />
+  return (
+    <div className="grid lg:grid-cols-[320px_1fr] gap-6 p-4 md:p-6 max-w-7xl mx-auto">
+      {/* Sidebar - Preset List */}
+      <div className="border rounded-xl bg-card shadow-sm overflow-hidden h-fit">
+        <div className="p-4 border-b bg-muted/40">
+          <h2 className="font-semibold">Style Presets</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Reusable styles for blocks
+          </p>
         </div>
 
-        <div className="border rounded p-4 space-y-3">
-          <div className="grid md:grid-cols-2 gap-3">
-            <label className="space-y-1">
-              <div className="text-sm opacity-70">Preset ID</div>
-              <input
-                className="border rounded p-2 w-full font-mono text-sm"
-                value={selectedId}
-                readOnly
-              />
-            </label>
-
-            <label className="space-y-1">
-              <div className="text-sm opacity-70">Target (optional)</div>
-              <input
-                className="border rounded p-2 w-full"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="Hero/* or Header/V1"
-              />
-            </label>
-
-            <label className="space-y-1 md:col-span-2">
-              <div className="text-sm opacity-70">Name</div>
-              <input
-                className="border rounded p-2 w-full"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </label>
-          </div>
-
-          {mode === "form" ? (
-            <StyleForm
-              value={style}
-              onChange={(next) => {
-                setStyle(next);
-                setJsonText(JSON.stringify(next, null, 2));
-              }}
-              siteId={siteId}
-              assetsMap={assetsMap}
-            />
-          ) : (
-            <div className="space-y-2">
-              <div className="text-sm opacity-70">Style JSON</div>
-              <textarea
-                className="w-full border rounded p-2 font-mono text-sm min-h-80"
-                value={jsonText}
-                onChange={(e) => setJsonText(e.target.value)}
-              />
-              <button
-                className="border rounded px-3 py-2 text-sm"
-                type="button"
-                onClick={() => {
-                  const parsed = safeJsonParse(jsonText);
-                  if (!parsed.ok) return alert(parsed.error);
-                  setStyle(parsed.value);
-                }}
-              >
-                Apply JSON to Form
-              </button>
-            </div>
-          )}
-
+        <div className="p-3">
           <button
-            className="bg-black text-white px-3 py-2 rounded"
-            type="button"
-            onClick={savePreset}
+            onClick={createNewPreset}
+            className="w-full flex items-center justify-center gap-2 py-2.5 border rounded-lg text-sm font-medium hover:bg-muted transition-colors"
           >
-            Save Preset
+            <Plus className="h-4 w-4" />
+            New Preset
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function StyleForm({
-  value,
-  onChange,
-  siteId,
-  assetsMap,
-}: {
-  value: any;
-  onChange: (v: any) => void;
-  siteId: string;
-  assetsMap: any;
-}) {
-  const v = value ?? {};
-  const pad = v.padding ?? {};
-  const bg = v.bg ?? { type: "none" };
-  const border = v.border ?? { enabled: false };
-
-  function set(path: string, newVal: any) {
-    const next = structuredClone(v);
-    const parts = path.split(".");
-    let cur = next;
-    for (let i = 0; i < parts.length - 1; i++)
-      cur = cur[parts[i]] ?? (cur[parts[i]] = {});
-    cur[parts[parts.length - 1]] = newVal;
-    onChange(next);
-  }
-  let previewBg = bg;
-  let resolvedBg = bg;
-  if (
-    bg.type === "image" &&
-    bg.imageAssetId &&
-    assetsMap?.[bg.imageAssetId]?.url
-  ) {
-    resolvedBg = { ...bg, imageUrl: assetsMap[bg.imageAssetId].url };
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="grid md:grid-cols-2 gap-3">
-        <Select
-          label="Container"
-          value={v.container || "boxed"}
-          onChange={(x: any) => set("container", x)}
-          options={["boxed", "full"]}
-        />
-        <Select
-          label="Max Width"
-          value={v.maxWidth || "xl"}
-          onChange={(x: any) => set("maxWidth", x)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
-        />
-      </div>
-
-      <div className="grid md:grid-cols-4 gap-2">
-        <NumberField
-          label="Pad Top"
-          value={pad.top ?? 0}
-          onChange={(n: any) => set("padding.top", n)}
-        />
-        <NumberField
-          label="Pad Right"
-          value={pad.right ?? 0}
-          onChange={(n: any) => set("padding.right", n)}
-        />
-        <NumberField
-          label="Pad Bottom"
-          value={pad.bottom ?? 0}
-          onChange={(n: any) => set("padding.bottom", n)}
-        />
-        <NumberField
-          label="Pad Left"
-          value={pad.left ?? 0}
-          onChange={(n: any) => set("padding.left", n)}
-        />
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-3">
-        <Select
-          label="Background Type"
-          value={bg.type || "none"}
-          onChange={(x: any) => set("bg.type", x)}
-          options={["none", "solid", "gradient", "image"]}
-        />
-        <Field
-          label="Text Color"
-          value={v.textColor || ""}
-          onChange={(x: any) => set("textColor", x)}
-          placeholder="var(--color-text) or #fff"
-        />
-        <Select
-          label="Shadow"
-          value={v.shadow || "none"}
-          onChange={(x: any) => set("shadow", x)}
-          options={["none", "sm", "md", "lg"]}
-        />
-      </div>
-
-      {bg.type === "solid" ? (
-        <Field
-          label="BG Color"
-          value={bg.color || ""}
-          onChange={(x: any) => set("bg.color", x)}
-          placeholder="var(--color-bg) or #ffffff"
-        />
-      ) : null}
-
-      {bg.type === "gradient" ? (
-        <div className="grid md:grid-cols-3 gap-3">
-          <Field
-            label="From"
-            value={bg.gradient?.from || ""}
-            onChange={(x: any) => set("bg.gradient.from", x)}
-            placeholder="#111827"
-          />
-          <Field
-            label="To"
-            value={bg.gradient?.to || ""}
-            onChange={(x: any) => set("bg.gradient.to", x)}
-            placeholder="#2563EB"
-          />
-          <Select
-            label="Direction"
-            value={bg.gradient?.direction || "to-r"}
-            onChange={(x: any) => set("bg.gradient.direction", x)}
-            options={["to-r", "to-l", "to-b", "to-t"]}
-          />
+        <div className="space-y-1 px-3 pb-3 max-h-[70vh] overflow-y-auto">
+          {presets.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              No presets yet
+            </div>
+          ) : (
+            presets.map((p) => (
+              <button
+                key={p._id}
+                onClick={() => setSelectedId(p._id)}
+                className={`
+                  w-full text-left px-4 py-2.5 rounded-lg text-sm transition-colors
+                  ${
+                    p._id === selectedId
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  }
+                `}
+              >
+                <div className="font-medium">{p.name || "Unnamed"}</div>
+                <div className="text-xs opacity-70 font-mono truncate">
+                  {p._id}
+                </div>
+                {p.target && (
+                  <div className="text-xs opacity-60 mt-0.5">
+                    Target: {p.target}
+                  </div>
+                )}
+              </button>
+            ))
+          )}
         </div>
-      ) : null}
+      </div>
 
-      {bg.type === "image" ? (
-        <div className="space-y-2">
-          <ImageField
-            siteId={siteId}
-            label="Background Image"
-            assetIdValue={bg.imageAssetId || ""}
-            altValue={bg.imageAlt || ""} // optional, ok to keep
-            onChangeAssetId={(v) => set("bg.imageAssetId", v)}
-            onChangeAlt={(v) => set("bg.imageAlt", v)}
-            assetsMap={assetsMap}
-          />
+      {/* Main Editor */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Preset Editor
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Site: <strong>{siteId}</strong>
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-3">
-            <Field
-              label="Overlay Color"
-              value={bg.overlayColor || ""}
-              onChange={(v: any) => set("bg.overlayColor", v)}
-              placeholder="#000000 or rgba(0,0,0,0.4) or var(--color-dark)"
-            />
+          <div className="flex items-center gap-3">
+            <EditorModeToggle mode={mode} setMode={setMode} />
 
-            <label className="space-y-1 block">
-              <div className="text-sm opacity-70">Overlay Opacity (0–1)</div>
-              <input
-                className="w-full"
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={bg.overlayOpacity ?? 0.35}
-                onChange={(e) =>
-                  set("bg.overlayOpacity", Number(e.target.value))
+            <button
+              onClick={savePreset}
+              disabled={saveStatus === "saving" || !name.trim()}
+              className={`
+                inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium
+                ${
+                  saveStatus === "success"
+                    ? "bg-green-600 text-white"
+                    : "bg-black text-white hover:bg-black/90"
                 }
-              />
-              <div className="text-xs opacity-60">
-                {bg.overlayOpacity ?? 0.35}
-              </div>
-            </label>
+                disabled:opacity-60 transition-colors
+              `}
+            >
+              {saveStatus === "saving" ? (
+                <>Saving…</>
+              ) : saveStatus === "success" ? (
+                <>Saved ✓</>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Preset
+                </>
+              )}
+            </button>
           </div>
         </div>
-      ) : null}
-      <StylePreviewCard
-        style={{ ...v, bg: resolvedBg }}
-        title="Preset Style Preview"
-      />
 
-      <div className="grid md:grid-cols-3 gap-3">
-        <NumberField
-          label="Radius"
-          value={v.radius ?? 0}
-          onChange={(n: any) => set("radius", n)}
-        />
-        <Select
-          label="Text Align"
-          value={v.align?.text || "left"}
-          onChange={(x: any) => set("align.text", x)}
-          options={["left", "center", "right"]}
-        />
-        <label className="flex items-center gap-2 border rounded p-2">
-          <input
-            type="checkbox"
-            checked={!!border.enabled}
-            onChange={(e) => set("border.enabled", e.target.checked)}
-          />
-          <span className="text-sm">Border</span>
-        </label>
+        {!selectedId && presets.length > 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            Select a preset from the list to edit
+          </div>
+        ) : (
+          <div className="border rounded-xl bg-card shadow-sm p-6 space-y-6">
+            {/* Header Fields */}
+            <div className="grid md:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Preset Name</label>
+                <input
+                  className="w-full border rounded-lg px-3 py-2"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Hero Section Dark"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Target (optional)</label>
+                <input
+                  className="w-full border rounded-lg px-3 py-2 font-mono text-sm"
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value)}
+                  placeholder="Hero/* or Header/V1 or .custom-class"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-sm font-medium">
+                  Preset ID (read-only)
+                </label>
+                <input
+                  className="w-full border rounded-lg px-3 py-2 font-mono text-sm bg-muted"
+                  value={selectedId}
+                  readOnly
+                />
+              </div>
+            </div>
+
+            {mode === "form" ? (
+              <div className="space-y-4 divide-y">
+                {/* Layout */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setLayoutOpen(!layoutOpen)}
+                    className="flex items-center justify-between w-full text-left font-medium pb-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layout className="h-4 w-4" />
+                      <span>Layout & Container</span>
+                    </div>
+                    {layoutOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {layoutOpen && (
+                    <div className="grid md:grid-cols-2 gap-5 pt-2">
+                      <Select
+                        label="Container Type"
+                        value={style.container || "boxed"}
+                        onChange={(v: any) =>
+                          setStyle({ ...style, container: v })
+                        }
+                        options={["boxed", "full"]}
+                      />
+                      <Select
+                        label="Max Width"
+                        value={style.maxWidth || "xl"}
+                        onChange={(v: any) =>
+                          setStyle({ ...style, maxWidth: v })
+                        }
+                        options={["sm", "md", "lg", "xl", "2xl", "full"]}
+                      />
+                      <Select
+                        label="Text Align"
+                        value={style.align?.text || "left"}
+                        onChange={(v: any) =>
+                          setStyle({
+                            ...style,
+                            align: { ...style.align, text: v },
+                          })
+                        }
+                        options={["left", "center", "right"]}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Spacing */}
+                <div className="pt-4">
+                  <button
+                    onClick={() => setSpacingOpen(!spacingOpen)}
+                    className="flex items-center justify-between w-full text-left font-medium pb-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sliders className="h-4 w-4" />
+                      <span>Spacing & Padding</span>
+                    </div>
+                    {spacingOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {spacingOpen && (
+                    <div className="grid md:grid-cols-4 gap-4 pt-2">
+                      {(["top", "right", "bottom", "left"] as const).map(
+                        (side) => (
+                          <NumberField
+                            key={side}
+                            label={`Padding ${side.charAt(0).toUpperCase()}`}
+                            value={style.padding?.[side] ?? 0}
+                            onChange={(n: number) =>
+                              setStyle({
+                                ...style,
+                                padding: { ...style.padding, [side]: n },
+                              })
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Background */}
+                <div className="pt-4">
+                  <button
+                    onClick={() => setBgOpen(!bgOpen)}
+                    className="flex items-center justify-between w-full text-left font-medium pb-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      <span>Background</span>
+                    </div>
+                    {bgOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {bgOpen && (
+                    <div className="space-y-5 pt-2">
+                      <Select
+                        label="Background Type"
+                        value={style.bg?.type || "none"}
+                        onChange={(v: any) =>
+                          setStyle({ ...style, bg: { ...style.bg, type: v } })
+                        }
+                        options={["none", "solid", "gradient", "image"]}
+                      />
+
+                      {style.bg?.type === "solid" && (
+                        <Field
+                          label="Background Color"
+                          value={style.bg?.color || ""}
+                          onChange={(v: string) =>
+                            setStyle({
+                              ...style,
+                              bg: { ...style.bg, color: v },
+                            })
+                          }
+                          placeholder="#ffffff or var(--color-bg)"
+                        />
+                      )}
+
+                      {style.bg?.type === "gradient" && (
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <Field
+                            label="From"
+                            value={style.bg?.gradient?.from || ""}
+                            onChange={(v: any) =>
+                              setStyle({
+                                ...style,
+                                bg: {
+                                  ...style.bg,
+                                  gradient: { ...style.bg.gradient, from: v },
+                                },
+                              })
+                            }
+                          />
+                          <Field
+                            label="To"
+                            value={style.bg?.gradient?.to || ""}
+                            onChange={(v: any) =>
+                              setStyle({
+                                ...style,
+                                bg: {
+                                  ...style.bg,
+                                  gradient: { ...style.bg.gradient, to: v },
+                                },
+                              })
+                            }
+                          />
+                          <Select
+                            label="Direction"
+                            value={style.bg?.gradient?.direction || "to-r"}
+                            onChange={(v: any) =>
+                              setStyle({
+                                ...style,
+                                bg: {
+                                  ...style.bg,
+                                  gradient: {
+                                    ...style.bg.gradient,
+                                    direction: v,
+                                  },
+                                },
+                              })
+                            }
+                            options={["to-r", "to-l", "to-b", "to-t"]}
+                          />
+                        </div>
+                      )}
+
+                      {style.bg?.type === "image" && (
+                        <div className="space-y-4">
+                          <ImageField
+                            siteId={siteId}
+                            label="Background Image"
+                            assetIdValue={style.bg?.imageAssetId || ""}
+                            altValue={style.bg?.imageAlt || ""}
+                            onChangeAssetId={(v) =>
+                              setStyle({
+                                ...style,
+                                bg: { ...style.bg, imageAssetId: v },
+                              })
+                            }
+                            onChangeAlt={(v) =>
+                              setStyle({
+                                ...style,
+                                bg: { ...style.bg, imageAlt: v },
+                              })
+                            }
+                            assetsMap={assetsMap}
+                          />
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <Field
+                              label="Overlay Color"
+                              value={style.bg?.overlayColor || ""}
+                              onChange={(v: any) =>
+                                setStyle({
+                                  ...style,
+                                  bg: { ...style.bg, overlayColor: v },
+                                })
+                              }
+                              placeholder="rgba(0,0,0,0.4)"
+                            />
+                            <div className="space-y-1.5">
+                              <label className="text-sm font-medium">
+                                Overlay Opacity
+                              </label>
+                              <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.05"
+                                value={style.bg?.overlayOpacity ?? 0.35}
+                                onChange={(e) =>
+                                  setStyle({
+                                    ...style,
+                                    bg: {
+                                      ...style.bg,
+                                      overlayOpacity: Number(e.target.value),
+                                    },
+                                  })
+                                }
+                                className="w-full"
+                              />
+                              <div className="text-xs text-right text-muted-foreground">
+                                {(style.bg?.overlayOpacity ?? 0.35).toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Effects & Border */}
+                <div className="pt-4">
+                  <button
+                    onClick={() => setEffectsOpen(!effectsOpen)}
+                    className="flex items-center justify-between w-full text-left font-medium pb-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Square className="h-4 w-4" />
+                      <span>Border, Radius & Shadow</span>
+                    </div>
+                    {effectsOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {effectsOpen && (
+                    <div className="grid md:grid-cols-3 gap-5 pt-2">
+                      <NumberField
+                        label="Border Radius"
+                        value={style.radius ?? 0}
+                        onChange={(n: any) => setStyle({ ...style, radius: n })}
+                      />
+
+                      <Select
+                        label="Shadow"
+                        value={style.shadow || "none"}
+                        onChange={(v: any) => setStyle({ ...style, shadow: v })}
+                        options={["none", "sm", "md", "lg", "xl"]}
+                      />
+
+                      <div className="flex items-center gap-3 pt-6">
+                        <input
+                          type="checkbox"
+                          checked={style.border?.enabled || false}
+                          onChange={(e) =>
+                            setStyle({
+                              ...style,
+                              border: {
+                                ...style.border,
+                                enabled: e.target.checked,
+                              },
+                            })
+                          }
+                          className="h-4 w-4"
+                        />
+                        <label className="text-sm font-medium">
+                          Enable Border
+                        </label>
+                      </div>
+
+                      {style.border?.enabled && (
+                        <div className="md:col-span-3 grid md:grid-cols-2 gap-5">
+                          <Field
+                            label="Border Color"
+                            value={style.border?.color || ""}
+                            onChange={(v: any) =>
+                              setStyle({
+                                ...style,
+                                border: { ...style.border, color: v },
+                              })
+                            }
+                            placeholder="rgba(0,0,0,0.1)"
+                          />
+                          <NumberField
+                            label="Border Width (px)"
+                            value={style.border?.width ?? 1}
+                            onChange={(n: any) =>
+                              setStyle({
+                                ...style,
+                                border: { ...style.border, width: n },
+                              })
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview */}
+                <div className="pt-6 border-t">
+                  <StylePreviewCard
+                    style={{
+                      ...style,
+                      bg:
+                        style.bg?.type === "image" &&
+                        style.bg?.imageAssetId &&
+                        assetsMap[style.bg.imageAssetId]?.url
+                          ? {
+                              ...style.bg,
+                              imageUrl: assetsMap[style.bg.imageAssetId].url,
+                            }
+                          : style.bg,
+                    }}
+                    title="Live Preview of Current Preset"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Type className="h-5 w-5" />
+                  <span>Raw Style JSON</span>
+                </div>
+                <textarea
+                  className="w-full h-96 font-mono text-sm p-4 border rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
+                  value={jsonText}
+                  onChange={(e) => setJsonText(e.target.value)}
+                  spellCheck={false}
+                />
+                <button
+                  onClick={() => {
+                    const parsed = safeJsonParse(jsonText);
+                    if (!parsed.ok) {
+                      alert(parsed.error);
+                      return;
+                    }
+                    setStyle(parsed.value);
+                  }}
+                  className="px-4 py-2 border rounded-lg text-sm hover:bg-muted"
+                >
+                  Apply JSON to Form
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {border.enabled ? (
-        <div className="grid md:grid-cols-2 gap-3">
-          <Field
-            label="Border Color"
-            value={border.color || ""}
-            onChange={(x: any) => set("border.color", x)}
-            placeholder="rgba(0,0,0,0.12)"
-          />
-          <NumberField
-            label="Border Width"
-            value={border.width ?? 1}
-            onChange={(n: any) => set("border.width", n)}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
 
 function Field({ label, value, onChange, placeholder }: any) {
   return (
-    <label className="space-y-1 block">
-      <div className="text-sm opacity-70">{label}</div>
+    <label className="block space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
       <input
-        className="border rounded p-2 w-full"
+        className="w-full border rounded-lg px-3 py-2 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -442,10 +672,10 @@ function Field({ label, value, onChange, placeholder }: any) {
 
 function NumberField({ label, value, onChange }: any) {
   return (
-    <label className="space-y-1 block">
-      <div className="text-sm opacity-70">{label}</div>
+    <label className="block space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
       <input
-        className="border rounded p-2 w-full"
+        className="w-full border rounded-lg px-3 py-2 text-sm"
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
@@ -456,10 +686,10 @@ function NumberField({ label, value, onChange }: any) {
 
 function Select({ label, value, onChange, options }: any) {
   return (
-    <label className="space-y-1 block">
-      <div className="text-sm opacity-70">{label}</div>
+    <label className="block space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
       <select
-        className="border rounded p-2 w-full"
+        className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >

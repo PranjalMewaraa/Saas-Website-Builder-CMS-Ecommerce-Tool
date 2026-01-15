@@ -6,10 +6,13 @@ export const dynamic = "force-dynamic"; // never cache preview
 export default async function PreviewPage({
   searchParams,
 }: {
-  searchParams: { handle?: string; token?: string };
+  searchParams: Promise<{ handle?: string; token?: string }>;
 }) {
-  const handle = searchParams.handle || "";
-  const token = searchParams.token || "";
+  // Await the promise – this is the key change
+  const params = await searchParams;
+
+  const handle = params.handle || "";
+  const token = params.token || "";
 
   if (!handle || !token) {
     return (
@@ -52,7 +55,10 @@ export default async function PreviewPage({
     return <div className="p-6">Home layout missing in draft snapshot</div>;
 
   return (
-    <div style={(snapshot.theme?.tokens || {}) as React.CSSProperties}>
+    <div
+      className="border-2 border-black"
+      style={(snapshot.theme?.tokens || {}) as React.CSSProperties}
+    >
       <div className="border-b p-2 text-sm bg-yellow-100">
         Preview Mode · Draft Snapshot:{" "}
         <span className="font-mono">{site.draft_snapshot_id}</span>

@@ -144,7 +144,7 @@ async function run() {
                 },
                 {
                   id: "b2",
-                  type: "Hero/V1",
+                  type: "Hero",
                   props: {
                     headline: "Users can style everything",
                     subhead:

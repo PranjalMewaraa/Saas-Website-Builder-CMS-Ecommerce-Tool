@@ -1,98 +1,64 @@
 import { NextResponse } from "next/server";
 import { requireSession, requireModule } from "@acme/auth";
-import {
-  getOrCreateTheme,
-  listMenus,
-  listPages,
-  listStylePresets,
-  createSnapshot,
-  ensureSitePreviewToken,
-  setDraftSnapshotId,
-  getMongoDb,
-} from "@acme/db-mongo";
-import { listAssetsForSnapshot } from "@acme/db-mongo";
+import { FormSchemaSchema } from "@acme/schemas";
+import { listForms, getForm, upsertFormDraft } from "@acme/db-mongo";
 
-function newDraftSnapshotId(site_id: string) {
-  return `draft_${site_id}_${Date.now()}`;
-}
-
-// Minimal typing to avoid ObjectId overload issues in TS
-type SiteDocLoose = {
-  _id: any;
-  tenant_id: string;
-  handle: string;
-};
-
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
 
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
-  const handleParam = searchParams.get("handle") || "demo-site"; // MVP default
+  const form_id = searchParams.get("form_id") || "";
 
-  await requireModule({ tenant_id, site_id, module: "builder" });
+  await requireModule({ tenant_id, site_id, module: "forms" });
 
-  const db = await getMongoDb();
+  if (form_id) {
+    const form = await getForm(tenant_id, site_id, form_id);
+    return NextResponse.json({ ok: true, form });
+  }
 
-  // ✅ FIX: typed collection so _id can be string/ObjectId without TS overload errors
-  const sitesCol = db.collection<SiteDocLoose>("sites");
+  const forms = await listForms(tenant_id, site_id);
+  return NextResponse.json({ ok: true, forms });
+}
 
-  const site = await sitesCol.findOne({ _id: site_id as any, tenant_id });
-  if (!site) {
+export async function PUT(req: Request) {
+  const session = await requireSession();
+  const tenant_id = session.user.tenant_id;
+
+  const { searchParams } = new URL(req.url);
+  const site_id = searchParams.get("site_id") || "";
+
+  await requireModule({ tenant_id, site_id, module: "forms" });
+
+  const body = await req.json();
+
+  const form_id = String(body.form_id || "");
+  const name = String(body.name || "Form").trim();
+  const draft_schema = body.draft_schema;
+
+  if (!form_id) {
     return NextResponse.json(
-      { ok: false, error: "Site not found" },
-      { status: 404 }
+      { ok: false, error: "Missing form_id" },
+      { status: 400 }
     );
   }
 
-  // ensure preview token exists
-  const token = await ensureSitePreviewToken(tenant_id, site_id);
+  const parsed = FormSchemaSchema.safeParse(draft_schema);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "Invalid schema", issues: parsed.error.issues },
+      { status: 400 }
+    );
+  }
 
-  // compile "draft snapshot"
-  const theme = await getOrCreateTheme(tenant_id, site_id);
-  const menus = await listMenus(tenant_id, site_id);
-  const pages = await listPages(tenant_id, site_id);
-  const presets = await listStylePresets(tenant_id, site_id);
-  const assets = await listAssetsForSnapshot(tenant_id, site_id);
-
-  const snapshot_id = newDraftSnapshotId(site_id);
-
-  const snapshot: any = {
-    _id: snapshot_id,
+  await upsertFormDraft({
     tenant_id,
     site_id,
-    handle: site.handle, // ✅ add handle to snapshot
+    form_id,
+    name,
+    draft_schema: parsed.data,
+  });
 
-    is_draft: true,
-    version: Date.now(),
-    created_by: session.user.user_id,
-    created_at: new Date(),
-
-    assets,
-
-    theme: { tokens: theme.draft_tokens },
-    stylePresets: Object.fromEntries(
-      presets.map((p) => [
-        p._id,
-        { name: p.name, style: p.style, target: p.target },
-      ])
-    ),
-    menus: Object.fromEntries(
-      menus.map((m) => [m._id, { tree: m.draft_tree }])
-    ),
-    pages: Object.fromEntries(
-      pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }])
-    ),
-    templates: {},
-  };
-
-  await createSnapshot(snapshot);
-  await setDraftSnapshotId(tenant_id, site_id, snapshot_id);
-
-  const previewUrl = `http://localhost:3002/preview?handle=${encodeURIComponent(
-    handleParam
-  )}&token=${encodeURIComponent(token)}`;
-
-  return NextResponse.json({ ok: true, snapshot_id, previewUrl });
+  return NextResponse.json({ ok: true });
 }

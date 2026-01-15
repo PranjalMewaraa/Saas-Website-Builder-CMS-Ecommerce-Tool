@@ -9,7 +9,7 @@ export default function FormV1(props: {
   title?: string;
   submitText?: string;
   schema: any;
-  mode?: "published" | "preview";
+  mode?: "published" | "preview" | "builder";
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [ok, setOk] = useState<string>("");
@@ -47,6 +47,11 @@ export default function FormV1(props: {
     payload.ts = ts;
 
     if (props.mode === "preview") payload.token = props.previewToken;
+    if (props.mode === "builder") {
+      setOk("Builder preview: submission is disabled.");
+      setSubmitting(false);
+      return;
+    }
 
     const res = await fetch(endpoint, {
       method: "POST",

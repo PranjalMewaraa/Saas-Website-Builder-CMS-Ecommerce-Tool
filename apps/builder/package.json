@@ -10,17 +10,22 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@acme/auth": "workspace:*",
+    "@acme/blocks": "workspace:*",
+    "@acme/core": "workspace:*",
+    "@acme/db-mongo": "workspace:*",
+    "@acme/db-mysql": "workspace:*",
+    "@acme/renderer": "workspace:*",
+    "@acme/schemas": "workspace:*",
+    "@acme/ui": "workspace:*",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "@acme/core": "workspace:*",
-    "@acme/auth": "workspace:*",
-    "@acme/schemas": "workspace:*",
-    "@acme/db-mongo": "workspace:*",
-    "@acme/db-mysql": "workspace:*",
-    "@acme/ui": "workspace:*",
-    "@acme/blocks": "workspace:*",
-    "@acme/renderer": "workspace:*"
+    "zod": "^4.3.5",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

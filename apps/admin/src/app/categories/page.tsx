@@ -21,7 +21,7 @@ export default async function CategoriesPage({
 
   return (
     <div>
-      <Nav siteId={siteId} storeId={storeId} />
+  
       <div className="p-6 space-y-4">
         <h1 className="text-xl font-semibold">Categories</h1>
 

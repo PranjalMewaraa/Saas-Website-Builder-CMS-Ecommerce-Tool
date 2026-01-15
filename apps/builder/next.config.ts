@@ -1,7 +1,14 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    const adminOrigin = process.env.ADMIN_ORIGIN || "http://localhost:3000";
+    return [
+      {
+        source: "/api/admin/:path*",
+        destination: `${adminOrigin}/api/admin/:path*`,
+      },
+    ];
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

@@ -53,9 +53,21 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.968.0
         version: 3.968.0
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(react@19.2.3)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      lucide-react:
+        specifier: ^0.562.0
+        version: 0.562.0(react@19.2.3)
       mongodb:
         specifier: ^7.0.0
         version: 7.0.0
@@ -77,6 +89,9 @@ importers:
       zod:
         specifier: ^4.3.5
         version: 4.3.5
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.10(@types/react@19.2.8)(react@19.2.3)
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
@@ -135,6 +150,15 @@ importers:
       '@acme/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(react@19.2.3)
       next:
         specifier: 16.1.1
         version: 16.1.1(@babel/core@7.28.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -144,6 +168,12 @@ importers:
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
+      zustand:
+        specifier: ^5.0.10
+        version: 5.0.10(@types/react@19.2.8)(react@19.2.3)
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
@@ -672,6 +702,28 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@dnd-kit/accessibility@3.1.1':
+    resolution: {integrity: sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==}
+    peerDependencies:
+      react: '>=16.8.0'
+
+  '@dnd-kit/core@6.3.1':
+    resolution: {integrity: sha512-xkGBRQQab4RLwgXxoqETICr6S5JlogafbhNsidmrkVv2YRs5MLwpjoF2qpiGjQt8S9AoxtIV603s0GIUpY5eYQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@dnd-kit/sortable@10.0.0':
+    resolution: {integrity: sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg==}
+    peerDependencies:
+      '@dnd-kit/core': ^6.3.0
+      react: '>=16.8.0'
+
+  '@dnd-kit/utilities@3.2.2':
+    resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
+    peerDependencies:
+      react: '>=16.8.0'
 
   '@emnapi/core@1.8.1':
     resolution: {integrity: sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg==}
@@ -2497,6 +2549,11 @@ packages:
     resolution: {integrity: sha512-Lkk/vx6ak3rYkRR0Nhu4lFUT2VDnQSxBe8Hbl7f36358p6ow8Bnvr8lrLt98H8J1aGxfhbX4Fs5tYg2+FTwr5Q==}
     engines: {bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0'}
 
+  lucide-react@0.562.0:
+    resolution: {integrity: sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -3158,6 +3215,24 @@ packages:
   zod@4.3.5:
     resolution: {integrity: sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g==}
 
+  zustand@5.0.10:
+    resolution: {integrity: sha512-U1AiltS1O9hSy3rul+Ub82ut2fqIAefiSuwECWt6jlMVUGejvf+5omLcRBSzqbRagSM3hQZbtzdeRc6QVScXTg==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -3784,6 +3859,31 @@ snapshots:
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+
+  '@dnd-kit/accessibility@3.1.1(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
+      tslib: 2.8.1
+
+  '@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@dnd-kit/accessibility': 3.1.1(react@19.2.3)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.3)
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      tslib: 2.8.1
+
+  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@dnd-kit/core': 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@dnd-kit/utilities': 3.2.2(react@19.2.3)
+      react: 19.2.3
+      tslib: 2.8.1
+
+  '@dnd-kit/utilities@3.2.2(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
+      tslib: 2.8.1
 
   '@emnapi/core@1.8.1':
     dependencies:
@@ -5742,6 +5842,10 @@ snapshots:
 
   lru.min@1.1.3: {}
 
+  lucide-react@0.562.0(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -6494,3 +6598,8 @@ snapshots:
       zod: 4.3.5
 
   zod@4.3.5: {}
+
+  zustand@5.0.10(@types/react@19.2.8)(react@19.2.3):
+    optionalDependencies:
+      '@types/react': 19.2.8
+      react: 19.2.3

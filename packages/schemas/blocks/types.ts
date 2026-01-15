@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BaseStyleSchema } from "../style/baseStyle";
+import { BlockStyleSchema } from "../style/blockStyle";
 
 export const BlockInstanceSchema = z.object({
   id: z.string().min(1),
@@ -13,6 +14,8 @@ export const PageLayoutSchema = z.object({
   sections: z.array(
     z.object({
       id: z.string().min(1),
+      label: z.string().max(60).optional(),
+      style: BlockStyleSchema.optional(),
       blocks: z.array(BlockInstanceSchema),
     })
   ),
