@@ -4,11 +4,16 @@ import MenusEditorClient from "./menusEditorClient";
 export default async function MenusPage({
   searchParams,
 }: {
-  searchParams: { site_id?: string; mode?: string };
+  searchParams: Promise<{ site_id?: string; mode?: string }>;
 }) {
   await requireSession();
-  const siteId = searchParams.site_id || "site_demo";
-  const mode = searchParams.mode || "";
+
+  // Await here
+  const resolvedSearchParams = await searchParams;
+
+  const siteId = resolvedSearchParams.site_id || "site_demo";
+  const mode = resolvedSearchParams.mode || "";
+
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-semibold">Menus</h1>

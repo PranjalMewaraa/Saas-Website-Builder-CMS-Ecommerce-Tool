@@ -832,6 +832,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
                 Open in new tab →
               </button>
             </div>
+
             {previewUrl ? (
               <iframe
                 src={previewUrl}

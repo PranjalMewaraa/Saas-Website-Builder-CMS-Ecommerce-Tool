@@ -3,8 +3,33 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import {
+  LayoutDashboard,
+  FileText,
+  Menu,
+  Palette,
+  Brush,
+  Image,
+  FormInput,
+  Eye,
+  Code2,
+  Store,
+  Tags,
+  Package,
+  ShoppingBag,
+  Globe,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  Save,
+} from "lucide-react";
 
-type NavItem = { label: string; href: string; group?: string };
+type NavItem = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  group?: string;
+};
 
 export default function AdminShell({
   children,
@@ -18,148 +43,241 @@ export default function AdminShell({
   const siteId = searchParams.get("site_id") || "site_demo";
 
   const nav: NavItem[] = [
-    { label: "Content Dashboard", href: "/content", group: "UI" },
-    { label: "Pages", href: "/content/pages/home", group: "UI" },
-    { label: "Menus", href: "/content/menus", group: "UI" },
-    { label: "Theme", href: "/content/theme", group: "UI" },
-    { label: "Style Presets", href: "/content/presets", group: "UI" },
-    { label: "Assets", href: "/content/assets", group: "UI" },
-    { label: "Forms", href: "/content/forms", group: "UI" },
-    { label: "Previews", href: "/content/preview", group: "UI" },
+    {
+      label: "Dashboard",
+      href: "/content",
+      icon: LayoutDashboard,
+      group: "Content",
+    },
+    {
+      label: "Pages",
+      href: "/content/pages",
+      icon: FileText,
+      group: "Content",
+    },
+    { label: "Menus", href: "/content/menus", icon: Menu, group: "Content" },
+    { label: "Theme", href: "/content/theme", icon: Palette, group: "Content" },
+    {
+      label: "Style Presets",
+      href: "/content/presets",
+      icon: Brush,
+      group: "Content",
+    },
+    { label: "Assets", href: "/content/assets", icon: Image, group: "Content" },
+    {
+      label: "Forms",
+      href: "/content/forms",
+      icon: FormInput,
+      group: "Content",
+    },
+    {
+      label: "Previews",
+      href: "/content/preview",
+      icon: Eye,
+      group: "Content",
+    },
 
-    { label: "Builder", href: "/builder", group: "Build" },
+    { label: "Builder", href: "/builder", icon: Code2, group: "Build" },
 
-    { label: "My Store", href: "/stores", group: "Commerce" },
-    { label: "Brands", href: "/brands", group: "Commerce" },
-    { label: "Categories", href: "/categories", group: "Commerce" },
-    { label: "Products", href: "/products", group: "Commerce" },
+    { label: "My Store", href: "/stores", icon: Store, group: "Commerce" },
+    { label: "Brands", href: "/brands", icon: Tags, group: "Commerce" },
+    { label: "Categories", href: "/categories", icon: Tags, group: "Commerce" },
+    {
+      label: "Products",
+      href: "/products",
+      icon: ShoppingBag,
+      group: "Commerce",
+    },
 
-    { label: "Domains", href: "/settings/domains", group: "Settings" },
-    { label: "Store Settings", href: "/settings/store", group: "Settings" },
+    {
+      label: "Domains",
+      href: "/settings/domains",
+      icon: Globe,
+      group: "Settings",
+    },
+    {
+      label: "Store Settings",
+      href: "/settings/store",
+      icon: Settings,
+      group: "Settings",
+    },
   ];
 
   const grouped = useMemo(() => {
     const g: Record<string, NavItem[]> = {};
-    for (const item of nav) (g[item.group || "Other"] ||= []).push(item);
+    nav.forEach((item) => {
+      const key = item.group || "Other";
+      if (!g[key]) g[key] = [];
+      g[key].push(item);
+    });
     return g;
   }, []);
 
   function withSite(href: string) {
-    const u = new URL(href, "http://x");
-    u.searchParams.set("site_id", siteId);
-    return u.pathname + "?" + u.searchParams.toString();
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("site_id", siteId);
+    return `${href}?${params.toString()}`;
   }
 
   const [draftSiteId, setDraftSiteId] = useState(siteId);
+  // Only one group can be open at a time → store the active group name (or null)
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
-  function applySiteId(nextSiteId: string) {
-    const sp = new URLSearchParams(searchParams.toString());
-    sp.set("site_id", nextSiteId);
-    router.replace(`${pathname}?${sp.toString()}`);
+  function applySiteId(next: string) {
+    const trimmed = next.trim() || "site_demo";
+    setDraftSiteId(trimmed);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("site_id", trimmed);
+    router.replace(`${pathname}?${params.toString()}`);
+  }
+
+  function toggleGroup(group: string) {
+    setActiveGroup((prev) => (prev === group ? null : group));
   }
 
   return (
-    <div className="min-h-screen text-gray-950 grid grid-cols-[280px_1fr]">
-      {/* Sidebar */}
-      <aside className="border-r bg-white">
-        <div className="p-4 border-b">
-          <div className="text-lg font-semibold">Admin</div>
-          <div className="text-xs opacity-70">Tenant workspace</div>
+    <div className="min-h-screen bg-gray-50 text-gray-900 grid grid-cols-[260px_1fr]">
+      {/* Sidebar – fixed, no scroll */}
+      <aside className="bg-white border-r border-gray-200 flex flex-col h-screen">
+        {/* Brand / Logo */}
+        <div className="p-5 border-b border-gray-200 shrink-0">
+          <div className="text-xl font-bold text-gray-900">Admin Panel</div>
+          <div className="text-xs text-gray-500 mt-0.5">Manage your sites</div>
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Site selector */}
-          <div className="space-y-2">
-            <div className="text-xs font-medium uppercase opacity-60">
-              Active Site
-            </div>
-            <div className="flex gap-2">
-              <input
-                className="border rounded px-3 py-2 text-sm w-full"
-                value={draftSiteId}
-                onChange={(e) => setDraftSiteId(e.target.value)}
-                placeholder="site_demo"
-              />
-              <button
-                className="border rounded px-3 py-2 text-sm"
-                type="button"
-                onClick={() => applySiteId(draftSiteId.trim() || "site_demo")}
-              >
-                Go
-              </button>
-            </div>
-            <div className="text-[11px] opacity-60">
-              All navigation preserves{" "}
-              <span className="font-mono">site_id</span>.
-            </div>
+        {/* Site Selector */}
+        <div className="p-4 border-b border-gray-200 shrink-0">
+          <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1.5">
+            Active Site
+          </label>
+          <div className="flex flex-col justify-center gap-2">
+            <input
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+              value={draftSiteId}
+              onChange={(e) => setDraftSiteId(e.target.value)}
+              placeholder="site_demo"
+              onKeyDown={(e) => e.key === "Enter" && applySiteId(draftSiteId)}
+            />
+            <button
+              onClick={() => applySiteId(draftSiteId)}
+              className="px-4 py-2 text-sm font-medium bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Apply
+            </button>
           </div>
-
-          {/* Navigation */}
-          {Object.entries(grouped).map(([group, items]) => (
-            <div key={group} className="space-y-2">
-              <div className="text-xs font-medium uppercase opacity-60">
-                {group}
-              </div>
-              <div className="space-y-1">
-                {items.map((item) => {
-                  const active =
-                    pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
-                  return (
-                    <Link
-                      key={item.href}
-                      href={withSite(item.href)}
-                      className={[
-                        "block rounded px-3 py-2 text-sm border",
-                        active
-                          ? "bg-black text-white border-black"
-                          : "bg-white hover:bg-neutral-50",
-                      ].join(" ")}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          <p className="mt-1.5 text-[11px] text-gray-500">
+            All links include <code className="font-mono">site_id</code>
+          </p>
         </div>
+
+        {/* Navigation – scrollable if needed, but with exclusive accordion it usually fits */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-2">
+          {Object.entries(grouped).map(([group, items]) => {
+            const isOpen = activeGroup === group;
+
+            return (
+              <div
+                key={group}
+                className="rounded-md overflow-hidden border border-gray-200"
+              >
+                <button
+                  onClick={() => toggleGroup(group)}
+                  className={`
+                    flex items-center justify-between w-full px-4 py-3 text-sm font-semibold
+                    ${isOpen ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-50"}
+                    transition-colors
+                  `}
+                >
+                  {group}
+                  {isOpen ? (
+                    <ChevronDown size={16} className="text-gray-500" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-500" />
+                  )}
+                </button>
+
+                <div
+                  className={`
+                    transition-all duration-300 ease-in-out
+                    ${isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}
+                    overflow-hidden bg-white
+                  `}
+                >
+                  <div className="py-1.5 px-1 space-y-0.5">
+                    {items.map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        pathname.startsWith(`${item.href}/`);
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={withSite(item.href)}
+                          className={`
+                            flex items-center gap-3 px-4 py-2.5 text-sm rounded-md mx-1
+                            transition-all
+                            ${
+                              isActive
+                                ? "bg-blue-600 text-white font-medium"
+                                : "text-gray-700 hover:bg-gray-100"
+                            }
+                          `}
+                        >
+                          <item.icon
+                            className={
+                              isActive ? "text-white" : "text-gray-500"
+                            }
+                          />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* Main */}
-      <div className="min-w-0">
-        {/* Topbar */}
-        <header className="bg-white border-b sticky top-0 z-10">
+      {/* Main area */}
+      <div className="flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
           <div className="px-6 py-3 flex items-center justify-between">
             <div className="min-w-0">
-              <div className="text-sm opacity-70">Active Site</div>
-              <div className="font-semibold truncate">{siteId}</div>
+              <div className="text-xs text-gray-500">Active Site</div>
+              <div className="font-semibold text-gray-900 truncate">
+                {siteId}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Link
-                className="border rounded px-3 py-2 text-sm bg-white hover:bg-neutral-50"
                 href={withSite("/content")}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Content
               </Link>
               <Link
-                className="border rounded px-3 py-2 text-sm bg-white hover:bg-neutral-50"
                 href={withSite("/builder")}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Builder
               </Link>
               <Link
-                className="bg-black text-white rounded px-3 py-2 text-sm"
                 href={withSite("/content/publish")}
+                className="px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm transition-all flex items-center gap-2"
               >
+                <Save size={16} />
                 Publish
               </Link>
             </div>
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        {/* Scrollable main content */}
+        <main className="flex-1 p-6 overflow-auto bg-gray-50">{children}</main>
       </div>
     </div>
   );

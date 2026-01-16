@@ -26,208 +26,191 @@ export default function MenusEditorClient({
   const [jsonText, setJsonText] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch(
-        `/api/admin/menus?site_id=${encodeURIComponent(siteId)}`,
-        { cache: "no-store" }
-      );
-      const data = await res.json();
-      const list = data.menus ?? [];
-      setMenus(list);
-      const cur = list.find((m: any) => m._id === active) || list[0];
-      setActive(cur?._id || "menu_main");
-      setTree(cur?.draft_tree || []);
-      setJsonText(JSON.stringify(cur?.draft_tree || [], null, 2));
-    })();
+    refresh();
   }, [siteId]);
 
-  useEffect(() => {
-    const cur = menus.find((m: any) => m._id === active);
+  async function refresh() {
+    const res = await fetch(`/api/admin/menus?site_id=${siteId}`, {
+      cache: "no-store",
+    });
+    const data = await res.json();
+    const list = data.menus ?? [];
+    setMenus(list);
+    const cur = list.find((m: any) => m._id === active) || list[0];
+    setActive(cur?._id || "menu_main");
     setTree(cur?.draft_tree || []);
     setJsonText(JSON.stringify(cur?.draft_tree || [], null, 2));
-  }, [active]);
+  }
+
+  function sync(next: any[]) {
+    setTree(next);
+    setJsonText(JSON.stringify(next, null, 2));
+  }
 
   async function save(nextTree: any[]) {
-    await fetch(`/api/admin/menus?site_id=${encodeURIComponent(siteId)}`, {
+    await fetch(`/api/admin/menus?site_id=${siteId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ menu_id: active, tree: nextTree }),
     });
     alert("Saved menu draft ✅");
-    // refresh menus
-    const res = await fetch(
-      `/api/admin/menus?site_id=${encodeURIComponent(siteId)}`,
-      { cache: "no-store" }
-    );
-    const data = await res.json();
-    setMenus(data.menus ?? []);
+    refresh();
   }
 
   return (
     <div className="space-y-3 max-w-4xl">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <button
-            className={`border rounded px-3 py-1 text-sm ${active === "menu_main" ? "bg-black text-white" : ""}`}
-            onClick={() => setActive("menu_main")}
-            type="button"
-          >
-            Main
-          </button>
-          <button
-            className={`border rounded px-3 py-1 text-sm ${active === "menu_footer" ? "bg-black text-white" : ""}`}
-            onClick={() => setActive("menu_footer")}
-            type="button"
-          >
-            Footer
-          </button>
+          {menus.map((m) => (
+            <button
+              key={m._id}
+              className={`border px-3 py-1 text-sm rounded ${
+                active === m._id ? "bg-black text-white" : ""
+              }`}
+              onClick={() => {
+                setActive(m._id);
+                sync(m.draft_tree || []);
+              }}
+            >
+              {m._id}
+            </button>
+          ))}
         </div>
         <EditorModeToggle mode={mode} setMode={setMode} />
       </div>
 
       {mode === "form" ? (
-        <div className="border rounded p-4 space-y-2">
-          {tree.map((item, idx) => (
-            <div
-              key={item.id || idx}
-              className="grid grid-cols-12 gap-2 items-center"
-            >
-              <input
-                className="border rounded p-2 col-span-3"
-                value={item.label || ""}
-                onChange={(e) =>
-                  update(idx, { ...item, label: e.target.value })
-                }
-                placeholder="Label"
-              />
-              <select
-                className="border rounded p-2 col-span-2"
-                value={item.type || "page"}
-                onChange={(e) => update(idx, { ...item, type: e.target.value })}
-              >
-                <option value="page">page</option>
-                <option value="external">external</option>
-              </select>
-              <input
-                className="border rounded p-2 col-span-5"
-                value={item.ref?.slug || item.ref?.href || ""}
-                onChange={(e) => updateRef(idx, e.target.value, item.type)}
-                placeholder="/about or https://..."
-              />
-              <div className="col-span-2 flex gap-2 justify-end">
-                <button
-                  className="border rounded px-2 py-2 text-sm"
-                  type="button"
-                  onClick={() => move(idx, -1)}
-                >
-                  ↑
-                </button>
-                <button
-                  className="border rounded px-2 py-2 text-sm"
-                  type="button"
-                  onClick={() => move(idx, +1)}
-                >
-                  ↓
-                </button>
-                <button
-                  className="border rounded px-2 py-2 text-sm"
-                  type="button"
-                  onClick={() => remove(idx)}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="flex gap-2">
-            <button
-              className="border rounded px-3 py-2 text-sm"
-              type="button"
-              onClick={add}
-            >
-              + Add Item
-            </button>
-            <button
-              className="bg-black text-white rounded px-3 py-2 text-sm"
-              type="button"
-              onClick={() => save(tree)}
-            >
-              Save Draft
-            </button>
-          </div>
-        </div>
+        <MenuTreeEditor tree={tree} onChange={sync} />
       ) : (
-        <div className="border rounded p-4 space-y-2">
-          <textarea
-            className="w-full border rounded p-2 font-mono text-sm min-h-[320px]"
-            value={jsonText}
-            onChange={(e) => setJsonText(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <button
-              className="border rounded px-3 py-2 text-sm"
-              type="button"
-              onClick={() => {
-                const parsed = safeJsonParse(jsonText);
-                if (!parsed.ok) return alert(parsed.error);
-                setTree(parsed.value);
-              }}
-            >
-              Apply JSON to Form
-            </button>
-            <button
-              className="bg-black text-white rounded px-3 py-2 text-sm"
-              type="button"
-              onClick={() => {
-                const parsed = safeJsonParse(jsonText);
-                if (!parsed.ok) return alert(parsed.error);
-                save(parsed.value);
-              }}
-            >
-              Save Draft
-            </button>
-          </div>
-        </div>
+        <textarea
+          className="w-full border rounded p-2 font-mono min-h-[300px]"
+          value={jsonText}
+          onChange={(e) => setJsonText(e.target.value)}
+        />
       )}
+
+      <div className="flex gap-2">
+        <button
+          className="border px-3 py-2 rounded"
+          onClick={() => addRoot(tree, sync)}
+        >
+          + Add Item
+        </button>
+        <button
+          className="bg-black text-white px-3 py-2 rounded"
+          onClick={() =>
+            mode === "form"
+              ? save(tree)
+              : (() => {
+                  const parsed = safeJsonParse(jsonText);
+                  if (!parsed.ok) return alert(parsed.error);
+                  save(parsed.value);
+                })()
+          }
+        >
+          Save Draft
+        </button>
+      </div>
     </div>
   );
+}
 
-  function add() {
-    const id = `n_${Date.now()}`;
-    const next = [
-      ...tree,
-      { id, label: "New", type: "page", ref: { slug: "/" } },
-    ];
-    setTree(next);
-    setJsonText(JSON.stringify(next, null, 2));
+function MenuTreeEditor({
+  tree,
+  onChange,
+}: {
+  tree: any[];
+  onChange: (v: any[]) => void;
+}) {
+  function update(idx: number, item: any) {
+    const next = [...tree];
+    next[idx] = item;
+    onChange(next);
   }
 
   function remove(idx: number) {
     const next = tree.filter((_: any, i: number) => i !== idx);
-    setTree(next);
-    setJsonText(JSON.stringify(next, null, 2));
+    onChange(next);
   }
 
-  function move(idx: number, dir: -1 | 1) {
+  function addChild(idx: number) {
     const next = [...tree];
-    const j = idx + dir;
-    if (j < 0 || j >= next.length) return;
-    [next[idx], next[j]] = [next[j], next[idx]];
-    setTree(next);
-    setJsonText(JSON.stringify(next, null, 2));
+    next[idx].children = next[idx].children || [];
+    next[idx].children.push(newItem());
+    onChange(next);
   }
 
-  function update(idx: number, item: any) {
-    const next = [...tree];
-    next[idx] = item;
-    setTree(next);
-    setJsonText(JSON.stringify(next, null, 2));
-  }
+  return (
+    <div className="border rounded p-4 space-y-2">
+      {tree.map((item, idx) => (
+        <div key={item.id} className="space-y-2">
+          <MenuItemEditor
+            item={item}
+            onChange={(v: any) => update(idx, v)}
+            onRemove={() => remove(idx)}
+            onAddChild={() => addChild(idx)}
+          />
+          {item.children && (
+            <div className="ml-6 border-l pl-4">
+              <MenuTreeEditor
+                tree={item.children}
+                onChange={(c) => update(idx, { ...item, children: c })}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  function updateRef(idx: number, val: string, type: string) {
-    const item = tree[idx];
-    const ref = type === "external" ? { href: val } : { slug: val };
-    update(idx, { ...item, ref });
-  }
+function MenuItemEditor({ item, onChange, onRemove, onAddChild }: any) {
+  return (
+    <div className="grid grid-cols-12 gap-2 items-center">
+      <input
+        className="border p-2 col-span-3"
+        value={item.label}
+        onChange={(e) => onChange({ ...item, label: e.target.value })}
+      />
+      <select
+        className="border p-2 col-span-2"
+        value={item.type}
+        onChange={(e) => onChange({ ...item, type: e.target.value })}
+      >
+        <option value="page">page</option>
+        <option value="external">external</option>
+      </select>
+      <input
+        className="border p-2 col-span-4"
+        value={item.ref?.slug || item.ref?.href || ""}
+        onChange={(e) =>
+          onChange({
+            ...item,
+            ref:
+              item.type === "external"
+                ? { href: e.target.value }
+                : { slug: e.target.value },
+          })
+        }
+      />
+      <div className="col-span-3 flex gap-2 justify-end">
+        <button onClick={onAddChild}>+ Child</button>
+        <button onClick={onRemove}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function newItem() {
+  return {
+    id: `n_${Date.now()}`,
+    label: "New",
+    type: "page",
+    ref: { slug: "/" },
+    children: [],
+  };
+}
+
+function addRoot(tree: any[], sync: any) {
+  sync([...tree, newItem()]);
 }
