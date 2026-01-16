@@ -4,22 +4,29 @@ import Image from "next/image";
 type MenuNode = {
   id: string;
   label: string;
-  type?: string;
   ref?: { slug?: string; href?: string };
+  children?: MenuNode[];
 };
 
-type Menu = {
-  tree?: MenuNode[];
-};
+function MenuItem({ node }: { node: MenuNode }) {
+  const href = node.ref?.slug || node.ref?.href || "#";
 
-type Props = {
-  menu: Menu | null;
-  ctaText?: string;
-  ctaHref?: string;
+  return (
+    <li className="relative group">
+      <Link href={href} className="px-2 py-1 block">
+        {node.label}
+      </Link>
 
-  logoUrl?: string;
-  logoAlt?: string;
-};
+      {node.children?.length ? (
+        <ul className="absolute left-0 top-full bg-white border shadow hidden group-hover:block min-w-[180px]">
+          {node.children.map((c) => (
+            <MenuItem key={c.id} node={c} />
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
 
 export default function HeaderV1({
   menu,
@@ -27,50 +34,38 @@ export default function HeaderV1({
   ctaHref,
   logoUrl,
   logoAlt,
-}: Props) {
-  const items = menu?.tree ?? [];
+}: any) {
+  const items = menu?.tree || [];
 
   return (
-    <header>
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
-        {logoUrl ? (
-          <Link href="/" className="flex items-center gap-2">
+    <header className="border-b">
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+        <Link href="/">
+          {logoUrl ? (
             <Image
               src={logoUrl}
               alt={logoAlt || "Logo"}
-              width={140}
+              width={120}
               height={40}
-              className="h-8 w-auto"
-              priority
             />
-          </Link>
-        ) : (
-          <Link href="/" className="font-semibold">
-            Store
-          </Link>
-        )}
+          ) : (
+            <b>Site</b>
+          )}
+        </Link>
 
-        <nav className="flex items-center gap-4 overflow-x-auto">
-          {items.map((n) => (
-            <Link
-              key={n.id}
-              href={n.ref?.slug || n.ref?.href || "#"}
-              className="text-sm whitespace-nowrap opacity-90 hover:opacity-100"
-            >
-              {n.label}
-            </Link>
+        <ul className="flex gap-4">
+          {items.map((n: MenuNode) => (
+            <MenuItem key={n.id} node={n} />
           ))}
-        </nav>
+        </ul>
 
-        {ctaText && ctaHref ? (
+        {ctaText && ctaHref && (
           <Link
             href={ctaHref}
-            className="px-3 py-2 rounded bg-black text-white text-sm"
+            className="bg-black text-white px-3 py-2 rounded"
           >
             {ctaText}
           </Link>
-        ) : (
-          <div className="w-[1px]" />
         )}
       </div>
     </header>
