@@ -20,7 +20,7 @@ type Props = {
 
 export default function FooterV1({ menu, logoUrl, logoAlt }: Props) {
   const items = menu?.tree ?? [];
-
+  console.log("Footer items:", menu);
   return (
     <footer>
       <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col gap-4">

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   if (!site) {
     return NextResponse.json(
       { ok: false, error: "Site not found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     // ✅ FORMS INCLUDED (draft schema)
     forms: Object.fromEntries(
-      forms.map((f: any) => [f._id, { name: f.name, schema: f.draft_schema }])
+      forms.map((f: any) => [f._id, { name: f.name, schema: f.draft_schema }]),
     ),
 
     theme: { tokens: theme.draft_tokens },
@@ -85,13 +85,19 @@ export async function POST(req: Request) {
       presets.map((p) => [
         p._id,
         { name: p.name, style: p.style, target: p.target },
-      ])
+      ]),
     ),
     menus: Object.fromEntries(
-      menus.map((m) => [m._id, { tree: m.draft_tree }])
+      menus.map((m) => [
+        m._id,
+        {
+          tree: m.draft_tree,
+          slot: m.slot ?? null, // ← add this
+        },
+      ]),
     ),
     pages: Object.fromEntries(
-      pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }])
+      pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }]),
     ),
     templates: {},
   };
@@ -103,7 +109,7 @@ export async function POST(req: Request) {
   const storefrontOrigin =
     process.env.STOREFRONT_ORIGIN || "http://localhost:3000";
   const previewUrl = `${storefrontOrigin}/preview?handle=${encodeURIComponent(
-    site.handle
+    site.handle,
   )}&token=${encodeURIComponent(token)}`;
 
   return NextResponse.json({ ok: true, snapshot_id, previewUrl });

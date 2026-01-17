@@ -15,12 +15,11 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import SortableItem from "./SortableItem"; // we’ll define this for nested support
+import SortableItem from "./SortableItem";
 
-type MenuNode = {
+export type MenuNode = {
   id: string;
   label: string;
   type?: "page" | "external";
@@ -36,149 +35,287 @@ function safeJsonParse(text: string) {
   }
 }
 
+type Props = {
+  siteId: string;
+  urlMode?: string;
+  activeMenuIdFor: string;
+  initialMenu: {
+    id: string;
+    name: string;
+    tree: MenuNode[];
+    slot?: "header" | "footer";
+  };
+  onSave?: () => void;
+};
+
 export default function MenusEditorClient({
   siteId,
   urlMode,
-}: {
-  siteId: string;
-  urlMode?: string;
-}) {
+  activeMenuIdFor,
+  initialMenu,
+  onSave,
+}: Props) {
   const { mode, setMode } = useEditorMode("form", urlMode);
 
   const [menus, setMenus] = useState<any[]>([]);
-  const [activeMenuId, setActiveMenuId] = useState("header");
-  const [tree, setTree] = useState<MenuNode[]>([]);
-  const [jsonText, setJsonText] = useState("");
+  const [activeMenuId, setActiveMenuId] = useState(activeMenuIdFor);
+  const [tree, setTree] = useState<MenuNode[]>(initialMenu?.tree || []);
+  const [jsonText, setJsonText] = useState(
+    JSON.stringify(initialMenu?.tree || [], null, 2),
+  );
   const [pages, setPages] = useState<{ slug: string; title: string }[]>([]);
+  const [newMenuName, setNewMenuName] = useState("");
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  // Fetch pages
+  // ── FETCH MENUS AND PAGES ────────────────────────────────
   useEffect(() => {
     (async () => {
-      const res = await fetch(`/api/admin/pages?site_id=${siteId}`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-      setPages(data.pages || []);
-    })();
-  }, [siteId]);
+      const [menusRes, pagesRes] = await Promise.all([
+        fetch(`/api/admin/menus?site_id=${siteId}`, { cache: "no-store" }),
+        fetch(`/api/admin/pages?site_id=${siteId}`, { cache: "no-store" }),
+      ]);
 
-  // Fetch menus
-  useEffect(() => {
-    (async () => {
-      const res = await fetch(`/api/admin/menus?site_id=${siteId}`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-      const list = data.menus ?? [];
-      if (!list.find((m: any) => m.id === "header"))
-        list.unshift({ id: "header", name: "Header", tree: [] });
-      if (!list.find((m: any) => m.id === "footer"))
-        list.push({ id: "footer", name: "Footer", tree: [] });
-      setMenus(list);
-      const cur = list.find((m: any) => m.id === activeMenuId) || list[0];
-      setActiveMenuId(cur.id);
-      setTree(cur?.tree || []);
-      setJsonText(JSON.stringify(cur?.tree || [], null, 2));
-    })();
-  }, [siteId]);
+      const menusData = await menusRes.json();
+      const pagesData = await pagesRes.json();
 
-  // Update tree on menu switch
+      setMenus(menusData.menus || []);
+      setPages(pagesData.pages || []);
+
+      const current = menusData.menus?.find(
+        (m: any) => m._id === activeMenuIdFor,
+      );
+      if (current) {
+        setActiveMenuId(current._id);
+        setTree(current.draft_tree || []);
+        setJsonText(JSON.stringify(current.draft_tree || [], null, 2));
+      }
+    })();
+  }, [siteId, activeMenuIdFor]);
+
+  // ── SYNC TREE WHEN ACTIVE MENU CHANGES ────────────────
   useEffect(() => {
-    const cur = menus.find((m) => m.id === activeMenuId);
-    setTree(cur?.tree || []);
-    setJsonText(JSON.stringify(cur?.tree || [], null, 2));
+    const current = menus.find((m) => m._id === activeMenuId);
+    if (current) {
+      setTree(current.draft_tree || []);
+      setJsonText(JSON.stringify(current.draft_tree || [], null, 2));
+    }
   }, [activeMenuId, menus]);
 
-  async function save(nextTree: MenuNode[]) {
-    const nextMenus = menus.map((m) =>
-      m.id === activeMenuId ? { ...m, tree: nextTree } : m,
-    );
-    await fetch(`/api/admin/menus?site_id=${siteId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ menus: nextMenus }),
-    });
-    alert("Saved menu draft ✅");
-    setMenus(nextMenus);
-  }
+  // ── SAVE TREE TO BACKEND ───────────────────────────────
+  const saveTree = async (nextTree: MenuNode[]) => {
+    try {
+      const res = await fetch(`/api/admin/menus?site_id=${siteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menu_id: activeMenuId,
+          tree: nextTree,
+        }),
+      });
 
-  function addItem(parent?: MenuNode) {
-    const id = `n_${Date.now()}`;
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Save failed");
+      }
+
+      setMenus((prev) =>
+        prev.map((m) =>
+          m._id === activeMenuId ? { ...m, draft_tree: nextTree } : m,
+        ),
+      );
+
+      alert("Menu draft saved ✓");
+      if (onSave) onSave();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to save: ${err.message}`);
+    }
+  };
+
+  // ── CREATE NEW MENU ─────────────────────────────────────
+  const createMenu = async () => {
+    if (!newMenuName.trim()) return;
+
+    try {
+      const tempId = `temp_${Date.now()}`;
+      const res = await fetch(`/api/admin/menus?site_id=${siteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menu_id: tempId,
+          name: newMenuName.trim(),
+        }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      const { menu } = await res.json();
+
+      setMenus((prev) => [...prev, menu]);
+      setActiveMenuId(menu._id);
+      setTree([]);
+      setJsonText("[]");
+      setNewMenuName("");
+    } catch (err) {
+      alert("Failed to create menu");
+    }
+  };
+
+  // ── ADD / REMOVE / UPDATE MENU ITEMS ───────────────────
+  const addItem = (parent?: MenuNode) => {
+    const id = `node_${Date.now()}`;
     const newItem: MenuNode = {
       id,
       label: "New Item",
       type: "page",
-      ref: { slug: "/" },
+      ref: { slug: pages[0]?.slug || "" },
       children: [],
     };
-    if (parent) {
-      parent.children = parent.children || [];
-      parent.children.push(newItem);
-      setTree([...tree]);
-    } else {
-      setTree([...tree, newItem]);
-    }
-    setJsonText(JSON.stringify(tree, null, 2));
-  }
 
-  function removeItem(idx: number, parent?: MenuNode) {
-    if (parent) {
-      parent.children = parent.children?.filter((_, i) => i !== idx);
-      setTree([...tree]);
-    } else {
-      setTree(tree.filter((_, i) => i !== idx));
-    }
-    setJsonText(JSON.stringify(tree, null, 2));
-  }
+    const newTree = parent ? [...tree] : [...tree, newItem];
 
-  function updateItem(idx: number, item: MenuNode, parent?: MenuNode) {
     if (parent) {
-      parent.children![idx] = item;
+      parent.children = [...(parent.children || []), newItem];
     } else {
-      tree[idx] = item;
+      setTree(newTree);
     }
-    setTree([...tree]);
-    setJsonText(JSON.stringify(tree, null, 2));
-  }
 
-  function handleDragEnd(event: DragEndEvent) {
+    setJsonText(JSON.stringify(newTree, null, 2));
+  };
+
+  const removeItem = (idx: number, parent?: MenuNode) => {
+    let newTree = [...tree];
+
+    if (parent) {
+      parent.children = parent.children?.filter((_, i) => i !== idx) || [];
+    } else {
+      newTree = newTree.filter((_, i) => i !== idx);
+    }
+
+    setTree(newTree);
+    setJsonText(JSON.stringify(newTree, null, 2));
+  };
+
+  const updateItem = (
+    idx: number,
+    updatedItem: MenuNode,
+    parent?: MenuNode,
+  ) => {
+    let newTree = [...tree];
+    if (parent) {
+      if (parent.children) parent.children[idx] = updatedItem;
+    } else {
+      newTree[idx] = updatedItem;
+    }
+    setTree(newTree);
+    setJsonText(JSON.stringify(newTree, null, 2));
+  };
+
+  // ── DRAG & DROP ────────────────────────────────────────
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over) return;
+    if (!over || active.id === over.id) return;
 
-    const oldIndex = tree.findIndex((t) => t.id === active.id);
-    const newIndex = tree.findIndex((t) => t.id === over.id);
-    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+    const oldIndex = tree.findIndex((item) => item.id === active.id);
+    const newIndex = tree.findIndex((item) => item.id === over.id);
 
-    const nextTree = arrayMove(tree, oldIndex, newIndex);
-    setTree(nextTree);
-    setJsonText(JSON.stringify(nextTree, null, 2));
-  }
+    if (oldIndex === -1 || newIndex === -1) return;
 
-  if (!menus.length) return <div>Loading menus...</div>;
+    const newTree = arrayMove(tree, oldIndex, newIndex);
+    setTree(newTree);
+    setJsonText(JSON.stringify(newTree, null, 2));
+  };
 
+  // ── ASSIGN MENU TO HEADER / FOOTER SLOT ───────────────
+  const handleSlotChange = async (
+    slot: "header" | "footer",
+    menuId: string,
+  ) => {
+    await fetch(`/api/admin/menus?site_id=${siteId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "assign",
+        menu_id: menuId,
+        slot,
+      }),
+    });
+
+    setMenus((prev) =>
+      prev.map((m) => ({
+        ...m,
+        slot: m._id === menuId ? slot : m.slot === slot ? undefined : m.slot,
+      })),
+    );
+  };
+
+  // ── RENDER ─────────────────────────────────────────────
   return (
-    <div className="space-y-3 max-w-4xl">
-      {/* Tabs */}
+    <div className="space-y-6">
+      {/* Mode toggle + Create menu */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-2 overflow-x-auto">
-          {menus.map((m) => (
-            <button
-              key={m.id}
-              className={`border rounded px-3 py-1 text-sm ${
-                m.id === activeMenuId ? "bg-black text-white" : ""
-              }`}
-              onClick={() => setActiveMenuId(m.id)}
-              type="button"
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
         <EditorModeToggle mode={mode} setMode={setMode} />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newMenuName}
+            onChange={(e) => setNewMenuName(e.target.value)}
+            placeholder="New menu name..."
+            className="border rounded px-3 py-1.5 text-sm"
+          />
+          <button
+            onClick={createMenu}
+            disabled={!newMenuName.trim()}
+            className="bg-green-600 text-white px-4 py-1.5 rounded text-sm disabled:opacity-50"
+          >
+            Create
+          </button>
+        </div>
       </div>
 
+      {/* Header / Footer slot selector */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gray-50 p-5 rounded-lg">
+        {(["header", "footer"] as const).map((slot) => (
+          <div key={slot}>
+            <label className="block text-sm font-medium mb-1 capitalize">
+              {slot} Menu
+            </label>
+            <select
+              value={menus.find((m) => m.slot === slot)?._id || ""}
+              onChange={(e) => handleSlotChange(slot, e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            >
+              <option value="">— None —</option>
+              {menus.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      {/* Menu tabs */}
+      <div className="flex flex-wrap gap-2 border-b">
+        {menus.map((m) => (
+          <button
+            key={m._id}
+            type="button"
+            onClick={() => setActiveMenuId(m._id)}
+            className={`px-5 py-2 text-sm font-medium rounded-t-lg border border-b-0 ${
+              activeMenuId === m._id
+                ? "bg-white border-gray-300 -mb-px"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {m.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Menu editor / JSON */}
       {mode === "form" ? (
         <DndContext
           sensors={sensors}
@@ -204,52 +341,55 @@ export default function MenusEditorClient({
             ))}
           </SortableContext>
 
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-3 mt-6">
             <button
-              className="border rounded px-3 py-2 text-sm"
               type="button"
               onClick={() => addItem()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium"
             >
               + Add Root Item
             </button>
+
             <button
-              className="bg-black text-white rounded px-3 py-2 text-sm"
               type="button"
-              onClick={() => save(tree)}
+              onClick={() => saveTree(tree)}
+              className="bg-black hover:bg-gray-900 text-white px-6 py-2 rounded-md text-sm font-medium"
             >
               Save Draft
             </button>
           </div>
         </DndContext>
       ) : (
-        <div className="border rounded p-4 space-y-2">
+        <div className="border rounded-lg p-5 bg-white">
           <textarea
-            className="w-full border rounded p-2 font-mono text-sm min-h-[320px]"
+            className="w-full h-96 font-mono text-sm p-4 border rounded resize-y mb-4"
             value={jsonText}
             onChange={(e) => setJsonText(e.target.value)}
           />
-          <div className="flex gap-2 mt-2">
+
+          <div className="flex gap-3">
             <button
-              className="border rounded px-3 py-2 text-sm"
               type="button"
               onClick={() => {
                 const parsed = safeJsonParse(jsonText);
                 if (!parsed.ok) return alert(parsed.error);
                 setTree(parsed.value);
               }}
+              className="border border-gray-300 hover:bg-gray-50 px-5 py-2 rounded text-sm"
             >
-              Apply JSON to Form
+              Apply JSON → Form
             </button>
+
             <button
-              className="bg-black text-white rounded px-3 py-2 text-sm"
               type="button"
               onClick={() => {
                 const parsed = safeJsonParse(jsonText);
                 if (!parsed.ok) return alert(parsed.error);
-                save(parsed.value);
+                saveTree(parsed.value);
               }}
+              className="bg-black text-white px-6 py-2 rounded text-sm font-medium"
             >
-              Save Draft
+              Save Draft (JSON)
             </button>
           </div>
         </div>

@@ -17,10 +17,49 @@ function safeProps(schema: any, props: any) {
     throw new Error(
       `BLOCK_PROPS_INVALID: ${parsed.error.issues
         .map((i: any) => i.message)
-        .join(", ")}`
+        .join(", ")}`,
     );
   }
   return parsed.data;
+}
+function normalizeMenusBySlot(snapshot: any) {
+  const raw = snapshot?.menus;
+  console.log("Normalizing menus:", raw);
+  if (!raw || typeof raw !== "object") return snapshot;
+
+  const slotMenus: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (!value || typeof value !== "object") continue;
+
+    // ── Already using standard slot name as key ──
+    if (key === "header" || key === "footer") {
+      slotMenus[key] = {
+        ...value,
+        // Optional: ensure consistent shape
+        tree: value.tree ?? [],
+      };
+      continue;
+    }
+
+    // ── Menu declares its own slot ──
+    const slot = (value as any).slot;
+    if (slot === "header" || slot === "footer") {
+      slotMenus[slot] = {
+        id: (value as any).id ?? key,
+        tree: (value as any).tree ?? [],
+        // you can copy other fields if needed, e.g. title, settings...
+      };
+    }
+
+    // If you want to keep menus that have no slot or invalid slot → decide here
+    // else { slotMenus[key] = value; }  ← preserve as-is (not recommended)
+  }
+
+  return {
+    ...snapshot,
+    menus: slotMenus,
+  };
 }
 
 export async function RenderPage(args: {
@@ -28,7 +67,12 @@ export async function RenderPage(args: {
   ctx: RenderContext;
 }) {
   const parsedLayout = PageLayoutSchema.parse(args.layout);
-  const { ctx } = args;
+
+  // ✅ Normalize menus HERE (single source of truth)
+  const ctx = {
+    ...args.ctx,
+    snapshot: normalizeMenusBySlot(args.ctx.snapshot),
+  };
 
   const css = buildResponsiveCss(parsedLayout);
 
@@ -175,9 +219,42 @@ async function BlockRenderer({
   }
 
   // menu binding
+  // menu binding
+  // =====================
+  // MENU SLOT BINDING (FIXED)
+  // =====================
   if (block.type.startsWith("Header/") || block.type.startsWith("Footer/")) {
-    const menu = ctx.snapshot.menus?.[props.menuId] || null;
     const Comp = def.render;
+
+    // Determine slot
+    const slot =
+      props.slot ?? (block.type.startsWith("Header/") ? "header" : "footer");
+
+    let menu: any = null;
+
+    /**
+     * EXPECTED SHAPE:
+     * ctx.snapshot.menus = {
+     *   header: { tree: [...] },
+     *   footer: { tree: [...] }
+     * }
+     */
+    if (ctx.snapshot.menus && typeof ctx.snapshot.menus === "object") {
+      menu = ctx.snapshot.menus[slot] ?? null;
+    }
+    console.log("here", ctx.snapshot.menus);
+
+    console.log(
+      "[MENU RESOLVE]",
+      "block:",
+      block.id,
+      "slot:",
+      slot,
+      "menu:",
+      menu,
+      "available:",
+      Object.keys(ctx.snapshot.menus || {}),
+    );
 
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
