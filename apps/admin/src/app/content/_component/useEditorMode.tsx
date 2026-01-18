@@ -2,15 +2,29 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-export function useEditorMode(defaultMode: "form" | "json", urlMode?: string) {
-  const initial = useMemo(() => {
-    if (urlMode === "json" || urlMode === "form") return urlMode;
+type EditorMode = "form" | "json" | "visual";
+
+export function useEditorMode(defaultMode: EditorMode, urlMode?: string) {
+  const initial = useMemo<EditorMode>(() => {
+    // 1. URL param wins
+    if (urlMode === "json" || urlMode === "form" || urlMode === "visual") {
+      return urlMode;
+    }
+
+    // 2. SSR fallback
     if (typeof window === "undefined") return defaultMode;
+
+    // 3. localStorage fallback
     const saved = window.localStorage.getItem("editor_mode");
-    return saved === "json" || saved === "form" ? saved : defaultMode;
+    if (saved === "json" || saved === "form" || saved === "visual") {
+      return saved;
+    }
+
+    // 4. default
+    return defaultMode;
   }, [defaultMode, urlMode]);
 
-  const [mode, setMode] = useState<"form" | "json">(initial as any);
+  const [mode, setMode] = useState<EditorMode>(initial);
 
   useEffect(() => {
     window.localStorage.setItem("editor_mode", mode);

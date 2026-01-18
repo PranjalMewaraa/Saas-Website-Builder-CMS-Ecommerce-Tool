@@ -4,8 +4,8 @@ export default function EditorModeToggle({
   mode,
   setMode,
 }: {
-  mode: "form" | "json";
-  setMode: (m: "form" | "json") => void;
+  mode: "form" | "json" | "visual";
+  setMode: (m: "form" | "json" | "visual") => void;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -23,6 +23,13 @@ export default function EditorModeToggle({
         type="button"
       >
         JSON
+      </button>
+      <button
+        className={`px-3 py-1 rounded border text-sm ${mode === "visual" ? "bg-black text-white" : ""}`}
+        onClick={() => setMode("visual")}
+        type="button"
+      >
+        Visual
       </button>
     </div>
   );

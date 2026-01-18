@@ -1,5 +1,3 @@
-import { pool } from "../../db-mysql";
-
 export type GridProduct = {
   id: string;
   slug: string;
@@ -12,6 +10,19 @@ export async function listPublishedProductsForStore(args: {
   store_id: string;
   limit: number;
 }): Promise<GridProduct[]> {
+  // ✅ CLIENT / VISUAL EDITOR → return mock data
+  if (typeof window !== "undefined") {
+    return Array.from({ length: args.limit }).map((_, i) => ({
+      id: `mock-${i}`,
+      slug: `sample-product-${i + 1}`,
+      title: `Sample Product ${i + 1}`,
+      base_price_cents: 1999,
+    }));
+  }
+
+  // ✅ SERVER ONLY → dynamic import (prevents bundling mysql2)
+  const { pool } = await import("../../db-mysql");
+
   const [rows] = await pool.query(
     `
     SELECT p.id, p.slug, p.title, p.base_price_cents
@@ -26,7 +37,7 @@ export async function listPublishedProductsForStore(args: {
     ORDER BY p.created_at DESC
     LIMIT ?
     `,
-    [args.tenant_id, args.store_id, args.limit]
+    [args.tenant_id, args.store_id, args.limit],
   );
 
   return rows as GridProduct[];

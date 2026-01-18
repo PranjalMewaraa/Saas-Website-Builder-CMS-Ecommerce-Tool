@@ -10,11 +10,18 @@ export function computeFinalStyle(args: {
 
   const presetId = args.style?.presetId;
   const presetStyle = presetId ? args.presets?.[presetId]?.style : undefined;
-  const overrides = args.style?.overrides;
+  const overrides = args.style?.overrides ?? {};
 
   const merged = deepMerge(deepMerge(defaults, presetStyle), overrides);
 
-  // NEW: resolve bg.imageAssetId -> bg.imageUrl
+  // ✅ FIX: force deep merge bg
+  merged.bg = {
+    ...(defaults.bg ?? {}),
+    ...(presetStyle?.bg ?? {}),
+    ...(overrides.bg ?? {}),
+  };
+
+  // resolve image asset
   const bg = merged.bg;
   if (
     bg?.type === "image" &&

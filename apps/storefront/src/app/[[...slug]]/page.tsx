@@ -59,7 +59,7 @@ export default async function StorefrontPage({
 
   const snapshot = await getSnapshotById(site.published_snapshot_id);
   if (!snapshot) return <div className="p-6">Published snapshot missing</div>;
-
+  console.log("Snapshot:", snapshot);
   const page = snapshot.pages?.[path] || null;
   if (!page?.layout) {
     return (

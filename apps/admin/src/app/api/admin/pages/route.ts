@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSession, requireModule } from "@acme/auth";
 import { getMongoDb } from "@acme/db-mongo";
+import { rebuildDraftSnapshot } from "@/lib/rebuildDraftSnapshot";
 
 function normalizeSlug(input: string) {
   let s = (input || "").trim();
@@ -222,13 +223,13 @@ export async function POST(req: Request) {
     if (!source_page_id) {
       return NextResponse.json(
         { ok: false, error: "Missing source_page_id" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!isValidSlug(slug)) {
       return NextResponse.json(
         { ok: false, error: "Invalid slug" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -240,7 +241,7 @@ export async function POST(req: Request) {
     if (!src)
       return NextResponse.json(
         { ok: false, error: "Source page not found" },
-        { status: 404 }
+        { status: 404 },
       );
 
     const exists = await col.findOne({
@@ -252,7 +253,7 @@ export async function POST(req: Request) {
     if (exists)
       return NextResponse.json(
         { ok: false, error: "Slug already exists" },
-        { status: 409 }
+        { status: 409 },
       );
 
     const _id = newPageId();
@@ -282,7 +283,7 @@ export async function POST(req: Request) {
   if (!isValidSlug(slug)) {
     return NextResponse.json(
       { ok: false, error: "Invalid slug" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -295,7 +296,7 @@ export async function POST(req: Request) {
   if (exists)
     return NextResponse.json(
       { ok: false, error: "Slug already exists" },
-      { status: 409 }
+      { status: 409 },
     );
 
   const _id = newPageId();
@@ -332,7 +333,7 @@ export async function PUT(req: Request) {
   if (!page_id) {
     return NextResponse.json(
       { ok: false, error: "Missing page_id" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -347,7 +348,7 @@ export async function PUT(req: Request) {
   if (!page)
     return NextResponse.json(
       { ok: false, error: "Page not found" },
-      { status: 404 }
+      { status: 404 },
     );
 
   // safe rules
@@ -355,13 +356,13 @@ export async function PUT(req: Request) {
   if (nextSlug && !isValidSlug(nextSlug)) {
     return NextResponse.json(
       { ok: false, error: "Invalid slug" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (page.slug === "/" && nextSlug && nextSlug !== "/") {
     return NextResponse.json(
       { ok: false, error: "Home page slug cannot be changed" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -375,7 +376,7 @@ export async function PUT(req: Request) {
     if (exists)
       return NextResponse.json(
         { ok: false, error: "Slug already exists" },
-        { status: 409 }
+        { status: 409 },
       );
   }
 
@@ -392,8 +393,9 @@ export async function PUT(req: Request) {
 
   await col.updateOne(
     { _id: page_id as any, tenant_id, site_id } as any,
-    { $set: patch } as any
+    { $set: patch } as any,
   );
+  await rebuildDraftSnapshot(tenant_id, site_id);
 
   return NextResponse.json({ ok: true });
 }
@@ -411,7 +413,7 @@ export async function DELETE(req: Request) {
   if (!page_id) {
     return NextResponse.json(
       { ok: false, error: "Missing page_id" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -426,13 +428,13 @@ export async function DELETE(req: Request) {
   if (!page)
     return NextResponse.json(
       { ok: false, error: "Page not found" },
-      { status: 404 }
+      { status: 404 },
     );
 
   if (page.slug === "/") {
     return NextResponse.json(
       { ok: false, error: "Cannot delete Home page" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -444,7 +446,7 @@ export async function DELETE(req: Request) {
         deleted_by: session.user.user_id,
         updated_at: new Date(),
       },
-    } as any
+    } as any,
   );
 
   return NextResponse.json({ ok: true });

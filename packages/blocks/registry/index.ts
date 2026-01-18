@@ -1,19 +1,18 @@
 import HeaderV1 from "../Header/HeaderV1";
 import FooterV1 from "../Footer/FooterV1";
 import ProductGridV1 from "../ProductGrid/ProductGridV1";
+import ProductGridVisualStub from "../ProductGrid/ProductGrid.visual";
 import FormV1 from "../Form/FormV1";
-
-// ✅ NEW unified Hero block component
-import Hero from "../Hero/HeroV1"; // adjust path if your file name differs
+import Hero from "../Hero/HeroV1";
 
 import {
   HeaderV1Schema,
   FooterV1Schema,
   ProductGridV1Schema,
   FormV1Schema,
-  // ✅ NEW unified Hero schema
   HeroSchema,
 } from "../../schemas";
+import React from "react";
 
 export const BLOCKS: Record<
   string,
@@ -21,7 +20,6 @@ export const BLOCKS: Record<
 > = {
   "Header/V1": { type: "Header/V1", schema: HeaderV1Schema, render: HeaderV1 },
 
-  // ✅ NEW: single scalable hero block
   Hero: { type: "Hero", schema: HeroSchema, render: Hero },
   "Hero/V1": { type: "Hero/V1", schema: HeroSchema, render: Hero },
 
@@ -30,7 +28,12 @@ export const BLOCKS: Record<
   "ProductGrid/V1": {
     type: "ProductGrid/V1",
     schema: ProductGridV1Schema,
-    render: ProductGridV1,
+    render: (props: any) => {
+      if (props.__editor) {
+        return React.createElement(ProductGridVisualStub, props);
+      }
+      return React.createElement(ProductGridV1 as any, props);
+    },
   },
 
   "Form/V1": {

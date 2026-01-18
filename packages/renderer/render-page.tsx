@@ -4,6 +4,7 @@ import { PageLayoutSchema } from "../schemas";
 import { computeFinalStyle } from "./style-merge";
 import { resolveWrapperStyle } from "./style-resolver";
 import { buildResponsiveCss } from "./responsive-css";
+import { StyleWrapper } from "./StyleWrapper";
 
 export type RenderContext = {
   tenantId: string;
@@ -137,6 +138,8 @@ async function BlockRenderer({
   const { outerClass, innerClass, outerStyle, innerStyle } =
     resolveWrapperStyle(finalStyle);
 
+  console.log("Final style for block:", block.id, finalStyle);
+
   if (!def) {
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
@@ -244,22 +247,12 @@ async function BlockRenderer({
     }
     console.log("here", ctx.snapshot.menus);
 
-    console.log(
-      "[MENU RESOLVE]",
-      "block:",
-      block.id,
-      "slot:",
-      slot,
-      "menu:",
-      menu,
-      "available:",
-      Object.keys(ctx.snapshot.menus || {}),
-    );
-
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
-          <Comp {...props} menu={menu} />
+          <StyleWrapper style={finalStyle}>
+            <Comp {...block.props} />
+          </StyleWrapper>
         </div>
       </div>
     );
@@ -271,7 +264,9 @@ async function BlockRenderer({
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
-          <Comp {...props} tenantId={ctx.tenantId} storeId={ctx.storeId} />
+          <StyleWrapper style={finalStyle}>
+            <Comp {...props} tenantId={ctx.tenantId} storeId={ctx.storeId} />
+          </StyleWrapper>
         </div>
       </div>
     );
@@ -304,13 +299,15 @@ async function BlockRenderer({
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
-          <Comp
-            {...props}
-            schema={form.schema}
-            handle={ctx.snapshot.handle}
-            mode={mode}
-            previewToken={ctx.snapshot.previewToken}
-          />
+          <StyleWrapper style={block.style}>
+            <Comp
+              {...props}
+              schema={form.schema}
+              handle={ctx.snapshot.handle}
+              mode={mode}
+              previewToken={ctx.snapshot.previewToken}
+            />
+          </StyleWrapper>
         </div>
       </div>
     );
@@ -318,10 +315,22 @@ async function BlockRenderer({
 
   // default render
   const Comp = def.render;
+  console.log(
+    "Rendering block:",
+    block,
+    "of type:",
+    block.type,
+    outerClass,
+    outerStyle,
+    innerClass,
+    innerStyle,
+  );
   return (
     <div data-block-id={block.id} className={outerClass} style={outerStyle}>
       <div className={`${innerClass} __inner`} style={innerStyle}>
-        <Comp {...props} />
+        <StyleWrapper style={finalStyle}>
+          <Comp {...props} />
+        </StyleWrapper>
       </div>
     </div>
   );

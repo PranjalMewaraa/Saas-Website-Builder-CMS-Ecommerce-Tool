@@ -6,7 +6,12 @@ export const BlockInstanceSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   props: z.record(z.string(), z.any()).default({}),
-  style: BaseStyleSchema.optional(),
+  style: z
+    .object({
+      presetId: z.string().optional(),
+      overrides: BaseStyleSchema.optional(),
+    })
+    .optional(),
 });
 
 export const PageLayoutSchema = z.object({
@@ -17,7 +22,7 @@ export const PageLayoutSchema = z.object({
       label: z.string().max(60).optional(),
       style: BlockStyleSchema.optional(),
       blocks: z.array(BlockInstanceSchema),
-    })
+    }),
   ),
 });
 
