@@ -235,23 +235,17 @@ async function BlockRenderer({
 
     let menu: any = null;
 
-    /**
-     * EXPECTED SHAPE:
-     * ctx.snapshot.menus = {
-     *   header: { tree: [...] },
-     *   footer: { tree: [...] }
-     * }
-     */
     if (ctx.snapshot.menus && typeof ctx.snapshot.menus === "object") {
       menu = ctx.snapshot.menus[slot] ?? null;
     }
-    console.log("here", ctx.snapshot.menus);
+
+    console.log("Menu", menu);
 
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
           <StyleWrapper style={finalStyle}>
-            <Comp {...block.props} />
+            <Comp {...props} menu={menu} />
           </StyleWrapper>
         </div>
       </div>
