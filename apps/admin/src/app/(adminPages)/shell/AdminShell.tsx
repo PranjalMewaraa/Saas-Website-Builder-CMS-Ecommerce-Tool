@@ -22,7 +22,9 @@ import {
   ChevronDown,
   ChevronRight,
   Save,
+  GlobeIcon,
 } from "lucide-react";
+import { SiteSwitcher } from "@/app/_components/SiteSwitcher";
 
 type NavItem = {
   label: string;
@@ -47,6 +49,12 @@ export default function AdminShell({
       label: "Dashboard",
       href: "/content",
       icon: LayoutDashboard,
+      group: "Content",
+    },
+    {
+      label: "Your Sites",
+      href: "/content/sites",
+      icon: GlobeIcon,
       group: "Content",
     },
     {
@@ -150,21 +158,7 @@ export default function AdminShell({
           <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1.5">
             Active Site
           </label>
-          <div className="flex flex-col justify-center gap-2">
-            <input
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
-              value={draftSiteId}
-              onChange={(e) => setDraftSiteId(e.target.value)}
-              placeholder="site_demo"
-              onKeyDown={(e) => e.key === "Enter" && applySiteId(draftSiteId)}
-            />
-            <button
-              onClick={() => applySiteId(draftSiteId)}
-              className="px-4 py-2 text-sm font-medium bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              Apply
-            </button>
-          </div>
+          <SiteSwitcher />
           <p className="mt-1.5 text-[11px] text-gray-500">
             All links include <code className="font-mono">site_id</code>
           </p>

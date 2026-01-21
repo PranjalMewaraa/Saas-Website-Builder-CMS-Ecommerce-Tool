@@ -60,7 +60,7 @@ export async function findSiteById(site_id: string): Promise<SiteDoc | null> {
 }
 
 export async function findSiteByHandle(
-  handle: string
+  handle: string,
 ): Promise<SiteDoc | null> {
   const col = await sitesCollection();
   return col.findOne({ handle });
@@ -72,8 +72,40 @@ export async function findSiteByDomain(host: string): Promise<SiteDoc | null> {
 }
 
 export async function findSnapshotById(
-  snapshot_id: string
+  snapshot_id: string,
 ): Promise<SnapshotDoc | null> {
   const col = await snapshotsCollection();
   return col.findOne({ _id: snapshot_id });
+}
+export async function createSite(args: {
+  site_id: string;
+  tenant_id: string;
+  name: string;
+  handle: string;
+}) {
+  const col = await sitesCollection();
+
+  const doc: SiteDoc = {
+    _id: args.site_id,
+    tenant_id: args.tenant_id,
+    store_id: `s_${Date.now()}`,
+    name: args.name,
+    handle: args.handle,
+    modules_enabled: {
+      catalog: true,
+      builder: true,
+      themes: true,
+      menus: true,
+      forms: true,
+      assets: true,
+      custom_entities: true,
+    },
+    published_snapshot_id: null,
+    active_theme_id: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  await col.insertOne(doc);
+  return doc;
 }
