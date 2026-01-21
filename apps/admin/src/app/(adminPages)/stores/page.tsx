@@ -1,5 +1,5 @@
-import { requireSession } from "../../../../../packages/auth";
-import { listStores } from "../../../../../packages/db-mysql";
+import { requireSession } from "@acme/auth";
+import { listStores } from "@acme/db-mysql";
 import Link from "next/link";
 
 export default async function StoresPage({

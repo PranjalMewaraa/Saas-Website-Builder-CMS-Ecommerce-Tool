@@ -9,9 +9,9 @@ function widthClass(w: HeroProps["contentWidth"]) {
 }
 
 function alignClass(a: HeroProps["align"]) {
-  if (a === "center") return "text-center items-center";
-  if (a === "right") return "text-right items-end";
-  return "text-left items-start";
+  if (a === "center") return "text-center items-center justify-center";
+  if (a === "right") return "text-right items-end justify-center";
+  return "text-left items-start justify-center";
 }
 
 export default function Hero(props: HeroProps) {
@@ -27,8 +27,8 @@ export default function Hero(props: HeroProps) {
 
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ minHeight: props.minHeight }}
+      className="relative  overflow-hidden"
+      style={{ minHeight: props.minHeight, height: "60vh" }}
     >
       {/* Background layer */}
       {bgType === "image" ? (
@@ -62,37 +62,38 @@ export default function Hero(props: HeroProps) {
       ) : null}
 
       {/* Content */}
-      <div className="relative z-10">
-        <div className={`mx-auto px-4 py-14 ${widthClass(props.contentWidth)}`}>
-          <div className={`flex flex-col gap-4 ${alignClass(props.align)}`}>
-            <h1 className="text-3xl md:text-5xl font-semibold leading-tight">
-              {props.headline}
-            </h1>
-            {props.subhead ? (
-              <p className="text-base md:text-lg opacity-90 max-w-2xl">
-                {props.subhead}
-              </p>
+
+      <div
+        className={`mx-auto px-4 h-full flex flex-col py-14 ${alignClass(props.align)} ${widthClass(props.contentWidth)}`}
+      >
+        <div className={`flex flex-col gap-4 `}>
+          <h1 className="text-3xl md:text-5xl font-semibold leading-tight">
+            {props.headline}
+          </h1>
+          {props.subhead ? (
+            <p className="text-base md:text-lg opacity-90 max-w-2xl">
+              {props.subhead}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3 pt-2">
+            {props.ctaText ? (
+              <a
+                href={props.ctaHref || "#"}
+                className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border bg-black text-white"
+              >
+                {props.ctaText}
+              </a>
             ) : null}
 
-            <div className="flex flex-wrap gap-3 pt-2">
-              {props.ctaText ? (
-                <a
-                  href={props.ctaHref || "#"}
-                  className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border bg-black text-white"
-                >
-                  {props.ctaText}
-                </a>
-              ) : null}
-
-              {props.secondaryCtaText ? (
-                <a
-                  href={props.secondaryCtaHref || "#"}
-                  className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border"
-                >
-                  {props.secondaryCtaText}
-                </a>
-              ) : null}
-            </div>
+            {props.secondaryCtaText ? (
+              <a
+                href={props.secondaryCtaHref || "#"}
+                className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border"
+              >
+                {props.secondaryCtaText}
+              </a>
+            ) : null}
           </div>
         </div>
       </div>

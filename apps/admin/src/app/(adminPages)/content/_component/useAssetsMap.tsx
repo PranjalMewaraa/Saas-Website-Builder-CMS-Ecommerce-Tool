@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 export type AssetMeta = {
   _id: string;
+  key: string; // ✅ add this
   kind: "image" | "file";
   url: string;
   alt?: string;
@@ -20,7 +21,7 @@ export function useAssetsMap(siteId: string) {
     setLoading(true);
     const res = await fetch(
       `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
     const data = await res.json();
     setAssets(data.assets ?? []);
@@ -29,14 +30,14 @@ export function useAssetsMap(siteId: string) {
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId]);
 
   const map = useMemo(() => {
-    return Object.fromEntries(assets.map((a) => [a._id, a])) as Record<
-      string,
-      AssetMeta
-    >;
+    return Object.fromEntries(
+      assets
+        .filter((a) => a.key) // safety
+        .map((a) => [a.key, a]), // ✅ USE KEY
+    ) as Record<string, AssetMeta>;
   }, [assets]);
 
   return { assets, assetsMap: map, loading, refresh };

@@ -29,7 +29,7 @@ export default function HeaderV1({
   logoAlt,
 }: Props) {
   const items = menu?.tree ?? [];
-  console.log("Header menu items:", menu);
+
   return (
     <header>
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">

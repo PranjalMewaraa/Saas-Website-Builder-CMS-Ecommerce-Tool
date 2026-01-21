@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AssetPickerModal from "./AssetPickerModal";
 import type { AssetMeta } from "./useAssetsMap";
 
@@ -12,17 +12,22 @@ export default function ImageField({
   onChangeAssetId,
   onChangeAlt,
   assetsMap,
+  placeholder,
+  onChangeAssetUrl,
+  assetUrlValue,
 }: {
   siteId: string;
   label: string;
   assetIdValue: string;
   altValue: string;
+  placeholder?: string;
+  assetUrlValue?: string;
+  onChangeAssetUrl?: (v: string) => void;
   onChangeAssetId: (v: string) => void;
   onChangeAlt: (v: string) => void;
   assetsMap?: Record<string, AssetMeta>;
 }) {
   const [open, setOpen] = useState(false);
-
   const asset = useMemo(() => {
     if (!assetsMap) return null;
     return assetsMap[assetIdValue] ?? null;
@@ -60,8 +65,7 @@ export default function ImageField({
         <input
           className="border rounded p-2 w-full font-mono text-sm"
           value={assetIdValue}
-          onChange={(e) => onChangeAssetId(e.target.value)}
-          placeholder="assetId (pick from Assets)"
+          placeholder={placeholder || "(asset id)"}
         />
         <button
           className="border rounded px-3 py-2 text-sm"
@@ -97,7 +101,9 @@ export default function ImageField({
         open={open}
         onClose={() => setOpen(false)}
         onPick={(picked) => {
-          onChangeAssetId(picked._id);
+          console.log("Picked asset in ImageField:", picked);
+          onChangeAssetId(picked.key); // ✅ FIX
+          onChangeAssetUrl?.(picked.url);
           if (!altValue) onChangeAlt(picked.alt || "");
         }}
       />

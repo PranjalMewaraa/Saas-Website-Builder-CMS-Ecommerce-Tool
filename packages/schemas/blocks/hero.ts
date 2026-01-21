@@ -1,48 +1,46 @@
 import { z } from "zod";
 
-export const HeroSchema = z.object({
-  variant: z.enum(["basic", "image", "video"]).default("basic"),
+export const HeroSchema = z
+  .object({
+    variant: z.enum(["basic", "image", "video"]).default("basic"),
 
-  headline: z.string().min(1).default("Headline"),
-  subhead: z.string().optional().default("Subhead"),
+    headline: z.string().min(1).default("Headline"),
+    subhead: z.string().optional().default("Subhead"),
 
-  ctaText: z.string().optional().default("Browse"),
-  ctaHref: z.string().optional().default("/products"),
-  secondaryCtaText: z.string().optional().default(""),
-  secondaryCtaHref: z.string().optional().default(""),
+    ctaText: z.string().optional().default("Browse"),
+    ctaHref: z.string().optional().default("/products"),
+    secondaryCtaText: z.string().optional().default(""),
+    secondaryCtaHref: z.string().optional().default(""),
 
-  align: z.enum(["left", "center", "right"]).default("left"),
-  contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),
-  minHeight: z.number().int().min(240).max(980).default(520),
+    align: z.enum(["left", "center", "right"]).default("left"),
+    contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),
+    minHeight: z.number().int().min(240).max(980).default(520),
 
-  bg: z
-    .object({
-      type: z.enum(["none", "image", "video"]).default("none"),
+    bg: z
+      .object({
+        type: z.enum(["none", "image", "video"]).optional(),
 
-      // background image
-      imageAssetId: z.string().optional().default(""),
-      imageUrl: z.string().optional().default(""),
-      imageAlt: z.string().optional().default(""),
+        imageAssetId: z.string().optional(),
+        imageUrl: z.string().optional(),
+        imageAlt: z.string().optional(),
 
-      // background video
-      videoAssetId: z.string().optional().default(""),
-      videoUrl: z.string().optional().default(""),
-      posterAssetId: z.string().optional().default(""),
-      posterUrl: z.string().optional().default(""),
+        videoAssetId: z.string().optional(),
+        videoUrl: z.string().optional(),
+        posterAssetId: z.string().optional(),
+        posterUrl: z.string().optional(),
 
-      // overlay
-      overlayColor: z.string().optional().default("#000000"),
-      overlayOpacity: z.number().min(0).max(1).default(0.45),
+        overlayColor: z.string().optional(),
+        overlayOpacity: z.number().min(0).max(1).optional(),
 
-      // video behavior
-      videoAutoplay: z.boolean().default(true),
-      videoMuted: z.boolean().default(true),
-      videoLoop: z.boolean().default(true),
-      videoControls: z.boolean().default(false),
-      videoPreload: z.enum(["none", "metadata", "auto"]).default("metadata"),
-    })
-    .default({ type: "none" }),
-});
+        videoAutoplay: z.boolean().optional(),
+        videoMuted: z.boolean().optional(),
+        videoLoop: z.boolean().optional(),
+        videoControls: z.boolean().optional(),
+        videoPreload: z.enum(["none", "metadata", "auto"]).optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 export type HeroProps = z.infer<typeof HeroSchema>;
 
@@ -56,7 +54,7 @@ export const HeroDefaults: HeroProps = {
   secondaryCtaHref: "",
   align: "left",
   contentWidth: "xl",
-  minHeight: 520,
+  minHeight: 320,
   bg: {
     type: "none",
     imageAssetId: "",

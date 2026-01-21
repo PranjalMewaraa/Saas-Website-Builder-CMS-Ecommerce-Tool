@@ -1,4 +1,3 @@
-import Nav from "../_components/Nav";
 import { requireSession, requireModule } from "@acme/auth";
 import { listBrands } from "@acme/db-mysql";
 import BrandCreateClient from "./BrandCreateClient";
@@ -21,7 +20,6 @@ export default async function BrandsPage({
 
   return (
     <div>
-     
       <div className="p-6 space-y-4">
         <h1 className="text-xl font-semibold">Brands</h1>
 

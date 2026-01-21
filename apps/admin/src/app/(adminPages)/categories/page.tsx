@@ -1,4 +1,3 @@
-import Nav from "../_components/Nav";
 import { requireSession, requireModule } from "@acme/auth";
 import { listCategories } from "@acme/db-mysql";
 import CategoryCreateClient from "./CategoryCreateClient";
@@ -21,7 +20,6 @@ export default async function CategoriesPage({
 
   return (
     <div>
-  
       <div className="p-6 space-y-4">
         <h1 className="text-xl font-semibold">Categories</h1>
 

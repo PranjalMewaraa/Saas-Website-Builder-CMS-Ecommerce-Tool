@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     if (!filename)
       return NextResponse.json(
         { ok: false, error: "Missing filename" },
-        { status: 400 }
+        { status: 400 },
       );
 
     const Bucket = process.env.S3_BUCKET || "";
@@ -38,12 +38,12 @@ export async function POST(req: Request) {
     if (!Bucket)
       return NextResponse.json(
         { ok: false, error: "Missing S3_BUCKET" },
-        { status: 500 }
+        { status: 500 },
       );
     if (!cdnBase)
       return NextResponse.json(
         { ok: false, error: "Missing CDN_BASE_URL" },
-        { status: 500 }
+        { status: 500 },
       );
 
     const key = newKey({ tenant_id, site_id, filename });
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   } catch (e: any) {
     return NextResponse.json(
       { ok: false, error: e?.message || "sign_failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 async function getImageSize(
-  file: File
+  file: File,
 ): Promise<{ width?: number; height?: number }> {
   if (!file.type.startsWith("image/")) return {};
   return new Promise((resolve) => {
@@ -52,7 +52,7 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success" | "error"
   >("idle");
-
+  console.log("AssetsClient siteId:", siteId);
   async function refresh() {
     setLoading(true);
     try {
@@ -60,7 +60,7 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
         `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
         {
           cache: "no-store",
-        }
+        },
       );
       const data = await res.json();
       setAssets(data.assets ?? []);
@@ -107,27 +107,43 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   async function upload(file: File) {
     setBusy(true);
     setUploadStatus("uploading");
+
     try {
+      console.log("Uploading file:", file.name, file.type, file.size);
+
       const signRes = await fetch(
         `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: file.name, mime: file.type }),
-        }
+        },
       );
+
+      console.log("SIGN STATUS:", signRes.status);
+
       const signData = await signRes.json();
-      if (!signData.ok)
-        throw new Error(signData.error || "Failed to get upload URL");
+      console.log("SIGN RESPONSE:", signData);
 
-      const putRes = await fetch(signData.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
+      if (!signRes.ok) throw new Error("Sign API failed");
+
+      // Upload to S3 using POST policy
+      const formData = new FormData();
+
+      Object.entries(signData.upload.fields).forEach(([key, value]) => {
+        formData.append(key, value as string);
       });
-      if (!putRes.ok) throw new Error("Upload to storage failed");
 
-      const dim = await getImageSize(file);
+      formData.append("file", file);
+
+      const postRes = await fetch(signData.upload.url, {
+        method: "POST",
+        body: formData,
+      });
+
+      console.log("POST STATUS:", postRes.status);
+
+      if (!postRes.ok) throw new Error("Upload to storage failed");
 
       const finRes = await fetch(
         `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
@@ -139,22 +155,22 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
             url: signData.finalUrl,
             mime: file.type,
             size_bytes: file.size,
-            width: dim.width,
-            height: dim.height,
-            alt: "",
           }),
-        }
+        },
       );
+
+      console.log("FINALIZE STATUS:", finRes.status);
+
       const finData = await finRes.json();
-      if (!finData.ok) throw new Error(finData.error || "Finalize failed");
+      console.log("FINALIZE RESPONSE:", finData);
+
+      if (!finRes.ok) throw new Error("Finalize failed");
 
       setUploadStatus("success");
-      setTimeout(() => setUploadStatus("idle"), 2400);
       await refresh();
     } catch (err) {
-      console.error(err);
+      console.error("UPLOAD FAILED:", err);
       setUploadStatus("error");
-      setTimeout(() => setUploadStatus("idle"), 4000);
     } finally {
       setBusy(false);
     }
@@ -336,7 +352,7 @@ function AssetCard({
             tags,
             folder: folder.trim() || null,
           }),
-        }
+        },
       );
 
       if (alt !== asset.alt) {
@@ -346,7 +362,7 @@ function AssetCard({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ asset_id: asset._id, alt }),
-          }
+          },
         );
       }
 
@@ -373,7 +389,7 @@ function AssetCard({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ asset_id: asset._id }),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -383,7 +399,7 @@ function AssetCard({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ asset_id: asset._id }),
-          }
+          },
         );
       }
 

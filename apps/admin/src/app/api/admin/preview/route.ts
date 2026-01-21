@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       forms.map((f: any) => [f._id, { name: f.name, schema: f.draft_schema }]),
     ),
 
-    theme: { tokens: theme.draft_tokens },
+    theme: { tokens: theme.draft_tokens, brands: theme.brand },
     stylePresets: Object.fromEntries(
       presets.map((p) => [
         p._id,

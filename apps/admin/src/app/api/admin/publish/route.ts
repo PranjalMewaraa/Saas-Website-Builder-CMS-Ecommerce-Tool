@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   if (!site) {
     return NextResponse.json(
       { ok: false, error: "Site not found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -80,25 +80,25 @@ export async function POST(req: Request) {
     assets,
     brand: brandLogo,
     forms: Object.fromEntries(
-      forms.map((f) => [f._id, { name: f.name, schema: f.draft_schema }])
+      forms.map((f) => [f._id, { name: f.name, schema: f.draft_schema }]),
     ),
 
     version: Date.now(),
     created_by: session.user.user_id,
     created_at: new Date(),
 
-    theme: { tokens: theme.draft_tokens },
+    theme: { tokens: theme.draft_tokens, brands: theme.brand },
     stylePresets: Object.fromEntries(
       presets.map((p) => [
         p._id,
         { name: p.name, style: p.style, target: p.target },
-      ])
+      ]),
     ),
     menus: Object.fromEntries(
-      menus.map((m) => [m._id, { tree: m.draft_tree }])
+      menus.map((m) => [m._id, { tree: m.draft_tree }]),
     ),
     pages: Object.fromEntries(
-      pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }])
+      pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }]),
     ),
     templates: {},
   };
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
   // ✅ FIX: same typing approach for updateOne
   await sitesCol.updateOne(
     { _id: site_id as any, tenant_id },
-    { $set: { published_snapshot_id: snapshot_id, updated_at: new Date() } }
+    { $set: { published_snapshot_id: snapshot_id, updated_at: new Date() } },
   );
 
   return NextResponse.json({ ok: true, snapshot_id });

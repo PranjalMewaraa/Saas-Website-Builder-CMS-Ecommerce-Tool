@@ -755,7 +755,7 @@ export function BlockPropsForm({
   }
 
   if (type === "Hero" || type === "Hero/V1") {
-    const variant = props.variant || "basic";
+    const [variant, setVariant] = useState(props.variant || "basic");
     const bg = props.bg || { type: "none" };
 
     return (
@@ -764,6 +764,7 @@ export function BlockPropsForm({
           label="Variant"
           value={variant}
           onChange={(v: any) => {
+            setVariant(v);
             setProp("variant", v);
             // keep bg.type aligned with variant
             if (v === "image") setPropPath("bg.type", "image");

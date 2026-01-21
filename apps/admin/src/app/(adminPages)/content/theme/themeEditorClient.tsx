@@ -45,13 +45,26 @@ export default function ThemeEditorClient({
 
   const [basicOpen, setBasicOpen] = useState(true);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-
+  const [placeholder, setPlaceholder] = useState(
+    "Pick an asset using pick button",
+  );
+  const [assetValueId, setAssetValueId] = useState("");
+  const [assetValueUrl, setAssetValueUrl] = useState("");
+  function pickIt(v: any) {
+    console.log("picked", v);
+    setAssetValueId(v);
+    setPlaceholder(v);
+  }
+  function pickItUrl(v: any) {
+    console.log("picked", v);
+    setAssetValueUrl(v);
+  }
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(
           `/api/admin/theme?site_id=${encodeURIComponent(siteId)}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         if (!res.ok) throw new Error("Failed to load theme");
         const data = await res.json();
@@ -76,19 +89,29 @@ export default function ThemeEditorClient({
       dark: tokens["--color-dark"] || "#1f2937",
       light: tokens["--color-light"] || "#f3f4f6",
     }),
-    [tokens]
+    [tokens],
   );
 
   async function save(nextTokens: Record<string, string>, nextBrand: any) {
+    console.log("Saving theme...", nextTokens, nextBrand, assetValueId);
+    let finalBrands = {
+      ...nextBrand,
+      logoAssetId: assetValueId,
+      logoUrl: assetValueUrl,
+    };
     setSaveStatus("saving");
+    console.log("finalBrands", finalBrands);
     try {
       const res = await fetch(
         `/api/admin/theme?site_id=${encodeURIComponent(siteId)}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tokens: nextTokens, brand: nextBrand }),
-        }
+          body: JSON.stringify({
+            tokens: nextTokens,
+            brand: finalBrands,
+          }),
+        },
       );
       if (!res.ok) throw new Error("Save failed");
       setSaveStatus("success");
@@ -210,11 +233,12 @@ export default function ThemeEditorClient({
                     label="Global Brand Logo"
                     assetIdValue={brand.logoAssetId || ""}
                     altValue={brand.logoAlt || ""}
-                    onChangeAssetId={(v) =>
-                      setBrand({ ...brand, logoAssetId: v })
-                    }
+                    onChangeAssetId={(v) => pickIt(v)}
                     onChangeAlt={(v) => setBrand({ ...brand, logoAlt: v })}
                     assetsMap={assetsMap}
+                    placeholder={placeholder}
+                    assetValueUrl={assetValueUrl}
+                    onChangeAssetUrl={(v) => pickItUrl(v)}
                   />
                 </div>
               </div>
@@ -345,7 +369,7 @@ function KeyValueEditor({
   onChange: (next: Record<string, string>) => void;
 }) {
   const entries = Object.entries(value).sort((a, b) =>
-    a[0].localeCompare(b[0])
+    a[0].localeCompare(b[0]),
   );
 
   return (
@@ -379,7 +403,7 @@ function KeyValueEditor({
       <button
         onClick={() => {
           const key = prompt(
-            "New token key (e.g. --color-accent, --radius-lg)"
+            "New token key (e.g. --color-accent, --radius-lg)",
           );
           if (!key || value[key]) return;
           onChange({ ...value, [key]: "#000000" });

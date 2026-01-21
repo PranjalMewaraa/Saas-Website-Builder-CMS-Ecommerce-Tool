@@ -13,19 +13,19 @@ export type RenderContext = {
 };
 
 function safeProps(schema: any, props: any) {
-  const parsed = schema.safeParse(props ?? {});
+  // IMPORTANT: do NOT apply defaults during render
+  const parsed = schema.partial().safeParse(props ?? {});
   if (!parsed.success) {
-    throw new Error(
-      `BLOCK_PROPS_INVALID: ${parsed.error.issues
-        .map((i: any) => i.message)
-        .join(", ")}`,
-    );
+    console.warn("BLOCK_PROPS_INVALID", parsed.error.format());
+    return props ?? {};
   }
-  return parsed.data;
+
+  return { ...props, ...parsed.data };
 }
+
 function normalizeMenusBySlot(snapshot: any) {
   const raw = snapshot?.menus;
-  console.log("Normalizing menus:", raw);
+
   if (!raw || typeof raw !== "object") return snapshot;
 
   const slotMenus: Record<string, any> = {};
@@ -74,6 +74,8 @@ export async function RenderPage(args: {
     ...args.ctx,
     snapshot: normalizeMenusBySlot(args.ctx.snapshot),
   };
+
+  console.log("RenderPage ctx.snapshot", ctx.snapshot.theme.brands);
 
   const css = buildResponsiveCss(parsedLayout);
 
@@ -137,8 +139,6 @@ async function BlockRenderer({
 
   const { outerClass, innerClass, outerStyle, innerStyle } =
     resolveWrapperStyle(finalStyle);
-
-  console.log("Final style for block:", block.id, finalStyle);
 
   if (!def) {
     return (
@@ -239,13 +239,15 @@ async function BlockRenderer({
       menu = ctx.snapshot.menus[slot] ?? null;
     }
 
-    console.log("Menu", menu);
-
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
           <StyleWrapper style={finalStyle}>
-            <Comp {...props} menu={menu} />
+            <Comp
+              {...props}
+              menu={menu}
+              logoUrl={ctx.snapshot.theme.brands?.logoUrl}
+            />
           </StyleWrapper>
         </div>
       </div>
@@ -309,16 +311,7 @@ async function BlockRenderer({
 
   // default render
   const Comp = def.render;
-  console.log(
-    "Rendering block:",
-    block,
-    "of type:",
-    block.type,
-    outerClass,
-    outerStyle,
-    innerClass,
-    innerStyle,
-  );
+
   return (
     <div data-block-id={block.id} className={outerClass} style={outerStyle}>
       <div className={`${innerClass} __inner`} style={innerStyle}>

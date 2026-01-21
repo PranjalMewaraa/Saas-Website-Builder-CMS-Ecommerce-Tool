@@ -18,14 +18,21 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
+
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
 
-  await requireModule({ tenant_id, site_id, module: "builder" });
+  // ✅ Skip module check during onboarding
+  const isOnboarding = req.headers.get("x-onboarding") === "1";
+
+  if (!isOnboarding) {
+    await requireModule({ tenant_id, site_id, module: "builder" });
+  }
 
   const body = await req.json();
   const tokens = body.tokens || {};
   const brand = body.brand;
+
   await updateThemeDraftTokens(tenant_id, site_id, tokens);
   if (brand) await updateThemeBrand(tenant_id, site_id, brand);
 

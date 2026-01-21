@@ -11,7 +11,7 @@ export default function AssetPickerModal({
   siteId: string;
   open: boolean;
   onClose: () => void;
-  onPick: (asset: { _id: string; url: string; alt?: string }) => void;
+  onPick: (asset: { key: string; url: string; alt?: string }) => void;
 }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function AssetPickerModal({
       setLoading(true);
       const res = await fetch(
         `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       const data = await res.json();
       setAssets(data.assets ?? []);
@@ -31,10 +31,16 @@ export default function AssetPickerModal({
   }, [open, siteId]);
 
   if (!open) return null;
-
+  console.log("assets", assets);
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white w-full max-w-4xl rounded-xl p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full max-w-4xl rounded-xl p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <div className="font-semibold">Pick an Asset</div>
           <button
@@ -54,7 +60,8 @@ export default function AssetPickerModal({
               key={a._id}
               className="border rounded p-2 text-left hover:shadow-sm"
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 onPick(a);
                 onClose();
               }}
@@ -70,7 +77,7 @@ export default function AssetPickerModal({
                   File
                 </div>
               )}
-              <div className="mt-2 text-xs opacity-70 break-all">{a._id}</div>
+              <div className="mt-2 text-xs opacity-70 break-all">{a.key}</div>
             </button>
           ))}
         </div>
