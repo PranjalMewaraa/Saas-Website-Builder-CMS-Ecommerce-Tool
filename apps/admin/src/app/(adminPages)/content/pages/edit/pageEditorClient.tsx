@@ -340,7 +340,7 @@ export default function PageEditorClient({
         <PageSeoEditor
           siteId={siteId}
           slug={page.slug}
-          initialSeo={page?.seo}
+          seo={page?.seo}
           assetsMap={assetsMap}
         />
       )}

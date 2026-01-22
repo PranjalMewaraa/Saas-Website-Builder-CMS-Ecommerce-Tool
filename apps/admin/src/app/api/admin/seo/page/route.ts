@@ -8,7 +8,24 @@ export async function PUT(req: Request) {
   const tenant_id = session.user.tenant_id;
   const db = await getMongoDb();
 
-  const res = await db.collection("snapshots").updateOne(
+  // 1️⃣ Update draft page document
+  const pagesRes = await db.collection("pages").updateOne(
+    {
+      tenant_id,
+      site_id,
+      slug,
+    },
+    {
+      $set: {
+        seo,
+        updated_at: new Date(),
+        updated_by: session.user.user_id,
+      },
+    },
+  );
+
+  // 2️⃣ Update draft snapshot for live preview
+  const snapshotRes = await db.collection("snapshots").updateOne(
     {
       tenant_id,
       site_id,
@@ -24,5 +41,9 @@ export async function PUT(req: Request) {
     },
   );
 
-  return Response.json({ ok: true, modified: res.modifiedCount });
+  return Response.json({
+    ok: true,
+    pages_modified: pagesRes.modifiedCount,
+    snapshot_modified: snapshotRes.modifiedCount,
+  });
 }

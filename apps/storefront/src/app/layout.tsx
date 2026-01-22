@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { headers } from "next/headers";
 import { getSiteByHandle, getMongoDb } from "@acme/db-mongo";
+import { reportVitals } from "./_component/webVital";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -37,12 +38,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: site?.name || "Website",
     description: site?.description || "Powered by Acme SaaS",
+
     other: site?.google_verification
       ? {
           "google-site-verification": site.google_verification,
         }
       : {},
   };
+}
+export function reportWebVitals(metric: any) {
+  reportVitals(metric);
 }
 
 export default function RootLayout({

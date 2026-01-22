@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import ImageField from "../(adminPages)/content/_component/ImageField";
+import SerpPreview from "./SerpPreview";
 
 type SeoData = {
   title?: string;
   description?: string;
   ogImageAssetId?: string;
+  keywords?: string;
   // add other seo fields you might use later (keywords, canonical, etc.)
 };
 
@@ -143,6 +145,24 @@ export default function PageSeoEditor({
           />
         </div>
       </div>
+      <SerpPreview
+        title={seo.title}
+        description={seo.description}
+        url={seo.canonical}
+      />
+
+      <button
+        onClick={async () => {
+          const r = await fetch("/api/admin/seo/keywords", {
+            method: "POST",
+            body: JSON.stringify({ text: seo.description }),
+          });
+          const d = await r.json();
+          setState({ ...seo, keywords: d.keywords });
+        }}
+      >
+        Suggest Keywords
+      </button>
 
       <div className="flex justify-end pt-4 border-t">
         <button
