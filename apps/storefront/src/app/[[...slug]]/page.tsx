@@ -3,7 +3,9 @@
 import { headers } from "next/headers";
 import { RenderPage } from "@acme/renderer";
 import { getMongoDb, getSnapshotById, getSiteByHandle } from "@acme/db-mongo";
-
+import type { Metadata } from "next";
+import { buildSeo } from "@acme/renderer/seo";
+import { organizationSchema, webpageSchema } from "@acme/renderer/seo/jsonld";
 export const dynamic = "force-dynamic";
 
 function normalizePath(slugParts?: string[]) {
@@ -39,6 +41,58 @@ async function resolveSite() {
   const fallback = process.env.DEFAULT_SITE_HANDLE || "demo-site";
   return await getSiteByHandle(fallback);
 }
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  const path = normalizePath(resolvedParams.slug);
+
+  const site = await resolveSite();
+  if (!site?.published_snapshot_id) return {};
+
+  const snapshot = await getSnapshotById(site.published_snapshot_id);
+  if (!snapshot) return {};
+
+  const seo = buildSeo(snapshot, path);
+
+  const metadata: Metadata = {
+    title: seo.title,
+    description: seo.description,
+  };
+
+  if (seo.ogImage) {
+    metadata.openGraph = {
+      title: seo.title,
+      description: seo.description,
+      images: [seo.ogImage],
+      type: "website",
+    };
+
+    metadata.twitter = {
+      card: "summary_large_image",
+      title: seo.title,
+      description: seo.description,
+      images: [seo.ogImage],
+    };
+  }
+
+  if (seo.canonical) {
+    metadata.alternates = {
+      canonical: seo.canonical,
+    };
+  }
+
+  if (seo.robots) {
+    metadata.robots = {
+      index: seo.robots.index,
+      follow: seo.robots.follow,
+    };
+  }
+
+  return metadata;
+}
 
 // ── Changed signature ────────────────────────────────────────
 export default async function StorefrontPage({
@@ -68,13 +122,31 @@ export default async function StorefrontPage({
       </div>
     );
   }
+  const meta = page.seo || {};
+  const h = headers();
+  const host = (await h).get("host") || "";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  const url = `${protocol}://${host}${path}`;
+
+  const org = organizationSchema(site);
+  const web = webpageSchema(url, meta.title, meta.description);
 
   return (
-    <div style={(snapshot.theme?.tokens || {}) as React.CSSProperties}>
-      <RenderPage
-        layout={page.layout}
-        ctx={{ tenantId: site.tenant_id, storeId: site.store_id, snapshot }}
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }}
       />
-    </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(web) }}
+      />
+      <div style={(snapshot.theme?.tokens || {}) as React.CSSProperties}>
+        <RenderPage
+          layout={page.layout}
+          ctx={{ tenantId: site.tenant_id, storeId: site.store_id, snapshot }}
+        />
+      </div>
+    </>
   );
 }

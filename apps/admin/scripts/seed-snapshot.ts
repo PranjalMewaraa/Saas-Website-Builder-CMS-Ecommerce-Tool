@@ -196,7 +196,7 @@ async function run() {
   await snapshots.updateOne(
     { _id: snapshot_id },
     { $set: snapshot },
-    { upsert: true }
+    { upsert: true },
   );
 
   await sites.updateOne(
@@ -207,7 +207,7 @@ async function run() {
         updated_at: new Date(),
         store_id,
       },
-    }
+    },
   );
 
   console.log("Seeded Phase 4.1 snapshot ✅", { snapshot_id });

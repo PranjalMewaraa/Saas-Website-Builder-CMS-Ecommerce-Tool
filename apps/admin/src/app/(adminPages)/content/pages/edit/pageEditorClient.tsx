@@ -22,6 +22,7 @@ import { useAssetsMap } from "../../_component/useAssetsMap";
 import StylePreviewCard from "../../_component/StylePreviewCard";
 import { VisualInspector } from "../../_component/VisualInspector";
 import { VisualCanvas } from "../../_component/VisualCanvas";
+import PageSeoEditor from "@/app/_components/PageSeoEditor";
 
 /* ---------------- helpers ---------------- */
 
@@ -64,7 +65,7 @@ export default function PageEditorClient({
 }) {
   const { mode, setMode } = useEditorMode("form", urlMode);
   const { assetsMap } = useAssetsMap(siteId);
-
+  const [tab, setTab] = useState<"layout" | "seo">("layout");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [forms, setForms] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
@@ -187,6 +188,7 @@ export default function PageEditorClient({
     setPage({ ...page, draft_layout: next });
   }
 
+  console.log("page", page);
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6">
       {/* header */}
@@ -216,98 +218,131 @@ export default function PageEditorClient({
           )}
         </div>
       </div>
+      <div className="flex border-b mb-4">
+        <button
+          onClick={() => setTab("layout")}
+          className={`px-4 py-2 ${
+            tab === "layout" ? "border-b-2 border-black" : ""
+          }`}
+        >
+          Layout
+        </button>
 
-      {/* MODE RENDERING */}
-      {mode === "json" ? (
-        <div className="border rounded-xl p-5 bg-white space-y-4">
-          <textarea
-            className="w-full h-[60vh] font-mono border p-3"
-            value={layoutJson}
-            onChange={(e) => setLayoutJson(e.target.value)}
-          />
-          <button
-            onClick={() => {
-              const res = safeJsonParse(layoutJson);
-              if (!res.ok) return alert(res.error);
-              saveLayout(res.value);
-            }}
-            className="bg-black text-white px-4 py-2 rounded"
-          >
-            Save Draft
-          </button>
-        </div>
-      ) : mode === "visual" ? (
-        <div className="grid grid-cols-[1fr_360px] gap-6">
-          <VisualCanvas
-            layout={layout}
-            selectedId={selectedBlockId}
-            setSelectedId={setSelectedBlockId}
-          />
+        <button
+          onClick={() => setTab("seo")}
+          className={`px-4 py-2 ${
+            tab === "seo" ? "border-b-2 border-black" : ""
+          }`}
+        >
+          SEO
+        </button>
+      </div>
 
-          <div className="border rounded-xl p-4 bg-white">
-            <VisualInspector
-              block={blocks.find((b: any) => b.id === selectedBlockId)}
-              siteId={siteId}
-              assetsMap={assetsMap}
-              forms={forms}
-              onChange={(nextBlock: any) => {
-                const idx = blocks.findIndex((b: any) => b.id === nextBlock.id);
-                updateBlock(idx, nextBlock);
-              }}
-            />
-          </div>
-        </div>
-      ) : (
+      {tab === "layout" && (
         <>
-          {/* add bar */}
-          <div className="flex flex-wrap items-end gap-3 bg-white p-4 border rounded-xl shadow-sm">
-            <div className="flex-1 min-w-45">
-              <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-                Add new block
-              </label>
-              <select
-                id="blockType"
-                className="w-full border rounded-lg px-3 py-2.5 text-sm"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Choose block type...
-                </option>
-                {BLOCK_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t.replace("/V1", "")}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={addBlock}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg"
-            >
-              <Plus className="h-4 w-4" />
-              Add Block
-            </button>
-          </div>
-
-          {/* blocks */}
-          <div className="space-y-4">
-            {blocks.map((b: any, i: number) => (
-              <BlockCard
-                key={b.id}
-                block={b}
-                index={i}
-                total={blocks.length}
-                siteId={siteId}
-                forms={forms}
-                presets={presets}
-                assetsMap={assetsMap}
-                onChange={(nb: any) => updateBlock(i, nb)}
-                onMove={(d: any) => moveBlock(i, d)}
-                onDelete={() => deleteBlock(i)}
+          {mode === "json" ? (
+            <div className="border rounded-xl p-5 bg-white space-y-4">
+              <textarea
+                className="w-full h-[60vh] font-mono border p-3"
+                value={layoutJson}
+                onChange={(e) => setLayoutJson(e.target.value)}
               />
-            ))}
-          </div>
+              <button
+                onClick={() => {
+                  const res = safeJsonParse(layoutJson);
+                  if (!res.ok) return alert(res.error);
+                  saveLayout(res.value);
+                }}
+                className="bg-black text-white px-4 py-2 rounded"
+              >
+                Save Draft
+              </button>
+            </div>
+          ) : mode === "visual" ? (
+            <div className="grid grid-cols-[1fr_360px] gap-6">
+              <VisualCanvas
+                layout={layout}
+                selectedId={selectedBlockId}
+                setSelectedId={setSelectedBlockId}
+              />
+
+              <div className="border rounded-xl p-4 bg-white">
+                <VisualInspector
+                  block={blocks.find((b: any) => b.id === selectedBlockId)}
+                  siteId={siteId}
+                  assetsMap={assetsMap}
+                  forms={forms}
+                  onChange={(nextBlock: any) => {
+                    const idx = blocks.findIndex(
+                      (b: any) => b.id === nextBlock.id,
+                    );
+                    updateBlock(idx, nextBlock);
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* add bar */}
+              <div className="flex flex-wrap items-end gap-3 bg-white p-4 border rounded-xl shadow-sm">
+                <div className="flex-1 min-w-45">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                    Add new block
+                  </label>
+                  <select
+                    id="blockType"
+                    className="w-full border rounded-lg px-3 py-2.5 text-sm"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Choose block type...
+                    </option>
+                    {BLOCK_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t.replace("/V1", "")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={addBlock}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Block
+                </button>
+              </div>
+
+              {/* blocks */}
+              <div className="space-y-4">
+                {blocks.map((b: any, i: number) => (
+                  <BlockCard
+                    key={b.id}
+                    block={b}
+                    index={i}
+                    total={blocks.length}
+                    siteId={siteId}
+                    forms={forms}
+                    presets={presets}
+                    assetsMap={assetsMap}
+                    onChange={(nb: any) => updateBlock(i, nb)}
+                    onMove={(d: any) => moveBlock(i, d)}
+                    onDelete={() => deleteBlock(i)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
+      )}
+
+      {tab === "seo" && (
+        <PageSeoEditor
+          siteId={siteId}
+          slug={page.slug}
+          initialSeo={page?.seo}
+          assetsMap={assetsMap}
+        />
       )}
     </div>
   );

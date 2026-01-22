@@ -10,12 +10,14 @@ export type SiteDoc = {
   store_id: string;
   name: string;
   handle: string;
+  site_seo: any;
   modules_enabled: Record<string, boolean>;
   domains?: Array<{ host: string; status?: string; is_primary?: boolean }>;
   published_snapshot_id?: string | null;
   active_theme_id?: string | null;
   created_at: Date;
   updated_at: Date;
+  google_verification?: string;
 };
 
 // IMPORTANT: type SnapshotDoc with _id: string so findOne({ _id: string }) is valid.
@@ -26,6 +28,8 @@ export type SnapshotDoc = {
   version: number;
   created_at: Date;
   created_by?: string;
+  site_seo: any;
+  google_verification?: string;
 
   // Published bundle data (keep flexible)
   modules_effective?: Record<string, boolean>;
@@ -100,6 +104,7 @@ export async function createSite(args: {
       assets: true,
       custom_entities: true,
     },
+    site_seo: null,
     published_snapshot_id: null,
     active_theme_id: null,
     created_at: new Date(),
@@ -108,4 +113,15 @@ export async function createSite(args: {
 
   await col.insertOne(doc);
   return doc;
+}
+export async function updateSiteSeo(
+  tenant_id: string,
+  site_id: string,
+  siteSeo: any,
+) {
+  const col = await sitesCollection();
+  await col.updateOne(
+    { _id: site_id, tenant_id },
+    { $set: { site_seo: siteSeo, updated_at: new Date() } },
+  );
 }

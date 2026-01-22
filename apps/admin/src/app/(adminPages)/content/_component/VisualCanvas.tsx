@@ -1,6 +1,6 @@
 "use client";
 
-import { VisualBlockRenderer } from "../../../../../../packages/renderer/VisualBlockRenderer";
+import { VisualBlockRenderer } from "../../../../../../../packages/renderer/VisualBlockRenderer";
 
 export function VisualCanvas({ layout, selectedId, setSelectedId }: any) {
   const blocks = layout.sections?.[0]?.blocks ?? [];

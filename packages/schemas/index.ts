@@ -6,3 +6,4 @@ export * from "./blocks";
 export * from "./style/baseStyle";
 export * from "./style/blockStyle";
 export * from "./blocks/types";
+export * from "./seo.schema";
