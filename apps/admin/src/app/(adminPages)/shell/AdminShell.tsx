@@ -15,7 +15,6 @@ import {
   Code2,
   Store,
   Tags,
-  Package,
   ShoppingBag,
   Globe,
   Settings,
@@ -42,7 +41,8 @@ export default function AdminShell({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const siteId = searchParams.get("site_id") || "site_demo";
+  const siteId = searchParams.get("site_id") || "";
+  const hasSite = !!siteId; // ✅ NEW
 
   const nav: NavItem[] = [
     {
@@ -84,9 +84,7 @@ export default function AdminShell({
       icon: Eye,
       group: "Content",
     },
-
     { label: "Builder", href: "/builder", icon: Code2, group: "Build" },
-
     { label: "My Store", href: "/stores", icon: Store, group: "Commerce" },
     { label: "Brands", href: "/brands", icon: Tags, group: "Commerce" },
     { label: "Categories", href: "/categories", icon: Tags, group: "Commerce" },
@@ -96,7 +94,6 @@ export default function AdminShell({
       icon: ShoppingBag,
       group: "Commerce",
     },
-
     {
       label: "Domains",
       href: "/settings/domains",
@@ -123,156 +120,144 @@ export default function AdminShell({
 
   function withSite(href: string) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("site_id", siteId);
+    if (siteId) params.set("site_id", siteId);
     return `${href}?${params.toString()}`;
   }
 
-  const [draftSiteId, setDraftSiteId] = useState(siteId);
-  // Only one group can be open at a time → store the active group name (or null)
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
-
-  function applySiteId(next: string) {
-    const trimmed = next.trim() || "site_demo";
-    setDraftSiteId(trimmed);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("site_id", trimmed);
-    router.replace(`${pathname}?${params.toString()}`);
-  }
 
   function toggleGroup(group: string) {
     setActiveGroup((prev) => (prev === group ? null : group));
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 grid grid-cols-[260px_1fr]">
-      {/* Sidebar – fixed, no scroll */}
-      <aside className="bg-white border-r border-gray-200 flex flex-col h-screen">
-        {/* Brand / Logo */}
-        <div className="p-5 border-b border-gray-200 shrink-0">
-          <div className="text-xl font-bold text-gray-900">Admin Panel</div>
-          <div className="text-xs text-gray-500 mt-0.5">Manage your sites</div>
-        </div>
+    <>
+      {/* ✅ FORCE SITE SELECTION MODAL */}
+      {!hasSite && (
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-[420px] space-y-4">
+            <h2 className="text-lg font-semibold">Select a Site</h2>
+            <p className="text-sm text-gray-600">
+              You must select a site before using the admin panel.
+            </p>
 
-        {/* Site Selector */}
-        <div className="p-4 border-b border-gray-200 shrink-0">
-          <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1.5">
-            Active Site
-          </label>
-          <SiteSwitcher />
-          <p className="mt-1.5 text-[11px] text-gray-500">
-            All links include <code className="font-mono">site_id</code>
-          </p>
-        </div>
-
-        {/* Navigation – scrollable if needed, but with exclusive accordion it usually fits */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-2">
-          {Object.entries(grouped).map(([group, items]) => {
-            const isOpen = activeGroup === group;
-
-            return (
-              <div
-                key={group}
-                className="rounded-md overflow-hidden border border-gray-200"
-              >
-                <button
-                  onClick={() => toggleGroup(group)}
-                  className={`
-                    flex items-center justify-between w-full px-4 py-3 text-sm font-semibold
-                    ${isOpen ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-50"}
-                    transition-colors
-                  `}
-                >
-                  {group}
-                  {isOpen ? (
-                    <ChevronDown size={16} className="text-gray-500" />
-                  ) : (
-                    <ChevronRight size={16} className="text-gray-500" />
-                  )}
-                </button>
-
-                <div
-                  className={`
-                    transition-all duration-300 ease-in-out
-                    ${isOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}
-                    overflow-hidden bg-white
-                  `}
-                >
-                  <div className="py-1.5 px-1 space-y-0.5">
-                    {items.map((item) => {
-                      const isActive =
-                        pathname === item.href ||
-                        pathname.startsWith(`${item.href}/`);
-
-                      return (
-                        <Link
-                          key={item.href}
-                          href={withSite(item.href)}
-                          className={`
-                            flex items-center gap-3 px-4 py-2.5 text-sm rounded-md mx-1
-                            transition-all
-                            ${
-                              isActive
-                                ? "bg-blue-600 text-white font-medium"
-                                : "text-gray-700 hover:bg-gray-100"
-                            }
-                          `}
-                        >
-                          <item.icon
-                            className={
-                              isActive ? "text-white" : "text-gray-500"
-                            }
-                          />
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Main area */}
-      <div className="flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-          <div className="px-6 py-3 flex items-center justify-between">
-            <div className="min-w-0">
-              <div className="text-xs text-gray-500">Active Site</div>
-              <div className="font-semibold text-gray-900 truncate">
-                {siteId}
-              </div>
+            <div className="pt-2">
+              <SiteSwitcher />
             </div>
 
-            <div className="flex items-center gap-3">
-              <Link
-                href={withSite("/content")}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Content
-              </Link>
-              <Link
-                href={withSite("/builder")}
-                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Builder
-              </Link>
-              <Link
-                href={withSite("/content/publish")}
-                className="px-5 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm transition-all flex items-center gap-2"
-              >
-                <Save size={16} />
-                Publish
-              </Link>
+            <p className="text-xs text-gray-500 pt-2">
+              This selection will be used across the dashboard.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN LAYOUT */}
+      <div
+        className={`min-h-screen bg-gray-50 text-gray-900 grid grid-cols-[260px_1fr] ${
+          !hasSite ? "pointer-events-none blur-[1px]" : ""
+        }`}
+      >
+        {/* Sidebar */}
+        <aside className="bg-white border-r border-gray-200 flex flex-col h-screen">
+          <div className="p-5 border-b border-gray-200 shrink-0">
+            <div className="text-xl font-bold text-gray-900">Admin Panel</div>
+            <div className="text-xs text-gray-500 mt-0.5">
+              Manage your sites
             </div>
           </div>
-        </header>
 
-        {/* Scrollable main content */}
-        <main className="flex-1 p-6 overflow-auto bg-gray-50">{children}</main>
+          <div className="p-4 border-b border-gray-200 shrink-0">
+            <label className="block text-xs font-medium text-gray-600 uppercase tracking-wide mb-1.5">
+              Active Site
+            </label>
+            <SiteSwitcher />
+          </div>
+
+          <nav className="flex-1 overflow-y-auto p-3 space-y-2">
+            {Object.entries(grouped).map(([group, items]) => {
+              const isOpen = activeGroup === group;
+
+              return (
+                <div
+                  key={group}
+                  className="rounded-md overflow-hidden border border-gray-200"
+                >
+                  <button
+                    onClick={() => toggleGroup(group)}
+                    className={`flex items-center justify-between w-full px-4 py-3 text-sm font-semibold ${
+                      isOpen ? "bg-gray-100" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    {group}
+                    {isOpen ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+
+                  {isOpen && (
+                    <div className="bg-white">
+                      {items.map((item) => {
+                        const isActive =
+                          pathname === item.href ||
+                          pathname.startsWith(`${item.href}/`);
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={withSite(item.href)}
+                            className={`flex items-center gap-3 px-4 py-2 text-sm ${
+                              isActive
+                                ? "bg-blue-600 text-white"
+                                : "hover:bg-gray-100"
+                            }`}
+                          >
+                            <item.icon />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main area */}
+        <div className="flex flex-col min-w-0">
+          <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+            <div className="px-6 py-3 flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-500">Active Site</div>
+                <div className="font-semibold">{siteId || "None selected"}</div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link href={withSite("/content")} className="btn">
+                  Content
+                </Link>
+                <Link href={withSite("/builder")} className="btn">
+                  Builder
+                </Link>
+                <Link
+                  href={withSite("/content/publish")}
+                  className="btn-primary"
+                >
+                  <Save size={16} /> Publish
+                </Link>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 p-6 overflow-auto bg-gray-50">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
