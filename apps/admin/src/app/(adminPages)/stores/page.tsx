@@ -5,12 +5,12 @@ import Link from "next/link";
 export default async function StoresPage({
   searchParams,
 }: {
-  searchParams: { site_id?: string };
+  searchParams: Promise<{ site_id?: string }>;
 }) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
-
-  const siteId = searchParams.site_id || "site_demo";
+  const resolvedSearchParams = await searchParams;
+  const siteId = resolvedSearchParams.site_id || "site_demo";
   const stores = await listStores(tenant_id);
 
   return (

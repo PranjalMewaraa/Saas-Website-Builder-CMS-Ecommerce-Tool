@@ -10,6 +10,9 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
   const [stores, setStores] = useState<any[]>([]);
   const [storeIndustry, setStoreIndustry] = useState<string | null>(null);
 
+  const [productId, setProductId] = useState<string | null>(null);
+  const [images, setImages] = useState<any[]>([]);
+
   const [storeId, setStoreId] = useState("");
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState(0);
@@ -37,7 +40,6 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
     load();
   }, []);
 
-  /* Filter attributes by industry template */
   const filteredAttributes = (() => {
     if (!storeIndustry) return [];
     const template = INDUSTRY_TEMPLATES[storeIndustry];
@@ -66,10 +68,7 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
             className="border p-2 rounded w-full"
             value={value}
             onChange={(e) =>
-              setAttrValues((prev) => ({
-                ...prev,
-                [attr.id]: e.target.value,
-              }))
+              setAttrValues((prev) => ({ ...prev, [attr.id]: e.target.value }))
             }
           >
             <option value="">Select {attr.name}</option>
@@ -83,19 +82,16 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
 
       case "boolean":
         return (
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={!!value}
-              onChange={(e) =>
-                setAttrValues((prev) => ({
-                  ...prev,
-                  [attr.id]: e.target.checked,
-                }))
-              }
-            />
-            <span>Yes</span>
-          </label>
+          <input
+            type="checkbox"
+            checked={!!value}
+            onChange={(e) =>
+              setAttrValues((prev) => ({
+                ...prev,
+                [attr.id]: e.target.checked,
+              }))
+            }
+          />
         );
 
       case "number":
@@ -120,10 +116,7 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
             className="border p-2 rounded w-full"
             value={value}
             onChange={(e) =>
-              setAttrValues((prev) => ({
-                ...prev,
-                [attr.id]: e.target.value,
-              }))
+              setAttrValues((prev) => ({ ...prev, [attr.id]: e.target.value }))
             }
           />
         );
@@ -135,18 +128,46 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
             className="border p-2 rounded w-full"
             value={value}
             onChange={(e) =>
-              setAttrValues((prev) => ({
-                ...prev,
-                [attr.id]: e.target.value,
-              }))
+              setAttrValues((prev) => ({ ...prev, [attr.id]: e.target.value }))
             }
           />
         );
     }
   }
 
+  async function loadImages(pid: string) {
+    const r = await fetch(`/api/admin/products/images/list?product_id=${pid}`);
+    const d = await r.json();
+    setImages(d.images || []);
+  }
+
+  async function uploadImage(file: File) {
+    if (!productId) return;
+
+    const fd = new FormData();
+    fd.append("product_id", productId);
+    fd.append("file", file);
+
+    await fetch("/api/admin/products/images/upload", {
+      method: "POST",
+      body: fd,
+    });
+
+    await loadImages(productId);
+  }
+
+  async function deleteImage(id: string) {
+    await fetch("/api/admin/products/images/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_id: id }),
+    });
+
+    if (productId) loadImages(productId);
+  }
+
   async function createProduct() {
-    await fetch("/api/admin/products/create", {
+    const res = await fetch("/api/admin/products/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -163,8 +184,13 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
       }),
     });
 
-    alert("Product created!");
+    const data = await res.json();
+
+    setProductId(data.product_id);
+    setStep(5);
+    loadImages(data.product_id);
   }
+  console.log(filteredAttributes);
 
   if (loading) return <div className="p-6">Loading...</div>;
 
@@ -197,7 +223,7 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
 
           <button
             disabled={!storeId}
-            className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="bg-blue-600 text-white px-4 py-2 rounded"
             onClick={() => setStep(2)}
           >
             Next
@@ -313,6 +339,55 @@ export default function ProductWizard({ siteId }: { siteId: string }) {
           >
             Create Product
           </button>
+        </div>
+      )}
+
+      {/* STEP 5 */}
+      {step === 5 && productId && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Upload Product Images</h2>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files?.[0]) uploadImage(e.target.files[0]);
+            }}
+          />
+
+          <div className="grid grid-cols-4 gap-3">
+            {images.map((img) => (
+              <div key={img.id} className="border rounded p-2 relative">
+                <img
+                  src={img.url}
+                  className="w-full h-24 object-cover rounded"
+                />
+
+                <button
+                  onClick={() => deleteImage(img.id)}
+                  className="absolute top-1 right-1 bg-red-600 text-white text-xs px-1 rounded"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              className="bg-gray-600 text-white px-4 py-2 rounded"
+              onClick={() => setStep(4)}
+            >
+              Back
+            </button>
+
+            <button
+              className="bg-green-700 text-white px-4 py-2 rounded"
+              onClick={() => alert("Product setup complete!")}
+            >
+              Finish
+            </button>
+          </div>
         </div>
       )}
     </div>

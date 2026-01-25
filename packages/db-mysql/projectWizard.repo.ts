@@ -18,7 +18,7 @@ export async function createProductWithAttributes(args: {
   }>;
 }) {
   const ts = nowSql();
-  const product_id = newId("prod");
+  const product_id = newId("prod").slice(0, 21);
   const slug = slugify(args.title);
 
   const conn = await pool.getConnection();
