@@ -32,7 +32,7 @@ export default function ProductCreateClient({
               base_price_cents: Math.round(price * 100),
               status: "active",
             }),
-          }
+          },
         );
 
         // After create, redirect back to product list

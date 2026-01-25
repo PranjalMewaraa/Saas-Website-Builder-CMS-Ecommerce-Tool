@@ -6,14 +6,17 @@ import CategoryDeleteClient from "./CategoryDeleteClient";
 export default async function CategoriesPage({
   searchParams,
 }: {
-  searchParams: { site_id?: string; store_id?: string };
+  searchParams: Promise<{ site_id?: string; store_id?: string }>;
 }) {
+  // ✅ Await searchParams
+  const params = await searchParams;
+
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
 
-  const siteId = searchParams.site_id || "site_demo";
-  const storeId = searchParams.store_id || "s_demo";
-
+  const siteId = params.site_id || "site_demo";
+  const storeId = params.store_id || "s_demo";
+  console.log(tenant_id);
   await requireModule({ tenant_id, site_id: siteId, module: "catalog" });
 
   const categories = await listCategories(tenant_id);
@@ -41,6 +44,7 @@ export default async function CategoriesPage({
               <CategoryDeleteClient siteId={siteId} categoryId={c.id} />
             </div>
           ))}
+
           {categories.length === 0 && (
             <div className="opacity-70">No categories yet.</div>
           )}

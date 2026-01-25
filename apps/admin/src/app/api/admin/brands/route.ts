@@ -3,8 +3,11 @@ import {
   requireSession,
   requireModule,
 } from "../../../../../../../packages/auth";
-import { parseOrThrow } from "../../../../../../../packages/schemas/index.js";
-import { BrandCreateSchema } from "../../../../../../../packages/schemas";
+
+import {
+  BrandCreateSchema,
+  parseOrThrow,
+} from "../../../../../../../packages/schemas";
 import { listBrands, createBrand } from "@acme/db-mysql";
 
 export async function GET(req: Request) {

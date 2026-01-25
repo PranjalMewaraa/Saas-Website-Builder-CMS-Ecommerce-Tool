@@ -27,3 +27,6 @@ export * from "./stores.repo";
 export * from "./brands.repo";
 export * from "./categories.repo";
 export * from "./products.repo";
+export * from "./attributes.repo";
+export * from "./attributeValue.repo";
+export * from "./projectWizard.repo";

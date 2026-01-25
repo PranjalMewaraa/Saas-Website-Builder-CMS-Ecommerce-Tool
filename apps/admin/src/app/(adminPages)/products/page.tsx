@@ -1,4 +1,3 @@
-import Nav from "../_components/Nav";
 import Link from "next/link";
 import { requireSession, requireModule } from "@acme/auth";
 import { listProductsForStore } from "@acme/db-mysql";
@@ -7,13 +6,16 @@ import ProductPublishToggleClient from "./ProductPublishToggleClient";
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { site_id?: string; store_id?: string };
+  searchParams: Promise<{ site_id?: string; store_id?: string }>;
 }) {
+  // ✅ Await searchParams
+  const params = await searchParams;
+
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
 
-  const siteId = searchParams.site_id || "site_demo";
-  const storeId = searchParams.store_id || "s_demo";
+  const siteId = params.site_id || "site_demo";
+  const storeId = params.store_id || "s_demo";
 
   // Gate UI too (optional but recommended for consistency)
   await requireModule({ tenant_id, site_id: siteId, module: "catalog" });
@@ -25,6 +27,7 @@ export default async function ProductsPage({
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Products</h1>
+
           <Link
             className="px-3 py-2 rounded bg-black text-white"
             href={`/products/new?site_id=${siteId}&store_id=${storeId}`}

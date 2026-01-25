@@ -6,13 +6,16 @@ import BrandDeleteClient from "./BrandDeleteClient";
 export default async function BrandsPage({
   searchParams,
 }: {
-  searchParams: { site_id?: string; store_id?: string };
+  searchParams: Promise<{ site_id?: string; store_id?: string }>;
 }) {
+  // ✅ Await searchParams
+  const params = await searchParams;
+
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
 
-  const siteId = searchParams.site_id || "site_demo";
-  const storeId = searchParams.store_id || "s_demo";
+  const siteId = params.site_id || "site_demo";
+  const storeId = params.store_id || "s_demo";
 
   await requireModule({ tenant_id, site_id: siteId, module: "catalog" });
 
@@ -38,6 +41,7 @@ export default async function BrandsPage({
               <BrandDeleteClient siteId={siteId} brandId={b.id} />
             </div>
           ))}
+
           {brands.length === 0 && (
             <div className="opacity-70">No brands yet.</div>
           )}

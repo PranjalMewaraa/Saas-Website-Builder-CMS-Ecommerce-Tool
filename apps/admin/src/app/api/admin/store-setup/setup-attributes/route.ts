@@ -6,10 +6,11 @@ export async function POST(req: Request) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
   const { industry } = await req.json();
-
+  console.log("Industry", industry);
   const template = INDUSTRY_TEMPLATES[industry] || [];
-
+  console.log("Template", template);
   for (const attr of template) {
+    console.log("attr pass", attr);
     await createAttribute(tenant_id, attr);
   }
 

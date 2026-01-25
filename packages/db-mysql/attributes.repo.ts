@@ -27,13 +27,13 @@ export async function createAttribute(
 ) {
   const id = newId("attr");
   const ts = nowSql();
-
+  const final_id = id.slice(0, 20);
   await pool.query(
     `INSERT INTO product_attributes 
      (id, tenant_id, code, name, type, is_filterable, is_variant, is_required, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      id,
+      final_id,
       tenant_id,
       input.code,
       input.name,
@@ -49,12 +49,12 @@ export async function createAttribute(
     for (const val of input.options) {
       await pool.query(
         `INSERT INTO product_attribute_options (id, attribute_id, value) VALUES (?, ?, ?)`,
-        [newId("opt"), id, val],
+        [newId("opt").slice(0, 20), final_id, val],
       );
     }
   }
 
-  return id;
+  return final_id;
 }
 
 export async function listAttributes(tenant_id: string) {

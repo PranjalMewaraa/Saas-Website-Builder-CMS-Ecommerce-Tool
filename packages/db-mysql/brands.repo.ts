@@ -5,29 +5,29 @@ import type { BrandRow } from "./types";
 export async function listBrands(tenant_id: string): Promise<BrandRow[]> {
   const [rows] = await pool.query(
     `SELECT * FROM brands WHERE tenant_id = ? ORDER BY created_at DESC`,
-    [tenant_id]
+    [tenant_id],
   );
   return rows as BrandRow[];
 }
 
 export async function createBrand(
   tenant_id: string,
-  input: { name: string; slug?: string }
+  input: { name: string; slug?: string },
 ): Promise<BrandRow> {
   const id = newId("brand");
   const ts = nowSql();
   const slug =
     input.slug && input.slug.trim() ? slugify(input.slug) : slugify(input.name);
-
+  const final_id = id.slice(0, 25);
   await pool.query(
     `INSERT INTO brands (id, tenant_id, name, slug, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, tenant_id, input.name.trim(), slug, ts, ts]
+    [final_id, tenant_id, input.name.trim(), slug, ts, ts],
   );
 
   const [rows] = await pool.query(
     `SELECT * FROM brands WHERE tenant_id = ? AND id = ? LIMIT 1`,
-    [tenant_id, id]
+    [tenant_id, final_id],
   );
   return (rows as BrandRow[])[0];
 }
@@ -47,14 +47,14 @@ export async function safeDeleteBrand(tenant_id: string, brand_id: string) {
     // 1) Remove store_brands mappings first
     await conn.query(
       `DELETE FROM store_brands WHERE tenant_id = ? AND brand_id = ?`,
-      [tenant_id, brand_id]
+      [tenant_id, brand_id],
     );
 
     // 2) Unlink products from this brand (so product rows remain)
     //    Alternative: delete products too (not recommended for MVP).
     await conn.query(
       `UPDATE products SET brand_id = NULL WHERE tenant_id = ? AND brand_id = ?`,
-      [tenant_id, brand_id]
+      [tenant_id, brand_id],
     );
 
     // 3) Now delete the brand

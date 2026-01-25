@@ -3,33 +3,41 @@ import { newId, nowSql, slugify } from "./id";
 import type { CategoryRow } from "./types";
 
 export async function listCategories(
-  tenant_id: string
+  tenant_id: string,
 ): Promise<CategoryRow[]> {
   const [rows] = await pool.query(
     `SELECT * FROM categories WHERE tenant_id = ? ORDER BY created_at DESC`,
-    [tenant_id]
+    [tenant_id],
   );
   return rows as CategoryRow[];
 }
 
 export async function createCategory(
   tenant_id: string,
-  input: { name: string; slug?: string; parent_id?: string | null }
+  input: { name: string; slug?: string; parent_id?: string | null },
 ): Promise<CategoryRow> {
   const id = newId("cat");
   const ts = nowSql();
   const slug =
     input.slug && input.slug.trim() ? slugify(input.slug) : slugify(input.name);
-
+  const final_id = id.slice(0, 20);
   await pool.query(
     `INSERT INTO categories (id, tenant_id, name, slug, parent_id, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, tenant_id, input.name.trim(), slug, input.parent_id ?? null, ts, ts]
+    [
+      final_id,
+      tenant_id,
+      input.name.trim(),
+      slug,
+      input.parent_id ?? null,
+      ts,
+      ts,
+    ],
   );
 
   const [rows] = await pool.query(
     `SELECT * FROM categories WHERE tenant_id = ? AND id = ? LIMIT 1`,
-    [tenant_id, id]
+    [tenant_id, final_id],
   );
   return (rows as CategoryRow[])[0];
 }
@@ -42,7 +50,7 @@ export async function deleteCategory(tenant_id: string, category_id: string) {
 }
 export async function safeDeleteCategory(
   tenant_id: string,
-  category_id: string
+  category_id: string,
 ) {
   const conn = await pool.getConnection();
   try {
@@ -51,7 +59,7 @@ export async function safeDeleteCategory(
     // Remove product-category mappings first (FK safe)
     await conn.query(
       `DELETE FROM product_categories WHERE tenant_id = ? AND category_id = ?`,
-      [tenant_id, category_id]
+      [tenant_id, category_id],
     );
 
     // If you later add category-specific rules, delete those here too.
