@@ -5,7 +5,7 @@ import type { ProductRow, ProductVariantRow } from "./types";
 export async function listProducts(tenant_id: string): Promise<ProductRow[]> {
   const [rows] = await pool.query(
     `SELECT * FROM products WHERE tenant_id = ? ORDER BY created_at DESC`,
-    [tenant_id]
+    [tenant_id],
   );
   return rows as ProductRow[];
 }
@@ -14,6 +14,7 @@ export async function listProductsForStore(args: {
   tenant_id: string;
   store_id: string;
 }): Promise<(ProductRow & { is_published: number })[]> {
+  console.log("storeid", args.store_id);
   const [rows] = await pool.query(
     `
     SELECT p.*, COALESCE(sp.is_published, 0) as is_published
@@ -25,8 +26,9 @@ export async function listProductsForStore(args: {
     WHERE p.tenant_id = ?
     ORDER BY p.created_at DESC
     `,
-    [args.store_id, args.tenant_id]
+    [args.store_id, args.tenant_id],
   );
+  console.log("storeidprod", rows);
   return rows as any;
 }
 
@@ -40,7 +42,7 @@ export async function createProduct(
     status?: "draft" | "active" | "archived";
     base_price_cents: number;
     sku?: string | null;
-  }
+  },
 ): Promise<ProductRow> {
   const id = newId("prod");
   const ts = nowSql();
@@ -68,7 +70,7 @@ export async function createProduct(
       input.sku ?? null,
       ts,
       ts,
-    ]
+    ],
   );
 
   // MVP: create one default variant with same price
@@ -88,12 +90,12 @@ export async function createProduct(
       input.base_price_cents,
       ts,
       ts,
-    ]
+    ],
   );
 
   const [rows] = await pool.query(
     `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
-    [tenant_id, id]
+    [tenant_id, id],
   );
   return (rows as ProductRow[])[0];
 }
@@ -125,6 +127,6 @@ export async function setStoreProductPublished(args: {
       args.is_published ? 1 : 0,
       ts,
       ts,
-    ]
+    ],
   );
 }

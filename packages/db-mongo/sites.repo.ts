@@ -125,3 +125,7 @@ export async function updateSiteSeo(
     { $set: { site_seo: siteSeo, updated_at: new Date() } },
   );
 }
+export async function getSite(site_id: string, tenant_id: string) {
+  const col = await sitesCollection();
+  return col.findOne({ _id: site_id, tenant_id });
+}
