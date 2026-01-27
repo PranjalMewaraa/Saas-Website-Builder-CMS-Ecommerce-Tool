@@ -19,28 +19,44 @@ function normalizePath(slugParts?: string[]) {
   return p === "" ? "/" : p;
 }
 
-async function resolveSite() {
-  const h = headers();
-  const hostRaw = (await h).get("host") || "";
-  const host = hostRaw.split(":")[0];
+export async function resolveSite() {
+  const { headers } = await import("next/headers");
+
+  const h = await headers();
+
+  const host = (h.get("host") || "").split(":")[0];
+
+  // Read query params from RSC request header
+  const search = h.get("x-search") || h.get("next-url") || "";
+
+  let handle: string | null = null;
+
+  if (search.includes("?")) {
+    const url = new URL(search, "http://localhost");
+    console.log("URLS", url);
+    handle = url.searchParams.get("handle");
+  }
 
   const db = await getMongoDb();
   const sites = db.collection("sites");
 
-  const site =
-    (await sites.findOne({
-      $or: [
-        { primary_domain: host },
-        { domains: host },
-        { "domains.host": host },
-      ],
-    })) || null;
+  // 1. localhost → query param
+  if ((host === "localhost" || host === "127.0.0.1") && handle) {
+    const site = await sites.findOne({ handle });
+    if (site) return site;
+  }
 
-  if (site) return site;
+  // 2. subdomain
+  const parts = host.split(".");
+  if (parts.length >= 3) {
+    const site = await sites.findOne({ handle: parts[0] });
+    if (site) return site;
+  }
 
-  const fallback = process.env.DEFAULT_SITE_HANDLE || "demo-site";
-  return await getSiteByHandle(fallback);
+  // 3. fallback
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "demo-site");
 }
+
 export async function generateMetadata({
   params,
 }: {

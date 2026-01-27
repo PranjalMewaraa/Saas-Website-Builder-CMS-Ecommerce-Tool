@@ -11,23 +11,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-async function resolveSite() {
-  const h = headers();
-  const host = (await h).get("host")?.split(":")[0];
+export async function resolveSite() {
+  const h = await headers();
+
+  const handle = h.get("x-site-handle");
+  const host = h.get("x-site-host") || (h.get("host") || "").split(":")[0];
 
   const db = await getMongoDb();
   const sites = db.collection("sites");
 
-  const site =
-    (await sites.findOne({
-      $or: [
-        { primary_domain: host },
-        { domains: host },
-        { "domains.host": host },
-      ],
-    })) || null;
+  if (handle) {
+    const site = await sites.findOne({ handle });
+    if (site) return site;
+  }
 
-  if (site) return site;
+  const parts = host.split(".");
+  if (parts.length >= 3) {
+    const site = await sites.findOne({ handle: parts[0] });
+    if (site) return site;
+  }
 
   return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "demo-site");
 }

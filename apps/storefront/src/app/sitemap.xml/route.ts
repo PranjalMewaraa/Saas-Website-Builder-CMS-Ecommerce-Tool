@@ -6,27 +6,54 @@ export const dynamic = "force-dynamic";
 
 async function resolveSite() {
   const h = headers();
-  const hostRaw = (await h).get("host") || "";
-  const host = hostRaw.split(":")[0];
+  const hostHeader = (await h).get("host") || "";
+  const host = hostHeader.split(":")[0];
 
   const db = await getMongoDb();
   const sites = db.collection("sites");
 
-  const site =
-    (await sites.findOne({
-      $or: [
-        { primary_domain: host },
-        { domains: host },
-        { "domains.host": host },
-      ],
-    })) || null;
+  // -----------------------------
+  // 1. Localhost → use ?handle=
+  // -----------------------------
+  if (host === "localhost" || host === "127.0.0.1") {
+    const url = new URL((await h).get("x-url") || "http://localhost");
+    const handle = url.searchParams.get("handle");
 
-  if (site) return site;
+    if (handle) {
+      const site = await sites.findOne({ handle });
+      if (site) return site;
+    }
+  }
 
-  const fallback = process.env.DEFAULT_SITE_HANDLE || "demo-site";
-  return await getSiteByHandle(fallback);
+  // -----------------------------------
+  // 2. Subdomain mode: handle.domain.com
+  // -----------------------------------
+  const parts = host.split(".");
+
+  if (parts.length >= 3) {
+    const handle = parts[0];
+    const site = await sites.findOne({ handle });
+    if (site) return site;
+  }
+
+  // -----------------------------
+  // 3. Optional domain matching
+  // -----------------------------
+  const siteByDomain = await sites.findOne({
+    $or: [
+      { primary_domain: host },
+      { domains: host },
+      { "domains.host": host },
+    ],
+  });
+
+  if (siteByDomain) return siteByDomain;
+
+  // -----------------------------
+  // 4. Fallback
+  // -----------------------------
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "demo-site");
 }
-
 function escapeXml(str: string) {
   return str
     .replace(/&/g, "&amp;")

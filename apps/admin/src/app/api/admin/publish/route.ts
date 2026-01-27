@@ -18,7 +18,6 @@ function newSnapshotId(site_id: string) {
   return `snap_${site_id}_${Date.now()}`;
 }
 
-// Minimal typing to avoid ObjectId overload issues in TS
 type SiteDocLoose = {
   _id: any;
   tenant_id: string;
@@ -43,7 +42,6 @@ export async function POST(req: Request) {
   const assets = await listAssetsForSnapshot(tenant_id, site_id);
   const forms = await listForms(tenant_id, site_id);
 
-  // ✅ FIX: Use a loosely typed collection so _id can be string/ObjectId without TS overload errors
   const sitesCol = db.collection<SiteDocLoose>("sites");
 
   const site = await sitesCol.findOne({ _id: site_id as any, tenant_id });
@@ -76,7 +74,7 @@ export async function POST(req: Request) {
     tenant_id,
     site_id,
 
-    handle: site.handle, // ✅ published snapshot will carry handle
+    handle: site.handle,
     assets,
     brand: brandLogo,
     forms: Object.fromEntries(
@@ -105,11 +103,19 @@ export async function POST(req: Request) {
 
   await createSnapshot(snapshot);
 
-  // ✅ FIX: same typing approach for updateOne
   await sitesCol.updateOne(
     { _id: site_id as any, tenant_id },
     { $set: { published_snapshot_id: snapshot_id, updated_at: new Date() } },
   );
 
-  return NextResponse.json({ ok: true, snapshot_id });
+  const STOREFRONT_BASE_URL =
+    process.env.STOREFRONT_BASE_URL || "http://localhost:3002";
+
+  const storefront_url = `${STOREFRONT_BASE_URL}/?handle=${site.handle}`;
+
+  return NextResponse.json({
+    ok: true,
+    snapshot_id,
+    storefront_url,
+  });
 }

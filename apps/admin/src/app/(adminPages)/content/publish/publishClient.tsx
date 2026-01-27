@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { da } from "zod/locales";
 
 export default function PublishClient({ siteId }: { siteId: string }) {
   const [lastSnap, setLastSnap] = useState<string>("");
-
+  const [url, setUrl] = useState();
   return (
     <div className="border rounded p-4 space-y-3 max-w-xl">
       <div className="text-sm opacity-70">
@@ -16,11 +17,13 @@ export default function PublishClient({ siteId }: { siteId: string }) {
         onClick={async () => {
           const res = await fetch(
             `/api/admin/publish?site_id=${encodeURIComponent(siteId)}`,
-            { method: "POST" }
+            { method: "POST" },
           );
           const data = await res.json();
           if (!data.ok) return alert(data.error || "Publish failed");
+          console.log(data);
           setLastSnap(data.snapshot_id);
+          setUrl(data.storefront_url);
           alert("Published ✅");
         }}
         type="button"
@@ -33,13 +36,10 @@ export default function PublishClient({ siteId }: { siteId: string }) {
           <div>
             Snapshot: <span className="font-mono">{lastSnap}</span>
           </div>
+
           <div className="mt-2">
             Storefront:{" "}
-            <a
-              className="underline"
-              href="http://localhost:3002/?handle=demo-site"
-              target="_blank"
-            >
+            <a className="underline" href={url} target="_blank">
               Open storefront
             </a>
           </div>
