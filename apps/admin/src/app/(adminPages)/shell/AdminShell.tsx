@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Save,
   GlobeIcon,
+  ChartCandlestick,
 } from "lucide-react";
 import { SiteSwitcher } from "@/app/_components/SiteSwitcher";
 
@@ -55,6 +56,12 @@ export default function AdminShell({
       label: "Your Sites",
       href: "/content/sites",
       icon: GlobeIcon,
+      group: "Content",
+    },
+    {
+      label: "Site SEO",
+      href: "/content/seo",
+      icon: ChartCandlestick,
       group: "Content",
     },
     {
@@ -245,7 +252,7 @@ export default function AdminShell({
                 </Link>
                 <Link
                   href={withSite("/content/publish")}
-                  className="btn-primary"
+                  className="btn-primary py-3 text-white rounded-md items-center gap-2 flex px-6 bg-blue-400"
                 >
                   <Save size={16} /> Publish
                 </Link>

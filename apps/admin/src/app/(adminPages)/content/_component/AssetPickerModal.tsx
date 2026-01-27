@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Upload } from "lucide-react";
 
 export default function AssetPickerModal({
   siteId,
@@ -15,23 +16,90 @@ export default function AssetPickerModal({
 }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function loadAssets() {
+    setLoading(true);
+    const res = await fetch(
+      `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
+      { cache: "no-store" },
+    );
+    const data = await res.json();
+    setAssets(data.assets ?? []);
+    setLoading(false);
+  }
 
   useEffect(() => {
     if (!open) return;
-    (async () => {
-      setLoading(true);
-      const res = await fetch(
-        `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-        { cache: "no-store" },
-      );
-      const data = await res.json();
-      setAssets(data.assets ?? []);
-      setLoading(false);
-    })();
+    loadAssets();
   }, [open, siteId]);
 
+  async function uploadFile(file: File) {
+    try {
+      setUploading(true);
+
+      const signRes = await fetch(
+        `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name, mime: file.type }),
+        },
+      );
+
+      const signData = await signRes.json();
+      if (!signRes.ok) throw new Error(signData?.error || "Sign failed");
+
+      const formData = new FormData();
+      Object.entries(signData.upload.fields).forEach(([k, v]) =>
+        formData.append(k, v as string),
+      );
+      formData.append("file", file);
+
+      const postRes = await fetch(signData.upload.url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!postRes.ok) throw new Error("Upload failed");
+
+      const finRes = await fetch(
+        `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            key: signData.key,
+            url: signData.finalUrl,
+            mime: file.type,
+            size_bytes: file.size,
+          }),
+        },
+      );
+
+      const finData = await finRes.json();
+      if (!finRes.ok) throw new Error("Finalize failed");
+
+      // Refresh list
+      await loadAssets();
+
+      // Auto-pick newly uploaded asset
+      onPick({
+        key: signData.key,
+        url: signData.finalUrl,
+      });
+
+      onClose();
+    } catch (e) {
+      console.error("Upload error:", e);
+      alert("Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   if (!open) return null;
-  console.log("assets", assets);
+
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
@@ -41,18 +109,36 @@ export default function AssetPickerModal({
         className="bg-white w-full max-w-4xl rounded-xl p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3">
           <div className="font-semibold">Pick an Asset</div>
-          <button
-            className="border rounded px-3 py-1 text-sm"
-            onClick={onClose}
-            type="button"
-          >
-            Close
-          </button>
+
+          <div className="flex items-center gap-2">
+            <label className="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-sm cursor-pointer hover:bg-muted">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading…" : "Upload"}
+              <input
+                type="file"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadFile(f);
+                }}
+              />
+            </label>
+
+            <button
+              className="border rounded px-3 py-1 text-sm"
+              onClick={onClose}
+              type="button"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        {loading ? <div className="opacity-70 mt-3">Loading…</div> : null}
+        {loading && <div className="opacity-70 mt-3">Loading…</div>}
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 max-h-[60vh] overflow-auto">
           {assets.map((a) => (

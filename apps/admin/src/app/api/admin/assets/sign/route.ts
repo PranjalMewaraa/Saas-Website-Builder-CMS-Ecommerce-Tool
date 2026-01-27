@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const Bucket = process.env.S3_BUCKET || "";
     const cdnBase = process.env.CDN_BASE_URL || "";
-
+    console.log("Bucket ", Bucket, " cdn ", cdnBase);
     if (!Bucket)
       return NextResponse.json(
         { ok: false, error: "Missing S3_BUCKET" },

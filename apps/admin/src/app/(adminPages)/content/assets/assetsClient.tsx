@@ -52,7 +52,7 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   const [uploadStatus, setUploadStatus] = useState<
     "idle" | "uploading" | "success" | "error"
   >("idle");
-  console.log("AssetsClient siteId:", siteId);
+
   async function refresh() {
     setLoading(true);
     try {
@@ -78,7 +78,6 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   const filtered = useMemo(() => {
     const q = normalize(search);
     if (!q) return assets;
-
     return assets.filter((a) => {
       return (
         normalize(a.key || "").includes(q) ||
@@ -107,10 +106,7 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   async function upload(file: File) {
     setBusy(true);
     setUploadStatus("uploading");
-
     try {
-      console.log("Uploading file:", file.name, file.type, file.size);
-
       const signRes = await fetch(
         `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
         {
@@ -120,20 +116,14 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
         },
       );
 
-      console.log("SIGN STATUS:", signRes.status);
+      if (!signRes.ok) throw new Error("Sign failed");
 
       const signData = await signRes.json();
-      console.log("SIGN RESPONSE:", signData);
 
-      if (!signRes.ok) throw new Error("Sign API failed");
-
-      // Upload to S3 using POST policy
       const formData = new FormData();
-
-      Object.entries(signData.upload.fields).forEach(([key, value]) => {
-        formData.append(key, value as string);
+      Object.entries(signData.upload.fields).forEach(([k, v]) => {
+        formData.append(k, v as string);
       });
-
       formData.append("file", file);
 
       const postRes = await fetch(signData.upload.url, {
@@ -141,9 +131,7 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
         body: formData,
       });
 
-      console.log("POST STATUS:", postRes.status);
-
-      if (!postRes.ok) throw new Error("Upload to storage failed");
+      if (!postRes.ok) throw new Error("Upload failed");
 
       const finRes = await fetch(
         `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
@@ -159,17 +147,12 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
         },
       );
 
-      console.log("FINALIZE STATUS:", finRes.status);
-
-      const finData = await finRes.json();
-      console.log("FINALIZE RESPONSE:", finData);
-
       if (!finRes.ok) throw new Error("Finalize failed");
 
       setUploadStatus("success");
       await refresh();
     } catch (err) {
-      console.error("UPLOAD FAILED:", err);
+      console.error(err);
       setUploadStatus("error");
     } finally {
       setBusy(false);
@@ -177,98 +160,97 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="space-y-8 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Asset Library
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage images, files and media for site <strong>{siteId}</strong>
+          <h1 className="text-3xl font-bold tracking-tight">Asset Library</h1>
+          <p className="mt-1.5 text-muted-foreground">
+            Manage images, files & media for site{" "}
+            <span className="font-medium text-foreground">{siteId}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-60">
-            <Upload className="h-4 w-4" />
-            <span>Upload</span>
-            <input
-              type="file"
-              className="hidden"
-              disabled={busy}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) upload(file);
-              }}
-            />
-          </label>
-        </div>
+        <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-all shadow-sm disabled:opacity-60 disabled:pointer-events-none">
+          <Upload className="h-4.5 w-4.5" />
+          Upload files
+          <input
+            type="file"
+            className="hidden"
+            multiple
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.files) {
+                Array.from(e.target.files).forEach(upload);
+              }
+            }}
+          />
+        </label>
       </div>
 
       {/* Upload status */}
       {uploadStatus !== "idle" && (
         <div
-          className={`p-3 rounded-lg flex items-center gap-3 text-sm ${
+          className={`p-4 rounded-xl flex items-center gap-3 text-sm font-medium border-l-4 ${
             uploadStatus === "uploading"
-              ? "bg-blue-50 text-blue-700"
+              ? "bg-blue-50 border-blue-500 text-blue-700"
               : uploadStatus === "success"
-                ? "bg-green-50 text-green-700"
-                : "bg-red-50 text-red-700"
+                ? "bg-green-50 border-green-500 text-green-700"
+                : "bg-red-50 border-red-500 text-red-700"
           }`}
         >
           {uploadStatus === "uploading" && (
-            <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+            <div className="animate-spin h-5 w-5 border-3 border-current border-t-transparent rounded-full" />
           )}
           {uploadStatus === "success" && <Check className="h-5 w-5" />}
           {uploadStatus === "error" && <AlertTriangle className="h-5 w-5" />}
           <span>
             {uploadStatus === "uploading"
-              ? "Uploading..."
+              ? "Uploading file..."
               : uploadStatus === "success"
-                ? "Upload successful!"
-                : "Upload failed. Try again."}
+                ? "Upload completed successfully"
+                : "Upload failed — please try again"}
           </span>
         </div>
       )}
 
       {/* Search & Tags */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
           <input
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-            placeholder="Search by filename, alt, tags, folder..."
+            className="w-full pl-12 pr-12 py-3 bg-background border border-input rounded-xl text-base placeholder:text-muted-foreground focus:border-primary/70 focus:ring-4 focus:ring-primary/15 transition-all shadow-sm"
+            placeholder="Search by filename, alt text, tags, folder..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           {search && (
             <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setSearch("")}
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           )}
         </div>
 
         {topTags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {topTags.map(({ tag, count }) => {
               const active = normalize(search) === tag;
               return (
                 <button
                   key={tag}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-                    active
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background hover:bg-muted border-border"
-                  }`}
                   onClick={() => setSearch(active ? "" : tag)}
+                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-muted hover:bg-muted/80 border border-border/60 text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   <Tag className="h-3.5 w-3.5" />
                   {tag}
-                  <span className="opacity-70 text-xs">({count})</span>
+                  <span className="text-xs opacity-75">({count})</span>
                 </button>
               );
             })}
@@ -276,7 +258,6 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
         )}
       </div>
 
-      {/* Stats */}
       <div className="text-sm text-muted-foreground">
         Showing <strong className="text-foreground">{filtered.length}</strong>{" "}
         of <strong className="text-foreground">{assets.length}</strong> assets
@@ -284,26 +265,26 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="border rounded-xl p-4 animate-pulse bg-muted/40 h-64"
+              className="rounded-2xl overflow-hidden bg-muted/40 animate-pulse h-80"
             />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground">
-          <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-40" />
-          <h3 className="font-medium text-lg mb-2">No assets found</h3>
-          <p className="text-sm max-w-md mx-auto">
+        <div className="border border-dashed rounded-2xl p-12 text-center text-muted-foreground bg-muted/20">
+          <ImageIcon className="h-16 w-16 mx-auto mb-6 opacity-50" />
+          <h3 className="text-xl font-medium mb-3">No assets found</h3>
+          <p className="max-w-md mx-auto">
             {search
-              ? "Try adjusting your search or clear filters."
-              : "Upload your first image or file to get started."}
+              ? "Try a different search term or clear the filter."
+              : "Start by uploading your first image or file."}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filtered.map((asset) => (
             <AssetCard
               key={asset._id}
@@ -382,7 +363,6 @@ function AssetCard({
     }
 
     try {
-      // Try hard delete first, fallback to soft delete
       let res = await fetch(
         `/api/admin/assets/hard-delete?site_id=${encodeURIComponent(siteId)}`,
         {
@@ -403,100 +383,98 @@ function AssetCard({
         );
       }
 
-      if (res.ok) {
-        await onRefresh();
-      }
+      if (res.ok) await onRefresh();
     } catch (err) {
       console.error(err);
     }
   }
 
   return (
-    <div className="group border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow transition-all duration-200">
+    <div className="group relative border border-border/60 rounded-2xl overflow-hidden bg-card shadow-sm hover:shadow-lg hover:border-border transition-all duration-200">
       {/* Preview */}
-      <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/40 to-muted/70 overflow-hidden">
         {asset.kind === "image" ? (
-          <img
-            src={asset.url}
-            alt={asset.alt || asset.key}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            loading="lazy"
-          />
+          <>
+            <img
+              src={asset.url}
+              alt={asset.alt || asset.key}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-            <File className="h-10 w-10 mb-2" />
-            <span className="text-xs font-medium">
-              {asset.mime?.split("/")[1]?.toUpperCase() || "FILE"}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground/70">
+            <File className="h-14 w-14 mb-4 opacity-60" />
+            <span className="text-sm font-medium uppercase tracking-wider">
+              {asset.mime?.split("/")[1] || "FILE"}
             </span>
           </div>
         )}
 
         {asset.width && asset.height && (
-          <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+          <div className="absolute bottom-3 right-3 bg-black/75 text-white text-xs font-medium px-2.5 py-1 rounded-full backdrop-blur-sm">
             {asset.width} × {asset.height}
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-4">
-        {/* Alt */}
+      <div className="p-5 space-y-5">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Alt text
+          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Alt Text
           </label>
           <input
-            className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-4 py-2.5 bg-background border border-input rounded-lg text-sm focus:border-primary focus:ring-4 focus:ring-primary/15 transition-all"
             value={alt}
             onChange={(e) => setAlt(e.target.value)}
-            placeholder="Descriptive alt text for accessibility"
+            placeholder="Descriptive text for accessibility..."
           />
         </div>
 
-        {/* Folder */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-            <Folder className="h-3.5 w-3.5" />
+          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+            <Folder className="h-4 w-4" />
             Folder
           </label>
           <input
-            className="w-full border rounded-md px-3 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-4 py-2.5 font-mono bg-background border border-input rounded-lg text-sm focus:border-primary focus:ring-4 focus:ring-primary/15 transition-all"
             value={folder}
             onChange={(e) => setFolder(e.target.value)}
             placeholder="/images/heroes"
           />
         </div>
 
-        {/* Tags */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-            <Tag className="h-3.5 w-3.5" />
+          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+            <Tag className="h-4 w-4" />
             Tags
           </label>
           <input
-            className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full px-4 py-2.5 bg-background border border-input rounded-lg text-sm focus:border-primary focus:ring-4 focus:ring-primary/15 transition-all"
             value={tagsText}
             onChange={(e) => setTagsText(e.target.value)}
             placeholder="comma, separated, tags"
           />
 
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {tags.map((t) => (
                 <div
                   key={t}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-muted rounded-full text-xs font-medium cursor-pointer hover:bg-muted/80 transition-colors"
                   onClick={() => onTagClick(t)}
+                  className="group/tag inline-flex items-center gap-1.5 pl-3.5 pr-2.5 py-1 bg-secondary text-secondary-foreground text-xs font-medium rounded-full hover:bg-secondary/90 transition-colors cursor-pointer"
                 >
                   {t}
                   <button
-                    className="text-muted-foreground hover:text-foreground"
+                    className="p-0.5 rounded-full hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       setTagsText(tags.filter((tag) => tag !== t).join(", "));
                     }}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
@@ -504,48 +482,46 @@ function AssetCard({
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2 pt-2">
+        <div className="flex flex-wrap gap-3 pt-4 border-t">
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-md text-sm hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-input rounded-lg hover:bg-muted transition-colors"
             onClick={() => {
               navigator.clipboard.writeText(asset.url);
               setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
+              setTimeout(() => setCopied(false), 1800);
             }}
           >
             {copied ? (
-              <Check className="h-3.5 w-3.5" />
+              <Check className="h-4 w-4" />
             ) : (
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-4 w-4" />
             )}
-            {copied ? "Copied!" : "Copy URL"}
+            {copied ? "Copied" : "Copy URL"}
           </button>
 
           <button
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 disabled:opacity-60 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 disabled:opacity-60 transition-colors shadow-sm"
             onClick={saveMetadata}
             disabled={saving}
           >
-            <Save className="h-3.5 w-3.5" />
+            <Save className="h-4 w-4" />
             {saving ? "Saving…" : "Save"}
           </button>
 
           <button
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+            className={`ml-auto inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               showDeleteConfirm
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "text-red-600 hover:bg-red-50 border border-red-200"
+                ? "bg-red-600 text-white hover:bg-red-700 shadow-sm"
+                : "text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300"
             }`}
             onClick={handleDelete}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
             {showDeleteConfirm ? "Confirm Delete" : "Delete"}
           </button>
         </div>
 
-        {/* Key / meta */}
-        <div className="text-xs text-muted-foreground font-mono break-all pt-2 border-t">
+        <div className="text-xs text-muted-foreground/70 font-mono break-all pt-2 leading-relaxed">
           {asset.key}
         </div>
       </div>

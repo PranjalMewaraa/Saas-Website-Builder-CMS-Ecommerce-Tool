@@ -1,6 +1,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 
-const endpoint = process.env.S3_ENDPOINT || "s3.eu-north-1.amazonaws.com";
+const endpoint =
+  process.env.S3_ENDPOINT2 || "https://s3.eu-north-1.amazonaws.com";
 const region = process.env.S3_REGION || "eu-north-1";
 const accessKeyId = process.env.S3_ACCESS_KEY || "AKIAR5ZDIYOW4AII3W3D";
 const secretAccessKey =
@@ -9,7 +10,8 @@ const secretAccessKey =
 if (!endpoint) throw new Error("Missing S3_ENDPOINT");
 if (!accessKeyId) throw new Error("Missing S3_ACCESS_KEY");
 if (!secretAccessKey) throw new Error("Missing S3_SECRET_KEY");
-
+console.log(endpoint, accessKeyId, secretAccessKey);
+const finalEndpoint = `https://${endpoint}`;
 export const s3 = new S3Client({
   region,
   endpoint,
