@@ -75,7 +75,10 @@ export async function RenderPage(args: {
     snapshot: normalizeMenusBySlot(args.ctx.snapshot),
   };
 
-  console.log("RenderPage ctx.snapshot", ctx.snapshot.theme.brands);
+  console.log(
+    "RenderPage ctx.snapshot",
+    ctx.snapshot.pages["/"].layout.sections[0].blocks[1],
+  );
 
   const css = buildResponsiveCss(parsedLayout);
 

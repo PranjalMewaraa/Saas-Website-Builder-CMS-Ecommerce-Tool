@@ -7,4 +7,5 @@ export const HeaderV1Schema = z.object({
   logoAssetId: z.string().min(1).optional(),
   logoUrl: z.string().url().optional(),
   logoAlt: z.string().max(160).optional(),
+  contentWidth: z.string().min(1).max(50).optional(),
 });

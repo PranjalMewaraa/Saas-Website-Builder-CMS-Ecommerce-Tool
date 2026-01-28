@@ -16,7 +16,7 @@ type Props = {
   menu: Menu | null;
   ctaText?: string;
   ctaHref?: string;
-
+  contentWidth: string;
   logoUrl?: string;
   logoAlt?: string;
 };
@@ -27,12 +27,29 @@ export default function HeaderV1({
   ctaHref,
   logoUrl,
   logoAlt,
+  contentWidth,
 }: Props) {
   const items = menu?.tree ?? [];
 
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
+
   return (
-    <header>
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+    <header className="w-full">
+      <div
+        style={{ maxHeight: "4rem", maxWidth: maxWidth }}
+        className="mx-auto  px-4 py-3 flex items-center justify-between gap-4"
+      >
         {logoUrl ? (
           <Link href="/" className="flex items-center gap-2">
             <Image

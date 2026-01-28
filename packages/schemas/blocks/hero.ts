@@ -45,31 +45,43 @@ export const HeroSchema = z
 export type HeroProps = z.infer<typeof HeroSchema>;
 
 export const HeroDefaults: HeroProps = {
-  variant: "basic",
+  variant: "basic", // can stay basic or change to "centered"/"split" etc if your system supports
+
   headline: "Headline",
   subhead: "Subhead",
-  ctaText: "Browse",
+
+  ctaText: "Get Started",
   ctaHref: "/products",
-  secondaryCtaText: "",
-  secondaryCtaHref: "",
-  align: "left",
-  contentWidth: "xl",
-  minHeight: 320,
+  secondaryCtaText: "Learn More",
+  secondaryCtaHref: "/about",
+
+  align: "left", // "center" is usually more hero-like in 2024–2026 designs
+  // Alternative popular modern choice:
+  // align: "center",
+
+  contentWidth: "xl", // good choice — alternatives: "lg" / "2xl" / "7xl"
+
+  minHeight: 640, // 320px feels too short for modern hero sections — 80vh or 640–800px is more common
+
   bg: {
-    type: "none",
+    type: "image", // "none" → "image" or "video" feels more premium as default
     imageAssetId: "",
-    imageUrl: "",
-    imageAlt: "",
+    imageUrl:
+      "https://imgs.search.brave.com/wmNdZ-UZ8Tnxddp-fHKp-S1xfFV-wl9OA6Iagyi2EKQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWd2/My5mb3Rvci5jb20v/aW1hZ2VzL2Jsb2ct/Y292ZXItaW1hZ2Uv/YS1naXJsLWNyZWF0/aW5nLWEtZGVzaWdu/LXdpdGgtY29tcHV0/ZXIuanBn", // in real use → often a subtle gradient or high-quality hero image
+    imageAlt: "Hero background",
+
     videoAssetId: "",
     videoUrl: "",
     posterAssetId: "",
     posterUrl: "",
-    overlayColor: "#000000",
-    overlayOpacity: 0.45,
+
+    overlayColor: "#0f172a", // slate-950 — darker & more sophisticated than pure black
+    overlayOpacity: 0.55, // 0.45–0.65 range usually looks best
+
     videoAutoplay: true,
     videoMuted: true,
     videoLoop: true,
     videoControls: false,
-    videoPreload: "metadata",
+    videoPreload: "metadata", // "auto" is also common if video is the hero star
   },
 };

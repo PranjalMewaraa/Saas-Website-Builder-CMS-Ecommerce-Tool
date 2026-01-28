@@ -11,7 +11,7 @@ import {
 import SectionInspectorPanel from "./components/SectionInspectorPanel";
 import TemplatesPanel from "./components/TemplatesPanel";
 import { arrayMove } from "@dnd-kit/sortable";
-import { RenderPageBuilder } from "../../../../../packages/renderer/render-page-builder";
+
 import BlockLibraryPanel from "./components/BlockLibraryPanel";
 import SectionCanvas from "./components/SectionCanvas";
 import InspectorPanel from "./components/InspectorPanel";
@@ -26,6 +26,7 @@ import {
   Globe,
   Settings,
 } from "lucide-react";
+import { RenderPageBuilder } from "../../../../../../packages/renderer/render-page-builder";
 
 function firstKey(obj: any) {
   const keys = Object.keys(obj || {});
@@ -97,7 +98,7 @@ function remapSectionStyleAssets(sectionStyle: any, snapshotLike: any) {
 
 function resolveAssetReplacement(
   oldId: string,
-  assetMap: Record<string, string>
+  assetMap: Record<string, string>,
 ) {
   const v = assetMap[oldId];
   if (!v || v === "__clear__") return "";
@@ -122,13 +123,13 @@ function applyBlockMapping(block: any, snapshotLike: any, mapping: any) {
   if (block.props?.imageAssetId && !assets[block.props.imageAssetId]) {
     block.props.imageAssetId = resolveAssetReplacement(
       block.props.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
   if (block.props?.logoAssetId && !assets[block.props.logoAssetId]) {
     block.props.logoAssetId = resolveAssetReplacement(
       block.props.logoAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
 
@@ -138,7 +139,7 @@ function applyBlockMapping(block: any, snapshotLike: any, mapping: any) {
   ) {
     block.style.overrides.bg.imageAssetId = resolveAssetReplacement(
       block.style.overrides.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
   if (
@@ -147,7 +148,7 @@ function applyBlockMapping(block: any, snapshotLike: any, mapping: any) {
   ) {
     block.style.responsive.tablet.bg.imageAssetId = resolveAssetReplacement(
       block.style.responsive.tablet.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
   if (
@@ -156,7 +157,7 @@ function applyBlockMapping(block: any, snapshotLike: any, mapping: any) {
   ) {
     block.style.responsive.mobile.bg.imageAssetId = resolveAssetReplacement(
       block.style.responsive.mobile.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
 }
@@ -164,7 +165,7 @@ function applyBlockMapping(block: any, snapshotLike: any, mapping: any) {
 function applySectionMapping(
   sectionStyle: any,
   snapshotLike: any,
-  mapping: any
+  mapping: any,
 ) {
   const assets = snapshotLike.assets || {};
 
@@ -174,7 +175,7 @@ function applySectionMapping(
   ) {
     sectionStyle.overrides.bg.imageAssetId = resolveAssetReplacement(
       sectionStyle.overrides.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
   if (
@@ -183,7 +184,7 @@ function applySectionMapping(
   ) {
     sectionStyle.responsive.tablet.bg.imageAssetId = resolveAssetReplacement(
       sectionStyle.responsive.tablet.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
   if (
@@ -192,7 +193,7 @@ function applySectionMapping(
   ) {
     sectionStyle.responsive.mobile.bg.imageAssetId = resolveAssetReplacement(
       sectionStyle.responsive.mobile.bg.imageAssetId,
-      mapping.assetMap
+      mapping.assetMap,
     );
   }
 }
@@ -200,7 +201,7 @@ function applySectionMapping(
 export default function BuilderClient({ siteId }: { siteId: string }) {
   const [page, setPage] = useState<any>(null);
   const [rightBp, setRightBp] = useState<"desktop" | "tablet" | "mobile">(
-    "desktop"
+    "desktop",
   );
   const [insertWizardOpen, setInsertWizardOpen] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<any>(null);
@@ -208,10 +209,10 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
   const [selectedBlockId, setSelectedBlockId] = useState<string>("");
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [leftTab, setLeftTab] = useState<"sections" | "blocks" | "templates">(
-    "sections"
+    "sections",
   );
   const [centerTab, setCenterTab] = useState<"canvas" | "preview" | "website">(
-    "canvas"
+    "canvas",
   );
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
@@ -228,14 +229,14 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
   useEffect(() => {
     (async () => {
       const pagesRes = await fetch(
         `/api/admin/pages?site_id=${encodeURIComponent(siteId)}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       const pagesData = await pagesRes.json();
       const home = (pagesData.pages ?? []).find((p: any) => p.slug === "/");
@@ -255,7 +256,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           }),
           fetch(
             `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
-            { cache: "no-store" }
+            { cache: "no-store" },
           ),
           fetch(`/api/admin/assets?site_id=${encodeURIComponent(siteId)}`, {
             cache: "no-store",
@@ -272,13 +273,16 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
       const formsData = await formsRes.json();
 
       const menusMap = Object.fromEntries(
-        (menusData.menus ?? []).map((m: any) => [m._id, { tree: m.draft_tree }])
+        (menusData.menus ?? []).map((m: any) => [
+          m._id,
+          { tree: m.draft_tree },
+        ]),
       );
       const presetsMap = Object.fromEntries(
         (presetsData.presets ?? []).map((p: any) => [
           p._id,
           { name: p.name, style: p.style, target: p.target },
-        ])
+        ]),
       );
       const assetsMap = Object.fromEntries(
         (assetsData.assets ?? []).map((a: any) => [
@@ -290,13 +294,13 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
             height: a.height,
             mime: a.mime,
           },
-        ])
+        ]),
       );
       const formsMap = Object.fromEntries(
         (formsData.forms ?? []).map((f: any) => [
           f._id,
           { name: f.name, schema: f.draft_schema },
-        ])
+        ]),
       );
 
       setSnapshotLike((prev: any) => ({
@@ -359,7 +363,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     const sec = next.sections[idx];
     if (sec.blocks?.length) {
       const ok = confirm(
-        "This section has blocks. Are you sure you want to delete it?"
+        "This section has blocks. Are you sure you want to delete it?",
       );
       if (!ok) return;
     }
@@ -425,18 +429,18 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
 
     const name = prompt(
       "Enter a name for this template",
-      selectedSection.label || "My Section Template"
+      selectedSection.label || "My Section Template",
     );
     if (!name) return;
 
     const makeTenantWide = confirm(
-      "Make this template available across all sites (tenant-wide)?\n\nOK = Yes (tenant-wide)\nCancel = No (this site only)"
+      "Make this template available across all sites (tenant-wide)?\n\nOK = Yes (tenant-wide)\nCancel = No (this site only)",
     );
     const scope = makeTenantWide ? "tenant" : "site";
 
     const tagsText = prompt(
       "Enter tags (comma-separated, e.g., hero, footer)",
-      ""
+      "",
     );
     const tags = (tagsText || "")
       .split(",")
@@ -458,7 +462,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
             blocks: selectedSection.blocks,
           },
         }),
-      }
+      },
     );
 
     const data = await res.json();
@@ -466,7 +470,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     alert(
       scope === "tenant"
         ? "Template saved and available across all sites ✅"
-        : "Template saved for this site ✅"
+        : "Template saved for this site ✅",
     );
   }
 
@@ -476,7 +480,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
       menuMap: Record<string, string>;
       formMap: Record<string, string>;
       assetMap: Record<string, string>;
-    }
+    },
   ) {
     const next = structuredClone(layout);
     const newSectionId = `sec_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -540,7 +544,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
       next.sections[fromLoc.sectionIndex].blocks = arrayMove(
         next.sections[fromLoc.sectionIndex].blocks,
         fromLoc.blockIndex,
-        overLoc.blockIndex
+        overLoc.blockIndex,
       );
       setLayout(next);
       return;
@@ -753,7 +757,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
               if (!previewUrl) {
                 const res = await fetch(
                   `/api/admin/preview?site_id=${encodeURIComponent(siteId)}`,
-                  { method: "POST" }
+                  { method: "POST" },
                 );
                 const data = await res.json();
                 if (data.ok) {

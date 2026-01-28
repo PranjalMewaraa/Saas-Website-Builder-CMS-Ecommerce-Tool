@@ -8,6 +8,7 @@ interface Feature {
 interface FeaturesGridV1Props {
   title?: string;
   features?: Feature[];
+  contentWidth?: string;
 }
 
 const defaultFeatures: Feature[] = [
@@ -46,10 +47,23 @@ const defaultFeatures: Feature[] = [
 export default function FeaturesGridV1({
   title,
   features = defaultFeatures,
+  contentWidth,
 }: FeaturesGridV1Props) {
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
   return (
     <section className="py-20 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className=" mx-auto px-6" style={{ maxWidth: maxWidth }}>
         {title && (
           <h2 className="text-3xl font-bold mb-10 text-center">{title}</h2>
         )}

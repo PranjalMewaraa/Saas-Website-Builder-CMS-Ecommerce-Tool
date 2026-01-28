@@ -54,7 +54,7 @@ export async function resolveSite() {
   }
 
   // 3. fallback
-  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "demo-site");
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "pranjal-site");
 }
 
 export async function generateMetadata({

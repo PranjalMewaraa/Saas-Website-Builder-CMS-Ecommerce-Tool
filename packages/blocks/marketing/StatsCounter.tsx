@@ -7,6 +7,7 @@ interface Stat {
 
 interface StatsCounterV1Props {
   stats?: Stat[];
+  contentWidth?: string;
 }
 
 const defaultStats: Stat[] = [
@@ -18,10 +19,26 @@ const defaultStats: Stat[] = [
 
 export default function StatsCounterV1({
   stats = defaultStats,
+  contentWidth,
 }: StatsCounterV1Props) {
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
   return (
     <section className="py-16 bg-black text-white">
-      <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <div
+        className=" mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
+        style={{ maxWidth: maxWidth }}
+      >
         {stats.map((s, i) => (
           <div key={i}>
             <div className="text-3xl md:text-4xl font-bold">{s.value}</div>

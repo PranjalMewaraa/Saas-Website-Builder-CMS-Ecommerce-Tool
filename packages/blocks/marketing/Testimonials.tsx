@@ -9,6 +9,7 @@ interface Testimonial {
 interface TestimonialsV1Props {
   title?: string;
   testimonials?: Testimonial[];
+  contentWidth?: string;
 }
 
 const defaultTestimonials: Testimonial[] = [
@@ -32,11 +33,24 @@ const defaultTestimonials: Testimonial[] = [
 
 export default function TestimonialsV1({
   title,
+  contentWidth,
   testimonials = defaultTestimonials,
 }: TestimonialsV1Props) {
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
   return (
     <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className=" mx-auto px-6" style={{ maxWidth: maxWidth }}>
         {title && (
           <h2 className="text-3xl font-bold mb-10 text-center">{title}</h2>
         )}

@@ -1,19 +1,6 @@
 import React from "react";
 import type { HeroProps } from "./../../schemas/blocks/hero";
 
-function widthClass(w: HeroProps["contentWidth"]) {
-  if (w === "sm") return "max-w-screen-sm";
-  if (w === "md") return "max-w-screen-md";
-  if (w === "lg") return "max-w-screen-lg";
-  return "max-w-screen-xl";
-}
-
-function alignClass(a: HeroProps["align"]) {
-  if (a === "center") return "text-center items-center justify-center";
-  if (a === "right") return "text-right items-end justify-center";
-  return "text-left items-start justify-center";
-}
-
 export default function Hero(props: HeroProps) {
   const bgType =
     props.variant === "image"
@@ -22,78 +9,200 @@ export default function Hero(props: HeroProps) {
         ? "video"
         : (props.bg?.type ?? "none");
 
-  const overlayOpacity = props.bg?.overlayOpacity ?? 0.45;
-  const overlayColor = props.bg?.overlayColor ?? "#000000";
+  const overlayColor = props.bg?.overlayColor ?? "#0f172a";
+  const overlayOpacity = props.bg?.overlayOpacity ?? 0.55;
+
+  // Determine content alignment styles
+  const contentAlignStyle =
+    props.align === "center"
+      ? { textAlign: "center", alignItems: "center", justifyContent: "center" }
+      : props.align === "right"
+        ? {
+            textAlign: "right",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          }
+        : {
+            textAlign: "left",
+            alignItems: "flex-start",
+            justifyContent: "flex-start",
+          };
+
+  // Responsive max-width fallback
+  const maxWidth =
+    props.contentWidth === "sm"
+      ? "640px"
+      : props.contentWidth === "md"
+        ? "768px"
+        : props.contentWidth === "lg"
+          ? "1024px"
+          : props.contentWidth === "xl"
+            ? "1280px"
+            : props.contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
 
   return (
     <section
-      className="relative  overflow-hidden"
-      style={{ minHeight: props.minHeight, height: "60vh" }}
+      style={{
+        position: "relative",
+        width: "100%",
+        overflow: "hidden",
+        backgroundColor: "#0f172a", // slate-950
+        minHeight: props.minHeight ?? 580,
+        isolation: "isolate", // helps stacking context
+      }}
     >
       {/* Background layer */}
-      {bgType === "image" ? (
-        <HeroBgImage
-          url={props.bg?.imageUrl || ""}
-          alt={props.bg?.imageAlt || ""}
-        />
-      ) : null}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: -10,
+        }}
+      >
+        {bgType === "image" && (
+          <HeroBgImage
+            url={props.bg?.imageUrl || ""}
+            alt={props.bg?.imageAlt || "Background image"}
+          />
+        )}
 
-      {bgType === "video" ? (
-        <HeroBgVideo
-          url={props.bg?.videoUrl || ""}
-          poster={props.bg?.posterUrl || ""}
-          autoplay={!!props.bg?.videoAutoplay}
-          muted={!!props.bg?.videoMuted}
-          loop={!!props.bg?.videoLoop}
-          controls={!!props.bg?.videoControls}
-          preload={props.bg?.videoPreload || "metadata"}
-        />
-      ) : null}
+        {bgType === "video" && (
+          <HeroBgVideo
+            url={props.bg?.videoUrl || ""}
+            poster={props.bg?.posterUrl || ""}
+            autoplay={!!props.bg?.videoAutoplay}
+            muted={!!props.bg?.videoMuted}
+            loop={!!props.bg?.videoLoop}
+            controls={!!props.bg?.videoControls}
+            preload={props.bg?.videoPreload || "metadata"}
+          />
+        )}
+      </div>
 
       {/* Overlay */}
-      {bgType !== "none" ? (
+      {bgType !== "none" && (
         <div
-          className="absolute inset-0 pointer-events-none"
           style={{
-            background: overlayColor,
+            position: "absolute",
+            inset: 0,
+            zIndex: -10,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5), rgba(0,0,0,0.6))",
+            backgroundColor: overlayColor,
             opacity: overlayOpacity,
           }}
         />
-      ) : null}
+      )}
 
       {/* Content */}
-
       <div
-        className={`mx-auto px-4 h-full flex flex-col py-14 ${alignClass(props.align)} ${widthClass(props.contentWidth)}`}
+        style={{
+          position: "relative",
+          zIndex: 10,
+          height: "100%",
+          margin: "0 auto",
+          padding: "4rem 1.25rem", // py-16 px-5
+          display: "flex",
+          flexDirection: "column",
+          maxWidth: maxWidth,
+          ...contentAlignStyle, // override alignment
+        }}
       >
-        <div className={`flex flex-col gap-4 `}>
-          <h1 className="text-3xl md:text-5xl font-semibold leading-tight">
-            {props.headline}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.25rem", // gap-5
+            maxWidth: "48rem", // max-w-3xl
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "clamp(2.25rem, 6vw, 4.5rem)", // responsive scaling
+              fontWeight: 800,
+              lineHeight: 1.1,
+              letterSpacing: "-0.025em",
+              color: "#ffffff",
+              margin: 0,
+            }}
+          >
+            {props.headline || "Headline"}
           </h1>
-          {props.subhead ? (
-            <p className="text-base md:text-lg opacity-90 max-w-2xl">
+
+          {props.subhead && (
+            <p
+              style={{
+                fontSize: "clamp(1.125rem, 3vw, 1.5rem)",
+                color: "rgba(255,255,255,0.9)",
+                fontWeight: 300,
+                lineHeight: 1.6,
+                maxWidth: "32rem",
+                margin: 0,
+              }}
+            >
               {props.subhead}
             </p>
-          ) : null}
+          )}
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            {props.ctaText ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+              paddingTop: "1.5rem",
+              flexWrap: "wrap",
+              "@media (min-width: 640px)": {
+                flexDirection: "row",
+              },
+            }}
+          >
+            {props.ctaText && (
               <a
                 href={props.ctaHref || "#"}
-                className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border bg-black text-white"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0.875rem 1.5rem",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  borderRadius: "0.75rem",
+                  backgroundColor: "#ffffff",
+                  color: "#0f172a",
+                  textDecoration: "none",
+                  transition: "all 0.3s ease",
+                  transform: "scale(1)",
+                  boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                }}
               >
                 {props.ctaText}
               </a>
-            ) : null}
+            )}
 
-            {props.secondaryCtaText ? (
+            {props.secondaryCtaText && (
               <a
                 href={props.secondaryCtaHref || "#"}
-                className="inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium border"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0.875rem 1.5rem",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  borderRadius: "0.75rem",
+                  border: "1px solid rgba(255,255,255,0.4)",
+                  color: "#ffffff",
+                  backgroundColor: "transparent",
+                  textDecoration: "none",
+                  transition: "all 0.3s ease",
+                }}
               >
                 {props.secondaryCtaText}
               </a>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
@@ -104,20 +213,29 @@ export default function Hero(props: HeroProps) {
 function HeroBgImage({ url, alt }: { url: string; alt: string }) {
   if (!url) {
     return (
-      <div className="absolute inset-0 bg-gray-100">
-        <div className="absolute inset-0 opacity-50 bg-gradient-to-b from-black/10 to-black/30" />
-      </div>
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          background:
+            "linear-gradient(to bottom right, #1e293b, #111827, #000000)",
+        }}
+      />
     );
   }
 
   return (
     <img
       src={url}
-      alt={alt || ""}
-      className="absolute inset-0 h-full w-full object-cover"
+      alt={alt}
+      style={{
+        height: "100%",
+        width: "100%",
+        objectFit: "cover",
+        objectPosition: "center",
+      }}
       loading="eager"
       decoding="async"
-      fetchPriority="high"
     />
   );
 }
@@ -141,15 +259,25 @@ function HeroBgVideo({
 }) {
   if (!url) {
     return (
-      <div className="absolute inset-0 bg-gray-100">
-        <div className="absolute inset-0 opacity-50 bg-gradient-to-b from-black/10 to-black/30" />
-      </div>
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          background:
+            "linear-gradient(to bottom right, #1e293b, #111827, #000000)",
+        }}
+      />
     );
   }
 
   return (
     <video
-      className="absolute inset-0 h-full w-full object-cover"
+      style={{
+        height: "100%",
+        width: "100%",
+        objectFit: "cover",
+        objectPosition: "center",
+      }}
       src={url}
       poster={poster || undefined}
       autoPlay={autoplay}

@@ -1,9 +1,28 @@
 import React from "react";
 
-export default function NewsletterSignupV1({ title, subtitle }: any) {
+export default function NewsletterSignupV1({
+  title,
+  subtitle,
+  contentWidth,
+}: any) {
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
   return (
     <section className="py-20 bg-gray-100">
-      <div className="max-w-xl mx-auto px-6 text-center">
+      <div
+        className="max-w-xl mx-auto px-6 text-center"
+        style={{ maxWidth: maxWidth }}
+      >
         <h2 className="text-2xl font-bold mb-2">{title}</h2>
         <p className="text-gray-600 mb-6">{subtitle}</p>
 

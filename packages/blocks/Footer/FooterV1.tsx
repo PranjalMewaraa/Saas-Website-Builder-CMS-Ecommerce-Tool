@@ -16,14 +16,34 @@ type Props = {
   menu: Menu | null;
   logoUrl?: string;
   logoAlt?: string;
+  contentWidth?: string;
 };
 
-export default function FooterV1({ menu, logoUrl, logoAlt }: Props) {
+export default function FooterV1({
+  menu,
+  logoUrl,
+  logoAlt,
+  contentWidth,
+}: Props) {
   const items = menu?.tree ?? [];
-
+  const maxWidth =
+    contentWidth === "sm"
+      ? "640px"
+      : contentWidth === "md"
+        ? "768px"
+        : contentWidth === "lg"
+          ? "1024px"
+          : contentWidth === "xl"
+            ? "1280px"
+            : contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
   return (
     <footer>
-      <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col gap-4">
+      <div
+        className="mx-auto max-w-6xl px-4 py-8 flex flex-col gap-4"
+        style={{ maxWidth: maxWidth }}
+      >
         <div className="flex items-center justify-between gap-4">
           {logoUrl ? (
             <Link href="/" className="flex items-center">

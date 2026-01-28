@@ -720,6 +720,12 @@ export function BlockPropsForm({
           onChange={(v: any) => setProp("ctaHref", v)}
           placeholder="/products"
         />
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <div className="border rounded p-3 space-y-3">
           <div className="text-sm font-medium">Logo</div>
           <div className="flex gap-2">
@@ -759,6 +765,12 @@ export function BlockPropsForm({
             ))}
           </select>
         </label>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
@@ -783,6 +795,12 @@ export function BlockPropsForm({
           value={props.menuId || ""}
           onChange={(v: any) => setProp("menuId", v)}
           placeholder="menu_footer"
+        />
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
         />
       </div>
     );
@@ -866,7 +884,15 @@ export function BlockPropsForm({
               label="BG Image"
               assetIdValue={bg.imageAssetId || ""}
               altValue={bg.imageAlt || ""}
-              onChangeAssetId={(v: any) => setPropPath("bg.imageAssetId", v)}
+              onChangeAssetId={(v: any) => {
+                console.log("Id", v);
+
+                setPropPath("bg.imageAssetId", v);
+                setPropPath(
+                  "bg.imageUrl",
+                  `https://d64ppqfrcykxw.cloudfront.net/${v}`,
+                );
+              }}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
             />
@@ -1018,6 +1044,12 @@ export function BlockPropsForm({
           value={props.title || ""}
           onChange={(v: any) => setProp("title", v)}
           placeholder="Featured Products"
+        />{" "}
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
         />
         <NumberField
           label="limit"
@@ -1078,6 +1110,12 @@ export function BlockPropsForm({
   if (type === "BannerCTA/V1") {
     return (
       <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
@@ -1126,6 +1164,12 @@ export function BlockPropsForm({
 
     return (
       <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
@@ -1209,6 +1253,12 @@ export function BlockPropsForm({
               value={t.quote || ""}
               onChange={(v: any) => setPropPath(`testimonials.${i}.quote`, v)}
             />
+            <Select
+              label="Width"
+              value={props.contentWidth || "xl"}
+              onChange={(v: any) => setProp("contentWidth", v)}
+              options={["sm", "md", "lg", "xl", "2xl"]}
+            />
             <Field
               label="name"
               value={t.name || ""}
@@ -1235,6 +1285,12 @@ export function BlockPropsForm({
   if (type === "ProductHighlight/V1") {
     return (
       <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
@@ -1293,6 +1349,12 @@ export function BlockPropsForm({
 
     return (
       <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
@@ -1376,6 +1438,12 @@ export function BlockPropsForm({
                 Remove
               </button>
             </div>
+            <Select
+              label="Width"
+              value={props.contentWidth || "xl"}
+              onChange={(v: any) => setProp("contentWidth", v)}
+              options={["sm", "md", "lg", "xl", "2xl"]}
+            />
 
             <Field
               label="value"
@@ -1408,6 +1476,12 @@ export function BlockPropsForm({
           value={props.title || ""}
           onChange={(v: any) => setProp("title", v)}
         />
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <div className="text-xs opacity-60">
           Logos are managed via asset picker in renderer
         </div>
@@ -1417,11 +1491,18 @@ export function BlockPropsForm({
   if (type === "NewsletterSignup/V1") {
     return (
       <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
         <Field
           label="title"
           value={props.title || ""}
           onChange={(v: any) => setProp("title", v)}
         />
+
         <Field
           label="subtitle"
           value={props.subtitle || ""}

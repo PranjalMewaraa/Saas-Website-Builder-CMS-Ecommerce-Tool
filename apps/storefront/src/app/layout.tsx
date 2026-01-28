@@ -31,7 +31,7 @@ export async function resolveSite() {
     if (site) return site;
   }
 
-  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "demo-site");
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "pranjal-site");
 }
 
 export async function generateMetadata(): Promise<Metadata> {

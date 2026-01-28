@@ -8,6 +8,7 @@ export default function FormV1(props: {
   formId: string;
   title?: string;
   submitText?: string;
+  contentWidth?: string;
   schema: any;
   mode?: "published" | "preview" | "builder";
 }) {
@@ -70,10 +71,25 @@ export default function FormV1(props: {
     (e.currentTarget as HTMLFormElement).reset();
     setSubmitting(false);
   }
+  const maxWidth =
+    props.contentWidth === "sm"
+      ? "640px"
+      : props.contentWidth === "md"
+        ? "768px"
+        : props.contentWidth === "lg"
+          ? "1024px"
+          : props.contentWidth === "xl"
+            ? "1280px"
+            : props.contentWidth === "2xl"
+              ? "1536px"
+              : "1280px";
 
   return (
     <section>
-      <div className="mx-auto max-w-2xl px-4 py-8 border rounded-xl">
+      <div
+        className="mx-auto px-4 py-8 border rounded-xl"
+        style={{ maxWidth: maxWidth }}
+      >
         {props.title ? (
           <h2 className="text-xl font-semibold">{props.title}</h2>
         ) : null}

@@ -6,6 +6,7 @@ export const BlockInstanceSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   props: z.record(z.string(), z.any()).default({}),
+  contentWidth: z.string().optional(),
   style: z
     .object({
       presetId: z.string().optional(),

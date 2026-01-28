@@ -7,6 +7,7 @@ export const ProductHighlightV1Schema = z.object({
   price: z.number().optional(),
   ctaText: z.string().optional(),
   ctaHref: z.string().optional(),
+  contentWidth: z.string().optional(),
 });
 
 export const PricingTableV1Schema = z.object({
@@ -20,4 +21,5 @@ export const PricingTableV1Schema = z.object({
       ctaHref: z.string().optional(),
     }),
   ),
+  contentWidth: z.string().optional(),
 });
