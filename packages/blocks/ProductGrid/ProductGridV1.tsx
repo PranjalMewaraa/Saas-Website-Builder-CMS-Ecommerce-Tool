@@ -1,67 +1,65 @@
+// components/ProductGridV1.tsx
 import Link from "next/link";
 import { listPublishedProductsForStore } from "./productGrid.data";
+import { ImageOff } from "lucide-react";
+import ProductCardV1 from "./ProductCardBlocks/ProductCardV1";
 
 type Props = {
   tenantId: string;
   storeId: string;
   title?: string;
-  limit: number;
-  contentWidth?: string;
+  limit?: number;
+  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 };
 
 export default async function ProductGridV1({
   tenantId,
   storeId,
   title,
-  limit,
-  contentWidth,
+  limit = 8,
+  contentWidth = "xl",
 }: Props) {
   const products = await listPublishedProductsForStore({
     tenant_id: tenantId,
     store_id: storeId,
     limit,
   });
-  const maxWidth =
-    contentWidth === "sm"
-      ? "640px"
-      : contentWidth === "md"
-        ? "768px"
-        : contentWidth === "lg"
-          ? "1024px"
-          : contentWidth === "xl"
-            ? "1280px"
-            : contentWidth === "2xl"
-              ? "1536px"
-              : "1280px";
+
+  const maxWidthClass =
+    {
+      sm: "max-w-3xl",
+      md: "max-w-5xl",
+      lg: "max-w-6xl",
+      xl: "max-w-7xl",
+      "2xl": "max-w-screen-2xl",
+      full: "max-w-full",
+    }[contentWidth] || "max-w-7xl";
+
   return (
-    <section>
-      <div
-        className="mx-auto max-w-6xl px-4 py-8"
-        style={{ maxWidth: maxWidth }}
-      >
-        {title ? <h2 className="text-xl font-semibold">{title}</h2> : null}
+    <section className="py-10 md:py-12 lg:py-16">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthClass}`}>
+        {title && (
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl mb-8">
+            {title}
+          </h2>
+        )}
 
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {products.map((p) => (
-            <Link
-              key={p.id}
-              href={`/product/${p.slug}`}
-              className="border rounded p-3 hover:shadow-sm transition"
-            >
-              <div className="font-medium text-sm">{p.title}</div>
-              <div className="text-sm opacity-75 mt-1">
-                ${(p.base_price_cents / 100).toFixed(2)}
-              </div>
-            </Link>
-          ))}
-
-          {products.length === 0 ? (
-            <div className="col-span-2 md:col-span-4 opacity-70 text-sm">
-              No published products yet for this store.
-            </div>
-          ) : null}
-        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No published products available yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:gap-8">
+            {products.map((product) => (
+              <ProductCardV1 product={product} key={product.id} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
+
+// ────────────────────────────────────────────────
+// Product Type (safe & flexible)
+// ────────────────────────────────────────────────

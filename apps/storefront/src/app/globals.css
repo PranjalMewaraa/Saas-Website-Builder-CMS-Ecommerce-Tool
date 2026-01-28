@@ -1,1 +1,18 @@
 @import "tailwindcss";
+.card {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 8px;
+}
+.btn {
+  background: black;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+}
+.input {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 6px;
+  width: 100%;
+}
