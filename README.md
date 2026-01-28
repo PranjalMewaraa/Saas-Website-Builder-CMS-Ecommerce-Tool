@@ -1,139 +1,312 @@
-# Flappy
+# 🚀 SaaS Website Builder + Headless Commerce Platform
 
-I am creating something big here , my own combo of shopify , wordpress aiming for small shop owners
+A multi-tenant, production-grade **Website Builder + E-commerce SaaS** platform built from scratch using modern web architecture.
 
-# Turborepo starter
+This project enables users to:
 
-This Turborepo starter is maintained by the Turborepo core team.
+- Create websites visually (like Webflow / Shopify)
+- Manage themes, pages, assets, SEO, menus
+- Build full e-commerce stores
+- Publish to subdomains instantly
+- Scale to multiple industries (fashion, electronics, services, etc.)
 
-## Using this example
+---
 
-Run the following command:
+## 🧠 Vision
 
-```sh
-npx create-turbo@latest
-```
+To build a **fully customizable SaaS platform** that combines:
 
-## What's inside?
+- Visual website building  
+- Modular block-based rendering  
+- Enterprise-grade multi-tenant backend  
+- Flexible product system with attributes & variants  
+- Real-world ecommerce workflows  
+- Future AI-powered website generation
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## ✨ Key Features (MVP Completed)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### 🏗 Website Builder
+- Visual block-based page editor
+- Reusable sections & templates
+- Theme token system
+- Style presets
+- Menu builder
+- Forms builder
+- Snapshot-based publishing system
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### 🖼 Asset Management
+- S3 based upload system
+- Image optimization
+- Tags, folders, alt text
+- Hard & soft deletion
 
-### Utilities
+### 🧭 SEO System
+- Page-level SEO editor
+- OpenGraph
+- JSON-LD schemas
+- Dynamic metadata generation
+- Sitemap & robots support (in progress)
 
-This Turborepo has some additional tools already setup for you:
+### 🏢 Multi-Tenant Architecture
+- Tenants
+- Users & roles
+- Sites per tenant
+- Subdomain routing
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### 🛍 E-commerce Core
+- Brands
+- Categories
+- Products
+- Variants
+- Store publishing
+- MySQL relational store
+- Attribute system (custom per industry)
 
-### Build
+### 🔐 Auth & Permissions
+- NextAuth credentials login
+- Tenant based access
+- Module gating (catalog, builder, forms, etc.)
 
-To build all apps and packages, run the following command:
+---
 
-```
-cd my-turborepo
+## 🧩 Project Structure (Monorepo)
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+apps/
+admin/ # Admin dashboard (website builder + store management)
+content/
+components/
+api/
+onboarding/
+store-setup/
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+storefront/ # Public website renderer
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+packages/
+renderer/ # Rendering engine for pages & blocks
+blocks/ # All UI blocks (Hero, Header, ProductGrid, etc.)
+schemas/ # Zod schemas for blocks & APIs
+auth/ # Authentication + session + module gate
+core/ # Module system & feature toggles
+db-mongo/ # Website builder data layer (sites, pages, themes, assets)
+db-mysql/ # Ecommerce data layer (products, brands, categories, orders)
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+---
 
-### Develop
+## 🧱 Blocks System
 
-To develop all apps and packages, run the following command:
+Current blocks:
 
-```
-cd my-turborepo
+- Header
+- Hero
+- Footer
+- Product Grid
+- Forms
+- Spacer
+- Divider
+- RichText
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+Marketing blocks (Phase 0):
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+- FAQ Accordion
+- Category Chips
+- Brand Chips
+- Best Sellers
+- Banner Sections
+- Featured Products
+- Testimonials
+- CTA sections
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+## 🧪 Publishing Architecture
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+Admin publishes → snapshot created → site becomes live
 
-### Remote Caching
+Admin Panel
+|
+|-- Create Snapshot
+|
+MongoDB (snapshots)
+|
+|-- published_snapshot_id
+|
+Storefront resolves by subdomain
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### Domain Mapping
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+| URL | Purpose |
+|------|--------|
+| admin.domain.com | Admin dashboard |
+| handle.domain.com | Published website |
 
-```
-cd my-turborepo
+---
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+## 🔄 User Flow
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+### Website Owner
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+1. Signup
+2. Auto login
+3. Create site
+4. Build pages visually
+5. Setup theme, menus, SEO
+6. Publish
+7. Website live on subdomain
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Store Owner
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+1. Create store
+2. Choose store type (brand / distributor)
+3. Setup brands & categories
+4. Configure attributes
+5. Create products + variants
+6. Publish products
+7. Customers can browse & order
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
+---
 
-## Useful Links
+## 🏗 Architecture Overview
 
-Learn more about the power of Turborepo:
+Frontend:
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+Next.js (Admin + Storefront)
+
+Backend:
+
+MongoDB → website builder data
+
+MySQL → ecommerce system
+
+Storage:
+
+S3 compatible object storage
+
+Auth:
+
+NextAuth (JWT)
+
+Rendering:
+
+Custom renderer engine
+
+Hosting:
+
+Subdomain based routing
+
+Wildcard storefront domains
+
+
+---
+
+## 📌 What Is Already Built
+
+✅ Multi-tenant system  
+✅ Website builder  
+✅ Page editor  
+✅ Asset manager  
+✅ SEO editor  
+✅ Publishing system  
+✅ Store backend schema  
+✅ Attribute system design  
+✅ Product wizard base  
+✅ Subdomain resolution  
+✅ Snapshot rendering  
+✅ Admin UI shell  
+
+---
+
+## 🗺 Planned Roadmap
+
+### Phase 0 – Marketing Blocks (current)
+- High quality block library
+- Product showcases
+- Landing page sections
+
+### Phase 1 – Storefront Ecommerce
+- Product listing pages
+- Product detail pages
+- Cart
+- Checkout
+- Inventory
+- Orders
+
+### Phase 2 – Admin Ecommerce
+- Order management
+- Refunds
+- Stock control
+- Promotions
+- Coupons
+- Analytics
+
+### Phase 3 – Performance & SEO
+- Core Web Vitals tracking
+- SEO audits
+- AI keyword suggestions
+- OpenGraph generator
+
+### Phase 4 – AI Website Builder
+- Prompt based website creation
+- Auto layout generation
+- AI SEO optimization
+- AI product descriptions
+
+### Phase 5 – Plugins System
+- Payment gateways
+- Shipping providers
+- Tax systems
+- CRM integrations
+
+---
+
+## 🧠 Design Philosophy
+
+- Strong separation between **builder data** and **commerce data**
+- Modular feature system
+- Snapshot based publishing
+- API first
+- Multi-tenant by default
+- Industry-agnostic product system
+
+---
+
+## ⚙ Tech Stack
+
+- Next.js (App Router)
+- React
+- TypeScript
+- MongoDB
+- MySQL
+- NextAuth
+- AWS S3 compatible storage
+- Tailwind CSS
+- Zod schemas
+
+---
+
+## 🧪 Status
+
+This project is actively being developed as a long-term SaaS platform.
+
+MVP foundation is complete.
+
+
+
+---
+
+## 🤝 Contributing
+
+Currently private project – contributions may open later. ( making it public for recruiters )
+
+---
+
+## 🧑‍💻 Author
+
+Built by a solo developer ( ME - Pranjal Kachhawaha ) as a deep-tech SaaS engineering challenge.
+
+---
+
+> This project is designed to test full-stack system design, scalability, product architecture, and real-world SaaS workflows.
