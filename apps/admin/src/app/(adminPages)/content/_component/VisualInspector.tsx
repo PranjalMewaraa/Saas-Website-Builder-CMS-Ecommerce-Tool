@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { BlockPropsForm } from "../pages/edit/pageEditorClient";
 import StylePreviewCard from "./StylePreviewCard";
+import { BlockPropsForm } from "../pages/edit/components/BlocksPropForm";
 
 /* small local UI helpers */
 
