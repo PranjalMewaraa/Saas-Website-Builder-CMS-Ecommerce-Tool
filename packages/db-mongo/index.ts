@@ -1,9 +1,7 @@
 import { MongoClient } from "mongodb";
 
-const uri: string =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://mewarapranjal089_db_user:u0X7azwGcE1DdXdi@saasbuilder.cybysp4.mongodb.net/?appName=saasbuilder";
-const dbName = process.env.MONGODB_DB || "saasbuilder";
+const uri: string = process.env.MONGODB_URI || "";
+const dbName = process.env.MONGODB_DB || "";
 
 if (!uri) throw new Error("Missing MONGODB_URI in env");
 if (!dbName) throw new Error("Missing MONGODB_DB in env");
