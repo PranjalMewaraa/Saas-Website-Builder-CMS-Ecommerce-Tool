@@ -1,21 +1,5 @@
 const path = require("path");
 
-const fs = require("fs");
-const path = require("path");
-
-function loadGeneratedSafelist() {
-  try {
-    const p = path.join(__dirname, "generated", "tw-safelist.json");
-    if (!fs.existsSync(p)) return [];
-    const raw = JSON.parse(fs.readFileSync(p, "utf8"));
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
-  }
-}
-
-const generatedSafelist = loadGeneratedSafelist();
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -25,7 +9,6 @@ module.exports = {
 
   // TEMP DEBUG: force-generate rules used in blocks
   safelist: [
-    ...generatedSafelist,
     ...[
       "mx-auto",
       "max-w-6xl",

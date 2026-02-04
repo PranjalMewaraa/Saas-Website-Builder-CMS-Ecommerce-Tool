@@ -19,7 +19,8 @@ export async function createProductWithAttributes(args: {
 }) {
   const ts = nowSql();
   const product_id = newId("prod").slice(0, 21);
-  const slug = slugify(args.title);
+  const baseSlug = slugify(args.title);
+  const slug = await ensureUniqueProductSlug(args.tenant_id, baseSlug);
 
   const conn = await pool.getConnection();
   try {
@@ -108,5 +109,18 @@ export async function createProductWithAttributes(args: {
     throw e;
   } finally {
     conn.release();
+  }
+}
+
+async function ensureUniqueProductSlug(tenant_id: string, base: string) {
+  let slug = base || "product";
+  let i = 2;
+  while (true) {
+    const [rows] = await pool.query(
+      `SELECT id FROM products WHERE tenant_id = ? AND slug = ? LIMIT 1`,
+      [tenant_id, slug],
+    );
+    if (!(rows as any[]).length) return slug;
+    slug = `${base}-${i++}`;
   }
 }

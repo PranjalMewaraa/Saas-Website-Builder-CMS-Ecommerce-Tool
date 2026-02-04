@@ -50,12 +50,16 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
 
   const [stores, setStores] = useState<Store[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [storeId, setStoreId] = useState<string>("");
   const [storeIndustry, setStoreIndustry] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
+  const [brandId, setBrandId] = useState<string>("");
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
 
   const [attrValues, setAttrValues] = useState<Record<string, any>>({});
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -73,20 +77,28 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
         setLoading(true);
         setError(null);
 
-        const [attrRes, storeRes] = await Promise.all([
+        const [attrRes, storeRes, brandRes, catRes] = await Promise.all([
           fetch("/api/admin/attributes"),
           fetch("/api/admin/stores"),
+          fetch(`/api/admin/brands?site_id=${encodeURIComponent(siteId)}`),
+          fetch(`/api/admin/categories?site_id=${encodeURIComponent(siteId)}`),
         ]);
 
-        if (!attrRes.ok || !storeRes.ok) throw new Error("Failed to load data");
+        if (!attrRes.ok || !storeRes.ok || !brandRes.ok || !catRes.ok) {
+          throw new Error("Failed to load data");
+        }
 
-        const [attrData, storeData] = await Promise.all([
+        const [attrData, storeData, brandData, catData] = await Promise.all([
           attrRes.json(),
           storeRes.json(),
+          brandRes.json(),
+          catRes.json(),
         ]);
 
         setAttributes(attrData.attributes ?? []);
         setStores(storeData.stores ?? []);
+        setBrands(brandData.brands ?? []);
+        setCategories(catData.categories ?? []);
       } catch (err: any) {
         setError(err.message || "Failed to load initial data");
       } finally {
@@ -129,6 +141,8 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
     // Reset dependent fields
     setAttrValues({});
     setVariants([]);
+    setBrandId("");
+    setCategoryIds([]);
     setError(null);
   }
 
@@ -202,7 +216,8 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
         store_id: storeId,
         title: title.trim(),
         base_price_cents: basePrice * 100, // assuming input in dollars → cents
-        category_ids: [],
+        category_ids: categoryIds,
+        brand_id: brandId || null,
         attributes: attrs,
         variants,
       };
@@ -403,6 +418,44 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
                   setError(null);
                 }}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Brand</label>
+              <select
+                className="border border-gray-300 rounded px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={brandId}
+                onChange={(e) => setBrandId(e.target.value)}
+              >
+                <option value="">(No brand)</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Categories
+              </label>
+              <select
+                multiple
+                className="border border-gray-300 rounded px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                value={categoryIds}
+                onChange={(e) =>
+                  setCategoryIds(
+                    Array.from(e.target.selectedOptions).map((o) => o.value),
+                  )
+                }
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

@@ -16,8 +16,9 @@ export async function createBrand(
 ): Promise<BrandRow> {
   const id = newId("brand");
   const ts = nowSql();
-  const slug =
+  const baseSlug =
     input.slug && input.slug.trim() ? slugify(input.slug) : slugify(input.name);
+  const slug = await ensureUniqueBrandSlug(tenant_id, baseSlug);
   const final_id = id.slice(0, 25);
   await pool.query(
     `INSERT INTO brands (id, tenant_id, name, slug, created_at, updated_at)
@@ -30,6 +31,19 @@ export async function createBrand(
     [tenant_id, final_id],
   );
   return (rows as BrandRow[])[0];
+}
+
+async function ensureUniqueBrandSlug(tenant_id: string, base: string) {
+  let slug = base || "brand";
+  let i = 2;
+  while (true) {
+    const [rows] = await pool.query(
+      `SELECT id FROM brands WHERE tenant_id = ? AND slug = ? LIMIT 1`,
+      [tenant_id, slug],
+    );
+    if (!(rows as any[]).length) return slug;
+    slug = `${base}-${i++}`;
+  }
 }
 
 export async function deleteBrand(tenant_id: string, brand_id: string) {

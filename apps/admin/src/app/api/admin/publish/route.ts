@@ -93,7 +93,10 @@ export async function POST(req: Request) {
       ]),
     ),
     menus: Object.fromEntries(
-      menus.map((m) => [m._id, { tree: m.draft_tree }]),
+      menus.map((m) => [
+        m._id,
+        { id: m._id, name: m.name, slot: m.slot ?? null, tree: m.draft_tree },
+      ]),
     ),
     pages: Object.fromEntries(
       pages.map((p) => [p.slug, { seo: p.seo ?? {}, layout: p.draft_layout }]),

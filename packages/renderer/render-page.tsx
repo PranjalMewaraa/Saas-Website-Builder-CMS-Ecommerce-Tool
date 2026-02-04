@@ -60,7 +60,10 @@ function normalizeMenusBySlot(snapshot: any) {
 
   return {
     ...snapshot,
-    menus: slotMenus,
+    menus: {
+      ...(raw as Record<string, any>),
+      ...slotMenus,
+    },
   };
 }
 
@@ -267,7 +270,11 @@ async function BlockRenderer({
     let menu: any = null;
 
     if (ctx.snapshot.menus && typeof ctx.snapshot.menus === "object") {
-      menu = ctx.snapshot.menus[slot] ?? null;
+      if (props.menuId && ctx.snapshot.menus[props.menuId]) {
+        menu = ctx.snapshot.menus[props.menuId];
+      } else {
+        menu = ctx.snapshot.menus[slot] ?? null;
+      }
     }
 
     return (

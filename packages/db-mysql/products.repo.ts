@@ -42,14 +42,17 @@ export async function createProduct(
     status?: "draft" | "active" | "archived";
     base_price_cents: number;
     sku?: string | null;
+    store_id?: string;
+    category_ids?: string[];
   },
 ): Promise<ProductRow> {
   const id = newId("prod");
   const ts = nowSql();
-  const slug =
+  const baseSlug =
     input.slug && input.slug.trim()
       ? slugify(input.slug)
       : slugify(input.title);
+  const slug = await ensureUniqueProductSlug(tenant_id, baseSlug);
 
   await pool.query(
     `
@@ -73,6 +76,17 @@ export async function createProduct(
     ],
   );
 
+  if (input.category_ids?.length) {
+    for (const cat_id of input.category_ids) {
+      await pool.query(
+        `INSERT INTO product_categories (tenant_id, product_id, category_id, created_at)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE category_id = VALUES(category_id)`,
+        [tenant_id, id, cat_id, ts],
+      );
+    }
+  }
+
   // MVP: create one default variant with same price
   const variant_id = newId("var");
   await pool.query(
@@ -93,11 +107,42 @@ export async function createProduct(
     ],
   );
 
+  if (input.store_id) {
+    await pool.query(
+      `
+      INSERT INTO store_products (tenant_id, store_id, product_id, is_published, overrides, created_at, updated_at)
+      VALUES (?, ?, ?, ?, NULL, ?, ?)
+      ON DUPLICATE KEY UPDATE is_published = VALUES(is_published), updated_at = VALUES(updated_at)
+      `,
+      [
+        tenant_id,
+        input.store_id,
+        id,
+        input.status === "active" ? 1 : 0,
+        ts,
+        ts,
+      ],
+    );
+  }
+
   const [rows] = await pool.query(
     `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
     [tenant_id, id],
   );
   return (rows as ProductRow[])[0];
+}
+
+async function ensureUniqueProductSlug(tenant_id: string, base: string) {
+  let slug = base || "product";
+  let i = 2;
+  while (true) {
+    const [rows] = await pool.query(
+      `SELECT id FROM products WHERE tenant_id = ? AND slug = ? LIMIT 1`,
+      [tenant_id, slug],
+    );
+    if (!(rows as any[]).length) return slug;
+    slug = `${base}-${i++}`;
+  }
 }
 
 export async function deleteProduct(tenant_id: string, product_id: string) {

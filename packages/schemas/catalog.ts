@@ -19,6 +19,8 @@ export const ProductCreateSchema = z.object({
   status: z.enum(["draft", "active", "archived"]).optional(),
   base_price_cents: z.coerce.number().int().min(0),
   sku: z.string().optional().nullable(),
+  store_id: z.string().optional(),
+  category_ids: z.array(z.string()).optional(),
 });
 
 export const StoreProductPublishSchema = z.object({
