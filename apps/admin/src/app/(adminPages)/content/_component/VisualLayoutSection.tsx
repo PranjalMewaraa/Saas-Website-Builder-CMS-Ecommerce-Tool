@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import * as Icons from "lucide-react";
 import {
   Plus,
   ArrowUp,
@@ -31,9 +32,23 @@ const ROW_PRESETS: Record<string, { template: string; gap?: number | string }> =
     "1-col": { template: "minmax(0, 1fr)" },
     "2-col": { template: "repeat(2, minmax(0, 1fr))" },
     "3-col": { template: "repeat(3, minmax(0, 1fr))" },
+    "4-col": { template: "repeat(4, minmax(0, 1fr))" },
     "sidebar-left": { template: "minmax(0, 1fr) minmax(0, 2fr)" },
     "sidebar-right": { template: "minmax(0, 2fr) minmax(0, 1fr)" },
     "three-uneven": {
+      template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+    },
+    "two-one": { template: "minmax(0, 2fr) minmax(0, 1fr)" },
+    "one-two": { template: "minmax(0, 1fr) minmax(0, 2fr)" },
+    "three-one": { template: "minmax(0, 3fr) minmax(0, 1fr)" },
+    "one-three": { template: "minmax(0, 1fr) minmax(0, 3fr)" },
+    "two-one-one": {
+      template: "minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)",
+    },
+    "one-one-two": {
+      template: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)",
+    },
+    "one-two-one": {
       template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
     },
   };
@@ -43,7 +58,11 @@ function resolveAssetUrl(assetId: string | undefined, assetsMap: any) {
   return assetsMap[assetId]?.url || "";
 }
 
-function renderAtomicPreview(block: LayoutAtomicBlock, assetsMap: any) {
+function renderAtomicPreview(
+  block: LayoutAtomicBlock,
+  assetsMap: any,
+  menus?: any[],
+) {
   const style = resolveLayoutStyle(block.style);
   const props = block.props || {};
 
@@ -125,6 +144,275 @@ function renderAtomicPreview(block: LayoutAtomicBlock, assetsMap: any) {
     );
   }
 
+  if (block.type === "Atomic/Icon") {
+    const size = props.size ?? 24;
+    const IconComponent = props.iconName
+      ? (Icons as any)[props.iconName]
+      : null;
+    if (IconComponent) {
+      return (
+        <IconComponent
+          size={typeof size === "number" ? size : parseFloat(String(size))}
+          color={props.color || style.color}
+        />
+      );
+    }
+    return (
+      <span
+        style={{
+          ...style,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: typeof size === "number" ? `${size}px` : size,
+          color: props.color || style.color,
+          lineHeight: 1,
+        }}
+      >
+        {props.icon || "★"}
+      </span>
+    );
+  }
+
+  if (block.type === "Atomic/Divider") {
+    const orientation = props.orientation || "horizontal";
+    const thickness = props.thickness ?? 1;
+    const length =
+      props.length ?? (orientation === "horizontal" ? "100%" : 32);
+    return (
+      <div
+        style={{
+          ...style,
+          width: orientation === "horizontal" ? length : thickness,
+          height: orientation === "horizontal" ? thickness : length,
+          backgroundColor: props.color || "#e5e7eb",
+          borderRadius: 999,
+        }}
+      />
+    );
+  }
+
+  if (block.type === "Atomic/Spacer") {
+    const axis = props.axis || "vertical";
+    const size = props.size ?? 24;
+    return (
+      <div
+        style={{
+          ...style,
+          width: axis === "horizontal" ? size : "100%",
+          height: axis === "vertical" ? size : "100%",
+        }}
+      />
+    );
+  }
+
+  if (block.type === "Atomic/Badge") {
+    return (
+      <span
+        style={{
+          ...style,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px 10px",
+          borderRadius: 999,
+          fontSize: "12px",
+          fontWeight: 600,
+          backgroundColor: "rgba(15,23,42,0.08)",
+          color: "rgba(15,23,42,0.9)",
+        }}
+      >
+        {props.text || "Badge"}
+      </span>
+    );
+  }
+
+  if (block.type === "Atomic/List") {
+    const items = props.items || [];
+    const icon = props.icon || "•";
+    if (props.ordered) {
+      return (
+        <ol style={{ ...style, paddingLeft: "1.25rem" }}>
+          {items.map((item: string, idx: number) => (
+            <li key={idx} style={{ marginBottom: "0.35rem" }}>
+              {item}
+            </li>
+          ))}
+        </ol>
+      );
+    }
+    return (
+      <ul style={{ ...style, paddingLeft: 0, listStyle: "none" }}>
+        {items.map((item: string, idx: number) => (
+          <li
+            key={idx}
+            style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}
+          >
+            <span>{icon}</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (block.type === "Atomic/Card") {
+    return (
+      <div
+        style={{
+          ...style,
+          border: "1px solid rgba(15,23,42,0.12)",
+          borderRadius: 16,
+          padding: 16,
+          background: "#fff",
+        }}
+      >
+        {props.imageUrl ? (
+          <img
+            src={props.imageUrl}
+            alt={props.title || "Card image"}
+            style={{ width: "100%", borderRadius: 12, marginBottom: 12 }}
+          />
+        ) : null}
+        <div style={{ fontWeight: 600, marginBottom: 6 }}>
+          {props.title || "Card title"}
+        </div>
+        <div style={{ fontSize: 14, color: "rgba(15,23,42,0.7)" }}>
+          {props.body || "Card description goes here."}
+        </div>
+        {props.buttonText ? (
+          <span
+            style={{
+              display: "inline-flex",
+              marginTop: 12,
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "#0f172a",
+              color: "#fff",
+              fontSize: 12,
+            }}
+          >
+            {props.buttonText}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (block.type === "Atomic/Accordion") {
+    const items = props.items || [];
+    return (
+      <div>
+        {items.map((item: any, idx: number) => (
+          <div
+            key={idx}
+            style={{
+              border: "1px solid rgba(15,23,42,0.12)",
+              borderRadius: 12,
+              padding: "10px 12px",
+              marginBottom: 8,
+              background: "#fff",
+            }}
+          >
+            <div style={{ fontWeight: 600 }}>{item.title}</div>
+            <div
+              style={{ marginTop: 6, fontSize: 14, color: "rgba(15,23,42,0.7)" }}
+            >
+              {item.content}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (block.type === "Atomic/Menu") {
+    const menuId = props.menuId;
+    const menu =
+      menus?.find((m: any) => m._id === menuId) ||
+      menus?.find((m: any) => m.id === menuId) ||
+      menus?.[0];
+    const tree = menu?.tree || [];
+    const gap = props.itemGap ?? 16;
+    if (!tree.length) {
+      return (
+        <div className="text-xs text-gray-400 border border-dashed border-gray-300 rounded p-2">
+          Menu
+        </div>
+      );
+    }
+    return (
+      <div
+        style={{
+          display: props.orientation === "vertical" ? "block" : "flex",
+          gap: typeof gap === "number" ? `${gap}px` : gap,
+          alignItems: "center",
+        }}
+      >
+        {tree.map((node: any) => (
+          <span key={node.id} style={{ fontSize: 13 }}>
+            {node.label}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (block.type === "Atomic/Countdown") {
+    const targetDate = props.targetDate
+      ? new Date(props.targetDate)
+      : null;
+    const diff = targetDate
+      ? Math.max(0, targetDate.getTime() - Date.now())
+      : 0;
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    const display = props.showSeconds
+      ? `${days}d ${hours}h ${mins}m ${secs}s`
+      : `${days}d ${hours}h ${mins}m`;
+    return (
+      <div style={{ ...style }}>
+        {props.label ? (
+          <div style={{ fontSize: 12, color: "rgba(15,23,42,0.6)" }}>
+            {props.label}
+          </div>
+        ) : null}
+        <div style={{ fontSize: 20, fontWeight: 600 }}>{display}</div>
+      </div>
+    );
+  }
+
+  if (block.type === "Atomic/Embed") {
+    if (props.code) {
+      return <div dangerouslySetInnerHTML={{ __html: props.code }} />;
+    }
+    if (props.src) {
+      return (
+        <div
+          style={{
+            border: "1px solid rgba(0,0,0,0.1)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <iframe
+            src={props.src}
+            title={props.title || "Embed"}
+            style={{ width: "100%", height: 240, border: 0 }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="text-xs text-gray-400 border border-dashed border-gray-300 rounded p-2">
+        Embed
+      </div>
+    );
+  }
+
   return (
     <div className="text-xs text-red-500">Unknown: {block.type}</div>
   );
@@ -169,6 +457,7 @@ export default function VisualLayoutSection({
   block,
   selection,
   assetsMap,
+  menus,
   onSelect,
   onChangeBlock,
   showOutlines = true,
@@ -178,6 +467,7 @@ export default function VisualLayoutSection({
   block: any;
   selection: LayoutSelection | null;
   assetsMap: any;
+  menus?: any[];
   onSelect: (sel: LayoutSelection) => void;
   onChangeBlock: (nextBlock: any) => void;
   showOutlines?: boolean;
@@ -204,6 +494,56 @@ export default function VisualLayoutSection({
       type: "Atomic/Button",
       title: "Button",
       description: "Primary and secondary CTAs",
+    },
+    {
+      type: "Atomic/Icon",
+      title: "Icon",
+      description: "Emoji or symbol icon",
+    },
+    {
+      type: "Atomic/Divider",
+      title: "Divider",
+      description: "Line separator",
+    },
+    {
+      type: "Atomic/Spacer",
+      title: "Spacer",
+      description: "Adjustable empty space",
+    },
+    {
+      type: "Atomic/Badge",
+      title: "Badge",
+      description: "Small label pill",
+    },
+    {
+      type: "Atomic/List",
+      title: "List",
+      description: "Bulleted or numbered list",
+    },
+    {
+      type: "Atomic/Card",
+      title: "Card",
+      description: "Container with image and text",
+    },
+    {
+      type: "Atomic/Accordion",
+      title: "Accordion",
+      description: "FAQ style items",
+    },
+    {
+      type: "Atomic/Menu",
+      title: "Menu",
+      description: "Links from a menu",
+    },
+    {
+      type: "Atomic/Countdown",
+      title: "Countdown",
+      description: "Promo/event timer",
+    },
+    {
+      type: "Atomic/Embed",
+      title: "Embed",
+      description: "Iframe or HTML embed",
     },
     {
       type: "Atomic/Group",
@@ -743,7 +1083,7 @@ export default function VisualLayoutSection({
                         >
                           {ga.type === "Atomic/Group"
                             ? renderGroupLayout(ga)
-                            : renderAtomicPreview(ga, assetsMap)}
+                            : renderAtomicPreview(ga, assetsMap, menus)}
                         </div>
                       ))}
                       <button
@@ -1178,7 +1518,7 @@ export default function VisualLayoutSection({
                                   </div>
                                   {atomic.type === "Atomic/Group"
                                     ? renderGroupLayout(atomic)
-                                    : renderAtomicPreview(atomic, assetsMap)}
+                                    : renderAtomicPreview(atomic, assetsMap, menus)}
                                 </div>
                               );
                             })}

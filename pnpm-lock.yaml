@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      lucide-react:
+        specifier: ^0.562.0
+        version: 0.562.0(react@19.2.3)
       web-vitals:
         specifier: ^5.1.0
         version: 5.1.0
@@ -443,9 +446,12 @@ importers:
       '@types/node':
         specifier: ^25.0.7
         version: 25.0.7
+      lucide-react:
+        specifier: ^0.562.0
+        version: 0.562.0(react@19.2.3)
       react:
         specifier: ^18.2.0
-        version: 18.3.1
+        version: 19.2.3
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)

@@ -1,4 +1,5 @@
 import React from "react";
+import * as Icons from "lucide-react";
 import {
   resolveLayoutStyle,
   resolveRowLayoutStyle,
@@ -52,6 +53,7 @@ const ROW_PRESETS: Record<
   "1-col": { label: "1 Column", template: "minmax(0, 1fr)" },
   "2-col": { label: "2 Columns", template: "repeat(2, minmax(0, 1fr))" },
   "3-col": { label: "3 Columns", template: "repeat(3, minmax(0, 1fr))" },
+  "4-col": { label: "4 Columns", template: "repeat(4, minmax(0, 1fr))" },
   "sidebar-left": {
     label: "Sidebar Left",
     template: "minmax(0, 1fr) minmax(0, 2fr)",
@@ -62,6 +64,34 @@ const ROW_PRESETS: Record<
   },
   "three-uneven": {
     label: "3 Uneven",
+    template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+  },
+  "two-one": {
+    label: "2 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr)",
+  },
+  "one-two": {
+    label: "1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 2fr)",
+  },
+  "three-one": {
+    label: "3 / 1",
+    template: "minmax(0, 3fr) minmax(0, 1fr)",
+  },
+  "one-three": {
+    label: "1 / 3",
+    template: "minmax(0, 1fr) minmax(0, 3fr)",
+  },
+  "two-one-one": {
+    label: "2 / 1 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)",
+  },
+  "one-one-two": {
+    label: "1 / 1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)",
+  },
+  "one-two-one": {
+    label: "1 / 2 / 1",
     template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
   },
 };
@@ -107,7 +137,7 @@ function resolveAssetUrl(assetId: string | undefined, assets: any) {
   return a?.url || "";
 }
 
-function renderAtomicBlock(block: LayoutAtomic, assets: any) {
+function renderAtomicBlock(block: LayoutAtomic, assets: any, menus?: any) {
   const style = resolveLayoutStyle(block.style);
   const type = block.type;
   const props = block.props || {};
@@ -172,6 +202,302 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any) {
     );
   }
 
+  if (type === "Atomic/Icon") {
+    const size = props.size ?? 24;
+    const IconComponent = props.iconName
+      ? (Icons as any)[props.iconName]
+      : null;
+    if (IconComponent) {
+      return (
+        <IconComponent
+          size={typeof size === "number" ? size : parseFloat(String(size))}
+          color={props.color || style.color}
+        />
+      );
+    }
+    return (
+      <span
+        style={{
+          ...style,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: typeof size === "number" ? `${size}px` : size,
+          color: props.color || style.color,
+          lineHeight: 1,
+        }}
+      >
+        {props.icon || "★"}
+      </span>
+    );
+  }
+
+  if (type === "Atomic/Divider") {
+    const orientation = props.orientation || "horizontal";
+    const thickness = props.thickness ?? 1;
+    const length =
+      props.length ?? (orientation === "horizontal" ? "100%" : 32);
+    return (
+      <div
+        style={{
+          ...style,
+          width: orientation === "horizontal" ? length : thickness,
+          height: orientation === "horizontal" ? thickness : length,
+          backgroundColor: props.color || "#e5e7eb",
+          borderRadius: 999,
+        }}
+      />
+    );
+  }
+
+  if (type === "Atomic/Spacer") {
+    const axis = props.axis || "vertical";
+    const size = props.size ?? 24;
+    return (
+      <div
+        style={{
+          ...style,
+          width: axis === "horizontal" ? size : "100%",
+          height: axis === "vertical" ? size : "100%",
+        }}
+      />
+    );
+  }
+
+  if (type === "Atomic/Badge") {
+    return (
+      <span
+        style={{
+          ...style,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px 10px",
+          borderRadius: 999,
+          fontSize: "12px",
+          fontWeight: 600,
+          backgroundColor: "rgba(15,23,42,0.08)",
+          color: "rgba(15,23,42,0.9)",
+        }}
+      >
+        {props.text || "Badge"}
+      </span>
+    );
+  }
+
+  if (type === "Atomic/List") {
+    const items = props.items || [];
+    const icon = props.icon || "•";
+    if (props.ordered) {
+      return (
+        <ol style={{ ...style, paddingLeft: "1.25rem" }}>
+          {items.map((item: string, idx: number) => (
+            <li key={idx} style={{ marginBottom: "0.35rem" }}>
+              {item}
+            </li>
+          ))}
+        </ol>
+      );
+    }
+    return (
+      <ul style={{ ...style, paddingLeft: 0, listStyle: "none" }}>
+        {items.map((item: string, idx: number) => (
+          <li
+            key={idx}
+            style={{ display: "flex", gap: "0.5rem", marginBottom: "0.35rem" }}
+          >
+            <span>{icon}</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (type === "Atomic/Card") {
+    return (
+      <div
+        style={{
+          ...style,
+          border: "1px solid rgba(15,23,42,0.12)",
+          borderRadius: 16,
+          padding: 16,
+          background: "#fff",
+        }}
+      >
+        {props.imageUrl ? (
+          <img
+            src={props.imageUrl}
+            alt={props.title || "Card image"}
+            style={{ width: "100%", borderRadius: 12, marginBottom: 12 }}
+          />
+        ) : null}
+        <div style={{ fontWeight: 600, marginBottom: 6 }}>
+          {props.title || "Card title"}
+        </div>
+        <div style={{ fontSize: 14, color: "rgba(15,23,42,0.7)" }}>
+          {props.body || "Card description goes here."}
+        </div>
+        {props.buttonText ? (
+          <a
+            href={props.buttonHref || "#"}
+            style={{
+              display: "inline-flex",
+              marginTop: 12,
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "#0f172a",
+              color: "#fff",
+              fontSize: 12,
+            }}
+          >
+            {props.buttonText}
+          </a>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (type === "Atomic/Accordion") {
+    const items = props.items || [];
+    return (
+      <div>
+        {items.map((item: any, idx: number) => (
+          <details
+            key={idx}
+            style={{
+              border: "1px solid rgba(15,23,42,0.12)",
+              borderRadius: 12,
+              padding: "10px 12px",
+              marginBottom: 8,
+              background: "#fff",
+            }}
+          >
+            <summary style={{ cursor: "pointer", fontWeight: 600 }}>
+              {item.title}
+            </summary>
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 14,
+                color: "rgba(15,23,42,0.7)",
+              }}
+            >
+              {item.content}
+            </div>
+          </details>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === "Atomic/Menu") {
+    const menuId = props.menuId;
+    const menu =
+      (menuId && menus?.[menuId]) ||
+      (menus?.header && menus?.header.id === menuId ? menus.header : null) ||
+      (menus?.footer && menus?.footer.id === menuId ? menus.footer : null) ||
+      null;
+    const tree = menu?.tree || [];
+    const gap = props.itemGap ?? 16;
+    if (!tree.length) return null;
+    return (
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+          display: props.orientation === "vertical" ? "block" : "flex",
+          gap: typeof gap === "number" ? `${gap}px` : gap,
+          alignItems: "center",
+        }}
+      >
+        {tree.map((node: any) => (
+          <li key={node.id} style={{ position: "relative" }}>
+            <a
+              href={node.ref?.href || node.ref?.slug || "#"}
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              {node.label}
+            </a>
+            {props.showDivider ? (
+              <span
+                style={{
+                  position: "absolute",
+                  right: -8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 1,
+                  height: 12,
+                  background: "rgba(148,163,184,0.6)",
+                }}
+              />
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (type === "Atomic/Countdown") {
+    const targetDate = props.targetDate
+      ? new Date(props.targetDate)
+      : null;
+    const diff = targetDate
+      ? Math.max(0, targetDate.getTime() - Date.now())
+      : 0;
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    const display = props.showSeconds
+      ? `${days}d ${hours}h ${mins}m ${secs}s`
+      : `${days}d ${hours}h ${mins}m`;
+    return (
+      <div style={{ ...style }}>
+        {props.label ? (
+          <div style={{ fontSize: 12, color: "rgba(15,23,42,0.6)" }}>
+            {props.label}
+          </div>
+        ) : null}
+        <div style={{ fontSize: 20, fontWeight: 600 }}>{display}</div>
+      </div>
+    );
+  }
+
+  if (type === "Atomic/Embed") {
+    if (props.code) {
+      return <div dangerouslySetInnerHTML={{ __html: props.code }} />;
+    }
+    if (props.src) {
+      return (
+        <iframe
+          src={props.src}
+          title={props.title || "Embed"}
+          style={{ width: "100%", height: 360, border: 0 }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    return (
+      <div
+        style={{
+          border: "1px dashed rgba(0,0,0,0.2)",
+          padding: "16px",
+        }}
+      >
+        Embed
+      </div>
+    );
+  }
+
   if (type === "Atomic/Group") {
     const outerStyle = resolveLayoutStyle(block.style || {});
     const groupStyle = resolveLayoutStyle(props.style || {});
@@ -215,7 +541,7 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any) {
   );
 }
 
-function renderRows(rows: LayoutRow[], assets: any) {
+function renderRows(rows: LayoutRow[], assets: any, menus?: any) {
   return rows.map((row) => {
     const rowPreset =
       row.layout?.mode === "preset"
@@ -261,7 +587,7 @@ function renderRows(rows: LayoutRow[], assets: any) {
               <div style={{ position: "relative", zIndex: 2 }}>
               {(col.blocks || []).map((b) => (
                 <div key={b.id} data-atomic-id={b.id}>
-                  {renderAtomicBlock(b, assets)}
+                  {renderAtomicBlock(b, assets, menus)}
                 </div>
               ))}
               </div>
@@ -277,9 +603,11 @@ function renderRows(rows: LayoutRow[], assets: any) {
 export function LayoutSectionRenderer({
   props,
   assets,
+  menus,
 }: {
   props: LayoutSectionProps;
   assets?: any;
+  menus?: any;
 }) {
   const sectionStyle = resolveLayoutStyle(props.style);
   const video = getBackgroundVideo(props.style);
@@ -318,7 +646,7 @@ export function LayoutSectionRenderer({
         </>
       ) : null}
       <div style={{ position: "relative", zIndex: 2 }}>
-        {renderRows(props.rows || [], assets)}
+        {renderRows(props.rows || [], assets, menus)}
       </div>
     </section>
   );

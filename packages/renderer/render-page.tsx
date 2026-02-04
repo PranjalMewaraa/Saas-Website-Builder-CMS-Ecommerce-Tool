@@ -143,6 +143,7 @@ async function BlockRenderer({
         <LayoutSectionRenderer
           props={block.props || { rows: [] }}
           assets={ctx.snapshot.assets}
+          menus={ctx.snapshot.menus}
         />
       </div>
     );

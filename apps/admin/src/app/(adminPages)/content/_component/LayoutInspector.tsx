@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import * as Icons from "lucide-react";
 import ImageField from "./ImageField";
 import ColorPickerInput from "./ColorPickerInput";
 
@@ -30,6 +31,11 @@ const ROW_PRESET_PREVIEWS: Record<
     template: "repeat(3, minmax(0, 1fr))",
     cols: 3,
   },
+  "4-col": {
+    label: "4 Columns",
+    template: "repeat(4, minmax(0, 1fr))",
+    cols: 4,
+  },
   "sidebar-left": {
     label: "Sidebar Left",
     template: "minmax(0, 1fr) minmax(0, 2fr)",
@@ -44,6 +50,229 @@ const ROW_PRESET_PREVIEWS: Record<
     label: "3 Uneven",
     template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
     cols: 3,
+  },
+  "two-one": {
+    label: "2 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 2,
+  },
+  "one-two": {
+    label: "1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 2fr)",
+    cols: 2,
+  },
+  "three-one": {
+    label: "3 / 1",
+    template: "minmax(0, 3fr) minmax(0, 1fr)",
+    cols: 2,
+  },
+  "one-three": {
+    label: "1 / 3",
+    template: "minmax(0, 1fr) minmax(0, 3fr)",
+    cols: 2,
+  },
+  "two-one-one": {
+    label: "2 / 1 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)",
+    cols: 3,
+  },
+  "one-one-two": {
+    label: "1 / 1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)",
+    cols: 3,
+  },
+  "one-two-one": {
+    label: "1 / 2 / 1",
+    template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 3,
+  },
+};
+
+const ICON_NAMES = Object.keys(Icons).filter((name) => {
+  const value = (Icons as any)[name];
+  return typeof value === "function" && /^[A-Z]/.test(name);
+});
+
+const CARD_PRESETS = {
+  clean: {
+    label: "Clean",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.12)",
+      borderWidth: 1,
+      radius: 16,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "sm",
+    },
+  },
+  shadow: {
+    label: "Shadow",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 20,
+      padding: { top: 20, right: 20, bottom: 20, left: 20 },
+      shadow: "lg",
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.04)",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 18,
+      padding: { top: 18, right: 18, bottom: 18, left: 18 },
+      shadow: "none",
+    },
+  },
+  outline: {
+    label: "Outline",
+    style: {
+      bgColor: "transparent",
+      borderColor: "rgba(15,23,42,0.2)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "none",
+    },
+  },
+  gradient: {
+    label: "Gradient",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 20,
+      padding: { top: 20, right: 20, bottom: 20, left: 20 },
+      shadow: "lg",
+    },
+  },
+  glass: {
+    label: "Glass",
+    style: {
+      bgColor: "rgba(255,255,255,0.08)",
+      borderColor: "rgba(255,255,255,0.2)",
+      borderWidth: 1,
+      radius: 20,
+      padding: { top: 18, right: 18, bottom: 18, left: 18 },
+      shadow: "sm",
+    },
+  },
+};
+
+const ACCORDION_PRESETS = {
+  minimal: {
+    label: "Minimal",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.12)",
+      borderWidth: 1,
+      radius: 12,
+      padding: { top: 12, right: 12, bottom: 12, left: 12 },
+    },
+  },
+  elevated: {
+    label: "Elevated",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 16,
+      padding: { top: 14, right: 14, bottom: 14, left: 14 },
+      shadow: "sm",
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.04)",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 12, right: 12, bottom: 12, left: 12 },
+    },
+  },
+  boxed: {
+    label: "Boxed",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.18)",
+      borderWidth: 1,
+      radius: 8,
+      padding: { top: 10, right: 12, bottom: 10, left: 12 },
+    },
+  },
+  card: {
+    label: "Card",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 18,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "md",
+    },
+  },
+};
+
+const COUNTDOWN_PRESETS = {
+  bold: {
+    label: "Bold",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 16,
+      padding: { top: 12, right: 16, bottom: 12, left: 16 },
+      fontSize: 20,
+      fontWeight: 600,
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.06)",
+      textColor: "#0f172a",
+      radius: 14,
+      padding: { top: 10, right: 14, bottom: 10, left: 14 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  minimal: {
+    label: "Minimal",
+    style: {
+      bgColor: "transparent",
+      textColor: "#0f172a",
+      radius: 0,
+      padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  outline: {
+    label: "Outline",
+    style: {
+      bgColor: "transparent",
+      textColor: "#0f172a",
+      borderColor: "rgba(15,23,42,0.2)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 10, right: 14, bottom: 10, left: 14 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  pill: {
+    label: "Pill",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 999,
+      padding: { top: 10, right: 18, bottom: 10, left: 18 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
   },
 };
 
@@ -114,6 +343,7 @@ export default function LayoutInspector({
   selection,
   siteId,
   assetsMap,
+  menus = [],
   themePalette = [],
   onDeleteBlock,
   onChangeBlock,
@@ -122,22 +352,47 @@ export default function LayoutInspector({
   selection: LayoutSelection | null;
   siteId: string;
   assetsMap: any;
+  menus?: any[];
   themePalette?: string[];
   onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
 }) {
+  const [iconPicker, setIconPicker] = useState<{
+    open: boolean;
+    current?: string;
+    onPick?: (name: string) => void;
+  }>({ open: false });
+  const [iconQuery, setIconQuery] = useState("");
+
+  const iconPickerNode = (
+    <IconPickerDialog
+      open={iconPicker.open}
+      current={iconPicker.current}
+      query={iconQuery}
+      onQueryChange={setIconQuery}
+      onPick={(name) => iconPicker.onPick?.(name)}
+      onClose={() => setIconPicker({ open: false })}
+    />
+  );
+
   if (!block) {
     return (
-      <div className="text-sm text-muted-foreground">
-        Select a layout section to edit.
-      </div>
+      <>
+        <div className="text-sm text-muted-foreground">
+          Select a layout section to edit.
+        </div>
+        {iconPickerNode}
+      </>
     );
   }
   if (!selection || selection.kind === "block") {
     return (
-      <div className="text-sm text-muted-foreground">
-        Select a section, row, column, or atomic block to edit.
-      </div>
+      <>
+        <div className="text-sm text-muted-foreground">
+          Select a section, row, column, or atomic block to edit.
+        </div>
+        {iconPickerNode}
+      </>
     );
   }
 
@@ -613,6 +868,484 @@ export default function LayoutInspector({
           </>
         )}
 
+        {atom.type === "Atomic/Icon" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Icon</div>
+              <button
+                type="button"
+                className="w-full border rounded-lg px-3 py-2 text-sm text-left hover:bg-gray-50 flex items-center gap-2"
+                onClick={() =>
+                  setIconPicker({
+                    open: true,
+                    current: atom.props?.iconName || "Star",
+                    onPick: (name) =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.props = {
+                          ...draftAtom.props,
+                          iconName: name,
+                        };
+                      }),
+                  })
+                }
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border bg-white">
+                  {(() => {
+                    const Icon = (Icons as any)[atom.props?.iconName || "Star"];
+                    return Icon ? <Icon size={14} /> : null;
+                  })()}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {atom.props?.iconName || "Star"}
+                </span>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-muted-foreground">
+                  Choose icon
+                </span>
+              </button>
+            </div>
+            <UnitField
+              label="Size"
+              value={atom.props?.size ?? 24}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, size: v };
+                })
+              }
+            />
+            <ColorPickerInput
+              label="Color"
+              value={atom.props?.color || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, color: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Divider" && (
+          <>
+            <Select
+              label="Orientation"
+              value={atom.props?.orientation || "horizontal"}
+              options={["horizontal", "vertical"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, orientation: v };
+                })
+              }
+            />
+            <UnitField
+              label="Thickness"
+              value={atom.props?.thickness ?? 1}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, thickness: v };
+                })
+              }
+            />
+            <UnitField
+              label="Length"
+              value={atom.props?.length ?? "100%"}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, length: v };
+                })
+              }
+            />
+            <ColorPickerInput
+              label="Color"
+              value={atom.props?.color || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, color: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Spacer" && (
+          <>
+            <Select
+              label="Axis"
+              value={atom.props?.axis || "vertical"}
+              options={["vertical", "horizontal"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, axis: v };
+                })
+              }
+            />
+            <UnitField
+              label="Size"
+              value={atom.props?.size ?? 24}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, size: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Badge" && (
+          <>
+            <Field
+              label="Text"
+              value={atom.props?.text || "Badge"}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, text: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/List" && (
+          <>
+            <Checkbox
+              label="Ordered"
+              value={!!atom.props?.ordered}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, ordered: v };
+                })
+              }
+            />
+            {!atom.props?.ordered && (
+              <Field
+                label="Icon"
+                value={atom.props?.icon || "•"}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, icon: v };
+                  })
+                }
+              />
+            )}
+            <TextArea
+              label="Items (one per line)"
+              value={(atom.props?.items || []).join("\n")}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    items: v
+                      .split("\n")
+                      .map((i) => i.trim())
+                      .filter(Boolean),
+                  };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Card" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Card Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(CARD_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-12 rounded-md border"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    />
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+            <TextArea
+              label="Body"
+              value={atom.props?.body || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, body: v };
+                })
+              }
+            />
+            <Field
+              label="Image URL"
+              value={atom.props?.imageUrl || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, imageUrl: v };
+                })
+              }
+              placeholder="https://..."
+            />
+            <Field
+              label="Button Text"
+              value={atom.props?.buttonText || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, buttonText: v };
+                })
+              }
+            />
+            <Field
+              label="Button Href"
+              value={atom.props?.buttonHref || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, buttonHref: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Accordion" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Accordion Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(ACCORDION_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-10 rounded-md border"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    />
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <TextArea
+              label="Items (title:content per line)"
+              value={(atom.props?.items || [])
+                .map((i: any) => `${i.title}: ${i.content}`)
+                .join("\n")}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  const items = v
+                    .split("\n")
+                    .map((line) => line.split(":"))
+                    .filter((parts) => parts[0]?.trim())
+                    .map(([title, ...rest]) => ({
+                      title: (title || "").trim(),
+                      content: rest.join(":").trim(),
+                    }));
+                  draftAtom.props = { ...draftAtom.props, items };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Menu" && (
+          <>
+            <label className="block space-y-1.5">
+              <div className="text-sm font-medium">Menu</div>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={atom.props?.menuId || ""}
+                onChange={(e) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = {
+                      ...draftAtom.props,
+                      menuId: e.target.value,
+                    };
+                  })
+                }
+              >
+                <option value="">(select a menu)</option>
+                {menus.map((m: any) => (
+                  <option key={m._id || m.id} value={m._id || m.id}>
+                    {m.name || m._id || m.id}
+                    {m.slot ? ` (slot: ${m.slot})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Select
+              label="Orientation"
+              value={atom.props?.orientation || "horizontal"}
+              options={["horizontal", "vertical"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, orientation: v };
+                })
+              }
+            />
+            <UnitField
+              label="Item Gap"
+              value={atom.props?.itemGap ?? 16}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, itemGap: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Show Divider"
+              value={!!atom.props?.showDivider}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, showDivider: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Countdown" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Countdown Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(COUNTDOWN_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-10 rounded-md border flex items-center justify-center text-[11px] font-semibold"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        color: preset.style.textColor || "#0f172a",
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    >
+                      2d 04h 12m
+                    </div>
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field
+              label="Target Date (ISO)"
+              value={atom.props?.targetDate || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, targetDate: v };
+                })
+              }
+              placeholder="2026-12-31T23:59:00Z"
+            />
+            <Field
+              label="Label"
+              value={atom.props?.label || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, label: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Show Seconds"
+              value={!!atom.props?.showSeconds}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, showSeconds: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Embed" && (
+          <>
+            <TextArea
+              label="Embed Code (HTML)"
+              value={atom.props?.code || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, code: v };
+                })
+              }
+            />
+            <Field
+              label="Or URL (iframe src)"
+              value={atom.props?.src || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
+                })
+              }
+            />
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+          </>
+        )}
+
         <StyleFields
           style={atom.style}
           palette={themePalette}
@@ -620,6 +1353,7 @@ export default function LayoutInspector({
           assetsMap={assetsMap}
           onChange={onStyleChange}
         />
+        {iconPickerNode}
       </div>
     );
   }
@@ -770,7 +1504,96 @@ export default function LayoutInspector({
     );
   }
 
-  return null;
+  return (
+    <>
+      {iconPickerNode}
+    </>
+  );
+}
+
+function IconPickerDialog({
+  open,
+  current,
+  query,
+  onQueryChange,
+  onPick,
+  onClose,
+}: {
+  open: boolean;
+  current?: string;
+  query: string;
+  onQueryChange: (v: string) => void;
+  onPick: (name: string) => void;
+  onClose: () => void;
+}) {
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return ICON_NAMES;
+    return ICON_NAMES.filter((n) => n.toLowerCase().includes(q));
+  }, [query]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold text-gray-900">
+              Choose an icon
+            </div>
+            <div className="text-xs text-gray-500">
+              Search Lucide icons and pick one.
+            </div>
+          </div>
+          <button
+            type="button"
+            className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+        <div className="mt-3">
+          <input
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="Search icons (e.g. shopping, heart, star)"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+          />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 max-h-[55vh] overflow-auto pr-1">
+          {filtered.map((name) => {
+            const Icon = (Icons as any)[name];
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-3 text-xs hover:bg-gray-50 ${
+                  current === name
+                    ? "border-blue-300 bg-blue-50"
+                    : "border-gray-200"
+                }`}
+                onClick={() => {
+                  onPick(name);
+                  onClose();
+                }}
+              >
+                {Icon ? <Icon size={20} /> : null}
+                <span className="text-[11px] text-gray-600">{name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function Field({

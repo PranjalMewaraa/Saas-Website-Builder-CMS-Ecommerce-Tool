@@ -66,6 +66,16 @@ export type LayoutAtomicBlock = {
     | "Atomic/Image"
     | "Atomic/Video"
     | "Atomic/Button"
+    | "Atomic/Icon"
+    | "Atomic/Divider"
+    | "Atomic/Spacer"
+    | "Atomic/Badge"
+    | "Atomic/List"
+    | "Atomic/Card"
+    | "Atomic/Accordion"
+    | "Atomic/Menu"
+    | "Atomic/Countdown"
+    | "Atomic/Embed"
     | "Atomic/Group";
   props: any;
   style?: LayoutStyle;
@@ -154,6 +164,16 @@ export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
   "Atomic/Image",
   "Atomic/Video",
   "Atomic/Button",
+  "Atomic/Icon",
+  "Atomic/Divider",
+  "Atomic/Spacer",
+  "Atomic/Badge",
+  "Atomic/List",
+  "Atomic/Card",
+  "Atomic/Accordion",
+  "Atomic/Menu",
+  "Atomic/Countdown",
+  "Atomic/Embed",
   "Atomic/Group",
 ];
 
@@ -223,6 +243,111 @@ export function createAtomicBlock(
       props: {
         style: { padding: { top: 16, right: 16, bottom: 16, left: 16 } },
         rows: [createDefaultRow()],
+      },
+      style: { width: "100%" },
+    };
+  }
+  if (type === "Atomic/Icon") {
+    return {
+      id: uid("atom"),
+      type,
+      props: { iconName: "Star", size: 24, color: "#111827" },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Divider") {
+    return {
+      id: uid("atom"),
+      type,
+      props: { orientation: "horizontal", thickness: 1, color: "#e5e7eb" },
+      style: { width: "100%" },
+    };
+  }
+  if (type === "Atomic/Spacer") {
+    return {
+      id: uid("atom"),
+      type,
+      props: { axis: "vertical", size: 24 },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Badge") {
+    return {
+      id: uid("atom"),
+      type,
+      props: { text: "Badge" },
+      style: {},
+    };
+  }
+  if (type === "Atomic/List") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        items: ["List item"],
+        ordered: false,
+        icon: "•",
+      },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Card") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        title: "Card title",
+        body: "Card description goes here.",
+        imageUrl: "",
+        buttonText: "",
+        buttonHref: "#",
+      },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Accordion") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        items: [{ title: "Question", content: "Answer" }],
+      },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Menu") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        menuId: "",
+        orientation: "horizontal",
+        showDivider: false,
+        itemGap: 16,
+      },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Countdown") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        targetDate: "",
+        label: "Ends in",
+        showSeconds: true,
+      },
+      style: {},
+    };
+  }
+  if (type === "Atomic/Embed") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        code: "",
+        src: "",
+        title: "Embed",
       },
       style: { width: "100%" },
     };

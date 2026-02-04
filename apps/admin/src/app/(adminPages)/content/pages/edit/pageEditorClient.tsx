@@ -402,6 +402,7 @@ export default function PageEditorClient({
                     selection={selection}
                     siteId={siteId}
                     assetsMap={assetsMap}
+                    menus={menus}
                     themePalette={themePalette}
                     onDeleteBlock={(id: string) => {
                       const idx = blocks.findIndex((b: any) => b.id === id);

@@ -117,6 +117,7 @@ export function VisualCanvas({
                     block={b}
                     selection={selection}
                     assetsMap={assetsMap}
+                    menus={menus}
                     onSelect={onSelect}
                     onChangeBlock={onChangeBlock}
                     showOutlines={showOutlines}

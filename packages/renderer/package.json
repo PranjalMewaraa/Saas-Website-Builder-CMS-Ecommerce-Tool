@@ -12,6 +12,7 @@
     "@acme/blocks": "workspace:*",
     "@acme/schemas": "workspace:*",
     "@types/node": "^25.0.7",
+    "lucide-react": "^0.562.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {

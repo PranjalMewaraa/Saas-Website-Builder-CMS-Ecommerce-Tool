@@ -34,3 +34,69 @@ export const AtomicButtonSchema = z.object({
   target: z.enum(["_self", "_blank"]).optional(),
 });
 
+export const AtomicIconSchema = z.object({
+  iconName: z.string().optional(),
+  icon: z.string().optional(),
+  size: SizeSchema.optional(),
+  color: z.string().optional(),
+});
+
+export const AtomicDividerSchema = z.object({
+  orientation: z.enum(["horizontal", "vertical"]).default("horizontal"),
+  thickness: SizeSchema.optional(),
+  color: z.string().optional(),
+  length: SizeSchema.optional(),
+});
+
+export const AtomicSpacerSchema = z.object({
+  axis: z.enum(["vertical", "horizontal"]).default("vertical"),
+  size: SizeSchema.optional(),
+});
+
+export const AtomicBadgeSchema = z.object({
+  text: z.string().default("Badge"),
+});
+
+export const AtomicListSchema = z.object({
+  items: z.array(z.string()).default(["List item"]),
+  ordered: z.coerce.boolean().optional(),
+  icon: z.string().optional(),
+});
+
+export const AtomicCardSchema = z.object({
+  title: z.string().default("Card title"),
+  body: z.string().default("Card description goes here."),
+  imageUrl: z.string().url().optional(),
+  buttonText: z.string().optional(),
+  buttonHref: z.string().optional(),
+});
+
+export const AtomicAccordionSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        title: z.string(),
+        content: z.string(),
+      }),
+    )
+    .default([{ title: "Question", content: "Answer" }]),
+});
+
+export const AtomicMenuSchema = z.object({
+  menuId: z.string().optional(),
+  orientation: z.enum(["horizontal", "vertical"]).default("horizontal"),
+  showDivider: z.coerce.boolean().optional(),
+  itemGap: SizeSchema.optional(),
+});
+
+export const AtomicCountdownSchema = z.object({
+  targetDate: z.string().optional(),
+  label: z.string().optional(),
+  showSeconds: z.coerce.boolean().optional(),
+});
+
+export const AtomicEmbedSchema = z.object({
+  code: z.string().optional(),
+  src: z.string().optional(),
+  title: z.string().optional(),
+});

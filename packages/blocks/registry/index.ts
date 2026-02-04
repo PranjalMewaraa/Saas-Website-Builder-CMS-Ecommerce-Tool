@@ -35,6 +35,16 @@ import AtomicImage from "../Atomic/Image";
 import AtomicVideo from "../Atomic/Video";
 import AtomicButton from "../Atomic/Button";
 import AtomicGroup from "../Atomic/Group";
+import AtomicIcon from "../Atomic/Icon";
+import AtomicDivider from "../Atomic/Divider";
+import AtomicSpacer from "../Atomic/Spacer";
+import AtomicBadge from "../Atomic/Badge";
+import AtomicList from "../Atomic/List";
+import AtomicCard from "../Atomic/Card";
+import AtomicAccordion from "../Atomic/Accordion";
+import AtomicMenu from "../Atomic/Menu";
+import AtomicCountdown from "../Atomic/Countdown";
+import AtomicEmbed from "../Atomic/Embed";
 
 import {
   SpacerSchema,
@@ -48,6 +58,16 @@ import {
   AtomicImageSchema,
   AtomicVideoSchema,
   AtomicButtonSchema,
+  AtomicIconSchema,
+  AtomicDividerSchema,
+  AtomicSpacerSchema,
+  AtomicBadgeSchema,
+  AtomicListSchema,
+  AtomicCardSchema,
+  AtomicAccordionSchema,
+  AtomicMenuSchema,
+  AtomicCountdownSchema,
+  AtomicEmbedSchema,
 } from "../../schemas";
 import BannerCTAV1 from "../marketing/BannerCTA";
 import FeaturesGridV1 from "../marketing/FeaturesGrid";
@@ -205,6 +225,56 @@ export const BLOCKS: Record<
     type: "Atomic/Button",
     schema: AtomicButtonSchema,
     render: AtomicButton,
+  },
+  "Atomic/Icon": {
+    type: "Atomic/Icon",
+    schema: AtomicIconSchema,
+    render: AtomicIcon,
+  },
+  "Atomic/Divider": {
+    type: "Atomic/Divider",
+    schema: AtomicDividerSchema,
+    render: AtomicDivider,
+  },
+  "Atomic/Spacer": {
+    type: "Atomic/Spacer",
+    schema: AtomicSpacerSchema,
+    render: AtomicSpacer,
+  },
+  "Atomic/Badge": {
+    type: "Atomic/Badge",
+    schema: AtomicBadgeSchema,
+    render: AtomicBadge,
+  },
+  "Atomic/List": {
+    type: "Atomic/List",
+    schema: AtomicListSchema,
+    render: AtomicList,
+  },
+  "Atomic/Card": {
+    type: "Atomic/Card",
+    schema: AtomicCardSchema,
+    render: AtomicCard,
+  },
+  "Atomic/Accordion": {
+    type: "Atomic/Accordion",
+    schema: AtomicAccordionSchema,
+    render: AtomicAccordion,
+  },
+  "Atomic/Menu": {
+    type: "Atomic/Menu",
+    schema: AtomicMenuSchema,
+    render: AtomicMenu,
+  },
+  "Atomic/Countdown": {
+    type: "Atomic/Countdown",
+    schema: AtomicCountdownSchema,
+    render: AtomicCountdown,
+  },
+  "Atomic/Embed": {
+    type: "Atomic/Embed",
+    schema: AtomicEmbedSchema,
+    render: AtomicEmbed,
   },
   "Atomic/Group": {
     type: "Atomic/Group",
