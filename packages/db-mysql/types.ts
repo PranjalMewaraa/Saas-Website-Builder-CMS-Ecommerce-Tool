@@ -8,6 +8,7 @@ export type StoreRow = {
   currency: string;
   timezone: string;
   status: "active" | "suspended";
+  industry?: string | null;
   created_at: string;
   updated_at: string;
 };

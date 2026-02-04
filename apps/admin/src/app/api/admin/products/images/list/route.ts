@@ -1,5 +1,5 @@
 // ← adjust path to where your pool is exported
-import { requireSession } from "@acme/auth";
+import { requireSession, requireModule } from "@acme/auth";
 import { pool } from "@acme/db-mysql";
 
 export async function GET(req: Request) {
@@ -8,6 +8,9 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const product_id = searchParams.get("product_id");
+  const site_id = searchParams.get("site_id") || "";
+
+  await requireModule({ tenant_id, site_id, module: "catalog" });
 
   if (!product_id) {
     return Response.json(

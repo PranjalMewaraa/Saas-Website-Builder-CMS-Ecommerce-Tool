@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS stores (
   currency    CHAR(3) NOT NULL DEFAULT 'USD',
   timezone    VARCHAR(64) NOT NULL DEFAULT 'UTC',
   status      ENUM('active','suspended') NOT NULL DEFAULT 'active',
+  industry    VARCHAR(64) NULL,
   created_at  DATETIME NOT NULL,
   updated_at  DATETIME NOT NULL,
 
@@ -165,6 +166,75 @@ CREATE TABLE IF NOT EXISTS store_products (
     ON DELETE CASCADE,
   CONSTRAINT fk_store_products_product
     FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Product attributes
+CREATE TABLE IF NOT EXISTS product_attributes (
+  id            VARCHAR(26) PRIMARY KEY,
+  tenant_id     VARCHAR(26) NOT NULL,
+  code          VARCHAR(64) NOT NULL,
+  name          VARCHAR(255) NOT NULL,
+  type          VARCHAR(32) NOT NULL, -- text|number|boolean|select|multiselect|date
+  is_filterable TINYINT(1) NOT NULL DEFAULT 0,
+  is_variant    TINYINT(1) NOT NULL DEFAULT 0,
+  is_required   TINYINT(1) NOT NULL DEFAULT 0,
+  created_at    DATETIME NOT NULL,
+
+  UNIQUE KEY uq_attr_code (tenant_id, code),
+  INDEX idx_attr_tenant (tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS product_attribute_options (
+  id           VARCHAR(26) PRIMARY KEY,
+  attribute_id VARCHAR(26) NOT NULL,
+  value        VARCHAR(255) NOT NULL,
+
+  INDEX idx_attr_opt (attribute_id),
+  CONSTRAINT fk_attr_opt_attr
+    FOREIGN KEY (attribute_id) REFERENCES product_attributes(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS product_attribute_values (
+  tenant_id     VARCHAR(26) NOT NULL,
+  product_id    VARCHAR(26) NOT NULL,
+  attribute_id  VARCHAR(26) NOT NULL,
+  value_text    TEXT NULL,
+  value_number  DECIMAL(12,2) NULL,
+  value_bool    TINYINT(1) NULL,
+  value_date    DATE NULL,
+  option_id     VARCHAR(26) NULL,
+
+  PRIMARY KEY (tenant_id, product_id, attribute_id),
+  INDEX idx_pav_attr (tenant_id, attribute_id),
+  CONSTRAINT fk_pav_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_pav_attr
+    FOREIGN KEY (attribute_id) REFERENCES product_attributes(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_pav_option
+    FOREIGN KEY (option_id) REFERENCES product_attribute_options(id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS variant_attribute_values (
+  tenant_id     VARCHAR(26) NOT NULL,
+  variant_id    VARCHAR(26) NOT NULL,
+  attribute_id  VARCHAR(26) NOT NULL,
+  option_id     VARCHAR(26) NOT NULL,
+
+  PRIMARY KEY (tenant_id, variant_id, attribute_id),
+  INDEX idx_vav_attr (tenant_id, attribute_id),
+  CONSTRAINT fk_vav_variant
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_vav_attr
+    FOREIGN KEY (attribute_id) REFERENCES product_attributes(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_vav_option
+    FOREIGN KEY (option_id) REFERENCES product_attribute_options(id)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

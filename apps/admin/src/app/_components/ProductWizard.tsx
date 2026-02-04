@@ -234,10 +234,13 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
       formData.append("product_id", productId);
       formData.append("file", file);
 
-      const res = await fetch("/api/admin/products/images/upload", {
+      const res = await fetch(
+        `/api/admin/products/images/upload?site_id=${encodeURIComponent(siteId)}`,
+        {
         method: "POST",
         body: formData,
-      });
+        },
+      );
 
       if (!res.ok) throw new Error("Image upload failed");
 
@@ -251,11 +254,14 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
 
   async function deleteImage(imageId: string) {
     try {
-      const res = await fetch("/api/admin/products/images/delete", {
+      const res = await fetch(
+        `/api/admin/products/images/delete?site_id=${encodeURIComponent(siteId)}`,
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image_id: imageId }),
-      });
+        },
+      );
 
       if (!res.ok) throw new Error("Delete failed");
 
@@ -268,7 +274,7 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
   async function loadProductImages(pid: string) {
     try {
       const res = await fetch(
-        `/api/admin/products/images/list?product_id=${pid}`,
+        `/api/admin/products/images/list?product_id=${pid}&site_id=${encodeURIComponent(siteId)}`,
       );
       if (!res.ok) throw new Error("Failed to load images");
       const data = await res.json();

@@ -32,6 +32,7 @@ export default function StoreWizard({ siteId }: { siteId: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          site_id: siteId,
           store_type: type,
           name,
           industry,
@@ -54,7 +55,7 @@ export default function StoreWizard({ siteId }: { siteId: string }) {
       const res = await fetch("/api/admin/store-setup/create-brand", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, site_id: siteId }),
       });
 
       if (!res.ok) throw new Error("Brand creation failed");
@@ -70,7 +71,7 @@ export default function StoreWizard({ siteId }: { siteId: string }) {
       const res = await fetch("/api/admin/store-setup/create-category", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, site_id: siteId }),
       });
 
       if (!res.ok) throw new Error("Category creation failed");

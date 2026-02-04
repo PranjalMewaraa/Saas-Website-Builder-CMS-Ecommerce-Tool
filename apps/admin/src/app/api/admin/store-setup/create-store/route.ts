@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSession } from "@acme/auth";
+import { requireSession, requireModule } from "@acme/auth";
 import { pool } from "@acme/db-mysql";
 import { newId, nowSql } from "@acme/db-mysql/id";
 
@@ -7,6 +7,9 @@ export async function POST(req: Request) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
   const body = await req.json();
+  const site_id = body.site_id || "";
+
+  await requireModule({ tenant_id, site_id, module: "catalog" });
 
   const store_id = newId("store");
   const finalStoreId = store_id.slice(0, 20);
@@ -26,5 +29,5 @@ export async function POST(req: Request) {
     ],
   );
 
-  return NextResponse.json({ ok: true, store_id });
+  return NextResponse.json({ ok: true, store_id: finalStoreId });
 }

@@ -1,4 +1,4 @@
-import { requireSession } from "@acme/auth";
+import { requireSession, requireModule } from "@acme/auth";
 import { pool } from "@acme/db-mysql";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
@@ -16,6 +16,10 @@ const CDN_BASE_URL = process.env.CDN_BASE_URL!;
 export async function POST(req: Request) {
   const session = await requireSession();
   const tenant_id = session.user.tenant_id;
+  const { searchParams } = new URL(req.url);
+  const site_id = searchParams.get("site_id") || "";
+
+  await requireModule({ tenant_id, site_id, module: "catalog" });
 
   const { image_id } = await req.json();
 

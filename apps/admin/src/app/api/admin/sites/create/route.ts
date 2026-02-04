@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@acme/auth";
 import { sitesCollection } from "@acme/db-mongo/sites.repo";
+import { pool } from "@acme/db-mysql";
+import { newId, nowSql } from "@acme/db-mysql/id";
 
 function slugify(v: string) {
   return v
@@ -24,13 +26,15 @@ export async function POST(req: Request) {
 
   const handle = slugify(name);
   const site_id = `site_${Date.now()}`;
+  const store_id = newId("store").slice(0, 20);
+  const ts = nowSql();
 
   const col = await sitesCollection();
 
   const doc = {
     _id: site_id,
     tenant_id,
-    store_id: `store_${Date.now()}`,
+    store_id,
     name,
     handle,
     modules_enabled: {
@@ -48,6 +52,12 @@ export async function POST(req: Request) {
   };
 
   await col.insertOne(doc as any);
+
+  await pool.query(
+    `INSERT INTO stores (id, tenant_id, name, store_type, currency, timezone, status, created_at, updated_at, industry)
+     VALUES (?, ?, ?, 'brand', 'USD', 'UTC', 'active', ?, ?, ?)`,
+    [store_id, tenant_id, name, ts, ts, null],
+  );
 
   return NextResponse.json({ ok: true, site: doc });
 }
