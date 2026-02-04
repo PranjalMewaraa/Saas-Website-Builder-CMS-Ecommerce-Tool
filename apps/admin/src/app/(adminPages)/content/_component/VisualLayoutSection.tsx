@@ -372,7 +372,7 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
-                          className={`group relative rounded-lg border hover:ring-1 hover:ring-blue-200 ${
+                          className={`group/col relative rounded-lg border hover:ring-1 hover:ring-blue-200 ${
                             colSelected
                               ? "ring-2 ring-blue-500 border-blue-300"
                               : "border-gray-200"
@@ -391,7 +391,7 @@ export default function VisualLayoutSection({
                             });
                           }}
                         >
-                          <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
+                          <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover/col:opacity-100 group-hover/col:pointer-events-auto transition">
                             <button
                               className="p-1 rounded hover:bg-gray-50"
                               onClick={(e) => {
@@ -492,10 +492,10 @@ export default function VisualLayoutSection({
                               );
                             })}
 
-                            <div className="relative group/add">
+                            <div className="relative">
                               <button
                                 type="button"
-                                className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition"
+                                className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50 opacity-0 pointer-events-none group-hover/col:opacity-100 group-hover/col:pointer-events-auto transition"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setActiveAddCol({ rowId: row.id, colId: col.id });

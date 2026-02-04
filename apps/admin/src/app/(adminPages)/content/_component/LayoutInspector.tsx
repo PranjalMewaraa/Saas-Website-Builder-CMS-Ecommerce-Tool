@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ImageField from "./ImageField";
 import {
   type LayoutSelection,
@@ -616,6 +616,99 @@ function Field({
   );
 }
 
+function UnitField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: string | number) => void;
+  placeholder?: string;
+}) {
+  const [text, setText] = useState(value ?? "");
+  const [unit, setUnit] = useState("px");
+
+  useEffect(() => {
+    const v = value ?? "";
+    setText(v);
+    const m = String(v).trim().match(/(px|%|em|rem|vh|vw)$/);
+    if (m) setUnit(m[1]);
+  }, [value]);
+
+  function parseAndEmit(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      onChange("");
+      return;
+    }
+    if (trimmed === "auto") {
+      onChange("auto");
+      return;
+    }
+    const match = trimmed.match(/^(-?\\d+(?:\\.\\d+)?)(px|%|em|rem|vh|vw)$/);
+    if (match) {
+      onChange(`${match[1]}${match[2]}`);
+      return;
+    }
+    const num = Number(trimmed);
+    if (!Number.isNaN(num)) {
+      onChange(num);
+      return;
+    }
+    onChange(trimmed);
+  }
+
+  function onUnitChange(nextUnit: string) {
+    setUnit(nextUnit);
+    const current = String(text || "").trim();
+    if (!current || current === "auto") {
+      onChange(current);
+      return;
+    }
+    const numMatch = current.match(
+      /^(-?\\d+(?:\\.\\d+)?)(?:px|%|em|rem|vh|vw)?$/,
+    );
+    if (numMatch) {
+      const next = `${numMatch[1]}${nextUnit}`;
+      setText(next);
+      onChange(next);
+    }
+  }
+
+  return (
+    <label className="block space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
+      <div className="flex gap-2 items-center">
+        <input
+          className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 font-mono"
+          value={text}
+          onChange={(e) => {
+            const next = e.target.value;
+            setText(next);
+            const m = next.trim().match(/(px|%|em|rem|vh|vw)$/);
+            if (m) setUnit(m[1]);
+            parseAndEmit(next);
+          }}
+          placeholder={placeholder}
+        />
+        <select
+          className="border rounded-lg px-2 py-2 text-xs bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+          value={unit}
+          onChange={(e) => onUnitChange(e.target.value)}
+        >
+          {["px", "%", "em", "rem", "vh", "vw"].map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
+      </div>
+    </label>
+  );
+}
+
 function TextArea({
   label,
   value,
@@ -733,194 +826,215 @@ function StyleFields({
     <div className="space-y-4">
       <div className="text-sm font-medium">Style</div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Width"
-          value={s.width || ""}
-          onChange={(v) => set("width", v)}
-          placeholder="100%"
-        />
-        <Field
-          label="Max Width"
-          value={s.maxWidth || ""}
-          onChange={(v) => set("maxWidth", v)}
-          placeholder="1200px"
-        />
-        <Field
-          label="Min Width"
-          value={s.minWidth || ""}
-          onChange={(v) => set("minWidth", v)}
-          placeholder="0"
-        />
-        <Field
-          label="Height"
-          value={s.height || ""}
-          onChange={(v) => set("height", v)}
-          placeholder="auto"
-        />
-        <Field
-          label="Max Height"
-          value={s.maxHeight || ""}
-          onChange={(v) => set("maxHeight", v)}
-          placeholder="800px"
-        />
-        <Field
-          label="Min Height"
-          value={s.minHeight || ""}
-          onChange={(v) => set("minHeight", v)}
-          placeholder="0"
-        />
-      </div>
+      <details open className="border rounded-lg p-3 bg-white">
+        <summary className="cursor-pointer text-sm font-medium">
+          Size & Spacing
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Width"
+              value={s.width || ""}
+              onChange={(v) => set("width", v)}
+              placeholder="100%"
+            />
+            <UnitField
+              label="Max Width"
+              value={s.maxWidth || ""}
+              onChange={(v) => set("maxWidth", v)}
+              placeholder="1200px"
+            />
+            <UnitField
+              label="Min Width"
+              value={s.minWidth || ""}
+              onChange={(v) => set("minWidth", v)}
+              placeholder="0"
+            />
+            <UnitField
+              label="Height"
+              value={s.height || ""}
+              onChange={(v) => set("height", v)}
+              placeholder="auto"
+            />
+            <UnitField
+              label="Max Height"
+              value={s.maxHeight || ""}
+              onChange={(v) => set("maxHeight", v)}
+              placeholder="800px"
+            />
+            <UnitField
+              label="Min Height"
+              value={s.minHeight || ""}
+              onChange={(v) => set("minHeight", v)}
+              placeholder="0"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Background"
-          value={s.bgColor || ""}
-          onChange={(v) => set("bgColor", v)}
-          placeholder="#ffffff"
-        />
-        <Field
-          label="Text Color"
-          value={s.textColor || ""}
-          onChange={(v) => set("textColor", v)}
-          placeholder="#111111"
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Padding Top"
+              value={Number(s.padding?.top ?? 0)}
+              onChange={(v) => set("padding.top", v)}
+            />
+            <UnitField
+              label="Padding Right"
+              value={Number(s.padding?.right ?? 0)}
+              onChange={(v) => set("padding.right", v)}
+            />
+            <UnitField
+              label="Padding Bottom"
+              value={Number(s.padding?.bottom ?? 0)}
+              onChange={(v) => set("padding.bottom", v)}
+            />
+            <UnitField
+              label="Padding Left"
+              value={Number(s.padding?.left ?? 0)}
+              onChange={(v) => set("padding.left", v)}
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Select
-          label="Text Align"
-          value={s.textAlign || "left"}
-          options={["left", "center", "right"]}
-          onChange={(v) => set("textAlign", v)}
-        />
-        <Select
-          label="Align Items"
-          value={s.align || "stretch"}
-          options={["start", "center", "end", "stretch"]}
-          onChange={(v) => set("align", v)}
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Margin Top"
+              value={Number(s.margin?.top ?? 0)}
+              onChange={(v) => set("margin.top", v)}
+            />
+            <UnitField
+              label="Margin Right"
+              value={Number(s.margin?.right ?? 0)}
+              onChange={(v) => set("margin.right", v)}
+            />
+            <UnitField
+              label="Margin Bottom"
+              value={Number(s.margin?.bottom ?? 0)}
+              onChange={(v) => set("margin.bottom", v)}
+            />
+            <UnitField
+              label="Margin Left"
+              value={Number(s.margin?.left ?? 0)}
+              onChange={(v) => set("margin.left", v)}
+            />
+          </div>
+        </div>
+      </details>
 
-      <Select
-        label="Justify"
-        value={s.justify || "start"}
-        options={["start", "center", "end", "between", "around", "evenly"]}
-        onChange={(v) => set("justify", v)}
-      />
+      <details open className="border rounded-lg p-3 bg-white">
+        <summary className="cursor-pointer text-sm font-medium">
+          Color & Border
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Background"
+              value={s.bgColor || ""}
+              onChange={(v) => set("bgColor", v)}
+              placeholder="#ffffff"
+            />
+            <Field
+              label="Text Color"
+              value={s.textColor || ""}
+              onChange={(v) => set("textColor", v)}
+              placeholder="#111111"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Border Color"
-          value={s.borderColor || ""}
-          onChange={(v) => set("borderColor", v)}
-          placeholder="#e5e7eb"
-        />
-        <Field
-          label="Border Width"
-          value={s.borderWidth || ""}
-          onChange={(v) => set("borderWidth", v)}
-          placeholder="1"
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Border Color"
+              value={s.borderColor || ""}
+              onChange={(v) => set("borderColor", v)}
+              placeholder="#e5e7eb"
+            />
+            <UnitField
+              label="Border Width"
+              value={s.borderWidth || ""}
+              onChange={(v) => set("borderWidth", v)}
+              placeholder="1"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Radius"
-          value={s.radius || ""}
-          onChange={(v) => set("radius", v)}
-          placeholder="8"
-        />
-        <Select
-          label="Shadow"
-          value={s.shadow || "none"}
-          options={["none", "sm", "md", "lg"]}
-          onChange={(v) => set("shadow", v)}
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Radius"
+              value={s.radius || ""}
+              onChange={(v) => set("radius", v)}
+              placeholder="8"
+            />
+            <Select
+              label="Shadow"
+              value={s.shadow || "none"}
+              options={["none", "sm", "md", "lg"]}
+              onChange={(v) => set("shadow", v)}
+            />
+          </div>
+        </div>
+      </details>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Font Size"
-          value={s.fontSize || ""}
-          onChange={(v) => set("fontSize", v)}
-          placeholder="16"
-        />
-        <Field
-          label="Font Weight"
-          value={s.fontWeight || ""}
-          onChange={(v) => set("fontWeight", v)}
-          placeholder="400"
-        />
-      </div>
+      <details open className="border rounded-lg p-3 bg-white">
+        <summary className="cursor-pointer text-sm font-medium">
+          Typography & Alignment
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Text Align"
+              value={s.textAlign || "left"}
+              options={["left", "center", "right"]}
+              onChange={(v) => set("textAlign", v)}
+            />
+            <Select
+              label="Align Items"
+              value={s.align || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("align", v)}
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Line Height"
-          value={s.lineHeight || ""}
-          onChange={(v) => set("lineHeight", v)}
-          placeholder="24"
-        />
-        <Field
-          label="Letter Spacing"
-          value={s.letterSpacing || ""}
-          onChange={(v) => set("letterSpacing", v)}
-          placeholder="0.2"
-        />
-      </div>
+          <Select
+            label="Justify"
+            value={s.justify || "start"}
+            options={["start", "center", "end", "between", "around", "evenly"]}
+            onChange={(v) => set("justify", v)}
+          />
 
-      <Select
-        label="Text Transform"
-        value={s.textTransform || "none"}
-        options={["none", "uppercase", "lowercase", "capitalize"]}
-        onChange={(v) => set("textTransform", v)}
-      />
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Font Size"
+              value={s.fontSize || ""}
+              onChange={(v) => set("fontSize", v)}
+              placeholder="16"
+            />
+            <UnitField
+              label="Font Weight"
+              value={s.fontWeight || ""}
+              onChange={(v) => set("fontWeight", v)}
+              placeholder="400"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <NumberField
-          label="Padding Top"
-          value={Number(s.padding?.top ?? 0)}
-          onChange={(n) => set("padding.top", n)}
-        />
-        <NumberField
-          label="Padding Right"
-          value={Number(s.padding?.right ?? 0)}
-          onChange={(n) => set("padding.right", n)}
-        />
-        <NumberField
-          label="Padding Bottom"
-          value={Number(s.padding?.bottom ?? 0)}
-          onChange={(n) => set("padding.bottom", n)}
-        />
-        <NumberField
-          label="Padding Left"
-          value={Number(s.padding?.left ?? 0)}
-          onChange={(n) => set("padding.left", n)}
-        />
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Line Height"
+              value={s.lineHeight || ""}
+              onChange={(v) => set("lineHeight", v)}
+              placeholder="24"
+            />
+            <UnitField
+              label="Letter Spacing"
+              value={s.letterSpacing || ""}
+              onChange={(v) => set("letterSpacing", v)}
+              placeholder="0.2"
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <NumberField
-          label="Margin Top"
-          value={Number(s.margin?.top ?? 0)}
-          onChange={(n) => set("margin.top", n)}
-        />
-        <NumberField
-          label="Margin Right"
-          value={Number(s.margin?.right ?? 0)}
-          onChange={(n) => set("margin.right", n)}
-        />
-        <NumberField
-          label="Margin Bottom"
-          value={Number(s.margin?.bottom ?? 0)}
-          onChange={(n) => set("margin.bottom", n)}
-        />
-        <NumberField
-          label="Margin Left"
-          value={Number(s.margin?.left ?? 0)}
-          onChange={(n) => set("margin.left", n)}
-        />
-      </div>
+          <Select
+            label="Text Transform"
+            value={s.textTransform || "none"}
+            options={["none", "uppercase", "lowercase", "capitalize"]}
+            onChange={(v) => set("textTransform", v)}
+          />
+        </div>
+      </details>
     </div>
   );
 }
