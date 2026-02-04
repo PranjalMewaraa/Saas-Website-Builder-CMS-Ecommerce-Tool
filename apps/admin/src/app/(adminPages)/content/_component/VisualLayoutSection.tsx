@@ -272,7 +272,7 @@ export default function VisualLayoutSection({
         Section
       </div>
 
-      <div className="p-4" style={resolveLayoutStyle(props.style)}>
+      <div className="p-4 group" style={resolveLayoutStyle(props.style)}>
         {rows.length === 0 ? (
           <button
             type="button"
@@ -281,6 +281,7 @@ export default function VisualLayoutSection({
               e.stopPropagation();
               addRow();
             }}
+            title="Add row"
           >
             <Plus className="inline-block h-4 w-4 mr-1" />
             Add Row
@@ -306,7 +307,7 @@ export default function VisualLayoutSection({
               return (
                 <div
                   key={row.id}
-                  className={`relative rounded-lg border border-dashed ${
+                  className={`group relative rounded-lg border border-dashed hover:ring-1 hover:ring-blue-200 ${
                     rowSelected ? "ring-2 ring-blue-500 border-blue-300" : "border-gray-200"
                   }`}
                   onClick={(e) => {
@@ -318,7 +319,7 @@ export default function VisualLayoutSection({
                     });
                   }}
                 >
-                  <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1">
+                  <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
                     <button
                       className="p-1 rounded hover:bg-gray-50"
                       onClick={(e) => {
@@ -371,7 +372,7 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
-                          className={`relative rounded-lg border ${
+                          className={`group relative rounded-lg border hover:ring-1 hover:ring-blue-200 ${
                             colSelected
                               ? "ring-2 ring-blue-500 border-blue-300"
                               : "border-gray-200"
@@ -390,7 +391,7 @@ export default function VisualLayoutSection({
                             });
                           }}
                         >
-                          <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1">
+                          <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
                             <button
                               className="p-1 rounded hover:bg-gray-50"
                               onClick={(e) => {
@@ -438,7 +439,7 @@ export default function VisualLayoutSection({
                               return (
                                 <div
                                   key={atomic.id}
-                                  className={`relative rounded-md border ${
+                                  className={`group relative rounded-md border ${
                                     atomicSelected
                                       ? "ring-2 ring-blue-500 border-blue-300"
                                       : "border-transparent hover:border-gray-200"
@@ -454,7 +455,7 @@ export default function VisualLayoutSection({
                                     });
                                   }}
                                 >
-                                  <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1">
+                                  <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition">
                                     <button
                                       className="p-1 rounded hover:bg-gray-50"
                                       onClick={(e) => {
@@ -491,14 +492,15 @@ export default function VisualLayoutSection({
                               );
                             })}
 
-                            <div className="relative">
+                            <div className="relative group/add">
                               <button
                                 type="button"
-                                className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50"
+                                className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setActiveAddCol({ rowId: row.id, colId: col.id });
                                 }}
+                                title="Add block"
                               >
                                 <Plus className="inline-block h-3 w-3 mr-1" />
                                 Add Block
@@ -548,11 +550,12 @@ export default function VisualLayoutSection({
                   <div className="px-4 pb-3">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition"
                       onClick={(e) => {
                         e.stopPropagation();
                         addCol(row.id);
                       }}
+                      title="Add column"
                     >
                       <Plus className="h-3 w-3" />
                       Add Column
@@ -564,11 +567,12 @@ export default function VisualLayoutSection({
 
             <button
               type="button"
-              className="w-full border border-dashed border-gray-300 rounded-lg py-3 text-xs text-gray-500 hover:bg-gray-50"
+              className="w-full border border-dashed border-gray-300 rounded-lg py-3 text-xs text-gray-500 hover:bg-gray-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition"
               onClick={(e) => {
                 e.stopPropagation();
                 addRow();
               }}
+              title="Add row"
             >
               <Plus className="inline-block h-3 w-3 mr-1" />
               Add Row

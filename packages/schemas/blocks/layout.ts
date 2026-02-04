@@ -6,8 +6,10 @@ const SizeSchema = z.union([z.string(), z.number()]);
 export const LayoutStyleSchema = z.object({
   width: SizeSchema.optional(),
   maxWidth: SizeSchema.optional(),
+  minWidth: SizeSchema.optional(),
   height: SizeSchema.optional(),
   maxHeight: SizeSchema.optional(),
+  minHeight: SizeSchema.optional(),
 
   padding: PaddingSchema.optional(),
   margin: MarginSchema.optional(),

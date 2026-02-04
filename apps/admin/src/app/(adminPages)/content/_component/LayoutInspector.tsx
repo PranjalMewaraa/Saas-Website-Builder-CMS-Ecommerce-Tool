@@ -202,6 +202,19 @@ export default function LayoutInspector({
                         target.layout = target.layout || {};
                         target.layout.presetId = o.id;
                         target.layout.display = "grid";
+                        const preset = ROW_PRESET_PREVIEWS[o.id];
+                        if (preset) {
+                          const needed = preset.cols;
+                          target.layout.columns = needed;
+                          target.cols = target.cols || [];
+                          if (target.cols.length < needed) {
+                            for (let i = target.cols.length; i < needed; i++) {
+                              target.cols.push(createDefaultCol());
+                            }
+                          } else if (target.cols.length > needed) {
+                            target.cols = target.cols.slice(0, needed);
+                          }
+                        }
                       })
                     }
                   >
@@ -734,6 +747,12 @@ function StyleFields({
           placeholder="1200px"
         />
         <Field
+          label="Min Width"
+          value={s.minWidth || ""}
+          onChange={(v) => set("minWidth", v)}
+          placeholder="0"
+        />
+        <Field
           label="Height"
           value={s.height || ""}
           onChange={(v) => set("height", v)}
@@ -744,6 +763,12 @@ function StyleFields({
           value={s.maxHeight || ""}
           onChange={(v) => set("maxHeight", v)}
           placeholder="800px"
+        />
+        <Field
+          label="Min Height"
+          value={s.minHeight || ""}
+          onChange={(v) => set("minHeight", v)}
+          placeholder="0"
         />
       </div>
 

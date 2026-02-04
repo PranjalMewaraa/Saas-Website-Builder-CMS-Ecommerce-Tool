@@ -10,8 +10,10 @@ type BoxSides = {
 export type LayoutStyle = {
   width?: number | string;
   maxWidth?: number | string;
+  minWidth?: number | string;
   height?: number | string;
   maxHeight?: number | string;
+  minHeight?: number | string;
   padding?: BoxSides;
   margin?: BoxSides;
   textAlign?: "left" | "center" | "right";
@@ -68,8 +70,10 @@ export function resolveLayoutStyle(s?: LayoutStyle): React.CSSProperties {
 
   if (s.width) style.width = toCssSize(s.width)!;
   if (s.maxWidth) style.maxWidth = toCssSize(s.maxWidth)!;
+  if (s.minWidth) style.minWidth = toCssSize(s.minWidth)!;
   if (s.height) style.height = toCssSize(s.height)!;
   if (s.maxHeight) style.maxHeight = toCssSize(s.maxHeight)!;
+  if (s.minHeight) style.minHeight = toCssSize(s.minHeight)!;
 
   if (s.textAlign) style.textAlign = s.textAlign;
   if (s.bgColor) style.background = s.bgColor;

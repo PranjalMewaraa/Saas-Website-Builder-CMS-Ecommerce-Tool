@@ -1,8 +1,10 @@
 export type LayoutStyle = {
   width?: number | string;
   maxWidth?: number | string;
+  minWidth?: number | string;
   height?: number | string;
   maxHeight?: number | string;
+  minHeight?: number | string;
   padding?: {
     top?: number | string;
     right?: number | string;
@@ -160,4 +162,3 @@ export function createAtomicBlock(
     },
   };
 }
-
