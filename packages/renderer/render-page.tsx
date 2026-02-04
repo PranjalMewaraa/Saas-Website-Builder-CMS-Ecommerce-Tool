@@ -5,6 +5,7 @@ import { computeFinalStyle } from "./style-merge";
 import { resolveWrapperStyle } from "./style-resolver";
 import { buildResponsiveCss } from "./responsive-css";
 import { StyleWrapper } from "./StyleWrapper";
+import { LayoutSectionRenderer } from "./layout-section";
 
 export type RenderContext = {
   tenantId: string;
@@ -131,6 +132,17 @@ async function BlockRenderer({
   block: any;
   ctx: RenderContext;
 }) {
+  if (block.type === "Layout/Section") {
+    return (
+      <div data-block-id={block.id}>
+        <LayoutSectionRenderer
+          props={block.props || { rows: [] }}
+          assets={ctx.snapshot.assets}
+        />
+      </div>
+    );
+  }
+
   const def = getBlock(block.type);
 
   // presets live in snapshot.stylePresets (map)

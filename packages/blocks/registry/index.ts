@@ -29,12 +29,24 @@ import {
 import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
 import { RichText, RichTextDefaults } from "../utility/RichText";
+import LayoutSection from "../layout/Section";
+import AtomicText from "../atomic/Text";
+import AtomicImage from "../atomic/Image";
+import AtomicVideo from "../atomic/Video";
+import AtomicButton from "../atomic/Button";
 
 import {
   SpacerSchema,
   RichTextSchema,
   DividerSchema,
 } from "../../schemas/blocks/utility";
+import {
+  LayoutSectionPropsSchema,
+  AtomicTextSchema,
+  AtomicImageSchema,
+  AtomicVideoSchema,
+  AtomicButtonSchema,
+} from "../../schemas";
 import BannerCTAV1 from "../marketing/BannerCTA";
 import FeaturesGridV1 from "../marketing/FeaturesGrid";
 import TestimonialsV1 from "../marketing/Testimonials";
@@ -162,6 +174,35 @@ export const BLOCKS: Record<
     type: "NewsletterSignup/V1",
     schema: NewsletterSignupV1Schema,
     render: NewsletterSignupV1,
+  },
+
+  // ------------------------
+  // Layout / Atomic (Section)
+  // ------------------------
+  "Layout/Section": {
+    type: "Layout/Section",
+    schema: LayoutSectionPropsSchema,
+    render: LayoutSection,
+  },
+  "Atomic/Text": {
+    type: "Atomic/Text",
+    schema: AtomicTextSchema,
+    render: AtomicText,
+  },
+  "Atomic/Image": {
+    type: "Atomic/Image",
+    schema: AtomicImageSchema,
+    render: AtomicImage,
+  },
+  "Atomic/Video": {
+    type: "Atomic/Video",
+    schema: AtomicVideoSchema,
+    render: AtomicVideo,
+  },
+  "Atomic/Button": {
+    type: "Atomic/Button",
+    schema: AtomicButtonSchema,
+    render: AtomicButton,
   },
 };
 

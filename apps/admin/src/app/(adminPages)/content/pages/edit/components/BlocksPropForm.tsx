@@ -61,6 +61,15 @@ export function BlockPropsForm({
     );
   }
 
+  if (type === "Layout/Section") {
+    return (
+      <div className="text-sm text-muted-foreground">
+        This block uses the Layout editor. Switch to Visual mode to add rows,
+        columns, and atomic blocks.
+      </div>
+    );
+  }
+
   if (type === "Form/V1") {
     return (
       <div className="space-y-3">

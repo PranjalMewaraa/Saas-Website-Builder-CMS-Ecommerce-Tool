@@ -5,6 +5,7 @@ import { PageLayoutSchema } from "../schemas";
 import { computeFinalStyle } from "./style-merge";
 import { resolveWrapperStyle } from "./style-resolver";
 import { buildResponsiveCss } from "./responsive-css";
+import { LayoutSectionRenderer } from "./layout-section";
 
 export type RenderContext = {
   tenantId: string;
@@ -82,6 +83,16 @@ function BuilderBlockPreview({
   block: any;
   snapshot: any;
 }) {
+  if (block.type === "Layout/Section") {
+    return (
+      <div data-block-id={block.id}>
+        <LayoutSectionRenderer
+          props={block.props || { rows: [] }}
+          assets={snapshot.assets}
+        />
+      </div>
+    );
+  }
   const finalStyle = computeFinalStyle({
     style: block.style,
     presets: snapshot.stylePresets,

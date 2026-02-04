@@ -22,6 +22,8 @@ import { useAssetsMap } from "../../_component/useAssetsMap";
 import StylePreviewCard from "../../_component/StylePreviewCard";
 import { VisualInspector } from "../../_component/VisualInspector";
 import { VisualCanvas } from "../../_component/VisualCanvas";
+import LayoutInspector from "../../_component/LayoutInspector";
+import type { LayoutSelection } from "../../_component/layout-utils";
 import PageSeoEditor from "@/app/_components/PageSeoEditor";
 
 import { BLOCKS, getBlock } from "@acme/blocks/registry";
@@ -38,7 +40,7 @@ function safeJsonParse(text: string) {
   }
 }
 
-const BLOCK_TYPES = Object.keys(BLOCKS);
+const BLOCK_TYPES = Object.keys(BLOCKS).filter((t) => !t.startsWith("Atomic/"));
 
 /* ---------------- main ---------------- */
 
@@ -54,7 +56,7 @@ export default function PageEditorClient({
   const { mode, setMode } = useEditorMode("form", urlMode);
   const { assetsMap } = useAssetsMap(siteId);
   const [tab, setTab] = useState<"layout" | "seo">("layout");
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<LayoutSelection | null>(null);
   const [forms, setForms] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
   const [presets, setPresets] = useState<any[]>([]);
@@ -161,6 +163,15 @@ export default function PageEditorClient({
     setLayoutJson(JSON.stringify(next, null, 2));
   }
 
+  function updateBlockById(blockId: string, nextBlock: any) {
+    const next = structuredClone(layout);
+    const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
+    if (idx < 0) return;
+    next.sections[0].blocks[idx] = nextBlock;
+    setPage({ ...page, draft_layout: next });
+    setLayoutJson(JSON.stringify(next, null, 2));
+  }
+
   function moveBlock(idx: number, dir: -1 | 1) {
     const next = structuredClone(layout);
     const arr = next.sections[0].blocks;
@@ -250,23 +261,43 @@ export default function PageEditorClient({
             <div className="grid grid-cols-[1fr_360px] gap-6">
               <VisualCanvas
                 layout={layout}
-                selectedId={selectedBlockId}
-                setSelectedId={setSelectedBlockId}
+                selection={selection}
+                onSelect={setSelection}
+                onChangeBlock={(nextBlock: any) =>
+                  updateBlockById(nextBlock.id, nextBlock)
+                }
+                assetsMap={assetsMap}
               />
 
               <div className="border rounded-xl p-4 bg-white">
-                <VisualInspector
-                  block={blocks.find((b: any) => b.id === selectedBlockId)}
-                  siteId={siteId}
-                  assetsMap={assetsMap}
-                  forms={forms}
-                  onChange={(nextBlock: any) => {
-                    const idx = blocks.findIndex(
-                      (b: any) => b.id === nextBlock.id,
-                    );
-                    updateBlock(idx, nextBlock);
-                  }}
-                />
+                {selection && selection.kind !== "block" ? (
+                  <LayoutInspector
+                    block={blocks.find(
+                      (b: any) => b.id === selection.blockId,
+                    )}
+                    selection={selection}
+                    siteId={siteId}
+                    assetsMap={assetsMap}
+                    onChangeBlock={(nextBlock: any) =>
+                      updateBlockById(nextBlock.id, nextBlock)
+                    }
+                  />
+                ) : (
+                  <VisualInspector
+                    block={blocks.find(
+                      (b: any) => b.id === selection?.blockId,
+                    )}
+                    siteId={siteId}
+                    assetsMap={assetsMap}
+                    forms={forms}
+                    onChange={(nextBlock: any) => {
+                      const idx = blocks.findIndex(
+                        (b: any) => b.id === nextBlock.id,
+                      );
+                      updateBlock(idx, nextBlock);
+                    }}
+                  />
+                )}
               </div>
             </div>
           ) : (
@@ -504,6 +535,11 @@ function defaultPropsFor(type: string) {
     return {
       title: "Your Title here",
       subtitle: "Subtitle Here",
+    };
+  if (type === "Layout/Section")
+    return {
+      style: {},
+      rows: [],
     };
   return {};
 }
