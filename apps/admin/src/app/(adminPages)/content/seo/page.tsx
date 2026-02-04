@@ -210,6 +210,24 @@ export default function SiteSeoPage({
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
             />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Custom Head HTML
+              </label>
+              <textarea
+                placeholder="<meta name=&quot;verification&quot; content=&quot;...&quot; />"
+                className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[140px] font-mono"
+                value={seo.customHeadHtml || ""}
+                onChange={(e) =>
+                  setSeo({ ...seo, customHeadHtml: e.target.value })
+                }
+                disabled={saving}
+              />
+              <p className="text-xs text-gray-500">
+                Inject meta/link/script tags into every page head for this site.
+              </p>
+            </div>
           </div>
 
           <div className="pt-4">

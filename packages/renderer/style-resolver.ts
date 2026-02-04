@@ -59,11 +59,24 @@ export function resolveWrapperStyle(style: Style) {
   outerStyle.marginBottom = px(mar.bottom ?? 0);
   outerStyle.marginLeft = px(mar.left ?? 0);
 
+  if (s.display) {
+    innerStyle.display = s.display;
+  } else if (s.align?.items || s.align?.justify || typeof s.gap === "number") {
+    innerStyle.display = "flex";
+  }
+  if (typeof s.gap === "number") innerStyle.gap = px(s.gap);
+
   // radius
   innerStyle.borderRadius = px(s.radius ?? 0);
 
   // text color (supports CSS vars like var(--color-text))
   if (s.textColor) innerStyle.color = s.textColor;
+  if (s.fontSize) innerStyle.fontSize = px(s.fontSize);
+  if (s.fontWeight) innerStyle.fontWeight = String(s.fontWeight);
+  if (s.lineHeight) innerStyle.lineHeight = px(s.lineHeight);
+  if (s.letterSpacing !== undefined)
+    innerStyle.letterSpacing = `${s.letterSpacing}px`;
+  if (s.textTransform) innerStyle.textTransform = s.textTransform;
 
   // background
   const bg = s.bg ?? { type: "none" };
@@ -99,6 +112,9 @@ export function resolveWrapperStyle(style: Style) {
     innerStyle.borderWidth = px(border.width ?? 1);
     innerStyle.borderColor = border.color ?? "rgba(0,0,0,0.12)";
   }
+
+  if (s.align?.items) innerStyle.alignItems = s.align.items;
+  if (s.align?.justify) innerStyle.justifyContent = s.align.justify;
 
   return { outerClass, innerClass, outerStyle, innerStyle };
 }

@@ -9,6 +9,7 @@ type SeoData = {
   description?: string;
   ogImageAssetId?: string;
   keywords?: string;
+  customHeadHtml?: string;
   // add other seo fields you might use later (keywords, canonical, etc.)
 };
 
@@ -143,6 +144,23 @@ export default function PageSeoEditor({
             onChangeAlt={() => {}}
             assetsMap={assetsMap}
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">
+            Custom Head HTML
+          </label>
+          <textarea
+            placeholder="<meta name=&quot;robots&quot; content=&quot;index,follow&quot; />"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/20 min-h-[140px] resize-y font-mono"
+            value={state.customHeadHtml || ""}
+            onChange={(e) =>
+              setState({ ...state, customHeadHtml: e.target.value })
+            }
+          />
+          <p className="text-xs text-gray-500">
+            Add custom meta/link/script tags to be injected into the page head.
+          </p>
         </div>
       </div>
       <SerpPreview

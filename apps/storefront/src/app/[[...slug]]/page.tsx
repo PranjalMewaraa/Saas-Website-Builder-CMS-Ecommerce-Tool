@@ -8,7 +8,7 @@ import { buildSeo } from "@acme/renderer/seo";
 import { organizationSchema, webpageSchema } from "@acme/renderer/seo/jsonld";
 export const dynamic = "force-dynamic";
 
-function normalizePath(slugParts?: string[]) {
+export function normalizePath(slugParts?: string[]) {
   if (!slugParts || slugParts.length === 0) return "/";
   const p =
     "/" +

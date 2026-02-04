@@ -55,7 +55,7 @@ export default function ImageField({
         <div className="border rounded overflow-hidden">
           <img
             src={resolvedUrl}
-            alt={altValue || asset.alt || ""}
+            alt={altValue || asset?.alt || ""}
             className="w-full h-40 object-cover"
           />
         </div>
