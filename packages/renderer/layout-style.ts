@@ -17,10 +17,35 @@ export type LayoutStyle = {
   padding?: BoxSides;
   margin?: BoxSides;
   textAlign?: "left" | "center" | "right";
+  display?: "block" | "flex" | "grid";
+  flexDirection?: "row" | "column";
+  flexWrap?: "nowrap" | "wrap";
+  alignSelf?: "start" | "center" | "end" | "stretch";
+  justifySelf?: "start" | "center" | "end" | "stretch";
   align?: "start" | "center" | "end" | "stretch";
   justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+  gridColumns?: number;
+  gridRows?: number;
   gap?: number | string;
   bgColor?: string;
+  bg?: {
+    type?: "none" | "solid" | "gradient" | "image" | "video";
+    color?: string;
+    gradient?: { from?: string; to?: string; angle?: number };
+    imageUrl?: string;
+    imageAssetId?: string;
+    imageSize?: "cover" | "contain" | "auto";
+    imagePosition?: string;
+    imageRepeat?: "no-repeat" | "repeat" | "repeat-x" | "repeat-y";
+    overlayColor?: string;
+    overlayOpacity?: number;
+    videoUrl?: string;
+    videoPoster?: string;
+    videoAutoplay?: boolean;
+    videoMuted?: boolean;
+    videoLoop?: boolean;
+    videoControls?: boolean;
+  };
   textColor?: string;
   borderColor?: string;
   borderWidth?: number | string;
@@ -46,6 +71,28 @@ function shadowValue(shadow?: LayoutStyle["shadow"]) {
   if (shadow === "sm") return "0 1px 2px rgba(0,0,0,0.08)";
   if (shadow === "md") return "0 6px 18px rgba(0,0,0,0.12)";
   return "0 12px 30px rgba(0,0,0,0.18)";
+}
+
+function toOverlay(color: string, opacity: number) {
+  const clean = color.trim();
+  if (!clean) return color;
+  if (clean.startsWith("#")) {
+    const hex = clean.slice(1);
+    const full =
+      hex.length === 3
+        ? hex
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : hex;
+    if (full.length === 6) {
+      const r = parseInt(full.slice(0, 2), 16);
+      const g = parseInt(full.slice(2, 4), 16);
+      const b = parseInt(full.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+  }
+  return clean;
 }
 
 function applyBox(
@@ -76,10 +123,45 @@ export function resolveLayoutStyle(s?: LayoutStyle): React.CSSProperties {
   if (s.minHeight) style.minHeight = toCssSize(s.minHeight)!;
 
   if (s.textAlign) style.textAlign = s.textAlign;
+  if (s.display) style.display = s.display;
+  if (s.flexDirection) style.flexDirection = s.flexDirection;
+  if (s.flexWrap) style.flexWrap = s.flexWrap;
+  if (s.alignSelf) style.alignSelf = s.alignSelf;
+  if (s.justifySelf) style.justifySelf = s.justifySelf;
   if (s.bgColor) style.background = s.bgColor;
+  const bg = s.bg;
+  if (bg) {
+    if (bg.type === "solid" && bg.color) {
+      style.background = bg.color;
+    }
+    if (bg.type === "gradient" && bg.gradient?.from && bg.gradient?.to) {
+      const angle = typeof bg.gradient.angle === "number" ? bg.gradient.angle : 180;
+      style.background = `linear-gradient(${angle}deg, ${bg.gradient.from}, ${bg.gradient.to})`;
+    }
+    if (bg.type === "image" && bg.imageUrl) {
+      const overlayOpacity =
+        typeof bg.overlayOpacity === "number" ? bg.overlayOpacity : 0.35;
+      if (bg.overlayColor) {
+        style.backgroundImage = `linear-gradient(${toOverlay(bg.overlayColor, overlayOpacity)}, ${toOverlay(bg.overlayColor, overlayOpacity)}), url(${bg.imageUrl})`;
+      } else {
+        style.backgroundImage = `url(${bg.imageUrl})`;
+      }
+      style.backgroundSize = bg.imageSize || "cover";
+      style.backgroundPosition = bg.imagePosition || "center";
+      style.backgroundRepeat = bg.imageRepeat || "no-repeat";
+    }
+  }
   if (s.textColor) style.color = s.textColor;
   if (s.align) style.alignItems = s.align;
   if (s.justify) style.justifyContent = s.justify;
+  if (s.display === "grid") {
+    if (s.gridColumns) {
+      style.gridTemplateColumns = `repeat(${s.gridColumns}, minmax(0, 1fr))`;
+    }
+    if (s.gridRows) {
+      style.gridTemplateRows = `repeat(${s.gridRows}, minmax(0, 1fr))`;
+    }
+  }
   if (s.gap !== undefined) style.gap = toCssSize(s.gap)!;
 
   if (s.borderColor || s.borderWidth) {
@@ -139,6 +221,20 @@ export function resolveRowLayoutStyle(
   if (gap !== undefined) style.gap = toCssSize(gap)!;
 
   return style;
+}
+
+export function getBackgroundVideo(style?: LayoutStyle) {
+  if (!style?.bg || style.bg.type !== "video" || !style.bg.videoUrl) return null;
+  return {
+    src: style.bg.videoUrl,
+    poster: style.bg.videoPoster,
+    autoplay: !!style.bg.videoAutoplay,
+    muted: style.bg.videoMuted ?? true,
+    loop: style.bg.videoLoop ?? true,
+    controls: !!style.bg.videoControls,
+    overlayColor: style.bg.overlayColor,
+    overlayOpacity: style.bg.overlayOpacity ?? 0.35,
+  };
 }
 
 export function resolveColFlexStyle(colStyle?: LayoutStyle): React.CSSProperties {

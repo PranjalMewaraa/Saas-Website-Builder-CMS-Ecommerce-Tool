@@ -161,12 +161,12 @@ export default function AdminShell({
 
       {/* MAIN LAYOUT */}
       <div
-        className={`min-h-screen bg-gray-50 text-gray-900 grid grid-cols-[260px_1fr] ${
+        className={`min-h-screen bg-gray-50 text-gray-900 ${
           !hasSite ? "pointer-events-none blur-[1px]" : ""
         }`}
       >
         {/* Sidebar */}
-        <aside className="bg-white border-r border-gray-200 flex flex-col h-screen">
+        <aside className="bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 w-[260px]">
           <div className="p-5 border-b border-gray-200 shrink-0">
             <div className="text-xl font-bold text-gray-900">Admin Panel</div>
             <div className="text-xs text-gray-500 mt-0.5">
@@ -245,7 +245,7 @@ export default function AdminShell({
         </aside>
 
         {/* Main area */}
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 pl-[260px]">
           <main className="flex-1 p-6 overflow-auto bg-gray-50">
             {children}
           </main>

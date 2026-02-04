@@ -12,6 +12,7 @@ export function VisualCanvas({
   onSelect,
   onChangeBlock,
   assetsMap,
+  menus,
   showGrid = false,
   showOutlines = true,
   zoom = 100,
@@ -24,6 +25,7 @@ export function VisualCanvas({
   onSelect: (sel: LayoutSelection) => void;
   onChangeBlock: (nextBlock: any) => void;
   assetsMap: any;
+  menus?: any[];
   showGrid?: boolean;
   showOutlines?: boolean;
   zoom?: number;
@@ -131,6 +133,7 @@ export function VisualCanvas({
                   }
                   onSelect={() => onSelect({ kind: "block", blockId: b.id })}
                   showOutlines={showOutlines}
+                  menus={menus}
                 />
               </div>
             );

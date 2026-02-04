@@ -4,6 +4,7 @@ import {
   resolveRowLayoutStyle,
   resolveColFlexStyle,
   toCssSizeValue,
+  getBackgroundVideo,
   type LayoutStyle,
 } from "./layout-style";
 
@@ -64,6 +65,41 @@ const ROW_PRESETS: Record<
     template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
   },
 };
+
+function renderVideoLayer(video: ReturnType<typeof getBackgroundVideo>) {
+  if (!video) return null;
+  return (
+    <>
+      <video
+        src={video.src}
+        poster={video.poster}
+        autoPlay={video.autoplay}
+        muted={video.muted}
+        loop={video.loop}
+        controls={video.controls}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
+      {video.overlayColor ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(${video.overlayColor}, ${video.overlayColor})`,
+            opacity: video.overlayOpacity,
+            zIndex: 1,
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
 
 function resolveAssetUrl(assetId: string | undefined, assets: any) {
   if (!assetId || !assets) return "";
@@ -136,6 +172,35 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any) {
     );
   }
 
+  if (type === "Atomic/Group") {
+    const outerStyle = resolveLayoutStyle(block.style || {});
+    const groupStyle = resolveLayoutStyle(props.style || {});
+    const outerVideo = getBackgroundVideo(block.style);
+    const innerVideo = getBackgroundVideo(props.style);
+    return (
+      <div
+        style={{
+          ...outerStyle,
+          position: outerVideo ? "relative" : undefined,
+        }}
+        data-group-id={block.id}
+      >
+        {renderVideoLayer(outerVideo)}
+        <div
+          style={{
+            ...groupStyle,
+            position: innerVideo ? "relative" : undefined,
+          }}
+        >
+          {renderVideoLayer(innerVideo)}
+          <div style={{ position: "relative", zIndex: 2 }}>
+            {renderRows(props.rows || [], assets)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -150,6 +215,65 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any) {
   );
 }
 
+function renderRows(rows: LayoutRow[], assets: any) {
+  return rows.map((row) => {
+    const rowPreset =
+      row.layout?.mode === "preset"
+        ? ROW_PRESETS[row.layout?.presetId || "1-col"]
+        : undefined;
+
+    const rowLayoutStyle = resolveRowLayoutStyle(row.layout, rowPreset);
+    const rowStyle = resolveLayoutStyle(row.style);
+    const rowVideo = getBackgroundVideo(row.style);
+
+    return (
+      <div
+        key={row.id}
+        data-row-id={row.id}
+        style={{
+          ...rowStyle,
+          position: rowVideo ? "relative" : undefined,
+        }}
+      >
+        {renderVideoLayer(rowVideo)}
+        <div
+          style={{
+            ...rowLayoutStyle,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+        {(row.cols || []).map((col) => {
+          const colStyle = resolveLayoutStyle(col.style);
+          const colFlex = resolveColFlexStyle(col.style);
+          const colVideo = getBackgroundVideo(col.style);
+          return (
+            <div
+              key={col.id}
+              data-col-id={col.id}
+              style={{
+                ...colStyle,
+                ...colFlex,
+                position: colVideo ? "relative" : undefined,
+              }}
+            >
+              {renderVideoLayer(colVideo)}
+              <div style={{ position: "relative", zIndex: 2 }}>
+              {(col.blocks || []).map((b) => (
+                <div key={b.id} data-atomic-id={b.id}>
+                  {renderAtomicBlock(b, assets)}
+                </div>
+              ))}
+              </div>
+            </div>
+          );
+        })}
+        </div>
+      </div>
+    );
+  });
+}
+
 export function LayoutSectionRenderer({
   props,
   assets,
@@ -158,45 +282,44 @@ export function LayoutSectionRenderer({
   assets?: any;
 }) {
   const sectionStyle = resolveLayoutStyle(props.style);
-  const rows = props.rows || [];
+  const video = getBackgroundVideo(props.style);
 
   return (
-    <section style={sectionStyle}>
-      {rows.map((row) => {
-        const rowPreset =
-          row.layout?.mode === "preset"
-            ? ROW_PRESETS[row.layout?.presetId || "1-col"]
-            : undefined;
-
-        const rowLayoutStyle = resolveRowLayoutStyle(row.layout, rowPreset);
-        const rowStyle = resolveLayoutStyle(row.style);
-
-        return (
-          <div
-            key={row.id}
-            data-row-id={row.id}
-            style={{ ...rowStyle, ...rowLayoutStyle }}
-          >
-            {(row.cols || []).map((col) => {
-              const colStyle = resolveLayoutStyle(col.style);
-              const colFlex = resolveColFlexStyle(col.style);
-              return (
-                <div
-                  key={col.id}
-                  data-col-id={col.id}
-                  style={{ ...colStyle, ...colFlex }}
-                >
-                  {(col.blocks || []).map((b) => (
-                    <div key={b.id} data-atomic-id={b.id}>
-                      {renderAtomicBlock(b, assets)}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+    <section style={{ ...sectionStyle, position: video ? "relative" : undefined }}>
+      {video ? (
+        <>
+          <video
+            src={video.src}
+            poster={video.poster}
+            autoPlay={video.autoplay}
+            muted={video.muted}
+            loop={video.loop}
+            controls={video.controls}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: 0,
+            }}
+          />
+          {video.overlayColor ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `linear-gradient(${video.overlayColor}, ${video.overlayColor})`,
+                opacity: video.overlayOpacity,
+                zIndex: 1,
+              }}
+            />
+          ) : null}
+        </>
+      ) : null}
+      <div style={{ position: "relative", zIndex: 2 }}>
+        {renderRows(props.rows || [], assets)}
+      </div>
     </section>
   );
 }

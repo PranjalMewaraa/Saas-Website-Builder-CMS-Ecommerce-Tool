@@ -20,12 +20,12 @@ export default function Hero(props: HeroProps) {
         ? {
             textAlign: "right",
             alignItems: "flex-end",
-            justifyContent: "flex-end",
+            justifyContent: "center",
           }
         : {
             textAlign: "left",
             alignItems: "flex-start",
-            justifyContent: "flex-start",
+            justifyContent: "center",
           };
 
   // Responsive max-width fallback

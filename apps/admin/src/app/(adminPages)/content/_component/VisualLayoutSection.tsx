@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, ArrowUp, ArrowDown, Trash2, ArrowLeft, ArrowRight, Copy } from "lucide-react";
+import {
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  ArrowLeft,
+  ArrowRight,
+  Copy,
+} from "lucide-react";
 import {
   createAtomicBlock,
   createDefaultCol,
@@ -15,6 +23,7 @@ import {
   resolveRowLayoutStyle,
   resolveColFlexStyle,
   toCssSizeValue,
+  getBackgroundVideo,
 } from "../../../../../../../packages/renderer/layout-style";
 
 const ROW_PRESETS: Record<string, { template: string; gap?: number | string }> =
@@ -118,6 +127,41 @@ function renderAtomicPreview(block: LayoutAtomicBlock, assetsMap: any) {
 
   return (
     <div className="text-xs text-red-500">Unknown: {block.type}</div>
+  );
+}
+
+function renderVideoLayer(video: ReturnType<typeof getBackgroundVideo>) {
+  if (!video) return null;
+  return (
+    <>
+      <video
+        src={video.src}
+        poster={video.poster}
+        autoPlay={video.autoplay}
+        muted={video.muted}
+        loop={video.loop}
+        controls={video.controls}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
+      {video.overlayColor ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(${video.overlayColor}, ${video.overlayColor})`,
+            opacity: video.overlayOpacity,
+            zIndex: 1,
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -262,6 +306,264 @@ export default function VisualLayoutSection({
     updateProps({ ...props, rows: nextRows });
   }
 
+  function updateGroupProps(
+    atomicId: string,
+    mutator: (groupProps: any) => void,
+  ) {
+    const nextRows = rows.map((r) => {
+      const next = structuredClone(r);
+      next.cols = (next.cols || []).map((c: any) => {
+        const col = structuredClone(c);
+        col.blocks = (col.blocks || []).map((b: any) => {
+          if (b.id !== atomicId) return b;
+          const nb = structuredClone(b);
+          nb.props = nb.props || { rows: [] };
+          mutator(nb.props);
+          return nb;
+        });
+        return col;
+      });
+      return next;
+    });
+    updateProps({ ...props, rows: nextRows });
+  }
+
+  function groupAddRow(atomicId: string) {
+    updateGroupProps(atomicId, (gp: any) => {
+      gp.rows = gp.rows || [];
+      gp.rows.push(createDefaultRow());
+    });
+  }
+
+  function groupAddCol(atomicId: string, rowId: string) {
+    updateGroupProps(atomicId, (gp: any) => {
+      const row = (gp.rows || []).find((r: any) => r.id === rowId);
+      if (!row) return;
+      row.cols = row.cols || [];
+      row.cols.push(createDefaultCol());
+      if (row.layout?.columns) row.layout.columns = row.cols.length;
+    });
+  }
+
+  function groupAddAtomic(
+    atomicId: string,
+    rowId: string,
+    colId: string,
+    type: any,
+  ) {
+    updateGroupProps(atomicId, (gp: any) => {
+      const row = (gp.rows || []).find((r: any) => r.id === rowId);
+      if (!row) return;
+      const col = (row.cols || []).find((c: any) => c.id === colId);
+      if (!col) return;
+      col.blocks = col.blocks || [];
+      col.blocks.push(createAtomicBlock(type));
+    });
+  }
+
+  function renderGroupLayout(groupBlock: any) {
+    const gProps = groupBlock.props || { rows: [] };
+    const gRows = gProps.rows || [];
+
+    const groupOuterStyle = resolveLayoutStyle(groupBlock.style || {});
+    const groupInnerStyle = resolveLayoutStyle(gProps.style || {});
+    const groupOuterVideo = getBackgroundVideo(groupBlock.style);
+    const groupInnerVideo = getBackgroundVideo(gProps.style);
+
+    return (
+      <div
+        className="border border-dashed border-gray-300 rounded-md p-3 space-y-4"
+        style={{
+          ...groupOuterStyle,
+          position: groupOuterVideo ? "relative" : groupOuterStyle.position,
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect({
+            kind: "layout-group",
+            blockId: block.id,
+            rowId: "",
+            colId: "",
+            atomicId: groupBlock.id,
+          });
+        }}
+      >
+        {renderVideoLayer(groupOuterVideo)}
+        <div className="text-[10px] uppercase tracking-wider text-gray-400">
+          Group
+        </div>
+        <div
+          style={{
+            ...groupInnerStyle,
+            position: groupInnerVideo ? "relative" : groupInnerStyle.position,
+          }}
+        >
+        {renderVideoLayer(groupInnerVideo)}
+        <div style={{ position: "relative", zIndex: 2 }}>
+        {gRows.length === 0 ? (
+          <button
+            type="button"
+            className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              groupAddRow(groupBlock.id);
+              onSelect({
+                kind: "layout-group",
+                blockId: block.id,
+                rowId: "",
+                colId: "",
+                atomicId: groupBlock.id,
+              });
+            }}
+          >
+            <Plus className="inline-block h-3 w-3 mr-1" />
+            Add Row
+          </button>
+        ) : (
+          <div className="space-y-4">
+            {gRows.map((gr: any) => (
+              <div
+                key={gr.id}
+                className="border border-dashed border-gray-300 rounded-md p-3"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect({
+                    kind: "layout-group-row",
+                    blockId: block.id,
+                    rowId: "",
+                    colId: "",
+                    atomicId: groupBlock.id,
+                    groupRowId: gr.id,
+                  });
+                }}
+              >
+                <div className="text-[10px] text-gray-400 mb-2">Row</div>
+                <div className="grid gap-3">
+                  {(gr.cols || []).map((gc: any) => (
+                    <div
+                      key={gc.id}
+                      className="border border-gray-300 rounded-md p-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect({
+                          kind: "layout-group-col",
+                          blockId: block.id,
+                          rowId: "",
+                          colId: "",
+                          atomicId: groupBlock.id,
+                          groupRowId: gr.id,
+                          groupColId: gc.id,
+                        });
+                      }}
+                    >
+                      {(gc.blocks || []).map((ga: any) => (
+                        <div
+                          key={ga.id}
+                          className="border border-gray-200 rounded p-2 mb-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect({
+                              kind: "layout-group-atomic",
+                              blockId: block.id,
+                              rowId: "",
+                              colId: "",
+                              atomicId: groupBlock.id,
+                              groupRowId: gr.id,
+                              groupColId: gc.id,
+                              groupAtomicId: ga.id,
+                            });
+                          }}
+                        >
+                          {ga.type === "Atomic/Group"
+                            ? renderGroupLayout(ga)
+                            : renderAtomicPreview(ga, assetsMap)}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveAddCol({
+                            rowId: gr.id,
+                            colId: gc.id,
+                          });
+                        }}
+                      >
+                        <Plus className="inline-block h-3 w-3 mr-1" />
+                        Add Block
+                      </button>
+                      {activeAddCol &&
+                        activeAddCol.rowId === gr.id &&
+                        activeAddCol.colId === gc.id && (
+                          <div className="mt-2 w-full rounded-md border bg-white shadow-sm p-2 space-y-1 text-xs text-gray-700">
+                            {[
+                              "Atomic/Text",
+                              "Atomic/Image",
+                              "Atomic/Video",
+                              "Atomic/Button",
+                              "Atomic/Group",
+                            ].map((t) => (
+                              <button
+                                key={t}
+                                type="button"
+                                className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  groupAddAtomic(groupBlock.id, gr.id, gc.id, t);
+                                  setActiveAddCol(null);
+                                }}
+                              >
+                                {t.replace("Atomic/", "")}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveAddCol(null);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    groupAddCol(groupBlock.id, gr.id);
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Column
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                groupAddRow(groupBlock.id);
+              }}
+            >
+              <Plus className="inline-block h-3 w-3 mr-1" />
+              Add Row
+            </button>
+          </div>
+        )}
+        </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`group relative rounded-xl border ${
@@ -302,7 +604,15 @@ export default function VisualLayoutSection({
         Section
       </div>
 
-      <div className="p-4 group" style={resolveLayoutStyle(props.style)}>
+      <div
+        className="p-4 group"
+        style={{
+          ...resolveLayoutStyle(props.style),
+          position: getBackgroundVideo(props.style) ? "relative" : undefined,
+        }}
+      >
+        {renderVideoLayer(getBackgroundVideo(props.style))}
+        <div style={{ position: "relative", zIndex: 2 }}>
         {rows.length === 0 ? (
           <button
             type="button"
@@ -333,6 +643,7 @@ export default function VisualLayoutSection({
                 row.layout,
                 rowPreset,
               );
+              const rowVideo = getBackgroundVideo(row.style);
 
               return (
                 <div
@@ -395,15 +706,24 @@ export default function VisualLayoutSection({
                     className="p-4"
                     style={{
                       ...resolveLayoutStyle(row.style),
-                      ...rowLayoutStyle,
+                      position: rowVideo ? "relative" : undefined,
                     }}
                   >
+                    {renderVideoLayer(rowVideo)}
+                    <div
+                      style={{
+                        ...rowLayoutStyle,
+                        position: "relative",
+                        zIndex: 2,
+                      }}
+                    >
                     {(row.cols || []).map((col) => {
                       const colSelected =
                         selection?.kind === "layout-col" &&
                         selection.blockId === block.id &&
                         selection.rowId === row.id &&
                         selection.colId === col.id;
+                      const colVideo = getBackgroundVideo(col.style);
 
                       return (
                         <div
@@ -420,6 +740,7 @@ export default function VisualLayoutSection({
                           style={{
                             ...resolveLayoutStyle(col.style),
                             ...resolveColFlexStyle(col.style),
+                            position: colVideo ? "relative" : undefined,
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -431,6 +752,7 @@ export default function VisualLayoutSection({
                             });
                           }}
                         >
+                          {renderVideoLayer(colVideo)}
                           <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover/col:opacity-100 group-hover/col:pointer-events-auto transition">
                             <button
                               className="p-1 rounded hover:bg-gray-50"
@@ -467,7 +789,7 @@ export default function VisualLayoutSection({
                             Col
                           </div>
 
-                          <div className="space-y-4 p-3">
+                          <div className="space-y-4 p-3" style={{ position: "relative", zIndex: 2 }}>
                             {(col.blocks || []).map((atomic) => {
                               const atomicSelected =
                                 selection?.kind === "layout-atomic" &&
@@ -531,7 +853,9 @@ export default function VisualLayoutSection({
                                       <Trash2 className="h-3 w-3" />
                                     </button>
                                   </div>
-                                  {renderAtomicPreview(atomic, assetsMap)}
+                                  {atomic.type === "Atomic/Group"
+                                    ? renderGroupLayout(atomic)
+                                    : renderAtomicPreview(atomic, assetsMap)}
                                 </div>
                               );
                             })}
@@ -558,6 +882,7 @@ export default function VisualLayoutSection({
                                       "Atomic/Image",
                                       "Atomic/Video",
                                       "Atomic/Button",
+                                      "Atomic/Group",
                                     ].map((t) => (
                                       <button
                                         key={t}
@@ -589,6 +914,7 @@ export default function VisualLayoutSection({
                         </div>
                       );
                     })}
+                    </div>
                   </div>
 
                   <div className="px-4 pb-3">
@@ -623,6 +949,7 @@ export default function VisualLayoutSection({
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -150,6 +150,31 @@ export default function LayoutInspector({
     onChangeBlock({ ...block, props: next });
   }
 
+  function updateGroup(atomicId: string, mutator: (groupProps: any) => void) {
+    applyUpdate((draft) => {
+      for (const r of draft.rows) {
+        for (const c of r.cols || []) {
+          const target = (c.blocks || []).find((b: any) => b.id === atomicId);
+          if (target && target.type === "Atomic/Group") {
+            target.props = target.props || { rows: [] };
+            mutator(target.props);
+            return;
+          }
+        }
+      }
+    });
+  }
+
+  function getGroup(atomicId: string) {
+    for (const r of props.rows) {
+      for (const c of r.cols || []) {
+        const target = (c.blocks || []).find((b: any) => b.id === atomicId);
+        if (target && target.type === "Atomic/Group") return target;
+      }
+    }
+    return null;
+  }
+
   if (selection.kind === "layout-section") {
     return (
       <div className="space-y-5">
@@ -168,6 +193,8 @@ export default function LayoutInspector({
         <StyleFields
           style={props.style}
           palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               draft.style = nextStyle;
@@ -343,6 +370,8 @@ export default function LayoutInspector({
         <StyleFields
           style={row.style}
           palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const target = draft.rows.find((r) => r.id === row.id);
@@ -365,6 +394,8 @@ export default function LayoutInspector({
         <StyleFields
           style={col.style}
           palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const targetRow = draft.rows.find((r) => r.id === row.id);
@@ -377,26 +408,11 @@ export default function LayoutInspector({
     );
   }
 
-  if (selection.kind === "layout-atomic") {
-    const row = props.rows.find((r) => r.id === selection.rowId);
-    const col = row?.cols.find((c) => c.id === selection.colId);
-    const atom = col?.blocks.find((b) => b.id === selection.atomicId);
-    if (!row || !col || !atom) return null;
-
-    function updateAtomic(mutator: (draftAtom: LayoutAtomicBlock) => void) {
-      applyUpdate((draft) => {
-        for (const r of draft.rows) {
-          for (const c of r.cols || []) {
-            const target = c.blocks.find((b) => b.id === atom.id);
-            if (target) {
-              mutator(target);
-              return;
-            }
-          }
-        }
-      });
-    }
-
+  function renderAtomicEditor(
+    atom: LayoutAtomicBlock,
+    updateAtomic: (mutator: (draftAtom: LayoutAtomicBlock) => void) => void,
+    onStyleChange: (nextStyle: any) => void,
+  ) {
     return (
       <div className="space-y-6">
         <div className="text-sm font-medium">Atomic Block</div>
@@ -600,16 +616,157 @@ export default function LayoutInspector({
         <StyleFields
           style={atom.style}
           palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          onChange={onStyleChange}
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-atomic") {
+    const row = props.rows.find((r) => r.id === selection.rowId);
+    const col = row?.cols.find((c) => c.id === selection.colId);
+    const atom = col?.blocks.find((b) => b.id === selection.atomicId);
+    if (!row || !col || !atom) return null;
+
+    function updateAtomic(mutator: (draftAtom: LayoutAtomicBlock) => void) {
+      applyUpdate((draft) => {
+        for (const r of draft.rows) {
+          for (const c of r.cols || []) {
+            const target = c.blocks.find((b) => b.id === atom.id);
+            if (target) {
+              mutator(target);
+              return;
+            }
+          }
+        }
+      });
+    }
+
+    return renderAtomicEditor(atom, updateAtomic, (nextStyle) =>
+      applyUpdate((draft) => {
+        const targetRow = draft.rows.find((r) => r.id === row.id);
+        const targetCol = targetRow?.cols.find((c) => c.id === col.id);
+        const targetAtom = targetCol?.blocks.find((b) => b.id === atom.id);
+        if (targetAtom) targetAtom.style = nextStyle;
+      }),
+    );
+  }
+
+  if (selection.kind === "layout-group") {
+    const groupBlock = getGroup(selection.atomicId);
+    if (!groupBlock) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Settings</div>
+        <StyleFields
+          style={groupBlock.props?.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
           onChange={(nextStyle) =>
-            applyUpdate((draft) => {
-              const targetRow = draft.rows.find((r) => r.id === row.id);
-              const targetCol = targetRow?.cols.find((c) => c.id === col.id);
-              const targetAtom = targetCol?.blocks.find((b) => b.id === atom.id);
-              if (targetAtom) targetAtom.style = nextStyle;
+            updateGroup(selection.atomicId, (gp) => {
+              gp.style = nextStyle;
             })
           }
         />
       </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-row") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
+      null;
+    if (!groupBlock || !row) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Row Settings</div>
+        <Select
+          label="Layout Mode"
+          value={row.layout?.mode || "preset"}
+          options={["preset", "manual"]}
+          onChange={(v) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const target = gp.rows.find((r: any) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.mode = v as any;
+            })
+          }
+        />
+        <StyleFields
+          style={row.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          onChange={(nextStyle) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const target = gp.rows.find((r: any) => r.id === row.id);
+              if (target) target.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-col") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
+      null;
+    const col =
+      row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
+    if (!groupBlock || !row || !col) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Column Settings</div>
+        <StyleFields
+          style={col.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          onChange={(nextStyle) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const r = gp.rows.find((rr: any) => rr.id === row.id);
+              const c = r?.cols?.find((cc: any) => cc.id === col.id);
+              if (c) c.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-atomic") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
+      null;
+    const col =
+      row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
+    const atom =
+      col?.blocks?.find((b: any) => b.id === selection.groupAtomicId) || null;
+    if (!groupBlock || !row || !col || !atom) return null;
+    return renderAtomicEditor(
+      atom,
+      (mutator) =>
+        updateGroup(selection.atomicId, (gp) => {
+          const r = gp.rows.find((rr: any) => rr.id === row.id);
+          const c = r?.cols?.find((cc: any) => cc.id === col.id);
+          const a = c?.blocks?.find((bb: any) => bb.id === atom.id);
+          if (a) mutator(a);
+        }),
+      (nextStyle) =>
+        updateGroup(selection.atomicId, (gp) => {
+          const r = gp.rows.find((rr: any) => rr.id === row.id);
+          const c = r?.cols?.find((cc: any) => cc.id === col.id);
+          const a = c?.blocks?.find((bb: any) => bb.id === atom.id);
+          if (a) a.style = nextStyle;
+        }),
     );
   }
 
@@ -829,13 +986,20 @@ function Checkbox({
 function StyleFields({
   style,
   palette = [],
+  siteId,
+  assetsMap,
   onChange,
 }: {
   style: any;
   palette?: string[];
+  siteId?: string;
+  assetsMap?: any;
   onChange: (next: any) => void;
 }) {
   const s = style || {};
+  const resolvedBg =
+    s.bg ?? (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
+  const bgType = resolvedBg.type || "none";
 
   function set(path: string, val: any) {
     const next = structuredClone(s);
@@ -848,11 +1012,24 @@ function StyleFields({
     onChange(next);
   }
 
+  function setBg(next: any) {
+    const updated = structuredClone(s);
+    updated.bg = { ...(updated.bg || {}), ...next };
+    if (next.type === "none") {
+      updated.bgColor = undefined;
+    }
+    if (next.type === "solid") {
+      const color = next.color ?? updated.bg?.color;
+      if (color) updated.bgColor = color;
+    }
+    onChange(updated);
+  }
+
   return (
     <div className="space-y-4">
       <div className="text-sm font-medium">Style</div>
 
-      <details open className="border rounded-lg p-3 bg-white">
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">
           Size & Spacing
         </summary>
@@ -944,19 +1121,179 @@ function StyleFields({
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white">
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Background
+        </summary>
+        <div className="mt-3 space-y-3">
+          <Select
+            label="Type"
+            value={bgType}
+            options={["none", "solid", "gradient", "image", "video"]}
+            onChange={(v) => setBg({ type: v })}
+          />
+
+          {bgType === "solid" ? (
+            <ColorPickerInput
+              label="Color"
+              value={resolvedBg.color || ""}
+              onChange={(v) => setBg({ type: "solid", color: v })}
+              placeholder="#ffffff"
+              palette={palette}
+            />
+          ) : null}
+
+          {bgType === "gradient" ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="From"
+                  value={resolvedBg.gradient?.from || ""}
+                  onChange={(v) =>
+                    setBg({ type: "gradient", gradient: { ...resolvedBg.gradient, from: v } })
+                  }
+                  placeholder="#0f172a"
+                  palette={palette}
+                />
+                <ColorPickerInput
+                  label="To"
+                  value={resolvedBg.gradient?.to || ""}
+                  onChange={(v) =>
+                    setBg({ type: "gradient", gradient: { ...resolvedBg.gradient, to: v } })
+                  }
+                  placeholder="#38bdf8"
+                  palette={palette}
+                />
+              </div>
+              <NumberField
+                label="Angle"
+                value={Number(resolvedBg.gradient?.angle ?? 180)}
+                onChange={(v) =>
+                  setBg({
+                    type: "gradient",
+                    gradient: { ...resolvedBg.gradient, angle: v },
+                  })
+                }
+              />
+            </div>
+          ) : null}
+
+          {bgType === "image" ? (
+            <div className="space-y-3">
+              <ImageField
+                siteId={siteId || ""}
+                label="Background Image"
+                assetIdValue={resolvedBg.imageAssetId || ""}
+                assetUrlValue={resolvedBg.imageUrl || ""}
+                altValue=""
+                assetsMap={assetsMap}
+                onChangeAssetId={(v) =>
+                  setBg({ type: "image", imageAssetId: v })
+                }
+                onChangeAssetUrl={(v) => setBg({ type: "image", imageUrl: v })}
+                onChangeAlt={() => {}}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Select
+                  label="Size"
+                  value={resolvedBg.imageSize || "cover"}
+                  options={["cover", "contain", "auto"]}
+                  onChange={(v) => setBg({ type: "image", imageSize: v })}
+                />
+                <Select
+                  label="Repeat"
+                  value={resolvedBg.imageRepeat || "no-repeat"}
+                  options={["no-repeat", "repeat", "repeat-x", "repeat-y"]}
+                  onChange={(v) => setBg({ type: "image", imageRepeat: v })}
+                />
+              </div>
+              <Field
+                label="Position"
+                value={resolvedBg.imagePosition || "center"}
+                onChange={(v) => setBg({ type: "image", imagePosition: v })}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="Overlay Color"
+                  value={resolvedBg.overlayColor || ""}
+                  onChange={(v) => setBg({ type: "image", overlayColor: v })}
+                  placeholder="#000000"
+                  palette={palette}
+                />
+                <NumberField
+                  label="Overlay Opacity"
+                  value={Number(resolvedBg.overlayOpacity ?? 0.35)}
+                  onChange={(v) =>
+                    setBg({ type: "image", overlayOpacity: v })
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {bgType === "video" ? (
+            <div className="space-y-3">
+              <Field
+                label="Video URL"
+                value={resolvedBg.videoUrl || ""}
+                onChange={(v) => setBg({ type: "video", videoUrl: v })}
+                placeholder="https://..."
+              />
+              <Field
+                label="Poster"
+                value={resolvedBg.videoPoster || ""}
+                onChange={(v) => setBg({ type: "video", videoPoster: v })}
+                placeholder="https://..."
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Checkbox
+                  label="Autoplay"
+                  value={!!resolvedBg.videoAutoplay}
+                  onChange={(v) => setBg({ type: "video", videoAutoplay: v })}
+                />
+                <Checkbox
+                  label="Muted"
+                  value={resolvedBg.videoMuted ?? true}
+                  onChange={(v) => setBg({ type: "video", videoMuted: v })}
+                />
+                <Checkbox
+                  label="Loop"
+                  value={resolvedBg.videoLoop ?? true}
+                  onChange={(v) => setBg({ type: "video", videoLoop: v })}
+                />
+                <Checkbox
+                  label="Controls"
+                  value={!!resolvedBg.videoControls}
+                  onChange={(v) => setBg({ type: "video", videoControls: v })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="Overlay Color"
+                  value={resolvedBg.overlayColor || ""}
+                  onChange={(v) => setBg({ type: "video", overlayColor: v })}
+                  placeholder="#000000"
+                  palette={palette}
+                />
+                <NumberField
+                  label="Overlay Opacity"
+                  value={Number(resolvedBg.overlayOpacity ?? 0.35)}
+                  onChange={(v) =>
+                    setBg({ type: "video", overlayOpacity: v })
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">
           Color & Border
         </summary>
         <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <ColorPickerInput
-              label="Background"
-              value={s.bgColor || ""}
-              onChange={(v) => set("bgColor", v)}
-              placeholder="#ffffff"
-              palette={palette}
-            />
+          <div className="grid grid-cols-1 gap-3 min-w-0">
             <ColorPickerInput
               label="Text Color"
               value={s.textColor || ""}
@@ -964,9 +1301,6 @@ function StyleFields({
               placeholder="#111111"
               palette={palette}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <ColorPickerInput
               label="Border Color"
               value={s.borderColor || ""}
@@ -974,35 +1308,114 @@ function StyleFields({
               placeholder="#e5e7eb"
               palette={palette}
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 min-w-0">
             <UnitField
               label="Border Width"
               value={s.borderWidth || ""}
               onChange={(v) => set("borderWidth", v)}
               placeholder="1"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <Field
               label="Radius"
               value={s.radius || ""}
               onChange={(v) => set("radius", v)}
               placeholder="8"
             />
+          </div>
+
+          <Select
+            label="Shadow"
+            value={s.shadow || "none"}
+            options={["none", "sm", "md", "lg"]}
+            onChange={(v) => set("shadow", v)}
+          />
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Layout & Alignment
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <Select
-              label="Shadow"
-              value={s.shadow || "none"}
-              options={["none", "sm", "md", "lg"]}
-              onChange={(v) => set("shadow", v)}
+              label="Display"
+              value={s.display || "block"}
+              options={["block", "flex", "grid"]}
+              onChange={(v) => set("display", v)}
+            />
+            <Select
+              label="Direction"
+              value={s.flexDirection || "row"}
+              options={["row", "column"]}
+              onChange={(v) => set("flexDirection", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Wrap"
+              value={s.flexWrap || "nowrap"}
+              options={["nowrap", "wrap"]}
+              onChange={(v) => set("flexWrap", v)}
+            />
+            <UnitField
+              label="Gap"
+              value={s.gap || ""}
+              onChange={(v) => set("gap", v)}
+              placeholder="12"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Items"
+              value={s.align || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("align", v)}
+            />
+            <Select
+              label="Justify Content"
+              value={s.justify || "start"}
+              options={["start", "center", "end", "between", "around", "evenly"]}
+              onChange={(v) => set("justify", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Self"
+              value={s.alignSelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("alignSelf", v)}
+            />
+            <Select
+              label="Justify Self"
+              value={s.justifySelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("justifySelf", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <NumberField
+              label="Grid Columns"
+              value={Number(s.gridColumns || 0)}
+              onChange={(v) => set("gridColumns", v || undefined)}
+            />
+            <NumberField
+              label="Grid Rows"
+              value={Number(s.gridRows || 0)}
+              onChange={(v) => set("gridRows", v || undefined)}
             />
           </div>
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white">
-        <summary className="cursor-pointer text-sm font-medium">
-          Typography & Alignment
-        </summary>
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">Typography</summary>
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Select
@@ -1012,19 +1425,12 @@ function StyleFields({
               onChange={(v) => set("textAlign", v)}
             />
             <Select
-              label="Align Items"
-              value={s.align || "stretch"}
-              options={["start", "center", "end", "stretch"]}
-              onChange={(v) => set("align", v)}
+              label="Text Transform"
+              value={s.textTransform || "none"}
+              options={["none", "uppercase", "lowercase", "capitalize"]}
+              onChange={(v) => set("textTransform", v)}
             />
           </div>
-
-          <Select
-            label="Justify"
-            value={s.justify || "start"}
-            options={["start", "center", "end", "between", "around", "evenly"]}
-            onChange={(v) => set("justify", v)}
-          />
 
           <div className="grid grid-cols-2 gap-3">
             <UnitField
@@ -1055,13 +1461,6 @@ function StyleFields({
               placeholder="0.2"
             />
           </div>
-
-          <Select
-            label="Text Transform"
-            value={s.textTransform || "none"}
-            options={["none", "uppercase", "lowercase", "capitalize"]}
-            onChange={(v) => set("textTransform", v)}
-          />
         </div>
       </details>
     </div>

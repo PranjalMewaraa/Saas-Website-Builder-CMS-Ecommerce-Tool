@@ -65,6 +65,7 @@ export default function PageEditorClient({
   const [showGrid, setShowGrid] = useState(false);
   const [showOutlines, setShowOutlines] = useState(true);
   const [forms, setForms] = useState<any[]>([]);
+  const [menus, setMenus] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
   const [presets, setPresets] = useState<any[]>([]);
   const [themePalette, setThemePalette] = useState<string[]>([]);
@@ -124,6 +125,17 @@ export default function PageEditorClient({
     })();
   }, [siteId, pageId]);
 
+  useEffect(() => {
+    (async () => {
+      const res = await fetch(
+        `/api/admin/menus?site_id=${encodeURIComponent(siteId)}`,
+        { cache: "no-store" },
+      );
+      const data = await res.json();
+      setMenus(data.menus ?? []);
+    })();
+  }, [siteId]);
+
   async function saveLayout(nextLayout: any) {
     setSaveStatus("saving");
 
@@ -164,6 +176,14 @@ export default function PageEditorClient({
     const id = `b_${Date.now()}`;
 
     const defaults = defaultPropsFor(type);
+    if (type === "Header/V1") {
+      const assigned = menus.find((m: any) => m.slot === "header");
+      if (assigned?._id) defaults.menuId = assigned._id;
+    }
+    if (type === "Footer/V1") {
+      const assigned = menus.find((m: any) => m.slot === "footer");
+      if (assigned?._id) defaults.menuId = assigned._id;
+    }
     if (type === "Form/V1" && forms.length) defaults.formId = forms[0]._id;
 
     const next = structuredClone(layout);
@@ -344,6 +364,7 @@ export default function PageEditorClient({
                   updateBlockById(nextBlock.id, nextBlock)
                 }
                 assetsMap={assetsMap}
+                menus={menus}
                 showGrid={showGrid}
                 showOutlines={showOutlines}
                 zoom={zoom}
@@ -382,6 +403,7 @@ export default function PageEditorClient({
                     siteId={siteId}
                     assetsMap={assetsMap}
                     forms={forms}
+                    menus={menus}
                     themePalette={themePalette}
                     onDeleteBlock={(id: string) => {
                       const idx = blocks.findIndex((b: any) => b.id === id);
@@ -408,6 +430,7 @@ export default function PageEditorClient({
                     index={i}
                     total={blocks.length}
                     siteId={siteId}
+                    menus={menus}
                     forms={forms}
                     presets={presets}
                     assetsMap={assetsMap}

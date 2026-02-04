@@ -61,6 +61,7 @@ export function VisualInspector({
   siteId,
   assetsMap,
   forms,
+  menus,
   themePalette = [],
   onDeleteBlock,
   onChange,
@@ -146,6 +147,7 @@ export function VisualInspector({
         siteId={siteId}
         assetsMap={assetsMap}
         forms={forms}
+        menus={menus}
       />
 
       {/* -------- appearance -------- */}

@@ -30,10 +30,11 @@ import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
 import { RichText, RichTextDefaults } from "../utility/RichText";
 import LayoutSection from "../layout/Section";
-import AtomicText from "../atomic/Text";
-import AtomicImage from "../atomic/Image";
-import AtomicVideo from "../atomic/Video";
-import AtomicButton from "../atomic/Button";
+import AtomicText from "../Atomic/Text";
+import AtomicImage from "../Atomic/Image";
+import AtomicVideo from "../Atomic/Video";
+import AtomicButton from "../Atomic/Button";
+import AtomicGroup from "../Atomic/Group";
 
 import {
   SpacerSchema,
@@ -42,6 +43,7 @@ import {
 } from "../../schemas/blocks/utility";
 import {
   LayoutSectionPropsSchema,
+  LayoutGroupPropsSchema,
   AtomicTextSchema,
   AtomicImageSchema,
   AtomicVideoSchema,
@@ -203,6 +205,11 @@ export const BLOCKS: Record<
     type: "Atomic/Button",
     schema: AtomicButtonSchema,
     render: AtomicButton,
+  },
+  "Atomic/Group": {
+    type: "Atomic/Group",
+    schema: LayoutGroupPropsSchema,
+    render: AtomicGroup,
   },
 };
 

@@ -9,11 +9,13 @@ export function VisualBlockRenderer({
   isSelected,
   onSelect,
   showOutlines = true,
+  menus,
 }: {
   block: any;
   isSelected: boolean;
   onSelect: () => void;
   showOutlines?: boolean;
+  menus?: any[];
 }) {
   const def = getBlock(block.type);
 
@@ -49,6 +51,14 @@ export function VisualBlockRenderer({
   }
 
   const Component = def.render;
+  let menuProp: any = undefined;
+  if (block.type.startsWith("Header/") || block.type.startsWith("Footer/")) {
+    const slot = block.type.startsWith("Header/") ? "header" : "footer";
+    const byId = menus?.find((m: any) => m._id === block.props?.menuId);
+    const bySlot = menus?.find((m: any) => m.slot === slot);
+    const menu = byId || bySlot;
+    menuProp = menu ? { tree: menu.draft_tree ?? [] } : null;
+  }
 
   return (
     <div
@@ -68,7 +78,7 @@ export function VisualBlockRenderer({
     `}
     >
       <StyleWrapper style={block.style}>
-        <Component {...block.props} __editor />
+        <Component {...block.props} menu={menuProp} __editor />
       </StyleWrapper>
     </div>
   );

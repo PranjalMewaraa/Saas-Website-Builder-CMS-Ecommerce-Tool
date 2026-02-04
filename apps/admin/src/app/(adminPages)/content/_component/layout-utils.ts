@@ -18,10 +18,35 @@ export type LayoutStyle = {
     left?: number | string;
   };
   textAlign?: "left" | "center" | "right";
+  display?: "block" | "flex" | "grid";
+  flexDirection?: "row" | "column";
+  flexWrap?: "nowrap" | "wrap";
+  alignSelf?: "start" | "center" | "end" | "stretch";
+  justifySelf?: "start" | "center" | "end" | "stretch";
   align?: "start" | "center" | "end" | "stretch";
   justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+  gridColumns?: number;
+  gridRows?: number;
   gap?: number | string;
   bgColor?: string;
+  bg?: {
+    type?: "none" | "solid" | "gradient" | "image" | "video";
+    color?: string;
+    gradient?: { from?: string; to?: string; angle?: number };
+    imageUrl?: string;
+    imageAssetId?: string;
+    imageSize?: "cover" | "contain" | "auto";
+    imagePosition?: string;
+    imageRepeat?: "no-repeat" | "repeat" | "repeat-x" | "repeat-y";
+    overlayColor?: string;
+    overlayOpacity?: number;
+    videoUrl?: string;
+    videoPoster?: string;
+    videoAutoplay?: boolean;
+    videoMuted?: boolean;
+    videoLoop?: boolean;
+    videoControls?: boolean;
+  };
   textColor?: string;
   borderColor?: string;
   borderWidth?: number | string;
@@ -36,7 +61,12 @@ export type LayoutStyle = {
 
 export type LayoutAtomicBlock = {
   id: string;
-  type: "Atomic/Text" | "Atomic/Image" | "Atomic/Video" | "Atomic/Button";
+  type:
+    | "Atomic/Text"
+    | "Atomic/Image"
+    | "Atomic/Video"
+    | "Atomic/Button"
+    | "Atomic/Group";
   props: any;
   style?: LayoutStyle;
 };
@@ -79,6 +109,40 @@ export type LayoutSelection =
       rowId: string;
       colId: string;
       atomicId: string;
+    }
+  | {
+      kind: "layout-group";
+      blockId: string;
+      rowId: string;
+      colId: string;
+      atomicId: string;
+    }
+  | {
+      kind: "layout-group-row";
+      blockId: string;
+      rowId: string;
+      colId: string;
+      atomicId: string;
+      groupRowId: string;
+    }
+  | {
+      kind: "layout-group-col";
+      blockId: string;
+      rowId: string;
+      colId: string;
+      atomicId: string;
+      groupRowId: string;
+      groupColId: string;
+    }
+  | {
+      kind: "layout-group-atomic";
+      blockId: string;
+      rowId: string;
+      colId: string;
+      atomicId: string;
+      groupRowId: string;
+      groupColId: string;
+      groupAtomicId: string;
     };
 
 function uid(prefix: string) {
@@ -90,6 +154,7 @@ export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
   "Atomic/Image",
   "Atomic/Video",
   "Atomic/Button",
+  "Atomic/Group",
 ];
 
 export function createDefaultSectionProps(): LayoutSectionProps {
@@ -148,6 +213,17 @@ export function createAtomicBlock(
       id: uid("atom"),
       type,
       props: { src: "", controls: true },
+      style: { width: "100%" },
+    };
+  }
+  if (type === "Atomic/Group") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        style: { padding: { top: 16, right: 16, bottom: 16, left: 16 } },
+        rows: [createDefaultRow()],
+      },
       style: { width: "100%" },
     };
   }

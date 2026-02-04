@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ImageField from "../../../_component/ImageField";
 
 const DEFAULT_IMAGE =
@@ -14,17 +14,62 @@ export function BlockPropsForm({
   assetsMap,
   forms,
   assetUrlValue,
+  menus = [],
 }: any) {
   console.log(type);
+  const [variant, setVariant] = useState(props.variant || "basic");
+  const assignedHeader = menus.find((m: any) => m.slot === "header");
+  const assignedFooter = menus.find((m: any) => m.slot === "footer");
+
+  useEffect(() => {
+    if (type === "Header/V1" && !props.menuId && assignedHeader?._id) {
+      setProp("menuId", assignedHeader._id);
+    }
+    if (type === "Footer/V1" && !props.menuId && assignedFooter?._id) {
+      setProp("menuId", assignedFooter._id);
+    }
+  }, [
+    type,
+    props.menuId,
+    assignedHeader?._id,
+    assignedFooter?._id,
+    setProp,
+  ]);
+
+  useEffect(() => {
+    if (type === "Hero" || type === "Hero/V1") {
+      setVariant(props.variant || "basic");
+    }
+  }, [type, props.variant]);
+
   if (type === "Header/V1") {
     return (
       <div className="space-y-3">
-        <Field
-          label="menuId"
-          value={props.menuId || ""}
-          onChange={(v: any) => setProp("menuId", v)}
-          placeholder="menu_main"
-        />
+        {menus.length ? (
+          <label className="block space-y-1.5">
+            <div className="text-sm font-medium">Menu</div>
+            <select
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              value={props.menuId || ""}
+              onChange={(e) => setProp("menuId", e.target.value)}
+            >
+              <option value="">(select a menu)</option>
+              {menus.map((m: any) => (
+                <option key={m._id} value={m._id}>
+                  {m.name} — {m._id}
+                  {m.slot ? ` (slot: ${m.slot})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <Field
+            label="menuId"
+            value={props.menuId || ""}
+            onChange={(v: any) => setProp("menuId", v)}
+            placeholder="menu_main"
+          />
+        )}
         <Field
           label="ctaText"
           value={props.ctaText || ""}
@@ -116,12 +161,31 @@ export function BlockPropsForm({
   if (type === "Footer/V1") {
     return (
       <div className="space-y-3">
-        <Field
-          label="menuId"
-          value={props.menuId || ""}
-          onChange={(v: any) => setProp("menuId", v)}
-          placeholder="menu_footer"
-        />
+        {menus.length ? (
+          <label className="block space-y-1.5">
+            <div className="text-sm font-medium">Menu</div>
+            <select
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              value={props.menuId || ""}
+              onChange={(e) => setProp("menuId", e.target.value)}
+            >
+              <option value="">(select a menu)</option>
+              {menus.map((m: any) => (
+                <option key={m._id} value={m._id}>
+                  {m.name} — {m._id}
+                  {m.slot ? ` (slot: ${m.slot})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <Field
+            label="menuId"
+            value={props.menuId || ""}
+            onChange={(v: any) => setProp("menuId", v)}
+            placeholder="menu_footer"
+          />
+        )}
         <Select
           label="Width"
           value={props.contentWidth || "xl"}
@@ -133,7 +197,6 @@ export function BlockPropsForm({
   }
 
   if (type === "Hero" || type === "Hero/V1") {
-    const [variant, setVariant] = useState(props.variant || "basic");
     const bg = props.bg || { type: "none" };
 
     return (

@@ -15,14 +15,47 @@ export const LayoutStyleSchema = z.object({
   margin: MarginSchema.optional(),
 
   textAlign: z.enum(["left", "center", "right"]).optional(),
+  display: z.enum(["block", "flex", "grid"]).optional(),
+  flexDirection: z.enum(["row", "column"]).optional(),
+  flexWrap: z.enum(["nowrap", "wrap"]).optional(),
+  alignSelf: z.enum(["start", "center", "end", "stretch"]).optional(),
+  justifySelf: z.enum(["start", "center", "end", "stretch"]).optional(),
   align: z.enum(["start", "center", "end", "stretch"]).optional(),
   justify: z
     .enum(["start", "center", "end", "between", "around", "evenly"])
     .optional(),
+  gridColumns: z.coerce.number().int().min(1).max(12).optional(),
+  gridRows: z.coerce.number().int().min(1).max(12).optional(),
 
   gap: SizeSchema.optional(),
 
   bgColor: z.string().optional(),
+  bg: z
+    .object({
+      type: z.enum(["none", "solid", "gradient", "image", "video"]).optional(),
+      color: z.string().optional(),
+      gradient: z
+        .object({
+          from: z.string().optional(),
+          to: z.string().optional(),
+          angle: z.coerce.number().optional(),
+        })
+        .optional(),
+      imageUrl: z.string().optional(),
+      imageAssetId: z.string().optional(),
+      imageSize: z.enum(["cover", "contain", "auto"]).optional(),
+      imagePosition: z.string().optional(),
+      imageRepeat: z.enum(["no-repeat", "repeat", "repeat-x", "repeat-y"]).optional(),
+      overlayColor: z.string().optional(),
+      overlayOpacity: z.coerce.number().min(0).max(1).optional(),
+      videoUrl: z.string().optional(),
+      videoPoster: z.string().optional(),
+      videoAutoplay: z.coerce.boolean().optional(),
+      videoMuted: z.coerce.boolean().optional(),
+      videoLoop: z.coerce.boolean().optional(),
+      videoControls: z.coerce.boolean().optional(),
+    })
+    .optional(),
   textColor: z.string().optional(),
   borderColor: z.string().optional(),
   borderWidth: SizeSchema.optional(),
@@ -38,7 +71,7 @@ export const LayoutStyleSchema = z.object({
     .optional(),
 });
 
-export const LayoutAtomicBlockSchema = z.object({
+const LayoutAtomicBaseSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   props: z.record(z.string(), z.any()).default({}),
@@ -48,7 +81,7 @@ export const LayoutAtomicBlockSchema = z.object({
 export const LayoutColSchema = z.object({
   id: z.string().min(1),
   style: LayoutStyleSchema.optional(),
-  blocks: z.array(LayoutAtomicBlockSchema).default([]),
+  blocks: z.array(LayoutAtomicBaseSchema).default([]),
 });
 
 export const LayoutRowSchema = z.object({
@@ -74,4 +107,13 @@ export const LayoutRowSchema = z.object({
 export const LayoutSectionPropsSchema = z.object({
   style: LayoutStyleSchema.optional(),
   rows: z.array(LayoutRowSchema).default([]),
+});
+
+export const LayoutGroupPropsSchema = z.object({
+  style: LayoutStyleSchema.optional(),
+  rows: z.array(LayoutRowSchema).default([]),
+});
+
+export const LayoutAtomicBlockSchema = LayoutAtomicBaseSchema.extend({
+  props: z.record(z.string(), z.any()).default({}),
 });

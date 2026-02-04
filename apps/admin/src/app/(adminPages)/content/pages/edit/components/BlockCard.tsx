@@ -38,6 +38,7 @@ export default function BlockCard({
   index,
   total,
   siteId,
+  menus,
   forms,
   presets,
   assetsMap,
@@ -241,6 +242,7 @@ export default function BlockCard({
                     siteId={siteId}
                     assetsMap={assetsMap}
                     forms={forms}
+                    menus={menus}
                     setPropPath={setPropPath}
                     assetUrlValue={
                       block.props?.imageUrl ||
