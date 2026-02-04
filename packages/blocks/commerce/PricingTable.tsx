@@ -67,31 +67,56 @@ export default function PricingTableV1({
               ? "1536px"
               : "1280px";
   return (
-    <section className="py-20 bg-gray-50">
-      <div className=" mx-auto px-6 text-center" style={{ maxWidth: maxWidth }}>
-        {title && <h2 className="text-3xl font-bold mb-12">{title}</h2>}
+    <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
+      <div className="mx-auto px-6 text-center" style={{ maxWidth: maxWidth }}>
+        {title && (
+          <div className="mb-12">
+            <h2 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+              {title}
+            </h2>
+            <p className="mt-3 text-sm text-slate-500">
+              Flexible plans that scale with your store.
+            </p>
+          </div>
+        )}
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid gap-8 md:grid-cols-3">
           {plans?.map((p, i) => (
             <div
               key={i}
-              className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+              className={`relative rounded-2xl border p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg ${
+                i === 1
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-900"
+              }`}
             >
-              <h3 className="font-semibold text-lg mb-2">{p?.name}</h3>
-              <div className="text-3xl font-bold mb-4">{p?.price}</div>
+              {i === 1 && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
+                  Most popular
+                </span>
+              )}
+              <h3 className="text-lg font-semibold">{p?.name}</h3>
+              <div className="mt-3 text-3xl font-semibold">{p?.price}</div>
 
-              <ul className="space-y-2 text-sm text-gray-600 mb-6 min-h-[140px]">
+              <ul
+                className={`mt-5 min-h-[140px] space-y-2 text-sm ${
+                  i === 1 ? "text-white/80" : "text-slate-600"
+                }`}
+              >
                 {p?.features?.map((f, j) => (
-                  <li key={j}>✓ {f}</li>
+                  <li key={j} className="flex items-start gap-2">
+                    <span className="mt-0.5 text-sm">✓</span>
+                    <span>{f}</span>
+                  </li>
                 ))}
               </ul>
 
               <a
                 href={p?.ctaHref || "#"}
-                className={`inline-block px-6 py-3 rounded font-medium transition-colors ${
+                className={`mt-6 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition ${
                   i === 1
-                    ? "bg-black text-white hover:bg-gray-800"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    ? "bg-white text-slate-900 hover:bg-slate-100"
+                    : "bg-slate-900 text-white hover:bg-slate-800"
                 }`}
               >
                 {p?.ctaText || "Choose Plan"}

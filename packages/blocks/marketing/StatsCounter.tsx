@@ -34,15 +34,20 @@ export default function StatsCounterV1({
               ? "1536px"
               : "1280px";
   return (
-    <section className="py-16 bg-black text-white">
+    <section className="py-16 bg-slate-950 text-white">
       <div
-        className=" mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
+        className="mx-auto grid grid-cols-2 gap-6 px-6 text-center md:grid-cols-4"
         style={{ maxWidth: maxWidth }}
       >
         {stats.map((s, i) => (
-          <div key={i}>
-            <div className="text-3xl md:text-4xl font-bold">{s.value}</div>
-            <div className="text-sm md:text-base opacity-80 mt-1">
+          <div
+            key={i}
+            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 backdrop-blur"
+          >
+            <div className="text-3xl font-semibold md:text-4xl">
+              {s.value}
+            </div>
+            <div className="mt-2 text-xs uppercase tracking-wide text-white/70 md:text-sm">
               {s.label}
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Plus,
   ArrowUp,
@@ -184,14 +184,74 @@ export default function VisualLayoutSection({
   onDeleteBlock?: (blockId: string) => void;
   onDuplicateBlock?: (blockId: string) => void;
 }) {
+  const atomicOptions = [
+    {
+      type: "Atomic/Text",
+      title: "Text",
+      description: "Headings, paragraphs, rich text",
+    },
+    {
+      type: "Atomic/Image",
+      title: "Image",
+      description: "Responsive image block",
+    },
+    {
+      type: "Atomic/Video",
+      title: "Video",
+      description: "Embed or upload video",
+    },
+    {
+      type: "Atomic/Button",
+      title: "Button",
+      description: "Primary and secondary CTAs",
+    },
+    {
+      type: "Atomic/Group",
+      title: "Group",
+      description: "Nested layout inside a column",
+    },
+  ];
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : { style: {}, rows: [] };
   const rows = props.rows || [];
 
-  const [activeAddCol, setActiveAddCol] = useState<{
+  const [addAtomicDialog, setAddAtomicDialog] = useState<{
     rowId: string;
     colId: string;
+    groupId?: string;
   } | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const prevScrollRef = useRef<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!addAtomicDialog) return;
+    const scroller = document.querySelector(
+      ".visual-canvas-scroll",
+    ) as HTMLElement | null;
+    if (!scroller) return;
+    prevScrollRef.current = { top: scroller.scrollTop, left: scroller.scrollLeft };
+    // allow layout to paint
+    requestAnimationFrame(() => {
+      scroller.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
+      dialogRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [addAtomicDialog]);
+
+  useEffect(() => {
+    if (addAtomicDialog) return;
+    const prev = prevScrollRef.current;
+    if (!prev) return;
+    const scroller = document.querySelector(
+      ".visual-canvas-scroll",
+    ) as HTMLElement | null;
+    if (!scroller) return;
+    scroller.scrollTo({ top: prev.top, left: prev.left, behavior: "smooth" });
+    prevScrollRef.current = null;
+  }, [addAtomicDialog]);
 
   function updateProps(next: LayoutSectionProps) {
     onChangeBlock({ ...block, props: next });
@@ -201,6 +261,17 @@ export default function VisualLayoutSection({
     const row = createDefaultRow();
     updateProps({ ...props, rows: [...rows, row] });
     onSelect({ kind: "layout-row", blockId: block.id, rowId: row.id });
+  }
+
+  function moveRowTo(fromRowId: string, toRowId: string) {
+    if (!fromRowId || !toRowId || fromRowId === toRowId) return;
+    const fromIndex = rows.findIndex((r) => r.id === fromRowId);
+    const toIndex = rows.findIndex((r) => r.id === toRowId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const nextRows = structuredClone(rows);
+    const [item] = nextRows.splice(fromIndex, 1);
+    nextRows.splice(toIndex, 0, item);
+    updateProps({ ...props, rows: nextRows });
   }
 
   function moveRow(rowId: string, dir: -1 | 1) {
@@ -241,6 +312,21 @@ export default function VisualLayoutSection({
       const j = idx + dir;
       if (j < 0 || j >= next.cols.length) return next;
       [next.cols[idx], next.cols[j]] = [next.cols[j], next.cols[idx]];
+      return next;
+    });
+    updateProps({ ...props, rows: nextRows });
+  }
+
+  function moveColTo(rowId: string, fromColId: string, toColId: string) {
+    if (!fromColId || !toColId || fromColId === toColId) return;
+    const nextRows = rows.map((r) => {
+      if (r.id !== rowId) return r;
+      const next = structuredClone(r);
+      const fromIndex = next.cols.findIndex((c: any) => c.id === fromColId);
+      const toIndex = next.cols.findIndex((c: any) => c.id === toColId);
+      if (fromIndex < 0 || toIndex < 0) return next;
+      const [item] = next.cols.splice(fromIndex, 1);
+      next.cols.splice(toIndex, 0, item);
       return next;
     });
     updateProps({ ...props, rows: nextRows });
@@ -289,6 +375,28 @@ export default function VisualLayoutSection({
       const j = idx + dir;
       if (j < 0 || j >= col.blocks.length) return next;
       [col.blocks[idx], col.blocks[j]] = [col.blocks[j], col.blocks[idx]];
+      return next;
+    });
+    updateProps({ ...props, rows: nextRows });
+  }
+
+  function moveAtomicTo(
+    rowId: string,
+    colId: string,
+    fromAtomId: string,
+    toAtomId: string,
+  ) {
+    if (!fromAtomId || !toAtomId || fromAtomId === toAtomId) return;
+    const nextRows = rows.map((r) => {
+      if (r.id !== rowId) return r;
+      const next = structuredClone(r);
+      const col = (next.cols || []).find((c: any) => c.id === colId);
+      if (!col) return next;
+      const fromIndex = col.blocks.findIndex((b: any) => b.id === fromAtomId);
+      const toIndex = col.blocks.findIndex((b: any) => b.id === toAtomId);
+      if (fromIndex < 0 || toIndex < 0) return next;
+      const [item] = col.blocks.splice(fromIndex, 1);
+      col.blocks.splice(toIndex, 0, item);
       return next;
     });
     updateProps({ ...props, rows: nextRows });
@@ -361,6 +469,58 @@ export default function VisualLayoutSection({
     });
   }
 
+  function groupMoveRow(atomicId: string, fromRowId: string, toRowId: string) {
+    if (!fromRowId || !toRowId || fromRowId === toRowId) return;
+    updateGroupProps(atomicId, (gp: any) => {
+      const rows = gp.rows || [];
+      const fromIndex = rows.findIndex((r: any) => r.id === fromRowId);
+      const toIndex = rows.findIndex((r: any) => r.id === toRowId);
+      if (fromIndex < 0 || toIndex < 0) return;
+      const [item] = rows.splice(fromIndex, 1);
+      rows.splice(toIndex, 0, item);
+      gp.rows = rows;
+    });
+  }
+
+  function groupMoveCol(
+    atomicId: string,
+    rowId: string,
+    fromColId: string,
+    toColId: string,
+  ) {
+    if (!fromColId || !toColId || fromColId === toColId) return;
+    updateGroupProps(atomicId, (gp: any) => {
+      const row = (gp.rows || []).find((r: any) => r.id === rowId);
+      if (!row) return;
+      const fromIndex = row.cols.findIndex((c: any) => c.id === fromColId);
+      const toIndex = row.cols.findIndex((c: any) => c.id === toColId);
+      if (fromIndex < 0 || toIndex < 0) return;
+      const [item] = row.cols.splice(fromIndex, 1);
+      row.cols.splice(toIndex, 0, item);
+    });
+  }
+
+  function groupMoveAtomic(
+    atomicId: string,
+    rowId: string,
+    colId: string,
+    fromAtomId: string,
+    toAtomId: string,
+  ) {
+    if (!fromAtomId || !toAtomId || fromAtomId === toAtomId) return;
+    updateGroupProps(atomicId, (gp: any) => {
+      const row = (gp.rows || []).find((r: any) => r.id === rowId);
+      if (!row) return;
+      const col = (row.cols || []).find((c: any) => c.id === colId);
+      if (!col) return;
+      const fromIndex = col.blocks.findIndex((b: any) => b.id === fromAtomId);
+      const toIndex = col.blocks.findIndex((b: any) => b.id === toAtomId);
+      if (fromIndex < 0 || toIndex < 0) return;
+      const [item] = col.blocks.splice(fromIndex, 1);
+      col.blocks.splice(toIndex, 0, item);
+    });
+  }
+
   function renderGroupLayout(groupBlock: any) {
     const gProps = groupBlock.props || { rows: [] };
     const gRows = gProps.rows || [];
@@ -425,6 +585,36 @@ export default function VisualLayoutSection({
               <div
                 key={gr.id}
                 className="border border-dashed border-gray-300 rounded-md p-3"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(
+                    "text/plain",
+                    JSON.stringify({
+                      type: "group-row",
+                      groupId: groupBlock.id,
+                      rowId: gr.id,
+                    }),
+                  );
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  try {
+                    const data = JSON.parse(
+                      e.dataTransfer.getData("text/plain"),
+                    );
+                    if (
+                      data?.type === "group-row" &&
+                      data.groupId === groupBlock.id
+                    ) {
+                      groupMoveRow(groupBlock.id, data.rowId, gr.id);
+                    }
+                  } catch {}
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelect({
@@ -443,6 +633,43 @@ export default function VisualLayoutSection({
                     <div
                       key={gc.id}
                       className="border border-gray-300 rounded-md p-2"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData(
+                          "text/plain",
+                          JSON.stringify({
+                            type: "group-col",
+                            groupId: groupBlock.id,
+                            rowId: gr.id,
+                            colId: gc.id,
+                          }),
+                        );
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        try {
+                          const data = JSON.parse(
+                            e.dataTransfer.getData("text/plain"),
+                          );
+                          if (
+                            data?.type === "group-col" &&
+                            data.groupId === groupBlock.id &&
+                            data.rowId === gr.id
+                          ) {
+                            groupMoveCol(
+                              groupBlock.id,
+                              gr.id,
+                              data.colId,
+                              gc.id,
+                            );
+                          }
+                        } catch {}
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelect({
@@ -460,6 +687,46 @@ export default function VisualLayoutSection({
                         <div
                           key={ga.id}
                           className="border border-gray-200 rounded p-2 mb-2"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData(
+                              "text/plain",
+                              JSON.stringify({
+                                type: "group-atomic",
+                                groupId: groupBlock.id,
+                                rowId: gr.id,
+                                colId: gc.id,
+                                atomId: ga.id,
+                              }),
+                            );
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            try {
+                              const data = JSON.parse(
+                                e.dataTransfer.getData("text/plain"),
+                              );
+                              if (
+                                data?.type === "group-atomic" &&
+                                data.groupId === groupBlock.id &&
+                                data.rowId === gr.id &&
+                                data.colId === gc.id
+                              ) {
+                                groupMoveAtomic(
+                                  groupBlock.id,
+                                  gr.id,
+                                  gc.id,
+                                  data.atomId,
+                                  ga.id,
+                                );
+                              }
+                            } catch {}
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelect({
@@ -484,51 +751,16 @@ export default function VisualLayoutSection({
                         className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveAddCol({
+                          setAddAtomicDialog({
                             rowId: gr.id,
                             colId: gc.id,
+                            groupId: groupBlock.id,
                           });
                         }}
                       >
                         <Plus className="inline-block h-3 w-3 mr-1" />
                         Add Block
                       </button>
-                      {activeAddCol &&
-                        activeAddCol.rowId === gr.id &&
-                        activeAddCol.colId === gc.id && (
-                          <div className="mt-2 w-full rounded-md border bg-white shadow-sm p-2 space-y-1 text-xs text-gray-700">
-                            {[
-                              "Atomic/Text",
-                              "Atomic/Image",
-                              "Atomic/Video",
-                              "Atomic/Button",
-                              "Atomic/Group",
-                            ].map((t) => (
-                              <button
-                                key={t}
-                                type="button"
-                                className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  groupAddAtomic(groupBlock.id, gr.id, gc.id, t);
-                                  setActiveAddCol(null);
-                                }}
-                              >
-                                {t.replace("Atomic/", "")}
-                              </button>
-                            ))}
-                            <button
-                              type="button"
-                              className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-500"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveAddCol(null);
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
                     </div>
                   ))}
                 </div>
@@ -648,8 +880,11 @@ export default function VisualLayoutSection({
               return (
                 <div
                   key={row.id}
+                  draggable
                   className={`group relative rounded-lg ${
-                    showOutlines ? "border border-dashed border-gray-400 hover:ring-1 hover:ring-blue-200" : ""
+                    showOutlines
+                      ? "border border-dashed border-gray-400 hover:ring-1 hover:ring-blue-200"
+                      : ""
                   } ${
                     rowSelected
                       ? "ring-2 ring-blue-500 border-blue-300"
@@ -657,6 +892,28 @@ export default function VisualLayoutSection({
                         ? "border-gray-200"
                         : ""
                   }`}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData(
+                      "text/plain",
+                      JSON.stringify({ type: "row", rowId: row.id }),
+                    );
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    try {
+                      const data = JSON.parse(
+                        e.dataTransfer.getData("text/plain"),
+                      );
+                      if (data?.type === "row") {
+                        moveRowTo(data.rowId, row.id);
+                      }
+                    } catch {}
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelect({
@@ -728,8 +985,11 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
+                          draggable
                           className={`group/col relative rounded-lg ${
-                            showOutlines ? "border border-gray-400 hover:ring-1 hover:ring-blue-200" : ""
+                            showOutlines
+                              ? "border border-gray-400 hover:ring-1 hover:ring-blue-200"
+                              : ""
                           } ${
                             colSelected
                               ? "ring-2 ring-blue-500 border-blue-300"
@@ -741,6 +1001,32 @@ export default function VisualLayoutSection({
                             ...resolveLayoutStyle(col.style),
                             ...resolveColFlexStyle(col.style),
                             position: colVideo ? "relative" : undefined,
+                          }}
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData(
+                              "text/plain",
+                              JSON.stringify({
+                                type: "col",
+                                rowId: row.id,
+                                colId: col.id,
+                              }),
+                            );
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            try {
+                              const data = JSON.parse(
+                                e.dataTransfer.getData("text/plain"),
+                              );
+                              if (data?.type === "col" && data.rowId === row.id) {
+                                moveColTo(row.id, data.colId, col.id);
+                              }
+                            } catch {}
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -801,6 +1087,7 @@ export default function VisualLayoutSection({
                               return (
                                 <div
                                   key={atomic.id}
+                                  draggable
                                   className={`group relative rounded-md ${
                                     showOutlines ? "border border-gray-400" : ""
                                   } ${
@@ -810,6 +1097,42 @@ export default function VisualLayoutSection({
                                         ? "border-transparent hover:border-gray-200"
                                         : ""
                                   }`}
+                                  onDragStart={(e) => {
+                                    e.dataTransfer.effectAllowed = "move";
+                                    e.dataTransfer.setData(
+                                      "text/plain",
+                                      JSON.stringify({
+                                        type: "atomic",
+                                        rowId: row.id,
+                                        colId: col.id,
+                                        atomId: atomic.id,
+                                      }),
+                                    );
+                                  }}
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = "move";
+                                  }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    try {
+                                      const data = JSON.parse(
+                                        e.dataTransfer.getData("text/plain"),
+                                      );
+                                      if (
+                                        data?.type === "atomic" &&
+                                        data.rowId === row.id &&
+                                        data.colId === col.id
+                                      ) {
+                                        moveAtomicTo(
+                                          row.id,
+                                          col.id,
+                                          data.atomId,
+                                          atomic.id,
+                                        );
+                                      }
+                                    } catch {}
+                                  }}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onSelect({
@@ -866,49 +1189,16 @@ export default function VisualLayoutSection({
                                 className="w-full border border-dashed border-gray-300 rounded-md py-2 text-xs text-gray-500 hover:bg-gray-50 opacity-0 pointer-events-none group-hover/col:opacity-100 group-hover/col:pointer-events-auto transition"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setActiveAddCol({ rowId: row.id, colId: col.id });
+                                  setAddAtomicDialog({
+                                    rowId: row.id,
+                                    colId: col.id,
+                                  });
                                 }}
                                 title="Add block"
                               >
                                 <Plus className="inline-block h-3 w-3 mr-1" />
                                 Add Block
                               </button>
-                              {activeAddCol &&
-                                activeAddCol.rowId === row.id &&
-                                activeAddCol.colId === col.id && (
-                                  <div className="absolute z-10 mt-2 w-full rounded-md border bg-white shadow-sm p-2 space-y-1 text-xs text-gray-700">
-                                    {[
-                                      "Atomic/Text",
-                                      "Atomic/Image",
-                                      "Atomic/Video",
-                                      "Atomic/Button",
-                                      "Atomic/Group",
-                                    ].map((t) => (
-                                      <button
-                                        key={t}
-                                        type="button"
-                                        className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          addAtomic(row.id, col.id, t);
-                                          setActiveAddCol(null);
-                                        }}
-                                      >
-                                        {t.replace("Atomic/", "")}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-500"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveAddCol(null);
-                                      }}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                )}
                             </div>
                           </div>
                         </div>
@@ -951,6 +1241,76 @@ export default function VisualLayoutSection({
         )}
         </div>
       </div>
+
+      {addAtomicDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setAddAtomicDialog(null)}
+        >
+          <div
+            ref={dialogRef}
+            className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">
+                  Add New Block
+                </div>
+                <div className="text-xs text-gray-500">
+                  Choose an atomic block to insert.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
+                onClick={() => setAddAtomicDialog(null)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {atomicOptions.map((opt) => (
+                <button
+                  key={opt.type}
+                  type="button"
+                  className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-left hover:border-gray-300 hover:bg-gray-50"
+                  onClick={() => {
+                    if (addAtomicDialog.groupId) {
+                      groupAddAtomic(
+                        addAtomicDialog.groupId,
+                        addAtomicDialog.rowId,
+                        addAtomicDialog.colId,
+                        opt.type,
+                      );
+                    } else {
+                      addAtomic(
+                        addAtomicDialog.rowId,
+                        addAtomicDialog.colId,
+                        opt.type,
+                      );
+                    }
+                    setAddAtomicDialog(null);
+                  }}
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600">
+                    {opt.title.slice(0, 1)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {opt.title}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {opt.description}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

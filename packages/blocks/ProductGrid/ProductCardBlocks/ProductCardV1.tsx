@@ -46,7 +46,6 @@ function fixDoubleProtocolUrl(url: any) {
 function ProductCardV1({ product }: { product: Product }) {
   const primaryImage = product.images?.[0];
   const primaryImageUrl = fixDoubleProtocolUrl(product.images?.[0]?.url);
-  console.log(primaryImageUrl);
   const price = product.base_price_cents / 100;
   const comparePrice = product.compare_at_price_cents
     ? product.compare_at_price_cents / 100
@@ -59,10 +58,10 @@ function ProductCardV1({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group block overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:ring-offset-2"
     >
       {/* Image */}
-      <div className="aspect-[4/5] w-full bg-gray-100 relative overflow-hidden">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
         {primaryImage ? (
           <img
             src={primaryImageUrl}
@@ -71,32 +70,35 @@ function ProductCardV1({ product }: { product: Product }) {
             loading="lazy"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            <ImageOff size={48} strokeWidth={1.5} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+            <ImageOff size={46} strokeWidth={1.5} />
+            <span className="text-xs font-medium uppercase tracking-wide">
+              Image coming soon
+            </span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-5">
         {/* Title */}
-        <h3 className="text-lg font-medium text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+        <h3 className="text-lg font-semibold text-slate-900 line-clamp-2 transition-colors group-hover:text-slate-700">
           {product.title}
         </h3>
 
         {/* Description (shortened) */}
-        <p className="mt-1.5 text-sm text-gray-600 line-clamp-2">
+        <p className="mt-2 text-sm text-slate-600 line-clamp-2">
           {description}
         </p>
 
         {/* Price */}
-        <div className="mt-3 flex items-baseline gap-2.5">
-          <span className="text-xl font-bold text-gray-900">
+        <div className="mt-4 flex items-baseline gap-2.5">
+          <span className="text-xl font-semibold text-slate-900">
             ${price.toFixed(2)}
           </span>
 
           {comparePrice && comparePrice > price && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-sm text-slate-500 line-through">
               ${comparePrice.toFixed(2)}
             </span>
           )}
@@ -104,10 +106,10 @@ function ProductCardV1({ product }: { product: Product }) {
 
         {/* Optional attributes preview (first 2) */}
         {product.attributes && product.attributes.length > 0 && (
-          <div className="mt-3 text-xs text-gray-500 flex flex-wrap gap-3">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
             {product.attributes.slice(0, 2).map((attr) => (
               <div key={attr.code} className="flex items-center gap-1">
-                <span className="font-medium text-gray-700">{attr.name}:</span>
+                <span className="font-medium text-slate-700">{attr.name}:</span>
                 <span>
                   {attr.type === "boolean"
                     ? attr.value
@@ -118,7 +120,7 @@ function ProductCardV1({ product }: { product: Product }) {
               </div>
             ))}
             {product.attributes.length > 2 && (
-              <span className="text-gray-400">
+              <span className="text-slate-400">
                 +{product.attributes.length - 2} more
               </span>
             )}

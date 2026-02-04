@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { VisualBlockRenderer } from "../../../../../../../packages/renderer/VisualBlockRenderer";
 import { Trash2 } from "lucide-react";
 import { Copy } from "lucide-react";
@@ -19,6 +20,7 @@ export function VisualCanvas({
   onAddBlock,
   onDeleteBlock,
   onDuplicateBlock,
+  onMoveBlock,
 }: {
   layout: any;
   selection: LayoutSelection | null;
@@ -32,8 +34,10 @@ export function VisualCanvas({
   onAddBlock?: (type: string) => void;
   onDeleteBlock?: (blockId: string) => void;
   onDuplicateBlock?: (blockId: string) => void;
+  onMoveBlock?: (fromId: string, toId: string) => void;
 }) {
   const blocks = layout.sections?.[0]?.blocks ?? [];
+  const [dragBlockId, setDragBlockId] = React.useState<string | null>(null);
 
   if (!blocks.length) {
     return (
@@ -87,21 +91,65 @@ export function VisualCanvas({
           {blocks.map((b: any) => {
             if (b.type === "Layout/Section") {
               return (
-                <VisualLayoutSection
+                <div
                   key={b.id}
-                  block={b}
-                  selection={selection}
-                  assetsMap={assetsMap}
-                  onSelect={onSelect}
-                  onChangeBlock={onChangeBlock}
-                  showOutlines={showOutlines}
-                  onDeleteBlock={onDeleteBlock}
-                />
+                  className="relative"
+                  draggable
+                  onDragStart={(e) => {
+                    setDragBlockId(b.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", b.id);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const fromId =
+                      dragBlockId || e.dataTransfer.getData("text/plain");
+                    if (fromId) onMoveBlock?.(fromId, b.id);
+                    setDragBlockId(null);
+                  }}
+                  onDragEnd={() => setDragBlockId(null)}
+                >
+                  <VisualLayoutSection
+                    block={b}
+                    selection={selection}
+                    assetsMap={assetsMap}
+                    onSelect={onSelect}
+                    onChangeBlock={onChangeBlock}
+                    showOutlines={showOutlines}
+                    onDeleteBlock={onDeleteBlock}
+                    onDuplicateBlock={onDuplicateBlock}
+                  />
+                </div>
               );
             }
 
             return (
-              <div key={b.id} className="relative group">
+              <div
+                key={b.id}
+                className="relative group"
+                draggable
+                onDragStart={(e) => {
+                  setDragBlockId(b.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", b.id);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const fromId =
+                    dragBlockId || e.dataTransfer.getData("text/plain");
+                  if (fromId) onMoveBlock?.(fromId, b.id);
+                  setDragBlockId(null);
+                }}
+                onDragEnd={() => setDragBlockId(null)}
+              >
                 <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition z-20">
                   <button
                     className="p-1 rounded hover:bg-gray-50 text-gray-700"

@@ -62,20 +62,37 @@ export default function FeaturesGridV1({
               ? "1536px"
               : "1280px";
   return (
-    <section className="py-20 bg-gray-50">
-      <div className=" mx-auto px-6" style={{ maxWidth: maxWidth }}>
+    <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
+      <div className="mx-auto px-6" style={{ maxWidth: maxWidth }}>
         {title && (
-          <h2 className="text-3xl font-bold mb-10 text-center">{title}</h2>
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+              {title}
+            </h2>
+            <p className="mt-3 text-sm text-slate-500">
+              Modular blocks that stay cohesive across devices.
+            </p>
+          </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
             <div
               key={i}
-              className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow"
+              className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
             >
-              <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-              <p className="text-gray-600 text-sm">{f.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  Feature {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="text-xs text-slate-400 transition group-hover:text-slate-500">
+                  Learn more
+                </span>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                {f.title}
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">{f.description}</p>
             </div>
           ))}
         </div>

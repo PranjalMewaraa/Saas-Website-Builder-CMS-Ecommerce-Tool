@@ -19,6 +19,7 @@ type Props = {
   contentWidth: string;
   logoUrl?: string;
   logoAlt?: string;
+  __editor?: boolean;
 };
 
 export default function HeaderV1({
@@ -28,8 +29,15 @@ export default function HeaderV1({
   logoUrl,
   logoAlt,
   contentWidth,
+  __editor,
 }: Props) {
   const items = menu?.tree ?? [];
+  const placeholderItems = [
+    { id: "ph-1", label: "Shop", ref: { href: "#" } },
+    { id: "ph-2", label: "About", ref: { href: "#" } },
+    { id: "ph-3", label: "Contact", ref: { href: "#" } },
+  ];
+  const navItems = items.length ? items : __editor ? placeholderItems : [];
 
   const maxWidth =
     contentWidth === "sm"
@@ -45,10 +53,10 @@ export default function HeaderV1({
               : "1280px";
 
   return (
-    <header className="w-full">
+    <header className="w-full border-b border-black/10 bg-white/70 backdrop-blur">
       <div
         style={{ maxHeight: "4rem", maxWidth: maxWidth }}
-        className="mx-auto  px-4 py-3 flex items-center justify-between gap-4"
+        className="mx-auto px-4 py-3 flex items-center justify-between gap-6"
       >
         {logoUrl ? (
           <Link href="/" className="flex items-center gap-2">
@@ -67,12 +75,12 @@ export default function HeaderV1({
           </Link>
         )}
 
-        <nav className="flex items-center gap-4 overflow-x-auto">
-          {items.map((n) => (
+        <nav className="flex items-center gap-6 overflow-x-auto">
+          {navItems.map((n) => (
             <Link
               key={n.id}
               href={n.ref?.slug || n.ref?.href || "#"}
-              className="text-sm whitespace-nowrap opacity-90 hover:opacity-100"
+              className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
             >
               {n.label}
             </Link>
@@ -82,12 +90,12 @@ export default function HeaderV1({
         {ctaText && ctaHref ? (
           <Link
             href={ctaHref}
-            className="px-3 py-2 rounded bg-black text-white text-sm"
+            className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
           >
             {ctaText}
           </Link>
         ) : (
-          <div className="w-[1px]" />
+          <div className="w-[1px] h-8 bg-black/10" />
         )}
       </div>
     </header>

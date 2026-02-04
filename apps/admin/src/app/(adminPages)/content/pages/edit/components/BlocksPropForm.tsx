@@ -187,11 +187,48 @@ export function BlockPropsForm({
           />
         )}
         <Select
+          label="Layout"
+          value={props.layout || "multi-column"}
+          onChange={(v: any) => setProp("layout", v)}
+          options={["multi-column", "simple"]}
+        />
+        <Select
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
           options={["sm", "md", "lg", "xl", "2xl"]}
         />
+        <Field
+          label="Description"
+          value={props.description || ""}
+          onChange={(v: any) => setProp("description", v)}
+          placeholder="Building better digital experiences since 2023."
+        />
+        <Field
+          label="Badge"
+          value={props.badgeText || ""}
+          onChange={(v: any) => setProp("badgeText", v)}
+          placeholder="Designed for modern storefronts"
+        />
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={props.showSocials ?? true}
+            onChange={(e) => setProp("showSocials", e.target.checked)}
+          />
+          Show social icons
+        </label>
+        <div className="space-y-1.5">
+          <div className="text-sm font-medium">Social URLs</div>
+          <SocialLinksEditor
+            value={props.socialLinks || []}
+            onChange={(next) => setProp("socialLinks", next)}
+          />
+          <div className="text-xs text-muted-foreground">
+            Icons are auto-selected from the URL domain (x.com, github.com,
+            linkedin.com).
+          </div>
+        </div>
       </div>
     );
   }
@@ -922,6 +959,51 @@ function Field({ label, value, onChange, placeholder }: any) {
   );
 }
 
+function SocialLinksEditor({
+  value,
+  onChange,
+}: {
+  value?: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const links = Array.isArray(value) ? value : [];
+  return (
+    <div className="space-y-2">
+      {links.map((link, idx) => (
+        <div key={idx} className="flex items-center gap-2">
+          <input
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+            placeholder="https://x.com/yourhandle"
+            value={link}
+            onChange={(e) => {
+              const next = [...links];
+              next[idx] = e.target.value;
+              onChange(next);
+            }}
+          />
+          <button
+            type="button"
+            className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
+            onClick={() => {
+              const next = links.filter((_, i) => i !== idx);
+              onChange(next);
+            }}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="text-xs border rounded px-2 py-1 hover:bg-muted"
+        onClick={() => onChange([...links, ""])}
+      >
+        Add social URL
+      </button>
+    </div>
+  );
+}
+
 function NumberField({ label, value, onChange }: any) {
   return (
     <label className="block space-y-1.5">
@@ -958,7 +1040,15 @@ function Select({ label, value, onChange, options }: any) {
 function defaultPropsFor(type: string) {
   if (type === "Header/V1")
     return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      layout: "multi-column",
+      description: "Building better digital experiences since 2023.",
+      badgeText: "Designed for modern storefronts",
+      showSocials: true,
+      socialLinks: [],
+    };
   if (type === "Hero/V1")
     return {
       variant: "basic",

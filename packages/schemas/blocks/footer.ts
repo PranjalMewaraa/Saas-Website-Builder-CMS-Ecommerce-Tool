@@ -7,4 +7,9 @@ export const FooterV1Schema = z.object({
   logoAssetId: z.string().min(1).optional(),
   logoUrl: z.string().url().optional(),
   logoAlt: z.string().max(160).optional(),
+  layout: z.enum(["simple", "multi-column"]).optional(),
+  description: z.string().max(240).optional(),
+  badgeText: z.string().max(80).optional(),
+  showSocials: z.boolean().optional(),
+  socialLinks: z.array(z.string().url()).optional(),
 });

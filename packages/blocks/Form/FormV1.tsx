@@ -87,25 +87,32 @@ export default function FormV1(props: {
   return (
     <section>
       <div
-        className="mx-auto px-4 py-8 border rounded-xl"
+        className="mx-auto rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm"
         style={{ maxWidth: maxWidth }}
       >
         {props.title ? (
-          <h2 className="text-xl font-semibold">{props.title}</h2>
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              {props.title}
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              We’ll get back to you within 24 hours.
+            </p>
+          </div>
         ) : null}
 
         {ok ? (
-          <div className="mt-3 text-sm border rounded p-2 bg-green-50">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
             {ok}
           </div>
         ) : null}
         {errors._global ? (
-          <div className="mt-3 text-sm border rounded p-2 bg-red-50">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
             {errors._global}
           </div>
         ) : null}
 
-        <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
           <input
             name="_hp"
             style={{ display: "none" }}
@@ -115,8 +122,8 @@ export default function FormV1(props: {
           <input name="_ts" type="hidden" value={Date.now()} />
 
           {fields.map((f: any) => (
-            <div key={f.id} className="space-y-1">
-              <label className="text-sm opacity-80">
+            <div key={f.id} className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">
                 {f.label}{" "}
                 {f.required ? <span className="opacity-60">*</span> : null}
               </label>
@@ -124,11 +131,14 @@ export default function FormV1(props: {
               {f.type === "textarea" ? (
                 <textarea
                   name={f.name}
-                  className="border rounded p-2 w-full"
+                  className="min-h-[120px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
                   placeholder={f.placeholder || ""}
                 />
               ) : f.type === "select" ? (
-                <select name={f.name} className="border rounded p-2 w-full">
+                <select
+                  name={f.name}
+                  className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-slate-400"
+                >
                   <option value="">Select…</option>
                   {(f.options || []).map((o: string) => (
                     <option key={o} value={o}>
@@ -138,13 +148,19 @@ export default function FormV1(props: {
                 </select>
               ) : f.type === "checkbox" ? (
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name={f.name} />
-                  <span className="text-sm">{f.helpText || "Yes"}</span>
+                  <input
+                    type="checkbox"
+                    name={f.name}
+                    className="h-4 w-4 rounded border-slate-300 text-slate-900"
+                  />
+                  <span className="text-sm text-slate-600">
+                    {f.helpText || "Yes"}
+                  </span>
                 </label>
               ) : (
                 <input
                   name={f.name}
-                  className="border rounded p-2 w-full"
+                  className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-slate-400"
                   placeholder={f.placeholder || ""}
                   type={
                     f.type === "email"
@@ -157,10 +173,10 @@ export default function FormV1(props: {
               )}
 
               {f.helpText && f.type !== "checkbox" ? (
-                <div className="text-xs opacity-60">{f.helpText}</div>
+                <div className="text-xs text-slate-500">{f.helpText}</div>
               ) : null}
               {errors[f.name] ? (
-                <div className="text-xs text-red-600">{errors[f.name]}</div>
+                <div className="text-xs text-rose-600">{errors[f.name]}</div>
               ) : null}
             </div>
           ))}
@@ -168,7 +184,7 @@ export default function FormV1(props: {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-black text-white rounded px-4 py-2"
+            className="h-11 w-full rounded-full bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {submitting ? "Submitting…" : props.submitText || "Submit"}
           </button>

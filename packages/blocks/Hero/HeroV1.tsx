@@ -44,23 +44,11 @@ export default function Hero(props: HeroProps) {
 
   return (
     <section
-      style={{
-        position: "relative",
-        width: "100%",
-        overflow: "hidden",
-        backgroundColor: "#0f172a", // slate-950
-        minHeight: props.minHeight ?? 580,
-        isolation: "isolate", // helps stacking context
-      }}
+      className="relative isolate w-full overflow-hidden bg-slate-950"
+      style={{ minHeight: props.minHeight ?? 580 }}
     >
       {/* Background layer */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: -10,
-        }}
-      >
+      <div className="absolute inset-0 -z-10">
         {bgType === "image" && (
           <HeroBgImage
             url={props.bg?.imageUrl || ""}
@@ -84,13 +72,10 @@ export default function Hero(props: HeroProps) {
       {/* Overlay */}
       {bgType !== "none" && (
         <div
+          className="absolute inset-0 -z-10 pointer-events-none"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: -10,
-            pointerEvents: "none",
             background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5), rgba(0,0,0,0.6))",
+              "linear-gradient(to bottom, rgba(2,6,23,0.2), rgba(2,6,23,0.6), rgba(2,6,23,0.8))",
             backgroundColor: overlayColor,
             opacity: overlayOpacity,
           }}
@@ -99,84 +84,36 @@ export default function Hero(props: HeroProps) {
 
       {/* Content */}
       <div
+        className="relative z-10 mx-auto flex w-full flex-col px-5"
         style={{
-          position: "relative",
-          zIndex: 10,
-          height: "100%",
-          margin: "0 auto",
-          padding: "4rem 1.25rem", // py-16 px-5
-          display: "flex",
-          flexDirection: "column",
           maxWidth: maxWidth,
-          ...contentAlignStyle, // override alignment
+          minHeight: props.minHeight ?? 580,
+          ...contentAlignStyle,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem", // gap-5
-            maxWidth: "48rem", // max-w-3xl
-          }}
-        >
+        <div className="flex min-h-[inherit] w-full flex-col justify-center py-20 sm:py-24 lg:py-28">
+        <div className="flex max-w-3xl flex-col gap-5">
           <h1
-            style={{
-              fontSize: "clamp(2.25rem, 6vw, 4.5rem)", // responsive scaling
-              fontWeight: 800,
-              lineHeight: 1.1,
-              letterSpacing: "-0.025em",
-              color: "#ffffff",
-              margin: 0,
-            }}
+            className="m-0 text-balance text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl"
           >
             {props.headline || "Headline"}
           </h1>
 
           {props.subhead && (
             <p
-              style={{
-                fontSize: "clamp(1.125rem, 3vw, 1.5rem)",
-                color: "rgba(255,255,255,0.9)",
-                fontWeight: 300,
-                lineHeight: 1.6,
-                maxWidth: "32rem",
-                margin: 0,
-              }}
+              className="m-0 max-w-2xl text-lg text-white/80 sm:text-xl"
             >
               {props.subhead}
             </p>
           )}
 
           <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-              paddingTop: "1.5rem",
-              flexWrap: "wrap",
-              "@media (min-width: 640px)": {
-                flexDirection: "row",
-              },
-            }}
+            className="flex flex-wrap items-center gap-3 pt-6"
           >
             {props.ctaText && (
               <a
                 href={props.ctaHref || "#"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "0.875rem 1.5rem",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  borderRadius: "0.75rem",
-                  backgroundColor: "#ffffff",
-                  color: "#0f172a",
-                  textDecoration: "none",
-                  transition: "all 0.3s ease",
-                  transform: "scale(1)",
-                  boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                }}
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:shadow-slate-900/30"
               >
                 {props.ctaText}
               </a>
@@ -185,25 +122,13 @@ export default function Hero(props: HeroProps) {
             {props.secondaryCtaText && (
               <a
                 href={props.secondaryCtaHref || "#"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "0.875rem 1.5rem",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  borderRadius: "0.75rem",
-                  border: "1px solid rgba(255,255,255,0.4)",
-                  color: "#ffffff",
-                  backgroundColor: "transparent",
-                  textDecoration: "none",
-                  transition: "all 0.3s ease",
-                }}
+                className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90 transition hover:border-white/70 hover:text-white"
               >
                 {props.secondaryCtaText}
               </a>
             )}
           </div>
+        </div>
         </div>
       </div>
     </section>

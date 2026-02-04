@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import StylePreviewCard from "./StylePreviewCard";
 import { BlockPropsForm } from "../pages/edit/components/BlocksPropForm";
 import ColorPickerInput from "./ColorPickerInput";
@@ -80,13 +81,7 @@ export function VisualInspector({
   onDeleteBlock,
   onChange,
 }: any) {
-  if (!block) {
-    return (
-      <div className="text-muted-foreground text-sm">
-        Select a block to edit
-      </div>
-    );
-  }
+  const [openGroup, setOpenGroup] = useState<string>("size");
 
   /* -------- props helpers -------- */
 
@@ -132,11 +127,47 @@ export function VisualInspector({
     onChange(next);
   }
 
-  const overrides = block.style?.overrides ?? {};
+  const overrides = block?.style?.overrides ?? {};
 
   const previewStyle = useMemo(() => overrides, [overrides]);
 
   /* ---------------- UI ---------------- */
+
+  if (!block) {
+    return (
+      <div className="text-muted-foreground text-sm">
+        Select a block to edit
+      </div>
+    );
+  }
+
+  const Section = ({
+    id,
+    title,
+    children,
+  }: {
+    id: string;
+    title: string;
+    children: ReactNode;
+  }) => {
+    const isOpen = openGroup === id;
+    return (
+      <div className="border rounded-lg bg-white shadow-sm">
+        <button
+          type="button"
+          onClick={() => setOpenGroup(isOpen ? "" : id)}
+          className="w-full px-3 py-2 text-left text-sm font-medium flex items-center justify-between"
+        >
+          <span>{title}</span>
+          <ChevronDown
+            size={16}
+            className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+        {isOpen ? <div className="px-3 pb-3">{children}</div> : null}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -169,14 +200,12 @@ export function VisualInspector({
       <div className="border-t pt-4 space-y-4">
         <h3 className="font-medium">Appearance & Style</h3>
 
-        <details open className="border rounded-lg p-3 bg-white shadow-sm">
-          <summary className="cursor-pointer text-sm font-medium">
-            Size & Spacing
-          </summary>
-          <div className="mt-3 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="Container"
+        <>
+          <Section id="size" title="Size & Spacing">
+            <div className="mt-3 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select
+                  label="Container"
                 value={overrides.container ?? "boxed"}
                 onChange={(v: string) => setStyle("container", v)}
                 options={["boxed", "full"]}
@@ -201,26 +230,23 @@ export function VisualInspector({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {(["top", "right", "bottom", "left"] as const).map((side) => (
-                <NumberField
-                  key={side}
-                  label={`Margin ${side.toUpperCase()}`}
-                  value={overrides.margin?.[side] ?? 0}
-                  onChange={(n: number) => setStyle(`margin.${side}`, n)}
-                />
-              ))}
+                {(["top", "right", "bottom", "left"] as const).map((side) => (
+                  <NumberField
+                    key={side}
+                    label={`Margin ${side.toUpperCase()}`}
+                    value={overrides.margin?.[side] ?? 0}
+                    onChange={(n: number) => setStyle(`margin.${side}`, n)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </details>
+          </Section>
 
-        <details open className="border rounded-lg p-3 bg-white shadow-sm">
-          <summary className="cursor-pointer text-sm font-medium">
-            Background
-          </summary>
-          <div className="mt-3 space-y-3">
-            <Select
-              label="Type"
-              value={overrides.bg?.type ?? "none"}
+          <Section id="background" title="Background">
+            <div className="mt-3 space-y-3">
+              <Select
+                label="Type"
+                value={overrides.bg?.type ?? "none"}
               onChange={(v: string) => setStyle("bg.type", v)}
               options={["none", "solid", "gradient", "image"]}
             />
@@ -299,133 +325,125 @@ export function VisualInspector({
               </div>
             )}
           </div>
-        </details>
+          </Section>
 
-        <details open className="border rounded-lg p-3 bg-white shadow-sm">
-          <summary className="cursor-pointer text-sm font-medium">
-            Color & Border
-          </summary>
-          <div className="mt-3 space-y-3">
-            <ColorPickerInput
-              label="Text Color"
-              value={overrides.textColor ?? ""}
-              onChange={(v: string) => setStyle("textColor", v)}
-              placeholder="#111111"
-              palette={themePalette}
-            />
-            <Checkbox
-              label="Enable Border"
-              value={!!overrides.border?.enabled}
-              onChange={(v: boolean) => setStyle("border.enabled", v)}
-            />
-            <div className="grid grid-cols-1 gap-3">
+          <Section id="color" title="Color & Border">
+            <div className="mt-3 space-y-3">
               <ColorPickerInput
-                label="Border Color"
-                value={overrides.border?.color ?? ""}
-                onChange={(v: string) => setStyle("border.color", v)}
-                placeholder="#e5e7eb"
+                label="Text Color"
+                value={overrides.textColor ?? ""}
+                onChange={(v: string) => setStyle("textColor", v)}
+                placeholder="#111111"
                 palette={themePalette}
               />
-              <NumberField
-                label="Border Width"
-                value={overrides.border?.width ?? 1}
-                onChange={(n: number) => setStyle("border.width", n)}
+              <Checkbox
+                label="Enable Border"
+                value={!!overrides.border?.enabled}
+                onChange={(v: boolean) => setStyle("border.enabled", v)}
               />
+              <div className="grid grid-cols-1 gap-3">
+                <ColorPickerInput
+                  label="Border Color"
+                  value={overrides.border?.color ?? ""}
+                  onChange={(v: string) => setStyle("border.color", v)}
+                  placeholder="#e5e7eb"
+                  palette={themePalette}
+                />
+                <NumberField
+                  label="Border Width"
+                  value={overrides.border?.width ?? 1}
+                  onChange={(n: number) => setStyle("border.width", n)}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <NumberField
+                  label="Border Radius"
+                  value={overrides.radius ?? 0}
+                  onChange={(n: number) => setStyle("radius", n)}
+                />
+                <Select
+                  label="Shadow"
+                  value={overrides.shadow ?? "none"}
+                  onChange={(v: string) => setStyle("shadow", v)}
+                  options={["none", "sm", "md", "lg"]}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-1 gap-3">
-              <NumberField
-                label="Border Radius"
-                value={overrides.radius ?? 0}
-                onChange={(n: number) => setStyle("radius", n)}
-              />
-              <Select
-                label="Shadow"
-                value={overrides.shadow ?? "none"}
-                onChange={(v: string) => setStyle("shadow", v)}
-                options={["none", "sm", "md", "lg"]}
-              />
-            </div>
-          </div>
-        </details>
+          </Section>
 
-        <details open className="border rounded-lg p-3 bg-white shadow-sm">
-          <summary className="cursor-pointer text-sm font-medium">
-            Layout & Alignment
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="Display"
-                value={overrides.display ?? "block"}
-                onChange={(v: string) => setStyle("display", v)}
-                options={["block", "flex", "grid"]}
-              />
-              <Select
-                label="Text Align"
-                value={overrides.align?.text ?? "left"}
-                onChange={(v: string) => setStyle("align.text", v)}
-                options={["left", "center", "right"]}
+          <Section id="layout" title="Layout & Alignment">
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select
+                  label="Display"
+                  value={overrides.display ?? "block"}
+                  onChange={(v: string) => setStyle("display", v)}
+                  options={["block", "flex", "grid"]}
+                />
+                <Select
+                  label="Text Align"
+                  value={overrides.align?.text ?? "left"}
+                  onChange={(v: string) => setStyle("align.text", v)}
+                  options={["left", "center", "right"]}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select
+                  label="Align Items"
+                  value={overrides.align?.items ?? "stretch"}
+                  onChange={(v: string) => setStyle("align.items", v)}
+                  options={["start", "center", "end", "stretch"]}
+                />
+                <Select
+                  label="Justify Content"
+                  value={overrides.align?.justify ?? "start"}
+                  onChange={(v: string) => setStyle("align.justify", v)}
+                  options={["start", "center", "end", "between"]}
+                />
+              </div>
+              <NumberField
+                label="Gap"
+                value={overrides.gap ?? 0}
+                onChange={(n: number) => setStyle("gap", n)}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="Align Items"
-                value={overrides.align?.items ?? "stretch"}
-                onChange={(v: string) => setStyle("align.items", v)}
-                options={["start", "center", "end", "stretch"]}
-              />
-              <Select
-                label="Justify Content"
-                value={overrides.align?.justify ?? "start"}
-                onChange={(v: string) => setStyle("align.justify", v)}
-                options={["start", "center", "end", "between"]}
-              />
-            </div>
-            <NumberField
-              label="Gap"
-              value={overrides.gap ?? 0}
-              onChange={(n: number) => setStyle("gap", n)}
-            />
-          </div>
-        </details>
+          </Section>
 
-        <details open className="border rounded-lg p-3 bg-white shadow-sm">
-          <summary className="cursor-pointer text-sm font-medium">
-            Typography
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NumberField
-                label="Font Size"
-                value={overrides.fontSize ?? 16}
-                onChange={(n: number) => setStyle("fontSize", n)}
-              />
-              <NumberField
-                label="Font Weight"
-                value={overrides.fontWeight ?? 400}
-                onChange={(n: number) => setStyle("fontWeight", n)}
+          <Section id="typography" title="Typography">
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NumberField
+                  label="Font Size"
+                  value={overrides.fontSize ?? 16}
+                  onChange={(n: number) => setStyle("fontSize", n)}
+                />
+                <NumberField
+                  label="Font Weight"
+                  value={overrides.fontWeight ?? 400}
+                  onChange={(n: number) => setStyle("fontWeight", n)}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NumberField
+                  label="Line Height"
+                  value={overrides.lineHeight ?? 24}
+                  onChange={(n: number) => setStyle("lineHeight", n)}
+                />
+                <NumberField
+                  label="Letter Spacing"
+                  value={overrides.letterSpacing ?? 0}
+                  onChange={(n: number) => setStyle("letterSpacing", n)}
+                />
+              </div>
+              <Select
+                label="Text Transform"
+                value={overrides.textTransform ?? "none"}
+                onChange={(v: string) => setStyle("textTransform", v)}
+                options={["none", "uppercase", "lowercase", "capitalize"]}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NumberField
-                label="Line Height"
-                value={overrides.lineHeight ?? 24}
-                onChange={(n: number) => setStyle("lineHeight", n)}
-              />
-              <NumberField
-                label="Letter Spacing"
-                value={overrides.letterSpacing ?? 0}
-                onChange={(n: number) => setStyle("letterSpacing", n)}
-              />
-            </div>
-            <Select
-              label="Text Transform"
-              value={overrides.textTransform ?? "none"}
-              onChange={(v: string) => setStyle("textTransform", v)}
-              options={["none", "uppercase", "lowercase", "capitalize"]}
-            />
-          </div>
-        </details>
+          </Section>
+        </>
 
         <StylePreviewCard style={previewStyle} title="Live Style Preview" />
       </div>

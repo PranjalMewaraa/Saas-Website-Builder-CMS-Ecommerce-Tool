@@ -75,6 +75,7 @@ export default function PageEditorClient({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
     "idle",
   );
+  const [dragBlockId, setDragBlockId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -223,6 +224,18 @@ export default function PageEditorClient({
     setPage({ ...page, draft_layout: next });
   }
 
+  function moveBlockTo(fromId: string, toId: string) {
+    if (!fromId || !toId || fromId === toId) return;
+    const next = structuredClone(layout);
+    const arr = next.sections[0].blocks;
+    const fromIndex = arr.findIndex((b: any) => b.id === fromId);
+    const toIndex = arr.findIndex((b: any) => b.id === toId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const [item] = arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, item);
+    setPage({ ...page, draft_layout: next });
+  }
+
   function deleteBlock(idx: number) {
     const next = structuredClone(layout);
     next.sections[0].blocks.splice(idx, 1);
@@ -324,8 +337,8 @@ export default function PageEditorClient({
                   </button>
                 </div>
               ) : mode === "visual" ? (
-                <div className="grid grid-cols-[1fr_320px] gap-6">
-                  <div className="space-y-4">
+                <div className="grid h-[calc(100vh-220px)] grid-cols-[1fr_320px] gap-6 min-h-0">
+                  <div className="visual-canvas-scroll space-y-4 overflow-y-auto pr-1 min-h-0">
                     <div className="flex flex-wrap items-center gap-3 bg-white border rounded-xl px-3 py-2">
                       <div className="text-xs text-gray-500">Zoom</div>
                       <select
@@ -374,10 +387,13 @@ export default function PageEditorClient({
                   if (idx >= 0) deleteBlock(idx);
                 }}
                 onDuplicateBlock={(id: string) => duplicateBlockById(id)}
+                onMoveBlock={(fromId: string, toId: string) =>
+                  moveBlockTo(fromId, toId)
+                }
               />
                   </div>
 
-                  <div className="border rounded-xl p-4 bg-white sticky top-24 h-fit">
+                  <div className="border rounded-xl p-4 bg-white sticky top-24 h-[calc(100vh-220px)] overflow-y-auto">
                 {selection && selection.kind !== "block" ? (
                   <LayoutInspector
                     block={blocks.find(
@@ -424,21 +440,42 @@ export default function PageEditorClient({
                   {/* blocks */}
                   <div className="space-y-4">
                     {blocks.map((b: any, i: number) => (
-                  <BlockCard
-                    key={b.id}
-                    block={b}
-                    index={i}
-                    total={blocks.length}
-                    siteId={siteId}
-                    menus={menus}
-                    forms={forms}
-                    presets={presets}
-                    assetsMap={assetsMap}
-                    themePalette={themePalette}
-                    onChange={(nb: any) => updateBlock(i, nb)}
-                    onMove={(d: any) => moveBlock(i, d)}
-                    onDelete={() => deleteBlock(i)}
-                  />
+                      <div
+                        key={b.id}
+                        draggable
+                        onDragStart={(e) => {
+                          setDragBlockId(b.id);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", b.id);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const fromId =
+                            dragBlockId || e.dataTransfer.getData("text/plain");
+                          moveBlockTo(fromId, b.id);
+                          setDragBlockId(null);
+                        }}
+                        onDragEnd={() => setDragBlockId(null)}
+                      >
+                        <BlockCard
+                          block={b}
+                          index={i}
+                          total={blocks.length}
+                          siteId={siteId}
+                          menus={menus}
+                          forms={forms}
+                          presets={presets}
+                          assetsMap={assetsMap}
+                          themePalette={themePalette}
+                          onChange={(nb: any) => updateBlock(i, nb)}
+                          onMove={(d: any) => moveBlock(i, d)}
+                          onDelete={() => deleteBlock(i)}
+                        />
+                      </div>
                 ))}
                   </div>
                 </>
