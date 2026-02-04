@@ -147,6 +147,15 @@ export default async function StorefrontPage({
   const org = organizationSchema(site);
   const web = webpageSchema(url, meta.title, meta.description);
 
+  const themeTokens = { ...(snapshot.theme?.tokens || {}) } as Record<
+    string,
+    string
+  >;
+  if (!themeTokens["--color-on-primary"] && themeTokens["--color-primary"]) {
+    const onPrimary = pickOnColor(themeTokens["--color-primary"]);
+    if (onPrimary) themeTokens["--color-on-primary"] = onPrimary;
+  }
+
   return (
     <>
       <script
@@ -159,7 +168,7 @@ export default async function StorefrontPage({
       />
       <div
         className="theme-root"
-        style={(snapshot.theme?.tokens || {}) as React.CSSProperties}
+        style={themeTokens as React.CSSProperties}
       >
         <RenderPage
           layout={page.layout}
@@ -168,4 +177,23 @@ export default async function StorefrontPage({
       </div>
     </>
   );
+}
+
+function pickOnColor(color: string) {
+  const hex = color.trim();
+  if (!hex.startsWith("#")) return "";
+  const raw = hex.slice(1);
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
+  if (full.length !== 6) return "";
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
 }
