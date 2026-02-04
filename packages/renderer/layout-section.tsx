@@ -41,6 +41,9 @@ type LayoutSectionProps = {
   rows?: LayoutRow[];
 };
 
+const DEFAULT_IMAGE =
+  "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
+
 const ROW_PRESETS: Record<
   string,
   { label: string; template: string; gap?: number | string }
@@ -83,28 +86,14 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any) {
   }
 
   if (type === "Atomic/Image") {
-    const src = props.src || resolveAssetUrl(props.assetId, assets);
+    const src =
+      props.src || resolveAssetUrl(props.assetId, assets) || DEFAULT_IMAGE;
     const imgStyle: React.CSSProperties = {
       ...style,
       width: toCssSizeValue(props.width) || style.width,
       height: toCssSizeValue(props.height) || style.height,
       objectFit: props.objectFit,
     };
-    if (!src) {
-      return (
-        <div
-          style={{
-            ...imgStyle,
-            border: "1px dashed rgba(0,0,0,0.2)",
-            padding: "24px",
-            fontSize: "12px",
-            color: "rgba(0,0,0,0.5)",
-          }}
-        >
-          Image
-        </div>
-      );
-    }
     return <img src={src} alt={props.alt || ""} style={imgStyle} />;
   }
 
@@ -218,4 +207,3 @@ export const ROW_PRESET_OPTIONS = Object.entries(ROW_PRESETS).map(
     label: def.label,
   }),
 );
-

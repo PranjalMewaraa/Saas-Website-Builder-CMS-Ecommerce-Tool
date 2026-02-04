@@ -55,7 +55,7 @@ export default function MenusEditorClient({
   initialMenu,
   onSave,
 }: Props) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
 
   const [menus, setMenus] = useState<any[]>([]);
   const [activeMenuId, setActiveMenuId] = useState(activeMenuIdFor);

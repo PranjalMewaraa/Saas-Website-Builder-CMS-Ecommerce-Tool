@@ -2,6 +2,8 @@
 import { useState } from "react";
 import ImageField from "../../../_component/ImageField";
 
+const DEFAULT_IMAGE =
+  "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 export function BlockPropsForm({
   type,
   props,
@@ -11,6 +13,7 @@ export function BlockPropsForm({
   siteId,
   assetsMap,
   forms,
+  assetUrlValue,
 }: any) {
   console.log(type);
   if (type === "Header/V1") {
@@ -218,6 +221,7 @@ export function BlockPropsForm({
               }}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
+              assetUrlValue={assetUrlValue || bg.imageUrl || DEFAULT_IMAGE}
             />
 
             <Field

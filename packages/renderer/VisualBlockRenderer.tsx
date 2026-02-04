@@ -8,10 +8,12 @@ export function VisualBlockRenderer({
   block,
   isSelected,
   onSelect,
+  showOutlines = true,
 }: {
   block: any;
   isSelected: boolean;
   onSelect: () => void;
+  showOutlines?: boolean;
 }) {
   const def = getBlock(block.type);
 
@@ -24,7 +26,13 @@ export function VisualBlockRenderer({
         }}
         className={`
           relative cursor-pointer
-          ${isSelected ? "ring-2 ring-blue-500" : "hover:ring-1 hover:ring-blue-300"}
+          ${
+            isSelected
+              ? "ring-2 ring-blue-500"
+              : showOutlines
+                ? "hover:ring-1 hover:ring-blue-300"
+                : ""
+          }
         `}
       >
         <LayoutSectionRenderer props={block.props || { rows: [] }} />
@@ -50,7 +58,13 @@ export function VisualBlockRenderer({
       }}
       className={`
       relative cursor-pointer
-      ${isSelected ? "ring-2 ring-blue-500" : "hover:ring-1 hover:ring-blue-300"}
+      ${
+        isSelected
+          ? "ring-2 ring-blue-500"
+          : showOutlines
+            ? "hover:ring-1 hover:ring-blue-300"
+            : ""
+      }
     `}
     >
       <StyleWrapper style={block.style}>

@@ -47,7 +47,7 @@ export default function PresetsEditorClient({
   siteId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const [presets, setPresets] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [name, setName] = useState("");

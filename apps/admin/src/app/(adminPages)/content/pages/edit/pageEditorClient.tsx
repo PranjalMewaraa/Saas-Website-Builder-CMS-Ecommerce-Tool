@@ -15,7 +15,7 @@ import {
   Paintbrush,
 } from "lucide-react";
 
-import EditorModeToggle from "../../_component/EditorModeToggle";
+import EditorModeToggleVisual from "../../_component/EditorModeToggleVisual";
 import { useEditorMode } from "../../_component/useEditorMode";
 import ImageField from "../../_component/ImageField";
 import { useAssetsMap } from "../../_component/useAssetsMap";
@@ -53,21 +53,31 @@ export default function PageEditorClient({
   pageId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("visual", urlMode, [
+    "form",
+    "json",
+    "visual",
+  ]);
   const { assetsMap } = useAssetsMap(siteId);
   const [tab, setTab] = useState<"layout" | "seo">("layout");
   const [selection, setSelection] = useState<LayoutSelection | null>(null);
+  const [zoom, setZoom] = useState(100);
+  const [showGrid, setShowGrid] = useState(false);
+  const [showOutlines, setShowOutlines] = useState(true);
   const [forms, setForms] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
   const [presets, setPresets] = useState<any[]>([]);
+  const [themePalette, setThemePalette] = useState<string[]>([]);
   const [layoutJson, setLayoutJson] = useState("");
+  const [addBlockOpen, setAddBlockOpen] = useState(false);
+  const [addBlockSearch, setAddBlockSearch] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
     "idle",
   );
 
   useEffect(() => {
     (async () => {
-      const [pageRes, presetsRes, formsRes] = await Promise.all([
+      const [pageRes, presetsRes, formsRes, themeRes] = await Promise.all([
         fetch(
           `/api/admin/pages?site_id=${encodeURIComponent(
             siteId,
@@ -81,16 +91,29 @@ export default function PageEditorClient({
         fetch(`/api/admin/forms?site_id=${encodeURIComponent(siteId)}`, {
           cache: "no-store",
         }),
+        fetch(`/api/admin/theme?site_id=${encodeURIComponent(siteId)}`, {
+          cache: "no-store",
+        }),
       ]);
 
-      const [pageData, presetsData, formsData] = await Promise.all([
+      const [pageData, presetsData, formsData, themeData] = await Promise.all([
         pageRes.json(),
         presetsRes.json(),
         formsRes.json(),
+        themeRes.json(),
       ]);
 
       setPresets(presetsData.presets ?? []);
       setForms(formsData.forms ?? []);
+      const tokens = themeData.theme?.draft_tokens || {};
+      const palette = [
+        tokens["--color-primary"],
+        tokens["--color-bg"],
+        tokens["--color-text"],
+        tokens["--color-dark"],
+        tokens["--color-light"],
+      ].filter(Boolean);
+      setThemePalette(palette);
 
       if (pageData.page) {
         setPage(pageData.page);
@@ -132,13 +155,12 @@ export default function PageEditorClient({
 
   const blocks = layout.sections?.[0]?.blocks ?? [];
 
-  function addBlock() {
-    const sel = document.getElementById(
-      "blockType",
-    ) as HTMLSelectElement | null;
-    if (!sel || !sel.value) return;
+  function openAddBlockDialog() {
+    setAddBlockOpen(true);
+    setAddBlockSearch("");
+  }
 
-    const type = sel.value;
+  function addBlockOfType(type: string) {
     const id = `b_${Date.now()}`;
 
     const defaults = defaultPropsFor(type);
@@ -187,78 +209,133 @@ export default function PageEditorClient({
     setPage({ ...page, draft_layout: next });
   }
 
+  function duplicateBlockById(blockId: string) {
+    const next = structuredClone(layout);
+    const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
+    if (idx < 0) return;
+    const copy = structuredClone(next.sections[0].blocks[idx]);
+    copy.id = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    next.sections[0].blocks.splice(idx + 1, 0, copy);
+    setPage({ ...page, draft_layout: next });
+  }
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6">
+    <div className="space-y-6 w-full mx-auto p-8 md:p-8">
       {/* header */}
-      <div className="flex justify-between border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{page.name || page.slug}</h1>
-          <p className="text-sm text-muted-foreground">
-            Site: {siteId} · Page: {page.slug}
-          </p>
-        </div>
+      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b pb-4 pt-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">{page.name || page.slug}</h1>
+            <p className="text-sm text-muted-foreground">
+              Site: {siteId} · Page: {page.slug}
+            </p>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <EditorModeToggle mode={mode} setMode={setMode} />
-          {mode !== "json" && (
+          <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => saveLayout(layout)}
-              disabled={saveStatus === "saving"}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
-                saveStatus === "success"
-                  ? "bg-green-600 text-white"
-                  : "bg-black text-white"
-              }`}
+              onClick={openAddBlockDialog}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50"
             >
-              <Save className="h-4 w-4" />
-              Save Draft
+              <Plus className="h-4 w-4" />
+              Add New Block
             </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex border-b mb-4">
-        <button
-          onClick={() => setTab("layout")}
-          className={`px-4 py-2 ${
-            tab === "layout" ? "border-b-2 border-black" : ""
-          }`}
-        >
-          Layout
-        </button>
-
-        <button
-          onClick={() => setTab("seo")}
-          className={`px-4 py-2 ${
-            tab === "seo" ? "border-b-2 border-black" : ""
-          }`}
-        >
-          SEO
-        </button>
-      </div>
-
-      {tab === "layout" && (
-        <>
-          {mode === "json" ? (
-            <div className="border rounded-xl p-5 bg-white space-y-4">
-              <textarea
-                className="w-full h-[60vh] font-mono border p-3"
-                value={layoutJson}
-                onChange={(e) => setLayoutJson(e.target.value)}
-              />
+            <div className="min-w-max">
+              <EditorModeToggleVisual mode={mode} setMode={setMode} />
+            </div>
+            {mode !== "json" && (
               <button
-                onClick={() => {
-                  const res = safeJsonParse(layoutJson);
-                  if (!res.ok) return alert(res.error);
-                  saveLayout(res.value);
-                }}
-                className="bg-black text-white px-4 py-2 rounded"
+                onClick={() => saveLayout(layout)}
+                disabled={saveStatus === "saving"}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
+                  saveStatus === "success"
+                    ? "bg-green-600 text-white"
+                    : "bg-black text-white"
+                }`}
               >
+                <Save className="h-4 w-4" />
                 Save Draft
               </button>
-            </div>
-          ) : mode === "visual" ? (
-            <div className="grid grid-cols-[1fr_360px] gap-6">
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-4 inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+          <button
+            onClick={() => setTab("layout")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              tab === "layout"
+                ? "bg-black text-white"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Layout
+          </button>
+          <button
+            onClick={() => setTab("seo")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              tab === "seo"
+                ? "bg-black text-white"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            SEO
+          </button>
+        </div>
+          {tab === "layout" && (
+            <>
+              {mode === "json" ? (
+                <div className="border rounded-xl p-5 bg-white space-y-4">
+                  <textarea
+                    className="w-full h-[60vh] font-mono border p-3"
+                    value={layoutJson}
+                    onChange={(e) => setLayoutJson(e.target.value)}
+                  />
+                  <button
+                    onClick={() => {
+                      const res = safeJsonParse(layoutJson);
+                      if (!res.ok) return alert(res.error);
+                      saveLayout(res.value);
+                    }}
+                    className="bg-black text-white px-4 py-2 rounded"
+                  >
+                    Save Draft
+                  </button>
+                </div>
+              ) : mode === "visual" ? (
+                <div className="grid grid-cols-[1fr_320px] gap-6">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-3 bg-white border rounded-xl px-3 py-2">
+                      <div className="text-xs text-gray-500">Zoom</div>
+                      <select
+                        value={zoom}
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="border rounded px-2 py-1 text-xs"
+                      >
+                        {[70, 80, 90, 100, 110, 125, 150].map((z) => (
+                          <option key={z} value={z}>
+                            {z}%
+                          </option>
+                        ))}
+                      </select>
+                      <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={showGrid}
+                          onChange={(e) => setShowGrid(e.target.checked)}
+                        />
+                        Grid
+                      </label>
+                      <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={showOutlines}
+                          onChange={(e) => setShowOutlines(e.target.checked)}
+                        />
+                        Outlines
+                      </label>
+                    </div>
               <VisualCanvas
                 layout={layout}
                 selection={selection}
@@ -267,9 +344,19 @@ export default function PageEditorClient({
                   updateBlockById(nextBlock.id, nextBlock)
                 }
                 assetsMap={assetsMap}
+                showGrid={showGrid}
+                showOutlines={showOutlines}
+                zoom={zoom}
+                onAddBlock={addBlockOfType}
+                onDeleteBlock={(id: string) => {
+                  const idx = blocks.findIndex((b: any) => b.id === id);
+                  if (idx >= 0) deleteBlock(idx);
+                }}
+                onDuplicateBlock={(id: string) => duplicateBlockById(id)}
               />
+                  </div>
 
-              <div className="border rounded-xl p-4 bg-white">
+                  <div className="border rounded-xl p-4 bg-white sticky top-24 h-fit">
                 {selection && selection.kind !== "block" ? (
                   <LayoutInspector
                     block={blocks.find(
@@ -278,6 +365,11 @@ export default function PageEditorClient({
                     selection={selection}
                     siteId={siteId}
                     assetsMap={assetsMap}
+                    themePalette={themePalette}
+                    onDeleteBlock={(id: string) => {
+                      const idx = blocks.findIndex((b: any) => b.id === id);
+                      if (idx >= 0) deleteBlock(idx);
+                    }}
                     onChangeBlock={(nextBlock: any) =>
                       updateBlockById(nextBlock.id, nextBlock)
                     }
@@ -290,6 +382,11 @@ export default function PageEditorClient({
                     siteId={siteId}
                     assetsMap={assetsMap}
                     forms={forms}
+                    themePalette={themePalette}
+                    onDeleteBlock={(id: string) => {
+                      const idx = blocks.findIndex((b: any) => b.id === id);
+                      if (idx >= 0) deleteBlock(idx);
+                    }}
                     onChange={(nextBlock: any) => {
                       const idx = blocks.findIndex(
                         (b: any) => b.id === nextBlock.id,
@@ -298,43 +395,13 @@ export default function PageEditorClient({
                     }}
                   />
                 )}
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* add bar */}
-              <div className="flex flex-wrap items-end gap-3 bg-white p-4 border rounded-xl shadow-sm">
-                <div className="flex-1 min-w-45">
-                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">
-                    Add new block
-                  </label>
-                  <select
-                    id="blockType"
-                    className="w-full border rounded-lg px-3 py-2.5 text-sm"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>
-                      Choose block type...
-                    </option>
-                    {BLOCK_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                  </div>
                 </div>
-                <button
-                  onClick={addBlock}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Block
-                </button>
-              </div>
-
-              {/* blocks */}
-              <div className="space-y-4">
-                {blocks.map((b: any, i: number) => (
+              ) : (
+                <>
+                  {/* blocks */}
+                  <div className="space-y-4">
+                    {blocks.map((b: any, i: number) => (
                   <BlockCard
                     key={b.id}
                     block={b}
@@ -344,27 +411,172 @@ export default function PageEditorClient({
                     forms={forms}
                     presets={presets}
                     assetsMap={assetsMap}
+                    themePalette={themePalette}
                     onChange={(nb: any) => updateBlock(i, nb)}
                     onMove={(d: any) => moveBlock(i, d)}
                     onDelete={() => deleteBlock(i)}
                   />
                 ))}
-              </div>
+                  </div>
+                </>
+              )}
             </>
           )}
-        </>
-      )}
 
-      {tab === "seo" && (
-        <PageSeoEditor
-          siteId={siteId}
-          slug={page.slug}
-          seo={page?.seo}
-          assetsMap={assetsMap}
-        />
+          {tab === "seo" && (
+            <PageSeoEditor
+              siteId={siteId}
+              slug={page.slug}
+              seo={page?.seo}
+              assetsMap={assetsMap}
+            />
+          )}
+      </div>
+
+      {addBlockOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl border border-gray-200/70 overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+                  Add Block
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Pick a block type to insert into your page
+                </p>
+              </div>
+              <button
+                onClick={() => setAddBlockOpen(false)}
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-6 py-6 space-y-6 max-h-[70vh] overflow-auto">
+              <div className="mb-4">
+                <input
+                  value={addBlockSearch}
+                  onChange={(e) => setAddBlockSearch(e.target.value)}
+                  placeholder="Search blocks…"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
+                />
+              </div>
+
+              {getBlockGroups(BLOCK_TYPES, addBlockSearch).map((group) => (
+                <div key={group.title}>
+                  <div className="text-sm font-semibold text-gray-700 mb-3">
+                    {group.title}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {group.items.map((t) => (
+                      <button
+                        key={t}
+                        className="border rounded-xl p-3 text-left hover:bg-gray-50 transition"
+                        onClick={() => {
+                          addBlockOfType(t);
+                          setAddBlockOpen(false);
+                        }}
+                      >
+                        <div className="h-16 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 mb-3 flex items-center justify-center text-xs text-gray-500">
+                          {blockPreviewLabel(t)}
+                        </div>
+                        <div className="text-sm font-medium">
+                          {t.replace("/V1", "")}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">{t}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-6 py-5 border-t bg-gray-50/70 flex justify-end">
+              <button
+                onClick={() => setAddBlockOpen(false)}
+                className="px-5 py-2.5 text-sm font-medium border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
+}
+
+function getBlockGroups(types: string[], searchText: string) {
+  const term = searchText.trim().toLowerCase();
+  const filtered = term
+    ? types.filter((t) => t.toLowerCase().includes(term))
+    : types;
+
+  const groups = [
+    {
+      title: "Layout",
+      items: filtered.filter((t) => t.startsWith("Layout/")),
+    },
+    {
+      title: "Core",
+      items: filtered.filter(
+        (t) =>
+          t.startsWith("Header") ||
+          t.startsWith("Hero") ||
+          t.startsWith("Footer"),
+      ),
+    },
+    {
+      title: "Commerce",
+      items: filtered.filter(
+        (t) => t.startsWith("Product") || t.startsWith("Pricing"),
+      ),
+    },
+    {
+      title: "Marketing",
+      items: filtered.filter(
+        (t) =>
+          t.startsWith("Banner") ||
+          t.startsWith("Features") ||
+          t.startsWith("Testimonials") ||
+          t.startsWith("Stats") ||
+          t.startsWith("Logos") ||
+          t.startsWith("Newsletter"),
+      ),
+    },
+    {
+      title: "Utility",
+      items: filtered.filter((t) => t.startsWith("Utility/")),
+    },
+    {
+      title: "Forms",
+      items: filtered.filter((t) => t.startsWith("Form/")),
+    },
+  ];
+
+  return groups.filter((g) => g.items.length > 0);
+}
+
+function blockPreviewLabel(type: string) {
+  if (type.startsWith("Hero")) return "Hero";
+  if (type.startsWith("Header")) return "Header";
+  if (type.startsWith("Footer")) return "Footer";
+  if (type.startsWith("ProductGrid")) return "Products";
+  if (type.startsWith("Form")) return "Form";
+  if (type.startsWith("Banner")) return "CTA";
+  if (type.startsWith("Features")) return "Features";
+  if (type.startsWith("Testimonials")) return "Quotes";
+  if (type.startsWith("Stats")) return "Stats";
+  if (type.startsWith("Logos")) return "Logos";
+  if (type.startsWith("Newsletter")) return "Newsletter";
+  if (type.startsWith("Pricing")) return "Pricing";
+  if (type.startsWith("Layout/Section")) return "Section";
+  if (type.startsWith("Utility/Spacer")) return "Spacer";
+  if (type.startsWith("Utility/Divider")) return "Divider";
+  if (type.startsWith("Utility/RichText")) return "Text";
+  return "Block";
 }
 
 /* ---------------- block card & forms ---------------- */

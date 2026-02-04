@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, ArrowUp, ArrowDown, Trash2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Plus, ArrowUp, ArrowDown, Trash2, ArrowLeft, ArrowRight, Copy } from "lucide-react";
 import {
   createAtomicBlock,
   createDefaultCol,
@@ -127,12 +127,18 @@ export default function VisualLayoutSection({
   assetsMap,
   onSelect,
   onChangeBlock,
+  showOutlines = true,
+  onDeleteBlock,
+  onDuplicateBlock,
 }: {
   block: any;
   selection: LayoutSelection | null;
   assetsMap: any;
   onSelect: (sel: LayoutSelection) => void;
   onChangeBlock: (nextBlock: any) => void;
+  showOutlines?: boolean;
+  onDeleteBlock?: (blockId: string) => void;
+  onDuplicateBlock?: (blockId: string) => void;
 }) {
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : { style: {}, rows: [] };
@@ -258,7 +264,7 @@ export default function VisualLayoutSection({
 
   return (
     <div
-      className={`relative rounded-xl border ${
+      className={`group relative rounded-xl border ${
         selection?.kind === "layout-section" && selection.blockId === block.id
           ? "ring-2 ring-blue-500 border-blue-300"
           : "border-gray-200"
@@ -268,6 +274,30 @@ export default function VisualLayoutSection({
         onSelect({ kind: "layout-section", blockId: block.id });
       }}
     >
+      <div className="absolute right-2 -top-3 bg-white border rounded-full shadow-sm flex items-center gap-1 p-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition z-20">
+        <button
+          className="p-1 rounded hover:bg-gray-50 text-gray-700"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicateBlock?.(block.id);
+          }}
+          title="Duplicate section block"
+          type="button"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+        <button
+          className="p-1 rounded hover:bg-red-50 text-red-600"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteBlock?.(block.id);
+          }}
+          title="Delete section block"
+          type="button"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
       <div className="absolute left-3 -top-3 text-[10px] bg-white px-2 py-0.5 border rounded-full text-gray-500">
         Section
       </div>
@@ -307,8 +337,14 @@ export default function VisualLayoutSection({
               return (
                 <div
                   key={row.id}
-                  className={`group relative rounded-lg border border-dashed hover:ring-1 hover:ring-blue-200 ${
-                    rowSelected ? "ring-2 ring-blue-500 border-blue-300" : "border-gray-200"
+                  className={`group relative rounded-lg ${
+                    showOutlines ? "border border-dashed border-gray-400 hover:ring-1 hover:ring-blue-200" : ""
+                  } ${
+                    rowSelected
+                      ? "ring-2 ring-blue-500 border-blue-300"
+                      : showOutlines
+                        ? "border-gray-200"
+                        : ""
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -372,10 +408,14 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
-                          className={`group/col relative rounded-lg border hover:ring-1 hover:ring-blue-200 ${
+                          className={`group/col relative rounded-lg ${
+                            showOutlines ? "border border-gray-400 hover:ring-1 hover:ring-blue-200" : ""
+                          } ${
                             colSelected
                               ? "ring-2 ring-blue-500 border-blue-300"
-                              : "border-gray-200"
+                              : showOutlines
+                                ? "border-gray-200"
+                                : ""
                           }`}
                           style={{
                             ...resolveLayoutStyle(col.style),
@@ -439,10 +479,14 @@ export default function VisualLayoutSection({
                               return (
                                 <div
                                   key={atomic.id}
-                                  className={`group relative rounded-md border ${
+                                  className={`group relative rounded-md ${
+                                    showOutlines ? "border border-gray-400" : ""
+                                  } ${
                                     atomicSelected
                                       ? "ring-2 ring-blue-500 border-blue-300"
-                                      : "border-transparent hover:border-gray-200"
+                                      : showOutlines
+                                        ? "border-transparent hover:border-gray-200"
+                                        : ""
                                   }`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -508,7 +552,7 @@ export default function VisualLayoutSection({
                               {activeAddCol &&
                                 activeAddCol.rowId === row.id &&
                                 activeAddCol.colId === col.id && (
-                                  <div className="absolute z-10 mt-2 w-full rounded-md border bg-white shadow-sm p-2 space-y-1 text-xs">
+                                  <div className="absolute z-10 mt-2 w-full rounded-md border bg-white shadow-sm p-2 space-y-1 text-xs text-gray-700">
                                     {[
                                       "Atomic/Text",
                                       "Atomic/Image",
@@ -518,7 +562,7 @@ export default function VisualLayoutSection({
                                       <button
                                         key={t}
                                         type="button"
-                                        className="w-full text-left px-2 py-1 rounded hover:bg-gray-50"
+                                        className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           addAtomic(row.id, col.id, t);

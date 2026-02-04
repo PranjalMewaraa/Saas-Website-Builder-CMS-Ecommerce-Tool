@@ -54,7 +54,7 @@ export default function HomePageEditorClient({
   siteId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const { assetsMap } = useAssetsMap(siteId);
   const [forms, setForms] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);

@@ -14,6 +14,7 @@ import EditorModeToggle from "../_component/EditorModeToggle";
 import { useEditorMode } from "../_component/useEditorMode";
 import { useAssetsMap } from "../_component/useAssetsMap";
 import ImageField from "../_component/ImageField";
+import ColorPickerInput from "../_component/ColorPickerInput";
 
 function safeJsonParse(text: string) {
   try {
@@ -30,7 +31,7 @@ export default function ThemeEditorClient({
   siteId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
@@ -90,6 +91,14 @@ export default function ThemeEditorClient({
       light: tokens["--color-light"] || "#f3f4f6",
     }),
     [tokens],
+  );
+
+  const themePalette = useMemo(
+    () =>
+      [common.primary, common.bg, common.text, common.dark, common.light].filter(
+        Boolean,
+      ),
+    [common],
   );
 
   async function save(nextTokens: Record<string, string>, nextBrand: any) {
@@ -200,30 +209,35 @@ export default function ThemeEditorClient({
 
             {basicOpen && (
               <div className="p-5 pt-1 grid md:grid-cols-2 gap-5 bg-card">
-                <ColorField
+                <ColorPickerInput
                   label="Primary"
                   value={common.primary}
                   onChange={(v) => updateToken("--color-primary", v)}
+                  palette={themePalette}
                 />
-                <ColorField
+                <ColorPickerInput
                   label="Background"
                   value={common.bg}
                   onChange={(v) => updateToken("--color-bg", v)}
+                  palette={themePalette}
                 />
-                <ColorField
+                <ColorPickerInput
                   label="Text"
                   value={common.text}
                   onChange={(v) => updateToken("--color-text", v)}
+                  palette={themePalette}
                 />
-                <ColorField
+                <ColorPickerInput
                   label="Dark"
                   value={common.dark}
                   onChange={(v) => updateToken("--color-dark", v)}
+                  palette={themePalette}
                 />
-                <ColorField
+                <ColorPickerInput
                   label="Light"
                   value={common.light}
                   onChange={(v) => updateToken("--color-light", v)}
+                  palette={themePalette}
                 />
 
                 <div className="md:col-span-2 border rounded-xl p-5 space-y-4 bg-muted/20">
@@ -332,34 +346,6 @@ export default function ThemeEditorClient({
   }
 }
 
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-md border shadow-sm flex-shrink-0"
-          style={{ backgroundColor: value || "transparent" }}
-          title={value || "Not set"}
-        />
-        <input
-          className="flex-1 border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="#2563eb or var(--color-...)"
-        />
-      </div>
-    </label>
-  );
-}
 
 function KeyValueEditor({
   value,

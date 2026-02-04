@@ -24,6 +24,15 @@ function normalizeSlug(input: string) {
   return s;
 }
 
+function slugFromName(input: string) {
+  const cleaned = (input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalizeSlug(cleaned || "new-page");
+}
+
 function isValidSlug(slug: string) {
   if (!slug.startsWith("/")) return false;
   if (slug.includes(" ") || slug.includes("?") || slug.includes("#"))
@@ -65,6 +74,7 @@ export default function PagesClient({ siteId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("New Page");
   const [createSlug, setCreateSlug] = useState("/new-page");
+  const [createSlugDirty, setCreateSlugDirty] = useState(false);
   const [createTemplate, setCreateTemplate] =
     useState<(typeof TEMPLATES)[number]["key"]>("blank");
   const [createError, setCreateError] = useState("");
@@ -103,8 +113,10 @@ export default function PagesClient({ siteId }: Props) {
 
   function openCreateDialog() {
     setCreateError("");
-    setCreateName("New Page");
-    setCreateSlug("/new-page");
+    const defaultName = "New Page";
+    setCreateName(defaultName);
+    setCreateSlug(slugFromName(defaultName));
+    setCreateSlugDirty(false);
     setCreateTemplate("blank");
     setCreateOpen(true);
   }
@@ -384,7 +396,13 @@ export default function PagesClient({ siteId }: Props) {
                 <input
                   autoFocus
                   value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCreateName(next);
+                    if (!createSlugDirty) {
+                      setCreateSlug(slugFromName(next));
+                    }
+                  }}
                   placeholder="e.g. Services, Pricing, Blog"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
                 />
@@ -396,7 +414,10 @@ export default function PagesClient({ siteId }: Props) {
                 </label>
                 <input
                   value={createSlug}
-                  onChange={(e) => setCreateSlug(e.target.value)}
+                  onChange={(e) => {
+                    setCreateSlugDirty(true);
+                    setCreateSlug(e.target.value);
+                  }}
                   onBlur={() => setCreateSlug(normalizeSlug(createSlug))}
                   placeholder="/services"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl font-mono bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"

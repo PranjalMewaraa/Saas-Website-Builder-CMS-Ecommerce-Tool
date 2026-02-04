@@ -63,7 +63,7 @@ export default function PageEditorClient({
   pageId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const { assetsMap } = useAssetsMap(siteId);
   const [tab, setTab] = useState<"layout" | "seo">("layout");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);

@@ -181,6 +181,15 @@ export default function AdminShell({
             <SiteSwitcher />
           </div>
 
+          <div className="p-4 border-b border-gray-200 shrink-0">
+            <Link
+              href={withSite("/content/publish")}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+            >
+              <Save size={16} /> Publish
+            </Link>
+          </div>
+
           <nav className="flex-1 overflow-y-auto p-3 space-y-2">
             {Object.entries(grouped).map(([group, items]) => {
               const isOpen = activeGroup === group;
@@ -232,34 +241,11 @@ export default function AdminShell({
               );
             })}
           </nav>
+
         </aside>
 
         {/* Main area */}
         <div className="flex flex-col min-w-0">
-          <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-            <div className="px-6 py-3 flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500">Active Site</div>
-                <div className="font-semibold">{siteId || "None selected"}</div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Link href={withSite("/content")} className="btn">
-                  Content
-                </Link>
-                <Link href={withSite("/builder")} className="btn">
-                  Builder
-                </Link>
-                <Link
-                  href={withSite("/content/publish")}
-                  className="btn-primary py-3 text-white rounded-md items-center gap-2 flex px-6 bg-blue-400"
-                >
-                  <Save size={16} /> Publish
-                </Link>
-              </div>
-            </div>
-          </header>
-
           <main className="flex-1 p-6 overflow-auto bg-gray-50">
             {children}
           </main>

@@ -53,7 +53,7 @@ export default function FormsClient({
   siteId: string;
   urlMode?: string;
 }) {
-  const { mode, setMode } = useEditorMode("form", urlMode);
+  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const [forms, setForms] = useState<any[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [name, setName] = useState("");

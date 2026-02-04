@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import ImageField from "./ImageField";
+import ColorPickerInput from "./ColorPickerInput";
+
+const DEFAULT_IMAGE =
+  "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 import {
   type LayoutSelection,
   type LayoutSectionProps,
@@ -110,12 +114,16 @@ export default function LayoutInspector({
   selection,
   siteId,
   assetsMap,
+  themePalette = [],
+  onDeleteBlock,
   onChangeBlock,
 }: {
   block: any;
   selection: LayoutSelection | null;
   siteId: string;
   assetsMap: any;
+  themePalette?: string[];
+  onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
 }) {
   if (!block) {
@@ -145,9 +153,21 @@ export default function LayoutInspector({
   if (selection.kind === "layout-section") {
     return (
       <div className="space-y-5">
-        <div className="text-sm font-medium">Section Settings</div>
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Section Settings</div>
+          {onDeleteBlock && (
+            <button
+              className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
+              onClick={() => onDeleteBlock(block.id)}
+              type="button"
+            >
+              Delete Section Block
+            </button>
+          )}
+        </div>
         <StyleFields
           style={props.style}
+          palette={themePalette}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               draft.style = nextStyle;
@@ -322,6 +342,7 @@ export default function LayoutInspector({
 
         <StyleFields
           style={row.style}
+          palette={themePalette}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const target = draft.rows.find((r) => r.id === row.id);
@@ -343,6 +364,7 @@ export default function LayoutInspector({
         <div className="text-sm font-medium">Column Settings</div>
         <StyleFields
           style={col.style}
+          palette={themePalette}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const targetRow = draft.rows.find((r) => r.id === row.id);
@@ -443,6 +465,7 @@ export default function LayoutInspector({
                 })
               }
               assetsMap={assetsMap}
+              assetUrlValue={atom.props?.src || DEFAULT_IMAGE}
             />
             <Field
               label="Image URL"
@@ -576,6 +599,7 @@ export default function LayoutInspector({
 
         <StyleFields
           style={atom.style}
+          palette={themePalette}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const targetRow = draft.rows.find((r) => r.id === row.id);
@@ -804,9 +828,11 @@ function Checkbox({
 
 function StyleFields({
   style,
+  palette = [],
   onChange,
 }: {
   style: any;
+  palette?: string[];
   onChange: (next: any) => void;
 }) {
   const s = style || {};
@@ -924,26 +950,29 @@ function StyleFields({
         </summary>
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field
+            <ColorPickerInput
               label="Background"
               value={s.bgColor || ""}
               onChange={(v) => set("bgColor", v)}
               placeholder="#ffffff"
+              palette={palette}
             />
-            <Field
+            <ColorPickerInput
               label="Text Color"
               value={s.textColor || ""}
               onChange={(v) => set("textColor", v)}
               placeholder="#111111"
+              palette={palette}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field
+            <ColorPickerInput
               label="Border Color"
               value={s.borderColor || ""}
               onChange={(v) => set("borderColor", v)}
               placeholder="#e5e7eb"
+              palette={palette}
             />
             <UnitField
               label="Border Width"

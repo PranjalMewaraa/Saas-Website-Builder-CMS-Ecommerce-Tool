@@ -157,7 +157,10 @@ export default async function StorefrontPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(web) }}
       />
-      <div style={(snapshot.theme?.tokens || {}) as React.CSSProperties}>
+      <div
+        className="theme-root"
+        style={(snapshot.theme?.tokens || {}) as React.CSSProperties}
+      >
         <RenderPage
           layout={page.layout}
           ctx={{ tenantId: site.tenant_id, storeId: site.store_id, snapshot }}

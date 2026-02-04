@@ -28,12 +28,16 @@ export default function ImageField({
   assetsMap?: Record<string, AssetMeta>;
 }) {
   const [open, setOpen] = useState(false);
+  const [localUrl, setLocalUrl] = useState("");
   const asset = useMemo(() => {
     if (!assetsMap) return null;
     return assetsMap[assetIdValue] ?? null;
   }, [assetsMap, assetIdValue]);
 
-  const resolvedUrl = asset?.url || "";
+  const defaultImage =
+    "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
+  const resolvedUrl =
+    asset?.url || assetUrlValue || localUrl || defaultImage;
 
   return (
     <div className="border rounded p-3 space-y-3">
@@ -47,10 +51,10 @@ export default function ImageField({
       </div>
 
       {/* Preview */}
-      {asset && asset.kind === "image" ? (
+      {(asset && asset.kind === "image") || resolvedUrl ? (
         <div className="border rounded overflow-hidden">
           <img
-            src={asset.url}
+            src={resolvedUrl}
             alt={altValue || asset.alt || ""}
             className="w-full h-40 object-cover"
           />
@@ -104,6 +108,7 @@ export default function ImageField({
           console.log("Picked asset in ImageField:", picked);
           onChangeAssetId(picked.key); // ✅ FIX
           onChangeAssetUrl?.(picked.url);
+          setLocalUrl(picked.url);
           if (!altValue) onChangeAlt(picked.alt || "");
         }}
       />

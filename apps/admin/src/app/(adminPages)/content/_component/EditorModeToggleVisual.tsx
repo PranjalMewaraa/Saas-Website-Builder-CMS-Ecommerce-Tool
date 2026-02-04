@@ -1,6 +1,6 @@
 "use client";
 
-export default function EditorModeToggle({
+export default function EditorModeToggleVisual({
   mode,
   setMode,
 }: {
@@ -24,6 +24,14 @@ export default function EditorModeToggle({
       >
         JSON
       </button>
+      <button
+        className={`px-3 py-1 rounded border text-sm ${mode === "visual" ? "bg-black text-white" : ""}`}
+        onClick={() => setMode("visual")}
+        type="button"
+      >
+        Visual
+      </button>
     </div>
   );
 }
+

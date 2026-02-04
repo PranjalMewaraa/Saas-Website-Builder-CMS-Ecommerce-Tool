@@ -12,6 +12,7 @@ import {
 
 import { useState, useEffect, useMemo } from "react";
 import StylePreviewCard from "../../../_component/StylePreviewCard";
+import ColorPickerInput from "../../../_component/ColorPickerInput";
 import { BlockPropsForm } from "./BlocksPropForm";
 function colorForType(type: string) {
   if (type.startsWith("Header")) return "bg-blue-50 border-blue-200";
@@ -30,6 +31,8 @@ function safeJsonParse(text: string) {
     return { ok: false, error: e?.message || "Invalid JSON" };
   }
 }
+const DEFAULT_IMAGE =
+  "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 export default function BlockCard({
   block,
   index,
@@ -41,6 +44,7 @@ export default function BlockCard({
   onChange,
   onMove,
   onDelete,
+  themePalette = [],
 }: any) {
   const [localJsonMode, setLocalJsonMode] = useState(false);
   const [propsOpen, setPropsOpen] = useState(false);
@@ -230,15 +234,20 @@ export default function BlockCard({
             </button>
             {propsOpen && (
               <div className="pl-1 pt-2 border-t">
-                <BlockPropsForm
-                  type={block.type}
-                  props={block.props ?? {}}
-                  setProp={setProp}
-                  siteId={siteId}
-                  assetsMap={assetsMap}
-                  forms={forms}
-                  setPropPath={setPropPath}
-                />
+                  <BlockPropsForm
+                    type={block.type}
+                    props={block.props ?? {}}
+                    setProp={setProp}
+                    siteId={siteId}
+                    assetsMap={assetsMap}
+                    forms={forms}
+                    setPropPath={setPropPath}
+                    assetUrlValue={
+                      block.props?.imageUrl ||
+                      block.props?.bg?.imageUrl ||
+                      DEFAULT_IMAGE
+                    }
+                  />
               </div>
             )}
           </div>
@@ -289,7 +298,7 @@ export default function BlockCard({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field
+                  <ColorPickerInput
                     label="Background Color"
                     value={overrides.bg?.color ?? ""}
                     onChange={(v: string) => {
@@ -297,12 +306,14 @@ export default function BlockCard({
                       setStyle("bg.color", v);
                     }}
                     placeholder="#ffffff or var(--bg)"
+                    palette={themePalette}
                   />
-                  <Field
+                  <ColorPickerInput
                     label="Text Color"
                     value={overrides.textColor ?? ""}
                     onChange={(v: string) => setStyle("textColor", v)}
                     placeholder="#111111 or var(--text)"
+                    palette={themePalette}
                   />
                 </div>
 

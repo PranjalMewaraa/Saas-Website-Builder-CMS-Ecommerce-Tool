@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import StylePreviewCard from "./StylePreviewCard";
 import { BlockPropsForm } from "../pages/edit/components/BlocksPropForm";
+import ColorPickerInput from "./ColorPickerInput";
 
 /* small local UI helpers */
 
@@ -60,6 +61,8 @@ export function VisualInspector({
   siteId,
   assetsMap,
   forms,
+  themePalette = [],
+  onDeleteBlock,
   onChange,
 }: any) {
   if (!block) {
@@ -122,7 +125,18 @@ export function VisualInspector({
 
   return (
     <div className="space-y-6">
-      <h3 className="font-medium">Block Properties</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium">Block Properties</h3>
+        {onDeleteBlock && (
+          <button
+            className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
+            onClick={() => onDeleteBlock(block.id)}
+            type="button"
+          >
+            Delete Block
+          </button>
+        )}
+      </div>
 
       <BlockPropsForm
         type={block.type}
@@ -150,7 +164,7 @@ export function VisualInspector({
           ))}
         </div>
 
-        <Field
+        <ColorPickerInput
           label="Background Color"
           value={overrides.bg?.color ?? ""}
           onChange={(v: string) => {
@@ -164,13 +178,15 @@ export function VisualInspector({
               });
             }
           }}
+          palette={themePalette}
         />
 
-        <Field
+        <ColorPickerInput
           label="Text Color"
           value={overrides.textColor ?? ""}
           onChange={(v: string) => setStyle("textColor", v)}
           placeholder="#111111"
+          palette={themePalette}
         />
 
         <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,11 @@
 @import "tailwindcss";
+.theme-root {
+  color: var(--color-text, #111827);
+  background-color: var(--color-bg, #ffffff);
+}
+.theme-root a {
+  color: var(--color-primary, #2563eb);
+}
 .card {
   border: 1px solid #ddd;
   padding: 20px;
