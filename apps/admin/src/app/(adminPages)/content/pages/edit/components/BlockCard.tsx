@@ -43,6 +43,7 @@ export default function BlockCard({
   forms,
   presets,
   assetsMap,
+  onSaveTemplate,
   onChange,
   onMove,
   onDelete,
@@ -141,6 +142,13 @@ export default function BlockCard({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            title="Save as template"
+            onClick={() => onSaveTemplate?.(block)}
+            className="p-1.5 rounded hover:bg-black/5 text-gray-700"
+          >
+            <Layout className="h-4 w-4" />
+          </button>
           <button
             title="Move up"
             disabled={index === 0}

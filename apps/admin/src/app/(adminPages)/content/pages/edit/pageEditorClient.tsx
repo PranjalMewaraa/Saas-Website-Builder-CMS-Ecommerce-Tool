@@ -69,9 +69,13 @@ export default function PageEditorClient({
   const [page, setPage] = useState<any>(null);
   const [presets, setPresets] = useState<any[]>([]);
   const [themePalette, setThemePalette] = useState<string[]>([]);
+  const [blockTemplates, setBlockTemplates] = useState<any[]>([]);
   const [layoutJson, setLayoutJson] = useState("");
   const [addBlockOpen, setAddBlockOpen] = useState(false);
   const [addBlockSearch, setAddBlockSearch] = useState("");
+  const [addBlockTab, setAddBlockTab] = useState<"templates" | "blocks">(
+    "blocks",
+  );
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
     "idle",
   );
@@ -79,7 +83,8 @@ export default function PageEditorClient({
 
   useEffect(() => {
     (async () => {
-      const [pageRes, presetsRes, formsRes, themeRes] = await Promise.all([
+      const [pageRes, presetsRes, formsRes, themeRes, templatesRes] =
+        await Promise.all([
         fetch(
           `/api/admin/pages?site_id=${encodeURIComponent(
             siteId,
@@ -96,17 +101,24 @@ export default function PageEditorClient({
         fetch(`/api/admin/theme?site_id=${encodeURIComponent(siteId)}`, {
           cache: "no-store",
         }),
+        fetch(
+          `/api/admin/block-templates?site_id=${encodeURIComponent(siteId)}`,
+          { cache: "no-store" },
+        ),
       ]);
 
-      const [pageData, presetsData, formsData, themeData] = await Promise.all([
+      const [pageData, presetsData, formsData, themeData, templatesData] =
+        await Promise.all([
         pageRes.json(),
         presetsRes.json(),
         formsRes.json(),
         themeRes.json(),
+        templatesRes.json(),
       ]);
 
       setPresets(presetsData.presets ?? []);
       setForms(formsData.forms ?? []);
+      setBlockTemplates(templatesData.templates ?? []);
       const tokens = themeData.theme?.draft_tokens || {};
       const palette = [
         tokens["--color-primary"],
@@ -250,6 +262,54 @@ export default function PageEditorClient({
     copy.id = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     next.sections[0].blocks.splice(idx + 1, 0, copy);
     setPage({ ...page, draft_layout: next });
+  }
+
+  async function saveBlockAsTemplate(block: any) {
+    const name = prompt(
+      "Enter a name for this block template",
+      block.type.replace("/V1", ""),
+    );
+    if (!name) return;
+    const makeTenantWide = confirm(
+      "Make this template available across all sites (tenant-wide)?\n\nOK = Yes (tenant-wide)\nCancel = No (this site only)",
+    );
+    const scope = makeTenantWide ? "tenant" : "site";
+    const tagsText = prompt("Enter tags (comma-separated)", "");
+    const tags = (tagsText || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const res = await fetch(
+      `/api/admin/block-templates?site_id=${encodeURIComponent(siteId)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          tags,
+          scope,
+          block: {
+            id: block.id,
+            type: block.type,
+            props: block.props ?? {},
+            style: block.style ?? {},
+          },
+        }),
+      },
+    );
+    const data = await res.json();
+    if (!data.ok) return alert(data.error || "Failed to save template");
+    setBlockTemplates((prev) => [data.template, ...prev]);
+  }
+
+  function addBlockFromTemplate(tpl: any) {
+    const next = structuredClone(layout);
+    const block = structuredClone(tpl.block || {});
+    block.id = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    next.sections[0].blocks.push(block);
+    setPage({ ...page, draft_layout: next });
+    setAddBlockOpen(false);
   }
 
   return (
@@ -472,6 +532,7 @@ export default function PageEditorClient({
                           presets={presets}
                           assetsMap={assetsMap}
                           themePalette={themePalette}
+                          onSaveTemplate={saveBlockAsTemplate}
                           onChange={(nb: any) => updateBlock(i, nb)}
                           onMove={(d: any) => moveBlock(i, d)}
                           onDelete={() => deleteBlock(i)}
@@ -516,42 +577,105 @@ export default function PageEditorClient({
             </div>
 
             <div className="px-6 py-6 space-y-6 max-h-[70vh] overflow-auto">
+              <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+                <button
+                  onClick={() => setAddBlockTab("blocks")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    addBlockTab === "blocks"
+                      ? "bg-black text-white"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Blocks
+                </button>
+                <button
+                  onClick={() => setAddBlockTab("templates")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    addBlockTab === "templates"
+                      ? "bg-black text-white"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Templates
+                </button>
+              </div>
+
               <div className="mb-4">
                 <input
                   value={addBlockSearch}
                   onChange={(e) => setAddBlockSearch(e.target.value)}
-                  placeholder="Search blocks…"
+                  placeholder={
+                    addBlockTab === "templates"
+                      ? "Search templates…"
+                      : "Search blocks…"
+                  }
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
                 />
               </div>
 
-              {getBlockGroups(BLOCK_TYPES, addBlockSearch).map((group) => (
-                <div key={group.title}>
-                  <div className="text-sm font-semibold text-gray-700 mb-3">
-                    {group.title}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {group.items.map((t) => (
-                      <button
-                        key={t}
-                        className="border rounded-xl p-3 text-left hover:bg-gray-50 transition"
-                        onClick={() => {
-                          addBlockOfType(t);
-                          setAddBlockOpen(false);
-                        }}
-                      >
-                        <div className="h-16 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 mb-3 flex items-center justify-center text-xs text-gray-500">
-                          {blockPreviewLabel(t)}
+              {addBlockTab === "templates" ? (
+                <>
+                  {getTemplateGroups(blockTemplates, addBlockSearch).map(
+                    (group) => (
+                      <div key={group.title}>
+                        <div className="text-sm font-semibold text-gray-700 mb-3">
+                          {group.title}
                         </div>
-                        <div className="text-sm font-medium">
-                          {t.replace("/V1", "")}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {group.items.map((t: any) => (
+                            <button
+                              key={t._id}
+                              className="border rounded-xl p-3 text-left hover:bg-gray-50 transition"
+                              onClick={() => addBlockFromTemplate(t)}
+                            >
+                              <div className="h-16 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 mb-3 flex items-center justify-center text-xs text-gray-500">
+                                {blockPreviewLabel(t.block?.type || "Block")}
+                              </div>
+                              <div className="text-sm font-medium">
+                                {t.name || "Block Template"}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {t.block?.type || "Block"} ·{" "}
+                                {t.scope === "tenant" ? "Tenant" : "Site"}
+                              </div>
+                            </button>
+                          ))}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{t}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                      </div>
+                    ),
+                  )}
+                </>
+              ) : (
+                <>
+                  {getBlockGroups(BLOCK_TYPES, addBlockSearch).map((group) => (
+                    <div key={group.title}>
+                      <div className="text-sm font-semibold text-gray-700 mb-3">
+                        {group.title}
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {group.items.map((t) => (
+                          <button
+                            key={t}
+                            className="border rounded-xl p-3 text-left hover:bg-gray-50 transition"
+                            onClick={() => {
+                              addBlockOfType(t);
+                              setAddBlockOpen(false);
+                            }}
+                          >
+                            <div className="h-16 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 mb-3 flex items-center justify-center text-xs text-gray-500">
+                              {blockPreviewLabel(t)}
+                            </div>
+                            <div className="text-sm font-medium">
+                              {t.replace("/V1", "")}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">{t}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             <div className="px-6 py-5 border-t bg-gray-50/70 flex justify-end">
@@ -614,6 +738,29 @@ function getBlockGroups(types: string[], searchText: string) {
     {
       title: "Forms",
       items: filtered.filter((t) => t.startsWith("Form/")),
+    },
+  ];
+
+  return groups.filter((g) => g.items.length > 0);
+}
+
+function getTemplateGroups(templates: any[], searchText: string) {
+  const term = searchText.trim().toLowerCase();
+  const filtered = term
+    ? (templates || []).filter((t) => {
+        const name = String(t?.name || "").toLowerCase();
+        const type = String(t?.block?.type || "").toLowerCase();
+        const tags = (t?.tags || []).join(" ").toLowerCase();
+        return (
+          name.includes(term) || type.includes(term) || tags.includes(term)
+        );
+      })
+    : templates || [];
+
+  const groups = [
+    {
+      title: "Saved Templates",
+      items: filtered,
     },
   ];
 

@@ -13,6 +13,7 @@ export type SectionTemplateDoc = {
   scope: SectionTemplateScope;
 
   name: string;
+  category?: string;
   tags: string[];
 
   section: {
@@ -64,6 +65,7 @@ export async function updateSectionTemplateMeta(args: {
   tenant_id: string;
   template_id: string;
   name?: string;
+  category?: string;
   tags?: string[];
 }) {
   const col = await sectionTemplatesCollection();
@@ -72,6 +74,7 @@ export async function updateSectionTemplateMeta(args: {
     {
       $set: {
         ...(args.name != null ? { name: args.name } : {}),
+        ...(args.category != null ? { category: args.category } : {}),
         ...(args.tags ? { tags: args.tags } : {}),
         updated_at: new Date(),
       },

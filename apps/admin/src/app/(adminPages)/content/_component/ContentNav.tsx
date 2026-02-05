@@ -11,6 +11,7 @@ const navItems = [
   { href: "/content/menus", label: "Menus" }, // Navigation structure – closely tied to pages
   { href: "/content/assets", label: "Assets" }, // Media library – used across pages/content
   { href: "/content/forms", label: "Forms" }, // Functional/interactive elements
+  { href: "/content/templates", label: "Templates" }, // Reusable page/blocks
   { href: "/content/presets", label: "Presets" }, // Templates/shortcuts – mid-to-late
   { href: "/content/preview", label: "Preview" }, // Testing/viewing changes
   { href: "/content/publish", label: "Publish" }, // Final action – usually last
