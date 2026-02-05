@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import * as Icons from "lucide-react";
 import {
   Plus,
   ArrowUp,
@@ -146,17 +145,6 @@ function renderAtomicPreview(
 
   if (block.type === "Atomic/Icon") {
     const size = props.size ?? 24;
-    const IconComponent = props.iconName
-      ? (Icons as any)[props.iconName]
-      : null;
-    if (IconComponent) {
-      return (
-        <IconComponent
-          size={typeof size === "number" ? size : parseFloat(String(size))}
-          color={props.color || style.color}
-        />
-      );
-    }
     return (
       <span
         style={{

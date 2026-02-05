@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import * as Icons from "lucide-react";
+import React, { useEffect, useState } from "react";
 import ImageField from "./ImageField";
 import ColorPickerInput from "./ColorPickerInput";
 
@@ -88,10 +87,6 @@ const ROW_PRESET_PREVIEWS: Record<
   },
 };
 
-const ICON_NAMES = Object.keys(Icons).filter((name) => {
-  const value = (Icons as any)[name];
-  return typeof value === "function" && /^[A-Z]/.test(name);
-});
 
 const CARD_PRESETS = {
   clean: {
@@ -357,42 +352,18 @@ export default function LayoutInspector({
   onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
 }) {
-  const [iconPicker, setIconPicker] = useState<{
-    open: boolean;
-    current?: string;
-    onPick?: (name: string) => void;
-  }>({ open: false });
-  const [iconQuery, setIconQuery] = useState("");
-
-  const iconPickerNode = (
-    <IconPickerDialog
-      open={iconPicker.open}
-      current={iconPicker.current}
-      query={iconQuery}
-      onQueryChange={setIconQuery}
-      onPick={(name) => iconPicker.onPick?.(name)}
-      onClose={() => setIconPicker({ open: false })}
-    />
-  );
-
   if (!block) {
     return (
-      <>
-        <div className="text-sm text-muted-foreground">
-          Select a layout section to edit.
-        </div>
-        {iconPickerNode}
-      </>
+      <div className="text-sm text-muted-foreground">
+        Select a layout section to edit.
+      </div>
     );
   }
   if (!selection || selection.kind === "block") {
     return (
-      <>
-        <div className="text-sm text-muted-foreground">
-          Select a section, row, column, or atomic block to edit.
-        </div>
-        {iconPickerNode}
-      </>
+      <div className="text-sm text-muted-foreground">
+        Select a section, row, column, or atomic block to edit.
+      </div>
     );
   }
 
@@ -870,40 +841,16 @@ export default function LayoutInspector({
 
         {atom.type === "Atomic/Icon" && (
           <>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Icon</div>
-              <button
-                type="button"
-                className="w-full border rounded-lg px-3 py-2 text-sm text-left hover:bg-gray-50 flex items-center gap-2"
-                onClick={() =>
-                  setIconPicker({
-                    open: true,
-                    current: atom.props?.iconName || "Star",
-                    onPick: (name) =>
-                      updateAtomic((draftAtom) => {
-                        draftAtom.props = {
-                          ...draftAtom.props,
-                          iconName: name,
-                        };
-                      }),
-                  })
-                }
-              >
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md border bg-white">
-                  {(() => {
-                    const Icon = (Icons as any)[atom.props?.iconName || "Star"];
-                    return Icon ? <Icon size={14} /> : null;
-                  })()}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {atom.props?.iconName || "Star"}
-                </span>
-                <span className="text-xs text-muted-foreground">•</span>
-                <span className="text-xs text-muted-foreground">
-                  Choose icon
-                </span>
-              </button>
-            </div>
+            <Field
+              label="Icon"
+              value={atom.props?.icon || "★"}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, icon: v };
+                })
+              }
+              placeholder="★"
+            />
             <UnitField
               label="Size"
               value={atom.props?.size ?? 24}
@@ -1353,7 +1300,6 @@ export default function LayoutInspector({
           assetsMap={assetsMap}
           onChange={onStyleChange}
         />
-        {iconPickerNode}
       </div>
     );
   }
@@ -1504,96 +1450,7 @@ export default function LayoutInspector({
     );
   }
 
-  return (
-    <>
-      {iconPickerNode}
-    </>
-  );
-}
-
-function IconPickerDialog({
-  open,
-  current,
-  query,
-  onQueryChange,
-  onPick,
-  onClose,
-}: {
-  open: boolean;
-  current?: string;
-  query: string;
-  onQueryChange: (v: string) => void;
-  onPick: (name: string) => void;
-  onClose: () => void;
-}) {
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return ICON_NAMES;
-    return ICON_NAMES.filter((n) => n.toLowerCase().includes(q));
-  }, [query]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-gray-900">
-              Choose an icon
-            </div>
-            <div className="text-xs text-gray-500">
-              Search Lucide icons and pick one.
-            </div>
-          </div>
-          <button
-            type="button"
-            className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
-            onClick={onClose}
-          >
-            Close
-          </button>
-        </div>
-        <div className="mt-3">
-          <input
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            placeholder="Search icons (e.g. shopping, heart, star)"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-          />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 max-h-[55vh] overflow-auto pr-1">
-          {filtered.map((name) => {
-            const Icon = (Icons as any)[name];
-            return (
-              <button
-                key={name}
-                type="button"
-                className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-3 text-xs hover:bg-gray-50 ${
-                  current === name
-                    ? "border-blue-300 bg-blue-50"
-                    : "border-gray-200"
-                }`}
-                onClick={() => {
-                  onPick(name);
-                  onClose();
-                }}
-              >
-                {Icon ? <Icon size={20} /> : null}
-                <span className="text-[11px] text-gray-600">{name}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function Field({

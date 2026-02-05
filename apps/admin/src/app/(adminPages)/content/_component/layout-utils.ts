@@ -251,7 +251,7 @@ export function createAtomicBlock(
     return {
       id: uid("atom"),
       type,
-      props: { iconName: "Star", size: 24, color: "#111827" },
+      props: { icon: "★", size: 24, color: "#111827" },
       style: {},
     };
   }

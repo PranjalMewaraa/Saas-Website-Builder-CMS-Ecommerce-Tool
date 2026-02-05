@@ -1,5 +1,4 @@
 import React from "react";
-import * as Icons from "lucide-react";
 import {
   resolveLayoutStyle,
   resolveRowLayoutStyle,
@@ -204,17 +203,6 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any, menus?: any) {
 
   if (type === "Atomic/Icon") {
     const size = props.size ?? 24;
-    const IconComponent = props.iconName
-      ? (Icons as any)[props.iconName]
-      : null;
-    if (IconComponent) {
-      return (
-        <IconComponent
-          size={typeof size === "number" ? size : parseFloat(String(size))}
-          color={props.color || style.color}
-        />
-      );
-    }
     return (
       <span
         style={{

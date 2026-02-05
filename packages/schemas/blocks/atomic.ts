@@ -35,7 +35,6 @@ export const AtomicButtonSchema = z.object({
 });
 
 export const AtomicIconSchema = z.object({
-  iconName: z.string().optional(),
   icon: z.string().optional(),
   size: SizeSchema.optional(),
   color: z.string().optional(),
