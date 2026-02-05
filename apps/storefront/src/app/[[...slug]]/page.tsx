@@ -130,17 +130,24 @@ export default async function StorefrontPage({
   const snapshot = await getSnapshotById(site.published_snapshot_id);
   if (!snapshot) return <div className="p-6">Published snapshot missing</div>;
 
-  const page = snapshot.pages?.[path] || null;
+  let page = snapshot.pages?.[path] || null;
   if (!page?.layout) {
-    return (
-      <div className="p-6">
-        404 — Page not found: <span className="font-mono">{path}</span>
-      </div>
-    );
+    const productSlugMatch =
+      path.startsWith("/products/") && path.split("/").length >= 3;
+    if (productSlugMatch && snapshot.pages?.["/products/[slug]"]) {
+      page = snapshot.pages["/products/[slug]"];
+    } else {
+      return (
+        <div className="p-6">
+          404 — Page not found: <span className="font-mono">{path}</span>
+        </div>
+      );
+    }
   }
   const meta = page.seo || {};
   const h = headers();
   const host = (await h).get("host") || "";
+  const search = (await h).get("x-search") || (await h).get("next-url") || "";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const url = `${protocol}://${host}${path}`;
 
@@ -172,7 +179,13 @@ export default async function StorefrontPage({
       >
         <RenderPage
           layout={page.layout}
-          ctx={{ tenantId: site.tenant_id, storeId: site.store_id, snapshot }}
+          ctx={{
+            tenantId: site.tenant_id,
+            storeId: site.store_id,
+            snapshot,
+            path,
+            search,
+          }}
         />
       </div>
     </>

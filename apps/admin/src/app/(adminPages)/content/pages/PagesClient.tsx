@@ -49,7 +49,22 @@ const TEMPLATES = [
   },
   { key: "about", label: "About", desc: "Classic about page layout" },
   { key: "contact", label: "Contact", desc: "Hero + simple contact form" },
+  {
+    key: "product_list",
+    label: "Product List",
+    desc: "Filterable product catalog page",
+  },
+  {
+    key: "product_detail",
+    label: "Product Detail",
+    desc: "Dynamic product detail at /products/[slug]",
+  },
 ] as const;
+
+const TEMPLATE_DEFAULT_SLUGS: Record<string, string> = {
+  product_list: "/products",
+  product_detail: "/products/[slug]",
+};
 
 type Page = {
   _id: string;
@@ -433,7 +448,13 @@ export default function PagesClient({ siteId }: Props) {
                 </label>
                 <select
                   value={createTemplate}
-                  onChange={(e) => setCreateTemplate(e.target.value as any)}
+                  onChange={(e) => {
+                    const next = e.target.value as any;
+                    setCreateTemplate(next);
+                    if (!createSlugDirty && TEMPLATE_DEFAULT_SLUGS[next]) {
+                      setCreateSlug(TEMPLATE_DEFAULT_SLUGS[next]);
+                    }
+                  }}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
                 >
                   {TEMPLATES.map((t) => (

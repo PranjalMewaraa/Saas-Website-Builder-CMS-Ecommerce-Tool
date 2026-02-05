@@ -26,7 +26,7 @@ import LayoutInspector from "../../_component/LayoutInspector";
 import type { LayoutSelection } from "../../_component/layout-utils";
 import PageSeoEditor from "@/app/_components/PageSeoEditor";
 
-import { BLOCKS, getBlock } from "@acme/blocks/registry";
+import { BLOCK_TYPES as ALL_BLOCK_TYPES } from "@acme/blocks/registry/block-types";
 import { title } from "process";
 import BlockCard from "./components/BlockCard";
 
@@ -40,7 +40,7 @@ function safeJsonParse(text: string) {
   }
 }
 
-const BLOCK_TYPES = Object.keys(BLOCKS).filter((t) => !t.startsWith("Atomic/"));
+const BLOCK_TYPES = ALL_BLOCK_TYPES.filter((t) => !t.startsWith("Atomic/"));
 
 /* ---------------- main ---------------- */
 
@@ -772,6 +772,8 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("Header")) return "Header";
   if (type.startsWith("Footer")) return "Footer";
   if (type.startsWith("ProductGrid")) return "Products";
+  if (type.startsWith("ProductList")) return "Product List";
+  if (type.startsWith("ProductDetail")) return "Product Detail";
   if (type.startsWith("Form")) return "Form";
   if (type.startsWith("Banner")) return "CTA";
   if (type.startsWith("Features")) return "Features";
@@ -825,7 +827,21 @@ function defaultPropsFor(type: string) {
     };
 
   if (type === "ProductGrid/V1")
-    return { title: "Featured Products", limit: 8 };
+    return { title: "Featured Products", limit: 8, detailPathPrefix: "/products" };
+  if (type === "ProductList/V1")
+    return {
+      title: "All Products",
+      limit: 12,
+      showFilters: true,
+      showSearch: true,
+      detailPathPrefix: "/products",
+    };
+  if (type === "ProductDetail/V1")
+    return {
+      showRelated: true,
+      relatedLimit: 4,
+      detailPathPrefix: "/products",
+    };
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };
 

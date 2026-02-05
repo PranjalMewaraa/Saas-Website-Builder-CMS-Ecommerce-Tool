@@ -11,6 +11,8 @@ export type RenderContext = {
   tenantId: string;
   storeId: string;
   snapshot: any; // published snapshot (or draft snapshot for preview/builder)
+  path?: string;
+  search?: string;
 };
 
 function safeProps(schema: any, props: any) {
@@ -301,6 +303,44 @@ async function BlockRenderer({
         <div className={`${innerClass} __inner`} style={innerStyle}>
           <StyleWrapper style={finalStyle}>
             <Comp {...props} tenantId={ctx.tenantId} storeId={ctx.storeId} />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.type.startsWith("ProductList/")) {
+    const Comp = def.render;
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp
+              {...props}
+              tenantId={ctx.tenantId}
+              storeId={ctx.storeId}
+              path={ctx.path}
+              search={ctx.search}
+            />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
+  if (block.type.startsWith("ProductDetail/")) {
+    const Comp = def.render;
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp
+              {...props}
+              tenantId={ctx.tenantId}
+              storeId={ctx.storeId}
+              path={ctx.path}
+              search={ctx.search}
+            />
           </StyleWrapper>
         </div>
       </div>

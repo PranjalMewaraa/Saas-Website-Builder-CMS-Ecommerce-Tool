@@ -43,7 +43,20 @@ function fixDoubleProtocolUrl(url: any) {
 
   return corrected;
 }
-function ProductCardV1({ product }: { product: Product }) {
+function joinPath(base: string, slug: string) {
+  const b = base.endsWith("/") ? base.slice(0, -1) : base;
+  const s = slug.startsWith("/") ? slug.slice(1) : slug;
+  if (!b || b === "/") return `/${s}`;
+  return `${b}/${s}`;
+}
+
+function ProductCardV1({
+  product,
+  detailPathPrefix = "/products",
+}: {
+  product: Product;
+  detailPathPrefix?: string;
+}) {
   const primaryImage = product.images?.[0];
   const primaryImageUrl = fixDoubleProtocolUrl(product.images?.[0]?.url);
   const price = product.base_price_cents / 100;
@@ -57,7 +70,7 @@ function ProductCardV1({ product }: { product: Product }) {
 
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={joinPath(detailPathPrefix || "/products", product.slug)}
       className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:ring-offset-2"
     >
       {/* Image */}

@@ -144,6 +144,88 @@ function seedLayout(template: string) {
     };
   }
 
+  if (template === "product_list") {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: "sec_main",
+          label: "Products",
+          blocks: [
+            {
+              id: `b_${Date.now()}_hdr`,
+              type: "Header/V1",
+              props: {
+                menuId: "menu_main",
+                ctaText: "Shop",
+                ctaHref: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_plist`,
+              type: "ProductList/V1",
+              props: {
+                title: "All Products",
+                limit: 12,
+                showFilters: true,
+                showSearch: true,
+                detailPathPrefix: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_ftr`,
+              type: "Footer/V1",
+              props: { menuId: "menu_footer" },
+              style: { overrides: {}, responsive: {} },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  if (template === "product_detail") {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: "sec_main",
+          label: "Product Detail",
+          blocks: [
+            {
+              id: `b_${Date.now()}_hdr`,
+              type: "Header/V1",
+              props: {
+                menuId: "menu_main",
+                ctaText: "Shop",
+                ctaHref: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_pdet`,
+              type: "ProductDetail/V1",
+              props: {
+                showRelated: true,
+                relatedLimit: 4,
+                detailPathPrefix: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_ftr`,
+              type: "Footer/V1",
+              props: { menuId: "menu_footer" },
+              style: { overrides: {}, responsive: {} },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   // blank (default)
   return {
     version: 1,

@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-export default function ContentDashboard({
+export default async function ContentDashboard({
   searchParams,
 }: {
-  searchParams: { site_id?: string };
+  searchParams: Promise<{ site_id?: string }>;
 }) {
-  const siteId = searchParams.site_id || "site_demo";
+  const params = await searchParams;
+  const siteId = params.site_id || "site_demo";
 
   const cards = [
     {

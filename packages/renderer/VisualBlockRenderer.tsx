@@ -1,6 +1,6 @@
 "use client";
 
-import { getBlock } from "@acme/blocks/registry";
+import { getBlockVisual } from "@acme/blocks/registry/visual";
 import { StyleWrapper } from "./StyleWrapper";
 import { LayoutSectionRenderer } from "./layout-section";
 
@@ -17,7 +17,7 @@ export function VisualBlockRenderer({
   showOutlines?: boolean;
   menus?: any[];
 }) {
-  const def = getBlock(block.type);
+  const def = getBlockVisual(block.type);
 
   if (block.type === "Layout/Section") {
     return (

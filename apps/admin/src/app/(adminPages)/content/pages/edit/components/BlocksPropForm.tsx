@@ -233,6 +233,84 @@ export function BlockPropsForm({
     );
   }
 
+  if (type === "ProductList/V1") {
+    return (
+      <div className="space-y-3">
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+          placeholder="All Products"
+        />
+        <NumberField
+          label="limit"
+          value={props.limit ?? 12}
+          onChange={(v: any) => setProp("limit", Number(v))}
+        />
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl", "full"]}
+        />
+        <Field
+          label="detailPathPrefix"
+          value={props.detailPathPrefix || "/products"}
+          onChange={(v: any) => setProp("detailPathPrefix", v)}
+          placeholder="/products"
+        />
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={props.showFilters ?? true}
+            onChange={(e) => setProp("showFilters", e.target.checked)}
+          />
+          Show filters
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={props.showSearch ?? true}
+            onChange={(e) => setProp("showSearch", e.target.checked)}
+          />
+          Show search
+        </label>
+      </div>
+    );
+  }
+
+  if (type === "ProductDetail/V1") {
+    return (
+      <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl", "full"]}
+        />
+        <Field
+          label="detailPathPrefix"
+          value={props.detailPathPrefix || "/products"}
+          onChange={(v: any) => setProp("detailPathPrefix", v)}
+          placeholder="/products"
+        />
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={props.showRelated ?? true}
+            onChange={(e) => setProp("showRelated", e.target.checked)}
+          />
+          Show related products
+        </label>
+        <NumberField
+          label="relatedLimit"
+          value={props.relatedLimit ?? 4}
+          onChange={(v: any) => setProp("relatedLimit", Number(v))}
+        />
+      </div>
+    );
+  }
+
   if (type === "Hero" || type === "Hero/V1") {
     const bg = props.bg || { type: "none" };
 
@@ -482,6 +560,12 @@ export function BlockPropsForm({
           label="limit"
           value={Number(props.limit ?? 8)}
           onChange={(n: any) => setProp("limit", n)}
+        />
+        <Field
+          label="detailPathPrefix"
+          value={props.detailPathPrefix || "/products"}
+          onChange={(v: any) => setProp("detailPathPrefix", v)}
+          placeholder="/products"
         />
       </div>
     );
@@ -1078,7 +1162,25 @@ function defaultPropsFor(type: string) {
     };
 
   if (type === "ProductGrid/V1")
-    return { title: "Featured Products", limit: 8 };
+    return {
+      title: "Featured Products",
+      limit: 8,
+      detailPathPrefix: "/products",
+    };
+  if (type === "ProductList/V1")
+    return {
+      title: "All Products",
+      limit: 12,
+      showFilters: true,
+      showSearch: true,
+      detailPathPrefix: "/products",
+    };
+  if (type === "ProductDetail/V1")
+    return {
+      showRelated: true,
+      relatedLimit: 4,
+      detailPathPrefix: "/products",
+    };
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };
 

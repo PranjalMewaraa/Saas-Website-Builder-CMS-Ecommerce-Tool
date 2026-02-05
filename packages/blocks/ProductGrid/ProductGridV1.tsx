@@ -10,6 +10,7 @@ type Props = {
   title?: string;
   limit?: number;
   contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  detailPathPrefix?: string;
 };
 
 export default async function ProductGridV1({
@@ -18,6 +19,7 @@ export default async function ProductGridV1({
   title,
   limit = 8,
   contentWidth = "xl",
+  detailPathPrefix = "/products",
 }: Props) {
   const products = await listPublishedProductsForStore({
     tenant_id: tenantId,
@@ -66,7 +68,11 @@ export default async function ProductGridV1({
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:gap-8">
             {products.map((product) => (
-              <ProductCardV1 product={product} key={product.id} />
+              <ProductCardV1
+                product={product}
+                key={product.id}
+                detailPathPrefix={detailPathPrefix}
+              />
             ))}
           </div>
         )}

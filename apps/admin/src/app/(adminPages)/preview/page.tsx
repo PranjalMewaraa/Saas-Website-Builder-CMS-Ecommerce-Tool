@@ -21,6 +21,12 @@ export default async function PreviewPage({
   const handle = params.handle || "";
   const token = params.token || "";
   const path = normalizePath(params.path || "/");
+  const search = new URLSearchParams(
+    Object.entries(params).reduce((acc, [k, v]) => {
+      if (typeof v === "string") acc[k] = v;
+      return acc;
+    }, {} as Record<string, string>),
+  ).toString();
 
   if (!handle || !token) {
     return (
@@ -60,14 +66,20 @@ export default async function PreviewPage({
   const snapshot = await getSnapshotById(site.draft_snapshot_id);
   if (!snapshot) return <div className="p-6">Draft snapshot missing</div>;
 
-  const page = snapshot.pages?.[path];
+  let page = snapshot.pages?.[path];
   if (!page?.layout) {
-    return (
-      <div className="p-6">
-        Page not found in draft snapshot:{" "}
-        <span className="font-mono">{path}</span>
-      </div>
-    );
+    const productSlugMatch =
+      path.startsWith("/products/") && path.split("/").length >= 3;
+    if (productSlugMatch && snapshot.pages?.["/products/[slug]"]) {
+      page = snapshot.pages["/products/[slug]"];
+    } else {
+      return (
+        <div className="p-6">
+          Page not found in draft snapshot:{" "}
+          <span className="font-mono">{path}</span>
+        </div>
+      );
+    }
   }
 
   return (
@@ -80,7 +92,13 @@ export default async function PreviewPage({
 
       <RenderPage
         layout={page.layout}
-        ctx={{ tenantId: site.tenant_id, storeId: site.store_id, snapshot }}
+        ctx={{
+          tenantId: site.tenant_id,
+          storeId: site.store_id,
+          snapshot,
+          path,
+          search: search ? `?${search}` : "",
+        }}
       />
     </div>
   );

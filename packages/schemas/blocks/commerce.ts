@@ -23,3 +23,19 @@ export const PricingTableV1Schema = z.object({
   ),
   contentWidth: z.string().optional(),
 });
+
+export const ProductListV1Schema = z.object({
+  title: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(48).default(12),
+  contentWidth: z.string().optional(),
+  showFilters: z.coerce.boolean().optional(),
+  showSearch: z.coerce.boolean().optional(),
+  detailPathPrefix: z.string().optional(),
+});
+
+export const ProductDetailV1Schema = z.object({
+  contentWidth: z.string().optional(),
+  showRelated: z.coerce.boolean().optional(),
+  relatedLimit: z.coerce.number().int().min(0).max(12).default(4),
+  detailPathPrefix: z.string().optional(),
+});
