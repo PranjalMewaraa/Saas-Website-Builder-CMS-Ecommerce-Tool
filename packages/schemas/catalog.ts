@@ -23,6 +23,19 @@ export const ProductCreateSchema = z.object({
   category_ids: z.array(z.string()).optional(),
 });
 
+export const ProductUpdateSchema = z.object({
+  product_id: z.string().min(1),
+  title: z.string().min(2).max(255).optional(),
+  slug: z.string().min(1).max(255).optional(),
+  description: z.string().optional().nullable(),
+  brand_id: z.string().optional().nullable(),
+  status: z.enum(["draft", "active", "archived"]).optional(),
+  base_price_cents: z.coerce.number().int().min(0).optional(),
+  sku: z.string().optional().nullable(),
+  store_id: z.string().optional(),
+  category_ids: z.array(z.string()).optional(),
+});
+
 export const StoreProductPublishSchema = z.object({
   store_id: z.string().min(1),
   product_id: z.string().min(1),

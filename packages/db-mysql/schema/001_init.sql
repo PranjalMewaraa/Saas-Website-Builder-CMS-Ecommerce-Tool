@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS stores (
   store_type  ENUM('brand','distributor') NOT NULL,
   currency    CHAR(3) NOT NULL DEFAULT 'USD',
   timezone    VARCHAR(64) NOT NULL DEFAULT 'UTC',
-  status      ENUM('active','suspended') NOT NULL DEFAULT 'active',
+  status      ENUM('active','suspended','archived') NOT NULL DEFAULT 'active',
   industry    VARCHAR(64) NULL,
   created_at  DATETIME NOT NULL,
   updated_at  DATETIME NOT NULL,

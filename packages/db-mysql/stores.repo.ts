@@ -20,3 +20,22 @@ export async function getStore(
   const arr = rows as StoreRow[];
   return arr[0] ?? null;
 }
+
+export async function updateStoreStatus(
+  tenant_id: string,
+  store_id: string,
+  status: "active" | "suspended" | "archived",
+) {
+  const ts = new Date();
+  await pool.query(
+    `UPDATE stores SET status = ?, updated_at = ? WHERE tenant_id = ? AND id = ?`,
+    [status, ts, tenant_id, store_id],
+  );
+}
+
+export async function deleteStore(tenant_id: string, store_id: string) {
+  await pool.query(`DELETE FROM stores WHERE tenant_id = ? AND id = ?`, [
+    tenant_id,
+    store_id,
+  ]);
+}
