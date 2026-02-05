@@ -15,8 +15,22 @@ export default function ProductsClient({
 }) {
   const [tab, setTab] = useState<Tab>("active");
   const [products, setProducts] = useState<any[]>([]);
+  const [archivedCount, setArchivedCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkConfirm, setBulkConfirm] = useState<null | {
+    action: "archive" | "restore" | "delete";
+    count: number;
+  }>(null);
+
+  async function fetchArchivedCount() {
+    const res = await fetch(
+      `/api/admin/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&status=archived`,
+      { cache: "no-store" },
+    );
+    const data = await res.json();
+    setArchivedCount((data.products ?? []).length);
+  }
 
   async function fetchList() {
     setLoading(true);
@@ -34,6 +48,7 @@ export default function ProductsClient({
 
   useEffect(() => {
     fetchList();
+    fetchArchivedCount();
   }, [siteId, storeId, tab]);
 
   const allSelected = useMemo(() => {
@@ -48,14 +63,10 @@ export default function ProductsClient({
 
   async function bulk(action: "archive" | "restore" | "delete") {
     if (!selectedIds.length) return;
-    const ok =
-      action === "delete"
-        ? confirm("Permanently delete selected products?")
-        : action === "archive"
-          ? confirm("Archive selected products?")
-          : confirm("Restore selected products to Draft?");
-    if (!ok) return;
+    setBulkConfirm({ action, count: selectedIds.length });
+  }
 
+  async function runBulk(action: "archive" | "restore" | "delete") {
     await fetch(`/api/admin/products/bulk?site_id=${encodeURIComponent(siteId)}`,
       {
         method: "POST",
@@ -64,6 +75,7 @@ export default function ProductsClient({
       }
     );
     await fetchList();
+    await fetchArchivedCount();
   }
 
   return (
@@ -88,7 +100,14 @@ export default function ProductsClient({
                 : "text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Archived
+            <span className="inline-flex items-center gap-2">
+              Archived
+              {archivedCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border">
+                  {archivedCount}
+                </span>
+              )}
+            </span>
           </button>
         </div>
 
@@ -185,6 +204,58 @@ export default function ProductsClient({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {bulkConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/70 overflow-hidden">
+            <div className="p-6 space-y-4">
+              <div className="text-lg font-semibold">Confirm Bulk Action</div>
+              <div className="text-sm text-gray-600">
+                {bulkConfirm.action === "delete" && (
+                  <>
+                    Permanently delete <b>{bulkConfirm.count}</b> product
+                    {bulkConfirm.count > 1 ? "s" : ""}? This cannot be undone.
+                  </>
+                )}
+                {bulkConfirm.action === "archive" && (
+                  <>
+                    Archive <b>{bulkConfirm.count}</b> product
+                    {bulkConfirm.count > 1 ? "s" : ""}?
+                  </>
+                )}
+                {bulkConfirm.action === "restore" && (
+                  <>
+                    Restore <b>{bulkConfirm.count}</b> product
+                    {bulkConfirm.count > 1 ? "s" : ""} to Draft?
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t bg-gray-50/70 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded border"
+                onClick={() => setBulkConfirm(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={`px-4 py-2 rounded text-white ${
+                  bulkConfirm.action === "delete"
+                    ? "bg-red-600"
+                    : "bg-black"
+                }`}
+                onClick={async () => {
+                  const action = bulkConfirm.action;
+                  setBulkConfirm(null);
+                  await runBulk(action);
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import { listStores } from "@acme/db-mysql";
 import { getSite } from "@acme/db-mongo";
 import Link from "next/link";
 import MainStoreSelector from "./MainStoreSelector";
-import StoreActionsClient from "./storeActionsClient";
+import StoresClient from "./StoresClient";
 
 export default async function StoresPage({
   searchParams,
@@ -39,41 +39,9 @@ export default async function StoresPage({
         currentStoreId={currentStoreId}
       />
 
-      {/* Existing store list */}
-      <div className="space-y-2 pt-4">
-        {stores.map((s) => (
-          <div
-            key={s.id}
-            className="border rounded p-3 flex items-center justify-between"
-          >
-            <div>
-              <div className="font-medium">{s.name}</div>
-              <div className="text-sm opacity-70">
-                Type: {s.store_type} · Status: {s.status} · ID: {s.id}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Link
-                className="px-3 py-2 rounded bg-black text-white"
-                href={`/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(
-                  s.id,
-                )}`}
-              >
-                Manage Catalog
-              </Link>
-              <StoreActionsClient
-                siteId={siteId}
-                storeId={s.id}
-                status={s.status}
-              />
-            </div>
-          </div>
-        ))}
-
-        {stores.length === 0 && (
-          <div className="opacity-70">No stores found.</div>
-        )}
+      {/* Store list + trash */}
+      <div className="pt-4">
+        <StoresClient siteId={siteId} />
       </div>
     </div>
   );
