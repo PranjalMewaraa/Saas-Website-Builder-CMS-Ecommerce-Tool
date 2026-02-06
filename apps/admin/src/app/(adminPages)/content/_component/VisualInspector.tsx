@@ -128,6 +128,7 @@ export function VisualInspector({
   }
 
   const overrides = block?.style?.overrides ?? {};
+  const display = overrides.display ?? "block";
 
   const previewStyle = useMemo(() => overrides, [overrides]);
 
@@ -201,6 +202,99 @@ export function VisualInspector({
         <h3 className="font-medium">Appearance & Style</h3>
 
         <>
+          <Section id="layout" title="Layout & Alignment">
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select
+                  label="Display"
+                  value={display}
+                  onChange={(v: string) => setStyle("display", v)}
+                  options={["block", "flex", "grid"]}
+                />
+                <Select
+                  label="Text Align"
+                  value={overrides.align?.text ?? "left"}
+                  onChange={(v: string) => setStyle("align.text", v)}
+                  options={["left", "center", "right"]}
+                />
+              </div>
+
+              {display === "flex" ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                      label="Direction"
+                      value={overrides.flexDirection ?? "row"}
+                      onChange={(v: string) => setStyle("flexDirection", v)}
+                      options={["row", "column"]}
+                    />
+                    <Select
+                      label="Wrap"
+                      value={overrides.flexWrap ?? "nowrap"}
+                      onChange={(v: string) => setStyle("flexWrap", v)}
+                      options={["nowrap", "wrap"]}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                      label="Align Items"
+                      value={overrides.align?.items ?? "stretch"}
+                      onChange={(v: string) => setStyle("align.items", v)}
+                      options={["start", "center", "end", "stretch"]}
+                    />
+                    <Select
+                      label="Justify Content"
+                      value={overrides.align?.justify ?? "start"}
+                      onChange={(v: string) => setStyle("align.justify", v)}
+                      options={["start", "center", "end", "between"]}
+                    />
+                  </div>
+                  <NumberField
+                    label="Gap"
+                    value={overrides.gap ?? 0}
+                    onChange={(n: number) => setStyle("gap", n)}
+                  />
+                </>
+              ) : null}
+
+              {display === "grid" ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <NumberField
+                      label="Grid Columns"
+                      value={overrides.gridColumns ?? 1}
+                      onChange={(n: number) => setStyle("gridColumns", n)}
+                    />
+                    <NumberField
+                      label="Grid Rows"
+                      value={overrides.gridRows ?? 1}
+                      onChange={(n: number) => setStyle("gridRows", n)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                      label="Align Items"
+                      value={overrides.align?.items ?? "stretch"}
+                      onChange={(v: string) => setStyle("align.items", v)}
+                      options={["start", "center", "end", "stretch"]}
+                    />
+                    <Select
+                      label="Justify Content"
+                      value={overrides.align?.justify ?? "start"}
+                      onChange={(v: string) => setStyle("align.justify", v)}
+                      options={["start", "center", "end", "between"]}
+                    />
+                  </div>
+                  <NumberField
+                    label="Gap"
+                    value={overrides.gap ?? 0}
+                    onChange={(n: number) => setStyle("gap", n)}
+                  />
+                </>
+              ) : null}
+            </div>
+          </Section>
+
           <Section id="size" title="Size & Spacing">
             <div className="mt-3 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -368,44 +462,6 @@ export function VisualInspector({
                   options={["none", "sm", "md", "lg"]}
                 />
               </div>
-            </div>
-          </Section>
-
-          <Section id="layout" title="Layout & Alignment">
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Select
-                  label="Display"
-                  value={overrides.display ?? "block"}
-                  onChange={(v: string) => setStyle("display", v)}
-                  options={["block", "flex", "grid"]}
-                />
-                <Select
-                  label="Text Align"
-                  value={overrides.align?.text ?? "left"}
-                  onChange={(v: string) => setStyle("align.text", v)}
-                  options={["left", "center", "right"]}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Select
-                  label="Align Items"
-                  value={overrides.align?.items ?? "stretch"}
-                  onChange={(v: string) => setStyle("align.items", v)}
-                  options={["start", "center", "end", "stretch"]}
-                />
-                <Select
-                  label="Justify Content"
-                  value={overrides.align?.justify ?? "start"}
-                  onChange={(v: string) => setStyle("align.justify", v)}
-                  options={["start", "center", "end", "between"]}
-                />
-              </div>
-              <NumberField
-                label="Gap"
-                value={overrides.gap ?? 0}
-                onChange={(n: number) => setStyle("gap", n)}
-              />
             </div>
           </Section>
 

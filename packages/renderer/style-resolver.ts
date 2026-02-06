@@ -113,6 +113,20 @@ export function resolveWrapperStyle(style: Style) {
     innerStyle.borderColor = border.color ?? "rgba(0,0,0,0.12)";
   }
 
+  if (s.display === "flex") {
+    if (s.flexDirection) innerStyle.flexDirection = s.flexDirection;
+    if (s.flexWrap) innerStyle.flexWrap = s.flexWrap;
+  }
+
+  if (s.display === "grid") {
+    if (s.gridColumns) {
+      innerStyle.gridTemplateColumns = `repeat(${s.gridColumns}, minmax(0, 1fr))`;
+    }
+    if (s.gridRows) {
+      innerStyle.gridTemplateRows = `repeat(${s.gridRows}, minmax(0, 1fr))`;
+    }
+  }
+
   if (s.align?.items) innerStyle.alignItems = s.align.items;
   if (s.align?.justify) innerStyle.justifyContent = s.align.justify;
 

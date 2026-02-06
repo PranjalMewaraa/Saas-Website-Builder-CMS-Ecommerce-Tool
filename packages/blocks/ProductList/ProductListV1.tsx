@@ -121,6 +121,11 @@ export default async function ProductListV1({
   const categoryIds = pickMulti(sp, "category");
   const attrValues = pickMulti(sp, "attr");
   const attrFilters = parseAttrFilters(attrValues);
+  const sort = (sp.get("sort") || "newest") as
+    | "newest"
+    | "price_asc"
+    | "price_desc"
+    | "title_asc";
   const minPrice = sp.get("min") ? Number(sp.get("min")) : undefined;
   const maxPrice = sp.get("max") ? Number(sp.get("max")) : undefined;
   const page = Math.max(1, Number(sp.get("page") || 1));
@@ -141,6 +146,7 @@ export default async function ProductListV1({
     brand_ids: brandIds.length ? brandIds : undefined,
     category_ids: categoryIds.length ? categoryIds : undefined,
     attr_filters: attrFilters.length ? attrFilters : undefined,
+    sort,
     min_price_cents:
       typeof minPrice === "number" && !Number.isNaN(minPrice)
         ? Math.round(minPrice * 100)
@@ -158,6 +164,7 @@ export default async function ProductListV1({
     brand_ids: brandIds.length ? brandIds : undefined,
     category_ids: categoryIds.length ? categoryIds : undefined,
     attr_filters: attrFilters.length ? attrFilters : undefined,
+    sort,
     min_price_cents:
       typeof minPrice === "number" && !Number.isNaN(minPrice)
         ? Math.round(minPrice * 100)
@@ -208,6 +215,19 @@ export default async function ProductListV1({
             <p className="mt-2 text-sm text-slate-500">
               Browse products with clean filters and fast results.
             </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">Sort</span>
+            <select
+              name="sort"
+              defaultValue={sort}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            >
+              <option value="newest">Newest</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="title_asc">Title A-Z</option>
+            </select>
           </div>
         </div>
 

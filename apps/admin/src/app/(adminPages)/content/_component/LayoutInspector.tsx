@@ -530,25 +530,41 @@ export default function LayoutInspector({
                 })
               }
             />
-            <NumberField
-              label="Columns"
-              value={row.layout?.columns || row.cols.length || 1}
-              onChange={(n) =>
-                applyUpdate((draft) => {
-                  const target = draft.rows.find((r) => r.id === row.id);
-                  if (!target) return;
-                  target.layout = target.layout || {};
-                  target.layout.columns = n;
-                  if (n > (target.cols?.length || 0)) {
-                    const toAdd = n - (target.cols?.length || 0);
-                    target.cols = target.cols || [];
-                    for (let i = 0; i < toAdd; i++) {
-                      target.cols.push(createDefaultCol());
+
+            {(row.layout?.display || "grid") === "grid" ? (
+              <NumberField
+                label="Columns"
+                value={row.layout?.columns || row.cols.length || 1}
+                onChange={(n) =>
+                  applyUpdate((draft) => {
+                    const target = draft.rows.find((r) => r.id === row.id);
+                    if (!target) return;
+                    target.layout = target.layout || {};
+                    target.layout.columns = n;
+                    if (n > (target.cols?.length || 0)) {
+                      const toAdd = n - (target.cols?.length || 0);
+                      target.cols = target.cols || [];
+                      for (let i = 0; i < toAdd; i++) {
+                        target.cols.push(createDefaultCol());
+                      }
                     }
-                  }
-                })
-              }
-            />
+                  })
+                }
+              />
+            ) : (
+              <Checkbox
+                label="Wrap"
+                value={!!row.layout?.wrap}
+                onChange={(v) =>
+                  applyUpdate((draft) => {
+                    const target = draft.rows.find((r) => r.id === row.id);
+                    if (!target) return;
+                    target.layout = target.layout || {};
+                    target.layout.wrap = v;
+                  })
+                }
+              />
+            )}
           </>
         )}
 

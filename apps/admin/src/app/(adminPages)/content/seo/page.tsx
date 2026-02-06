@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ImageField from "../_component/ImageField";
 import { useAssetsMap } from "../_component/useAssetsMap";
 
@@ -17,6 +18,10 @@ export default function SiteSeoPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [siteName, setSiteName] = useState<string>("");
+  const [confirmInput, setConfirmInput] = useState("");
+  const router = useRouter();
 
   // Resolve searchParams promise once on mount
   useEffect(() => {
@@ -94,6 +99,24 @@ export default function SiteSeoPage({
 
     return () => {
       isCurrent = false;
+    };
+  }, [siteId]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    let active = true;
+    async function fetchSite() {
+      try {
+        const res = await fetch(`/api/admin/sites?site_id=${siteId}`);
+        const data = await res.json();
+        if (active) setSiteName(data.site?.name || "");
+      } catch {
+        if (active) setSiteName("");
+      }
+    }
+    fetchSite();
+    return () => {
+      active = false;
     };
   }, [siteId]);
 
@@ -247,7 +270,79 @@ export default function SiteSeoPage({
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
+
+          <div className="pt-8">
+            <div className="border border-red-200 rounded-xl p-4 bg-red-50/40">
+              <div className="text-sm font-semibold text-red-700">
+                Danger Zone
+              </div>
+              <div className="text-sm text-red-600 mt-1">
+                Deleting a site removes its pages, assets, menus, templates, and
+                drafts. This cannot be undone.
+              </div>
+              <button
+                className="mt-3 inline-flex items-center px-4 py-2 rounded text-white bg-red-600 hover:bg-red-700"
+                onClick={() => setConfirmDelete(true)}
+              >
+                Delete Site
+              </button>
+            </div>
+          </div>
         </>
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/70 overflow-hidden">
+            <div className="p-6 space-y-3">
+              <div className="text-lg font-semibold">Delete Site</div>
+              <div className="text-sm text-gray-600">
+                Permanently delete this site? This will remove pages, assets,
+                menus, templates, and all drafts.
+              </div>
+              <div className="text-xs text-gray-500">
+                Type <b>{siteName || "this site"}</b> to confirm.
+              </div>
+              <input
+                className="w-full border rounded px-3 py-2 text-sm"
+                placeholder="Type site name to confirm"
+                value={confirmInput}
+                onChange={(e) => setConfirmInput(e.target.value)}
+              />
+            </div>
+            <div className="px-6 py-4 border-t bg-gray-50/70 flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded border"
+                onClick={() => {
+                  setConfirmDelete(false);
+                  setConfirmInput("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className={`px-4 py-2 rounded text-white ${
+                  confirmInput.trim() &&
+                  siteName &&
+                  confirmInput.trim() === siteName
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-red-300 cursor-not-allowed"
+                }`}
+                onClick={async () => {
+                  if (!siteName || confirmInput.trim() !== siteName) return;
+                  setConfirmDelete(false);
+                  setConfirmInput("");
+                  await fetch(`/api/admin/sites?site_id=${siteId}`, {
+                    method: "DELETE",
+                  });
+                  router.push("/content/sites");
+                }}
+              >
+                Delete Site
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

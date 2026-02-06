@@ -153,6 +153,7 @@ export async function listPublishedProductsForStoreWithFilters(args: {
   attr_filters?: Array<{ code: string; values: string[] }>;
   min_price_cents?: number;
   max_price_cents?: number;
+  sort?: "newest" | "price_asc" | "price_desc" | "title_asc";
 }): Promise<StorefrontProduct[]> {
   const { pool } = await import("../../db-mysql");
 
@@ -218,13 +219,22 @@ export async function listPublishedProductsForStoreWithFilters(args: {
     params.push(args.max_price_cents);
   }
 
+  const sortSql =
+    args.sort === "price_asc"
+      ? "p.base_price_cents ASC"
+      : args.sort === "price_desc"
+        ? "p.base_price_cents DESC"
+        : args.sort === "title_asc"
+          ? "p.title ASC"
+          : "p.created_at DESC";
+
   const [productRows] = await pool.query<any[]>(
     `
     SELECT p.*
     FROM store_products sp
     JOIN products p ON p.id = sp.product_id AND p.tenant_id = sp.tenant_id
     WHERE ${where.join(" AND ")}
-    ORDER BY p.created_at DESC
+    ORDER BY ${sortSql}
     LIMIT ? OFFSET ?
     `,
     [...params, args.limit, args.offset ?? 0],

@@ -19,13 +19,30 @@ export function useAssetsMap(siteId: string) {
 
   async function refresh() {
     setLoading(true);
-    const res = await fetch(
-      `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-      { cache: "no-store" },
-    );
-    const data = await res.json();
-    setAssets(data.assets ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(
+        `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
+        { cache: "no-store" },
+      );
+
+      if (!res.ok) {
+        setAssets([]);
+        return;
+      }
+
+      const text = await res.text();
+      if (!text) {
+        setAssets([]);
+        return;
+      }
+
+      const data = JSON.parse(text);
+      setAssets(data.assets ?? []);
+    } catch {
+      setAssets([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
