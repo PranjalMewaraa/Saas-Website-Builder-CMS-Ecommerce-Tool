@@ -193,17 +193,6 @@ export default function TemplatesEditorClient({ siteId }: { siteId: string }) {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          <p>Loading templates...</p>
-        </div>
-      </div>
-    );
-  }
-
   const listItems = tab === "sections" ? filteredSections : filteredBlocks;
   const selected = tab === "sections" ? selectedSection : selectedBlock;
   const allCategories = useMemo(() => {
@@ -228,6 +217,17 @@ export default function TemplatesEditorClient({ siteId }: { siteId: string }) {
       a[0].localeCompare(b[0])
     );
   }, [listItems]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <p>Loading templates...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid lg:grid-cols-[320px_1fr] gap-6">
