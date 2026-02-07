@@ -14,8 +14,11 @@ type Menu = {
 
 type Props = {
   menu: Menu | null;
+  layout?: "three-col" | "two-col" | "two-col-nav-cta";
   ctaText?: string;
   ctaHref?: string;
+  ctaSecondaryText?: string;
+  ctaSecondaryHref?: string;
   contentWidth: string;
   logoUrl?: string;
   logoAlt?: string;
@@ -24,8 +27,11 @@ type Props = {
 
 export default function HeaderV1({
   menu,
+  layout = "three-col",
   ctaText,
   ctaHref,
+  ctaSecondaryText,
+  ctaSecondaryHref,
   logoUrl,
   logoAlt,
   contentWidth,
@@ -52,50 +58,91 @@ export default function HeaderV1({
               ? "1536px"
               : "1280px";
 
+  const logoNode = logoUrl ? (
+    <Link href="/" className="flex items-center gap-2">
+      <Image
+        src={logoUrl}
+        alt={logoAlt || "Logo"}
+        width={140}
+        height={40}
+        className="h-8 w-auto"
+        priority
+      />
+    </Link>
+  ) : (
+    <Link href="/" className="font-semibold">
+      Store
+    </Link>
+  );
+
+  const navNode = (
+    <nav className="flex items-center gap-6 overflow-x-auto">
+      {navItems.map((n) => (
+        <Link
+          key={n.id}
+          href={n.ref?.slug || n.ref?.href || "#"}
+          className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
+        >
+          {n.label}
+        </Link>
+      ))}
+    </nav>
+  );
+
+  const ctaNode =
+    ctaText && ctaHref ? (
+      <div className="flex items-center gap-2">
+        {ctaSecondaryText && ctaSecondaryHref ? (
+          <Link
+            href={ctaSecondaryHref}
+            className="px-4 py-2 rounded-full border border-black/15 text-sm font-medium hover:border-black/25 transition"
+          >
+            {ctaSecondaryText}
+          </Link>
+        ) : null}
+        <Link
+          href={ctaHref}
+          className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
+        >
+          {ctaText}
+        </Link>
+      </div>
+    ) : (
+      <div className="w-[1px] h-8 bg-black/10" />
+    );
+
   return (
     <header className="w-full border-b border-black/10 bg-white/70 backdrop-blur">
       <div
         style={{ maxHeight: "4rem", maxWidth: maxWidth }}
-        className="mx-auto px-4 py-3 flex items-center justify-between gap-6"
+        className={`mx-auto px-4 py-3 ${
+          layout === "stacked"
+            ? "flex flex-col gap-3"
+            : "flex items-center justify-between gap-6"
+        }`}
       >
-        {logoUrl ? (
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src={logoUrl}
-              alt={logoAlt || "Logo"}
-              width={140}
-              height={40}
-              className="h-8 w-auto"
-              priority
-            />
-          </Link>
+        {layout === "two-col" ? (
+          <>
+            <div className="flex items-center gap-6">
+              {logoNode}
+              {navNode}
+            </div>
+            {ctaNode}
+          </>
+        ) : layout === "two-col-nav-cta" ? (
+          <>
+            {logoNode}
+            <div className="flex items-center gap-6">
+              {navNode}
+              {ctaNode}
+            </div>
+          </>
         ) : (
-          <Link href="/" className="font-semibold">
-            Store
-          </Link>
-        )}
-
-        <nav className="flex items-center gap-6 overflow-x-auto">
-          {navItems.map((n) => (
-            <Link
-              key={n.id}
-              href={n.ref?.slug || n.ref?.href || "#"}
-              className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-
-        {ctaText && ctaHref ? (
-          <Link
-            href={ctaHref}
-            className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
-          >
-            {ctaText}
-          </Link>
-        ) : (
-          <div className="w-[1px] h-8 bg-black/10" />
+          <>
+            {logoNode}
+            {navNode}
+            {ctaNode}
+          </>
         )}
       </div>
     </header>

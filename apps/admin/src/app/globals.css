@@ -6,10 +6,8 @@
   color: inherit;
 }
 .theme-root a {
-  color: var(--color-primary, #2563eb);
 }
 .theme-root a:not([class*="text-"]):not([class*="bg-"]) {
-  color: var(--color-primary, #2563eb);
 }
 .theme-root
   :where(button, a[role="button"], a.btn, a.button):not([class*="bg-"]) {

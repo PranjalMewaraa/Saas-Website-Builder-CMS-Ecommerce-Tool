@@ -134,6 +134,13 @@ export function VisualInspector({
     onChange(next);
   }
 
+  function replaceStyleOverrides(overrides: any) {
+    const next = structuredClone(block);
+    next.style = next.style ?? { overrides: {} };
+    next.style.overrides = { ...(overrides || {}) };
+    onChange(next);
+  }
+
   function setPreset(id: string) {
     const next = structuredClone(block);
     next.style = { ...next.style, presetId: id || undefined };
@@ -204,6 +211,7 @@ export function VisualInspector({
         setProp={setProp}
         setProps={setProps}
         setStyleOverrides={setStyleOverrides}
+        replaceStyleOverrides={replaceStyleOverrides}
         setPropPath={setPropPath}
         siteId={siteId}
         assetsMap={assetsMap}

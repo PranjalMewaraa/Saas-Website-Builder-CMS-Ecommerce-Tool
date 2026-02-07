@@ -19,6 +19,7 @@ export function BlockPropsForm({
   setProp,
   setProps,
   setStyleOverrides,
+  replaceStyleOverrides,
   setPropPath,
   propPath,
   siteId,
@@ -149,7 +150,7 @@ export function BlockPropsForm({
             <option value="">(select a form)</option>
             {forms.map((f: any) => (
               <option key={f._id} value={f._id}>
-                {f.name} — {f._id}
+                {f.name} - {f._id}
               </option>
             ))}
           </select>
@@ -434,7 +435,7 @@ export function BlockPropsForm({
               <option value="">(select a menu)</option>
               {menus.map((m: any) => (
                 <option key={m._id} value={m._id}>
-                  {m.name} — {m._id}
+                  {m.name} - {m._id}
                   {m.slot ? ` (slot: ${m.slot})` : ""}
                 </option>
               ))}
@@ -1748,7 +1749,15 @@ function RichTextEditor({
 
 function defaultPropsFor(type: string) {
   if (type === "Header/V1")
-    return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
+    return {
+      menuId: "menu_main",
+      layout: "three-col",
+      ctaText: "Shop",
+      ctaHref: "/products",
+      ctaSecondaryText: "Learn more",
+      ctaSecondaryHref: "/about",
+      contentWidth: "xl",
+    };
   if (type === "Footer/V1")
     return {
       menuId: "menu_footer",
@@ -1834,7 +1843,7 @@ function defaultPropsFor(type: string) {
         {
           title: "Fully Responsive Design",
           description:
-            "Looks perfect on every device — mobile, tablet, desktop — no compromises.",
+            "Looks perfect on every device - mobile, tablet, desktop - no compromises.",
         },
         {
           title: "Easy Customization",
@@ -1849,7 +1858,7 @@ function defaultPropsFor(type: string) {
         {
           title: "Dark Mode Ready",
           description:
-            "Built-in support for dark mode — just toggle your system preference.",
+            "Built-in support for dark mode - just toggle your system preference.",
         },
         {
           title: "Regular Updates",

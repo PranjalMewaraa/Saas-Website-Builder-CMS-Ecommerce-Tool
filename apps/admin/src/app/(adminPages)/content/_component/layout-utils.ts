@@ -237,12 +237,21 @@ export function createAtomicBlock(
     };
   }
   if (type === "Atomic/Group") {
+    const row = createDefaultRow();
+    if (row.cols && row.cols[0]) {
+      row.cols[0].style = {
+        ...(row.cols[0].style || {}),
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+      };
+    }
     return {
       id: uid("atom"),
       type,
       props: {
         style: { padding: { top: 16, right: 16, bottom: 16, left: 16 } },
-        rows: [createDefaultRow()],
+        rows: [row],
       },
       style: { width: "100%" },
     };

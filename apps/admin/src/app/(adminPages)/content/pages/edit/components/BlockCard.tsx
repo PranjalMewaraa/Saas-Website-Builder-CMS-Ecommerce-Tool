@@ -113,6 +113,13 @@ export default function BlockCard({
     onChange(next);
   }
 
+  function replaceStyleOverrides(overrides: any) {
+    const next = structuredClone(block);
+    next.style = next.style ?? { overrides: {} };
+    next.style.overrides = { ...(overrides || {}) };
+    onChange(next);
+  }
+
   function setPreset(id: string) {
     const next = structuredClone(block);
     next.style = { ...next.style, presetId: id || undefined };
@@ -263,6 +270,7 @@ export default function BlockCard({
                     setProp={setProp}
                     setProps={setProps}
                     setStyleOverrides={setStyleOverrides}
+                    replaceStyleOverrides={replaceStyleOverrides}
                     siteId={siteId}
                     assetsMap={assetsMap}
                     forms={forms}
@@ -673,7 +681,15 @@ function Checkbox({ label, value, onChange }: any) {
 
 function defaultPropsFor(type: string) {
   if (type === "Header/V1")
-    return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
+    return {
+      menuId: "menu_main",
+      layout: "three-col",
+      ctaText: "Shop",
+      ctaHref: "/products",
+      ctaSecondaryText: "Learn more",
+      ctaSecondaryHref: "/about",
+      contentWidth: "xl",
+    };
   if (type === "Footer/V1") return { menuId: "menu_footer" };
   if (type === "Hero/V1")
     return {

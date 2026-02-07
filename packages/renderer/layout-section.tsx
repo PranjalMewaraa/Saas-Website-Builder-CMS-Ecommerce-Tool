@@ -572,13 +572,11 @@ function renderRows(rows: LayoutRow[], assets: any, menus?: any) {
               }}
             >
               {renderVideoLayer(colVideo)}
-              <div style={{ position: "relative", zIndex: 2 }}>
               {(col.blocks || []).map((b) => (
                 <div key={b.id} data-atomic-id={b.id}>
                   {renderAtomicBlock(b, assets, menus)}
                 </div>
               ))}
-              </div>
             </div>
           );
         })}

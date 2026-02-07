@@ -821,7 +821,15 @@ function blockPreviewLabel(type: string) {
 
 function defaultPropsFor(type: string) {
   if (type === "Header/V1")
-    return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
+    return {
+      menuId: "menu_main",
+      layout: "three-col",
+      ctaText: "Shop",
+      ctaHref: "/products",
+      ctaSecondaryText: "Learn more",
+      ctaSecondaryHref: "/about",
+      contentWidth: "xl",
+    };
   if (type === "Footer/V1") return { menuId: "menu_footer" };
   if (type === "Hero/V1")
     return {

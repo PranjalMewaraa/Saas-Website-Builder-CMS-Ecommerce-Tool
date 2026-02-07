@@ -69,6 +69,7 @@ export default function ImageField({
         <input
           className="border rounded p-2 w-full font-mono text-sm"
           value={assetIdValue}
+          onChange={(e) => onChangeAssetId(e.target.value)}
           placeholder={placeholder || "(asset id)"}
         />
         <button

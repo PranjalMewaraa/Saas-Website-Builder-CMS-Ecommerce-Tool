@@ -74,7 +74,7 @@ function ProductCardV1({
       className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:ring-offset-2"
     >
       {/* Image */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
+      <div className="relative h-64 w-full overflow-hidden rounded-xl bg-slate-100">
         {primaryImage ? (
           <img
             src={primaryImageUrl}
