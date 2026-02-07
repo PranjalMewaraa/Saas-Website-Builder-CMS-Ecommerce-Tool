@@ -956,6 +956,16 @@ export default function LayoutInspector({
 
         {atom.type === "Atomic/Badge" && (
           <>
+            <Select
+              label="Style"
+              value={atom.props?.variant || "type-1"}
+              options={["type-1", "type-2", "type-3", "type-4", "type-5"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, variant: v };
+                })
+              }
+            />
             <Field
               label="Text"
               value={atom.props?.text || "Badge"}

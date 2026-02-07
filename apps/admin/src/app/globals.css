@@ -1,4 +1,21 @@
 @import "tailwindcss";
+.theme-root {
+  background-color: var(--color-bg, #ffffff);
+}
+.theme-root :where(p, h1, h2, h3, h4, h5, h6, li, span, small, blockquote) {
+  color: inherit;
+}
+.theme-root a {
+  color: var(--color-primary, #2563eb);
+}
+.theme-root a:not([class*="text-"]):not([class*="bg-"]) {
+  color: var(--color-primary, #2563eb);
+}
+.theme-root
+  :where(button, a[role="button"], a.btn, a.button):not([class*="bg-"]) {
+  background-color: var(--color-primary, #2563eb);
+  color: var(--color-on-primary, #ffffff);
+}
 .card {
   border: 1px solid #ddd;
   padding: 20px;

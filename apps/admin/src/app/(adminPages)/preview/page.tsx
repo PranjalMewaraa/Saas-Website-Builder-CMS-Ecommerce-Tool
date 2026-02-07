@@ -82,8 +82,17 @@ export default async function PreviewPage({
     }
   }
 
+  const themeTokens = { ...(snapshot.theme?.tokens || {}) } as Record<
+    string,
+    string
+  >;
+  if (!themeTokens["--color-on-primary"] && themeTokens["--color-primary"]) {
+    const onPrimary = pickOnColor(themeTokens["--color-primary"]);
+    if (onPrimary) themeTokens["--color-on-primary"] = onPrimary;
+  }
+
   return (
-    <div style={(snapshot.theme?.tokens || {}) as React.CSSProperties}>
+    <div className="theme-root" style={themeTokens as React.CSSProperties}>
       <div className="border-b p-2 text-sm bg-yellow-100">
         Preview Mode · Draft Snapshot:{" "}
         <span className="font-mono">{site.draft_snapshot_id}</span> · Path:{" "}
@@ -102,4 +111,24 @@ export default async function PreviewPage({
       />
     </div>
   );
+}
+
+function pickOnColor(color: string) {
+  const hex = color.trim();
+  if (!hex.startsWith("#")) return "";
+  const raw = hex.slice(1);
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
+
+  if (full.length !== 6) return "";
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 160 ? "#0f172a" : "#ffffff";
 }

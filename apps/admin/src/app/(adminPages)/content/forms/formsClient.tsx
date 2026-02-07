@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import {
   ChevronDown,
   ChevronUp,
@@ -53,6 +54,7 @@ export default function FormsClient({
   siteId: string;
   urlMode?: string;
 }) {
+  const { toast } = useUI();
   const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
   const [forms, setForms] = useState<any[]>([]);
   const [activeId, setActiveId] = useState<string>("");
@@ -125,7 +127,11 @@ export default function FormsClient({
     } catch (err) {
       console.error(err);
       setSaveStatus("idle");
-      alert("Failed to save. Check console.");
+      toast({
+        variant: "error",
+        title: "Save failed",
+        description: "Check console for details.",
+      });
     }
   }
 
@@ -331,7 +337,12 @@ export default function FormsClient({
                   <button
                     onClick={() => {
                       const parsed = safeJsonParse(schemaJson);
-                      if (!parsed.ok) return alert(parsed.error);
+                      if (!parsed.ok)
+                        return toast({
+                          variant: "error",
+                          title: "Save failed",
+                          description: parsed.error,
+                        });
                       setSchema(parsed.value);
                     }}
                     className="px-4 py-2 border rounded-lg text-sm hover:bg-muted"
@@ -341,7 +352,12 @@ export default function FormsClient({
                   <button
                     onClick={async () => {
                       const parsed = safeJsonParse(schemaJson);
-                      if (!parsed.ok) return alert(parsed.error);
+                      if (!parsed.ok)
+                        return toast({
+                          variant: "error",
+                          title: "Save failed",
+                          description: parsed.error,
+                        });
                       setSchema(parsed.value);
                       await save();
                     }}

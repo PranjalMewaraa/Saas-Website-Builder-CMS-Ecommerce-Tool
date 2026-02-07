@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import { Save, Trash2, Search, Layout, Blocks } from "lucide-react";
 import { useAssetsMap } from "../_component/useAssetsMap";
 import SectionTemplatePreview from "../../builder/components/SectionTemplatePreview";
@@ -14,6 +15,7 @@ function normalize(s: string) {
 type Tab = "sections" | "blocks";
 
 export default function TemplatesEditorClient({ siteId }: { siteId: string }) {
+  const { confirm, toast } = useUI();
   const [tab, setTab] = useState<Tab>("sections");
   const [search, setSearch] = useState("");
   const [sectionTemplates, setSectionTemplates] = useState<any[]>([]);
@@ -162,7 +164,11 @@ export default function TemplatesEditorClient({ siteId }: { siteId: string }) {
 
   async function deleteTemplate() {
     if (tab === "sections" && selectedSection) {
-      const ok = confirm("Delete this section template?");
+      const ok = await confirm({
+        title: "Delete section template?",
+        confirmText: "Delete",
+        tone: "danger",
+      });
       if (!ok) return;
       await fetch(
         `/api/admin/section-templates?site_id=${encodeURIComponent(siteId)}&template_id=${encodeURIComponent(selectedSection._id)}`,
@@ -178,7 +184,11 @@ export default function TemplatesEditorClient({ siteId }: { siteId: string }) {
     }
 
     if (tab === "blocks" && selectedBlock) {
-      const ok = confirm("Delete this block template?");
+      const ok = await confirm({
+        title: "Delete block template?",
+        confirmText: "Delete",
+        tone: "danger",
+      });
       if (!ok) return;
       await fetch(
         `/api/admin/block-templates?site_id=${encodeURIComponent(siteId)}&template_id=${encodeURIComponent(selectedBlock._id)}`,

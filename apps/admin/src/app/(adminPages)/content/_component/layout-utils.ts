@@ -275,7 +275,7 @@ export function createAtomicBlock(
     return {
       id: uid("atom"),
       type,
-      props: { text: "Badge" },
+      props: { text: "Badge", variant: "type-1" },
       style: {},
     };
   }

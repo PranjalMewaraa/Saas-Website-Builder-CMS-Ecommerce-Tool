@@ -241,14 +241,11 @@ export default function AdminShell({
               );
             })}
           </nav>
-
         </aside>
 
         {/* Main area */}
-        <div className="flex flex-col min-w-0 pl-[260px]">
-          <main className="flex-1 p-6 overflow-auto bg-gray-50">
-            {children}
-          </main>
+        <div className="flex flex-col min-w-0 pl-65">
+          <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
         </div>
       </div>
     </>

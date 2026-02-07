@@ -2,6 +2,7 @@
 
 import { INDUSTRY_TEMPLATES } from "@acme/db-mysql/industryTemplate";
 import { useEffect, useMemo, useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 
 type Attribute = {
   id: string;
@@ -44,6 +45,7 @@ interface ProductWizardProps {
 }
 
 export default function ProductWizard({ siteId }: ProductWizardProps) {
+  const { toast } = useUI();
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -683,7 +685,13 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
 
           <div className="flex justify-end">
             <button
-              onClick={() => alert("Product created successfully!")}
+              onClick={() =>
+                toast({
+                  variant: "success",
+                  title: "Product created",
+                  description: "Your product was created successfully.",
+                })
+              }
               className="px-8 py-3 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition"
             >
               Finish

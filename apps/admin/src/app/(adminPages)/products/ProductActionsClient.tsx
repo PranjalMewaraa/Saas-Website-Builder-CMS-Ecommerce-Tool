@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useUI } from "@/app/_components/ui/UiProvider";
 
 export default function ProductActionsClient({
   siteId,
@@ -14,10 +15,16 @@ export default function ProductActionsClient({
   productId: string;
   status: "draft" | "active" | "archived";
 }) {
+  const { confirm, toast } = useUI();
   const [busy, setBusy] = useState(false);
 
   async function archiveProduct() {
-    const ok = confirm("Archive this product? It will be hidden from listings.");
+    const ok = await confirm({
+      title: "Archive product?",
+      description: "It will be hidden from listings.",
+      confirmText: "Archive",
+      tone: "danger",
+    });
     if (!ok) return;
     setBusy(true);
     await fetch(
@@ -29,9 +36,12 @@ export default function ProductActionsClient({
   }
 
   async function hardDelete() {
-    const ok = confirm(
-      "Permanently delete this product? This cannot be undone.",
-    );
+    const ok = await confirm({
+      title: "Delete product?",
+      description: "This cannot be undone.",
+      confirmText: "Delete",
+      tone: "danger",
+    });
     if (!ok) return;
     setBusy(true);
     await fetch(
@@ -63,7 +73,11 @@ export default function ProductActionsClient({
           className="px-3 py-2 rounded border text-sm"
           disabled={busy}
           onClick={async () => {
-            const ok = confirm("Restore this product to Draft?");
+            const ok = await confirm({
+              title: "Restore product?",
+              description: "Restore this product to Draft.",
+              confirmText: "Restore",
+            });
             if (!ok) return;
             setBusy(true);
             await fetch(

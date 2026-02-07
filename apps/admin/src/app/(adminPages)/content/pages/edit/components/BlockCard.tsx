@@ -87,6 +87,12 @@ export default function BlockCard({
     onChange(next);
   }
 
+  function setProps(nextProps: any) {
+    const next = structuredClone(block);
+    next.props = nextProps ?? {};
+    onChange(next);
+  }
+
   function setStyle(path: string, val: any) {
     const next = structuredClone(block);
     next.style = next.style ?? { overrides: {} };
@@ -97,6 +103,13 @@ export default function BlockCard({
       cur = cur[parts[i]] = cur[parts[i]] ?? {};
     }
     cur[parts[parts.length - 1]] = val;
+    onChange(next);
+  }
+
+  function setStyleOverrides(overrides: any) {
+    const next = structuredClone(block);
+    next.style = next.style ?? { overrides: {} };
+    next.style.overrides = { ...(next.style.overrides || {}), ...overrides };
     onChange(next);
   }
 
@@ -248,6 +261,8 @@ export default function BlockCard({
                     type={block.type}
                     props={block.props ?? {}}
                     setProp={setProp}
+                    setProps={setProps}
+                    setStyleOverrides={setStyleOverrides}
                     siteId={siteId}
                     assetsMap={assetsMap}
                     forms={forms}

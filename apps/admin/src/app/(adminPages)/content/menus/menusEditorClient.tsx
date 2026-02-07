@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import { useEditorMode } from "../_component/useEditorMode";
 import EditorModeToggle from "../_component/EditorModeToggle";
 
@@ -56,6 +57,7 @@ export default function MenusEditorClient({
   onSave,
 }: Props) {
   const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
+  const { toast } = useUI();
 
   const [menus, setMenus] = useState<any[]>([]);
   const [activeMenuId, setActiveMenuId] = useState(activeMenuIdFor);
@@ -125,11 +127,15 @@ export default function MenusEditorClient({
         ),
       );
 
-      alert("Menu draft saved ✓");
+      toast({ variant: "success", title: "Menu draft saved" });
       if (onSave) onSave();
     } catch (err: any) {
       console.error(err);
-      alert(`Failed to save: ${err.message}`);
+      toast({
+        variant: "error",
+        title: "Save failed",
+        description: err.message,
+      });
     }
   };
 
@@ -158,7 +164,10 @@ export default function MenusEditorClient({
       setJsonText("[]");
       setNewMenuName("");
     } catch (err) {
-      alert("Failed to create menu");
+      toast({
+        variant: "error",
+        title: "Failed to create menu",
+      });
     }
   };
 
@@ -372,7 +381,12 @@ export default function MenusEditorClient({
               type="button"
               onClick={() => {
                 const parsed = safeJsonParse(jsonText);
-                if (!parsed.ok) return alert(parsed.error);
+                if (!parsed.ok)
+                  return toast({
+                    variant: "error",
+                    title: "Save failed",
+                    description: parsed.error,
+                  });
                 setTree(parsed.value);
               }}
               className="border border-gray-300 hover:bg-gray-50 px-5 py-2 rounded text-sm"
@@ -384,7 +398,12 @@ export default function MenusEditorClient({
               type="button"
               onClick={() => {
                 const parsed = safeJsonParse(jsonText);
-                if (!parsed.ok) return alert(parsed.error);
+                if (!parsed.ok)
+                  return toast({
+                    variant: "error",
+                    title: "Save failed",
+                    description: parsed.error,
+                  });
                 saveTree(parsed.value);
               }}
               className="bg-black text-white px-6 py-2 rounded text-sm font-medium"

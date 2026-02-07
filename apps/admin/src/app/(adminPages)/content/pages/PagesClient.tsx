@@ -14,6 +14,7 @@ import {
   FileText,
   MoreHorizontal,
 } from "lucide-react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 
 function normalizeSlug(input: string) {
   let s = (input || "").trim();
@@ -50,6 +51,16 @@ const TEMPLATES = [
   { key: "about", label: "About", desc: "Classic about page layout" },
   { key: "contact", label: "Contact", desc: "Hero + simple contact form" },
   {
+    key: "privacy",
+    label: "Privacy Policy",
+    desc: "Policy layout with header + rich text + footer",
+  },
+  {
+    key: "terms",
+    label: "Terms & Conditions",
+    desc: "Policy layout with header + rich text + footer",
+  },
+  {
     key: "product_list",
     label: "Product List",
     desc: "Filterable product catalog page",
@@ -64,6 +75,8 @@ const TEMPLATES = [
 const TEMPLATE_DEFAULT_SLUGS: Record<string, string> = {
   product_list: "/products",
   product_detail: "/products/[slug]",
+  privacy: "/privacy",
+  terms: "/terms",
 };
 
 type Page = {
@@ -77,6 +90,7 @@ interface Props {
 }
 
 export default function PagesClient({ siteId }: Props) {
+  const { prompt, toast } = useUI();
   const [pages, setPages] = useState<Page[]>([]);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -189,12 +203,18 @@ export default function PagesClient({ siteId }: Props) {
           },
         );
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || "Create failed");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          if (res.status === 409 && data?.page_id) {
+            setCreateOpen(false);
+            await refresh();
+            window.location.href = `/content/pages/edit?site_id=${encodeURIComponent(
+              siteId,
+            )}&page_id=${encodeURIComponent(data.page_id)}`;
+            return;
+          }
+          throw new Error(data.error || "Create failed");
         }
-
-        const data = await res.json();
         setCreateOpen(false);
         await refresh();
 
@@ -208,14 +228,22 @@ export default function PagesClient({ siteId }: Props) {
   }
 
   async function duplicatePage(page: Page) {
-    const newName = prompt(
-      "New page name",
-      `Copy of ${page.name || page.slug}`,
-    );
+    const newName = await prompt({
+      title: "New page name",
+      defaultValue: `Copy of ${page.name || page.slug}`,
+      placeholder: "Page name",
+      confirmText: "Continue",
+    });
     if (!newName?.trim()) return;
 
     const suggested = page.slug === "/" ? "/home-copy" : `${page.slug}-copy`;
-    const newSlugRaw = prompt("New slug", suggested);
+    const newSlugRaw = await prompt({
+      title: "New slug",
+      defaultValue: suggested,
+      placeholder: "/new-slug",
+      confirmText: "Duplicate",
+    });
+    if (!newSlugRaw) return;
     const newSlug = normalizeSlug(newSlugRaw || suggested);
 
     startTransition(async () => {
@@ -242,6 +270,11 @@ export default function PagesClient({ siteId }: Props) {
         )}`;
       } catch (err) {
         console.error("Duplicate failed", err);
+        toast({
+          variant: "error",
+          title: "Duplicate failed",
+          description: "Please try again.",
+        });
       }
     });
   }
@@ -414,7 +447,10 @@ export default function PagesClient({ siteId }: Props) {
                   onChange={(e) => {
                     const next = e.target.value;
                     setCreateName(next);
-                    if (!createSlugDirty) {
+                    if (
+                      !createSlugDirty &&
+                      !["product_list", "product_detail"].includes(createTemplate)
+                    ) {
                       setCreateSlug(slugFromName(next));
                     }
                   }}
@@ -435,10 +471,15 @@ export default function PagesClient({ siteId }: Props) {
                   }}
                   onBlur={() => setCreateSlug(normalizeSlug(createSlug))}
                   placeholder="/services"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl font-mono bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl font-mono bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all disabled:bg-gray-50 disabled:text-gray-500"
+                  disabled={["product_list", "product_detail"].includes(
+                    createTemplate,
+                  )}
                 />
                 <p className="text-xs text-gray-500">
-                  Must start with / • no spaces, ?, #
+                  {["product_list", "product_detail"].includes(createTemplate)
+                    ? "This template uses a fixed slug required for routing."
+                    : "Must start with / • no spaces, ?, #"}
                 </p>
               </div>
 

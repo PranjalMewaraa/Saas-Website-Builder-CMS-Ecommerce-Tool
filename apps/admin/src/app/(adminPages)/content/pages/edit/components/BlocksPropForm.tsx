@@ -1,6 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import Placeholder from "@tiptap/extension-placeholder";
+import Typography from "@tiptap/extension-typography";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import ImageField from "../../../_component/ImageField";
+import ColorPickerInput from "../../../_component/ColorPickerInput";
 
 const DEFAULT_IMAGE =
   "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
@@ -8,6 +17,8 @@ export function BlockPropsForm({
   type,
   props,
   setProp,
+  setProps,
+  setStyleOverrides,
   setPropPath,
   propPath,
   siteId,
@@ -18,6 +29,7 @@ export function BlockPropsForm({
 }: any) {
   console.log(type);
   const [variant, setVariant] = useState(props.variant || "basic");
+  const [richMode, setRichMode] = useState<"visual" | "html">("visual");
   const assignedHeader = menus.find((m: any) => m.slot === "header");
   const assignedFooter = menus.find((m: any) => m.slot === "footer");
 
@@ -41,6 +53,12 @@ export function BlockPropsForm({
       setVariant(props.variant || "basic");
     }
   }, [type, props.variant]);
+
+  useEffect(() => {
+    if (type === "Utility/RichText") {
+      setRichMode("visual");
+    }
+  }, [type]);
 
   if (type === "Header/V1") {
     return (
@@ -159,6 +177,250 @@ export function BlockPropsForm({
   }
 
   if (type === "Footer/V1") {
+    const panelBg = props.panelBg || { type: "gradient" };
+    const footerPresets = [
+      {
+        id: "midnight",
+        label: "Midnight",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "rgba(255,255,255,0.06)",
+              to: "rgba(255,255,255,0.0)",
+              angle: 140,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.08)",
+          panelBorderWidth: 1,
+          panelRadius: 28,
+          panelTextColor: "#94a3b8",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#94a3b8",
+        },
+      },
+      {
+        id: "soft-light",
+        label: "Soft Light",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "solid",
+            color: "rgba(15,23,42,0.04)",
+          },
+          panelBorderColor: "rgba(15,23,42,0.08)",
+          panelBorderWidth: 1,
+          panelRadius: 22,
+          panelTextColor: "#0f172a",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+        },
+      },
+      {
+        id: "glass",
+        label: "Glass",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "rgba(255,255,255,0.18)",
+              to: "rgba(255,255,255,0.05)",
+              angle: 160,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.35)",
+          panelBorderWidth: 1,
+          panelRadius: 30,
+          panelTextColor: "#0f172a",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#111827" },
+          textColor: "#e2e8f0",
+        },
+      },
+      {
+        id: "sunset",
+        label: "Sunset",
+        props: {
+          layout: "simple",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#f97316",
+              to: "#ec4899",
+              angle: 120,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.15)",
+          panelBorderWidth: 0,
+          panelRadius: 26,
+          panelTextColor: "#ffffff",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0b0b12" },
+          textColor: "#f8fafc",
+        },
+      },
+      {
+        id: "royal",
+        label: "Royal",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#111827",
+              to: "#4c1d95",
+              angle: 135,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.08)",
+          panelBorderWidth: 1,
+          panelRadius: 24,
+          panelTextColor: "#e2e8f0",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0b1020" },
+          textColor: "#e2e8f0",
+        },
+      },
+      {
+        id: "sand",
+        label: "Sand",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "solid",
+            color: "#f7f2ea",
+          },
+          panelBorderColor: "rgba(120, 88, 62, 0.16)",
+          panelBorderWidth: 1,
+          panelRadius: 20,
+          panelTextColor: "#3b2f2a",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#f3ede2" },
+          textColor: "#3b2f2a",
+        },
+      },
+      {
+        id: "ocean",
+        label: "Ocean",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#0ea5e9",
+              to: "#0f172a",
+              angle: 145,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.18)",
+          panelBorderWidth: 1,
+          panelRadius: 26,
+          panelTextColor: "#e2f4ff",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#061629" },
+          textColor: "#e2f4ff",
+        },
+      },
+      {
+        id: "forest",
+        label: "Forest",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#064e3b",
+              to: "#022c22",
+              angle: 160,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.12)",
+          panelBorderWidth: 1,
+          panelRadius: 24,
+          panelTextColor: "#d1fae5",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#041f18" },
+          textColor: "#d1fae5",
+        },
+      },
+      {
+        id: "mono",
+        label: "Mono",
+        props: {
+          layout: "simple",
+          panelBg: {
+            type: "solid",
+            color: "#111111",
+          },
+          panelBorderColor: "rgba(255,255,255,0.1)",
+          panelBorderWidth: 1,
+          panelRadius: 18,
+          panelTextColor: "#f5f5f5",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0a0a0a" },
+          textColor: "#f5f5f5",
+        },
+      },
+      {
+        id: "blush",
+        label: "Blush",
+        props: {
+          layout: "simple",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#fff1f2",
+              to: "#fecdd3",
+              angle: 135,
+            },
+          },
+          panelBorderColor: "rgba(190, 24, 93, 0.12)",
+          panelBorderWidth: 1,
+          panelRadius: 22,
+          panelTextColor: "#9f1239",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#fff7f9" },
+          textColor: "#9f1239",
+        },
+      },
+      {
+        id: "slate",
+        label: "Slate",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "rgba(15,23,42,0.85)",
+              to: "rgba(30,41,59,0.95)",
+              angle: 135,
+            },
+          },
+          panelBorderColor: "rgba(148,163,184,0.25)",
+          panelBorderWidth: 1,
+          panelRadius: 26,
+          panelTextColor: "#cbd5f5",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#cbd5f5",
+        },
+      },
+    ];
     return (
       <div className="space-y-3">
         {menus.length ? (
@@ -210,6 +472,12 @@ export function BlockPropsForm({
           onChange={(v: any) => setProp("badgeText", v)}
           placeholder="Designed for modern storefronts"
         />
+        <Select
+          label="Badge Style"
+          value={props.badgeStyle || "pill"}
+          onChange={(v: any) => setProp("badgeStyle", v)}
+          options={["pill", "outline", "soft", "glass", "text", "tag"]}
+        />
         <label className="inline-flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -218,6 +486,154 @@ export function BlockPropsForm({
           />
           Show social icons
         </label>
+        <Select
+          label="Social Style"
+          value={props.socialStyle || "pill"}
+          onChange={(v: any) => setProp("socialStyle", v)}
+          options={[
+            "pill",
+            "outline",
+            "soft",
+            "glass",
+            "square",
+            "minimal",
+            "label",
+          ]}
+        />
+        <div className="space-y-2 border rounded-lg p-3">
+          <div className="text-sm font-medium">Presets</div>
+          {[
+            {
+              title: "Dark",
+              items: footerPresets.filter((p) =>
+                ["midnight", "royal", "slate", "mono", "ocean", "forest"].includes(
+                  p.id
+                ),
+              ),
+            },
+            {
+              title: "Light",
+              items: footerPresets.filter((p) =>
+                ["soft-light", "sand", "blush"].includes(p.id),
+              ),
+            },
+            {
+              title: "Colorful",
+              items: footerPresets.filter((p) => ["sunset"].includes(p.id)),
+            },
+          ].map((group) =>
+            group.items.length ? (
+              <div key={group.title} className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {group.title}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {group.items.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className="text-xs border rounded-lg p-2 text-left hover:bg-gray-50"
+                      onClick={() => {
+                        const merged = { ...(props || {}), ...preset.props };
+                        if (setProps) {
+                          setProps(merged);
+                        } else {
+                          Object.entries(preset.props).forEach(([k, v]) => {
+                            setProp(k, v);
+                          });
+                        }
+                        if (preset.styleOverrides && setStyleOverrides) {
+                          setStyleOverrides(preset.styleOverrides);
+                        }
+                      }}
+                    >
+                      <div
+                        className="h-14 rounded-md border border-black/10"
+                        style={{
+                          background:
+                            preset.props.panelBg?.type === "solid"
+                              ? preset.props.panelBg.color
+                              : preset.props.panelBg?.type === "gradient"
+                                ? `linear-gradient(${preset.props.panelBg.gradient?.angle ?? 135}deg, ${
+                                    preset.props.panelBg.gradient?.from
+                                  }, ${preset.props.panelBg.gradient?.to})`
+                                : "transparent",
+                        }}
+                      />
+                      <div className="mt-2 font-medium">{preset.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null,
+          )}
+        </div>
+        <div className="space-y-2 border rounded-lg p-3">
+          <div className="text-sm font-medium">Panel Background</div>
+          <Select
+            label="Type"
+            value={panelBg.type || "gradient"}
+            onChange={(v: any) => setPropPath("panelBg.type", v)}
+            options={["none", "solid", "gradient"]}
+          />
+          {panelBg.type === "solid" ? (
+            <ColorPickerInput
+              label="Color"
+              value={panelBg.color || ""}
+              onChange={(v: any) => setPropPath("panelBg.color", v)}
+              placeholder="#0f172a"
+            />
+          ) : null}
+          {panelBg.type === "gradient" ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="From"
+                  value={panelBg.gradient?.from || ""}
+                  onChange={(v: any) =>
+                    setPropPath("panelBg.gradient.from", v)
+                  }
+                  placeholder="rgba(255,255,255,0.05)"
+                />
+                <ColorPickerInput
+                  label="To"
+                  value={panelBg.gradient?.to || ""}
+                  onChange={(v: any) => setPropPath("panelBg.gradient.to", v)}
+                  placeholder="rgba(255,255,255,0)"
+                />
+              </div>
+              <NumberField
+                label="Angle"
+                value={panelBg.gradient?.angle ?? 135}
+                onChange={(v: any) => setPropPath("panelBg.gradient.angle", v)}
+              />
+            </div>
+          ) : null}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <NumberField
+              label="Radius"
+              value={props.panelRadius ?? 24}
+              onChange={(v: any) => setProp("panelRadius", v)}
+            />
+            <NumberField
+              label="Border Width"
+              value={props.panelBorderWidth ?? 1}
+              onChange={(v: any) => setProp("panelBorderWidth", v)}
+            />
+          </div>
+          <ColorPickerInput
+            label="Border Color"
+            value={props.panelBorderColor || ""}
+            onChange={(v: any) => setProp("panelBorderColor", v)}
+            placeholder="rgba(255,255,255,0.1)"
+          />
+          <ColorPickerInput
+            label="Panel Text Color"
+            value={props.panelTextColor || ""}
+            onChange={(v: any) => setProp("panelTextColor", v)}
+            placeholder="#94a3b8"
+          />
+        </div>
         <div className="space-y-1.5">
           <div className="text-sm font-medium">Social URLs</div>
           <SocialLinksEditor
@@ -607,14 +1023,12 @@ export function BlockPropsForm({
   if (type === "Utility/RichText") {
     return (
       <div className="space-y-3">
-        <label className="block space-y-1">
-          <div className="text-sm font-medium">HTML</div>
-          <textarea
-            className="w-full border rounded p-2 text-sm min-h-[120px]"
-            value={props.html || ""}
-            onChange={(e) => setProp("html", e.target.value)}
-          />
-        </label>
+        <RichTextEditor
+          value={props.html || ""}
+          mode={richMode}
+          onModeChange={setRichMode}
+          onChange={(html) => setProp("html", html)}
+        />
       </div>
     );
   }
@@ -1118,6 +1532,217 @@ function Select({ label, value, onChange, options }: any) {
         ))}
       </select>
     </label>
+  );
+}
+
+function RichTextEditor({
+  value,
+  mode,
+  onModeChange,
+  onChange,
+}: {
+  value: string;
+  mode: "visual" | "html";
+  onModeChange: (m: "visual" | "html") => void;
+  onChange: (html: string) => void;
+}) {
+  const { prompt } = useUI();
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({ openOnClick: false }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Placeholder.configure({
+        placeholder: "Start writing your policy...",
+      }),
+      Typography,
+    ],
+    content: value || "<p></p>",
+    onUpdate({ editor }) {
+      onChange(editor.getHTML());
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if (current !== (value || "")) {
+      editor.commands.setContent(value || "<p></p>", false);
+    }
+  }, [value, editor]);
+
+  function insertPreset(kind: "title" | "subtitle" | "para") {
+    if (!editor) return;
+    const text =
+      kind === "title"
+        ? "Your Title"
+        : kind === "subtitle"
+          ? "Your subtitle goes here"
+          : "Your paragraph text goes here.";
+    const styles =
+      kind === "title"
+        ? "font-size:28px;font-weight:700;line-height:1.2;margin:0 0 12px;"
+        : kind === "subtitle"
+          ? "font-size:18px;font-weight:500;line-height:1.5;margin:0 0 10px;opacity:0.85;"
+          : "font-size:14px;font-weight:400;line-height:1.8;margin:0 0 10px;opacity:0.9;";
+    editor
+      .chain()
+      .focus()
+      .insertContent(`<div style="${styles}">${text}</div>`)
+      .run();
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">Content</div>
+        <div className="inline-flex rounded-lg border bg-white p-1">
+          <button
+            type="button"
+            className={`px-2.5 py-1 text-xs rounded ${
+              mode === "visual" ? "bg-black text-white" : "text-gray-700"
+            }`}
+            onClick={() => onModeChange("visual")}
+          >
+            Visual
+          </button>
+          <button
+            type="button"
+            className={`px-2.5 py-1 text-xs rounded ${
+              mode === "html" ? "bg-black text-white" : "text-gray-700"
+            }`}
+            onClick={() => onModeChange("html")}
+          >
+            HTML
+          </button>
+        </div>
+      </div>
+
+      {mode === "visual" ? (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+            >
+              Bold
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
+            >
+              Italic
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().toggleUnderline().run()}
+            >
+              Underline
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => insertPreset("title")}
+            >
+              Title
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => insertPreset("subtitle")}
+            >
+              Subtitle
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => insertPreset("para")}
+            >
+              Paragraph
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+            >
+              Bullets
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+            >
+              Numbered
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().setTextAlign("left").run()}
+            >
+              Left
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() =>
+                editor?.chain().focus().setTextAlign("center").run()
+              }
+            >
+              Center
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().setTextAlign("right").run()}
+            >
+              Right
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={async () => {
+                const url = await prompt({
+                  title: "Link URL",
+                  placeholder: "https://",
+                  confirmText: "Apply",
+                });
+                if (url) editor?.chain().focus().setLink({ href: url }).run();
+              }}
+            >
+              Link
+            </button>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1"
+              onClick={() => editor?.chain().focus().unsetAllMarks().run()}
+            >
+              Clear
+            </button>
+          </div>
+          <div className="w-full border rounded p-3 text-sm min-h-[200px] bg-white">
+            <EditorContent editor={editor} />
+          </div>
+          <div className="text-xs text-gray-500">
+            Use the toolbar for headings, lists, and links. Switch to HTML for
+            advanced edits.
+          </div>
+        </>
+      ) : (
+        <label className="block space-y-1">
+          <div className="text-sm font-medium">HTML</div>
+          <textarea
+            className="w-full border rounded p-2 text-sm min-h-[200px] font-mono"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </label>
+      )}
+    </div>
   );
 }
 

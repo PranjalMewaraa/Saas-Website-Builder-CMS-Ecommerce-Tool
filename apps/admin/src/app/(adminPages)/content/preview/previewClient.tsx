@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 
 export default function PreviewClient({
   siteId,
@@ -9,6 +10,7 @@ export default function PreviewClient({
   siteId: string;
   handle: string;
 }) {
+  const { toast } = useUI();
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
   return (
@@ -26,9 +28,20 @@ export default function PreviewClient({
             { method: "POST" }
           );
           const data = await res.json();
-          if (!data.ok) return alert(data.error || "Preview generation failed");
+          if (!data.ok) {
+            toast({
+              variant: "error",
+              title: "Preview failed",
+              description: data.error || "Preview generation failed",
+            });
+            return;
+          }
           setPreviewUrl(data.previewUrl);
-          alert("Draft preview generated ✅");
+          toast({
+            variant: "success",
+            title: "Preview ready",
+            description: "Draft preview generated.",
+          });
         }}
       >
         Generate Draft Preview
@@ -42,13 +55,21 @@ export default function PreviewClient({
             { method: "POST" }
           );
           const data = await res.json();
-          if (!data.ok)
-            return alert(data.error || "Failed to regenerate token");
+          if (!data.ok) {
+            toast({
+              variant: "error",
+              title: "Failed to regenerate token",
+              description: data.error || "Failed to regenerate token",
+            });
+            return;
+          }
 
           setPreviewUrl(""); // old link is now invalid
-          alert(
-            "Preview token regenerated ✅ Old preview links are now invalid."
-          );
+          toast({
+            variant: "success",
+            title: "Token regenerated",
+            description: "Old preview links are now invalid.",
+          });
         }}
       >
         Regenerate Preview Token
@@ -63,7 +84,10 @@ export default function PreviewClient({
             { method: "POST" }
           );
           setPreviewUrl("");
-          alert("Cleared draft preview pointer ✅");
+          toast({
+            variant: "success",
+            title: "Draft preview cleared",
+          });
         }}
       >
         Clear Draft Preview

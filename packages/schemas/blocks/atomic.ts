@@ -54,6 +54,9 @@ export const AtomicSpacerSchema = z.object({
 
 export const AtomicBadgeSchema = z.object({
   text: z.string().default("Badge"),
+  variant: z
+    .enum(["type-1", "type-2", "type-3", "type-4", "type-5"])
+    .optional(),
 });
 
 export const AtomicListSchema = z.object({

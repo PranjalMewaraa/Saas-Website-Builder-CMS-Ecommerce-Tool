@@ -2,8 +2,10 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useUI } from "../_components/ui/UiProvider";
 
 export default function SignupPage() {
+  const { toast } = useUI();
   const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +19,7 @@ export default function SignupPage() {
 
     const data = await res.json();
     if (!data.ok) {
-      alert(data.error);
+      toast({ variant: "error", title: "Signup failed", description: data.error });
       setLoading(false);
       return;
     }

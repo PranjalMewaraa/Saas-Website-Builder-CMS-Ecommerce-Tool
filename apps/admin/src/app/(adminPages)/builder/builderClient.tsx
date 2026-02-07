@@ -388,7 +388,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
       id,
       type,
       props: defaultProps(type),
-      style: { overrides: {}, responsive: {} },
+      style: defaultStyle(type),
     });
 
     setLayout(next);
@@ -992,4 +992,18 @@ function defaultProps(type: string) {
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };
   return {};
+}
+
+function defaultStyle(type: string) {
+  if (type === "Footer/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        bg: { type: "solid", color: "#0f172a" },
+        textColor: "#94a3b8",
+      },
+      responsive: {},
+    };
+  }
+  return { presetId: undefined, overrides: {}, responsive: {} };
 }

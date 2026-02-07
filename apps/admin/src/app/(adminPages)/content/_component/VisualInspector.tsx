@@ -92,6 +92,12 @@ export function VisualInspector({
     onChange(next);
   }
 
+  function setProps(nextProps: any) {
+    const next = structuredClone(block);
+    next.props = nextProps ?? {};
+    onChange(next);
+  }
+
   function setPropPath(path: string, val: any) {
     const next = structuredClone(block);
     next.props = next.props || {};
@@ -118,6 +124,13 @@ export function VisualInspector({
     }
     cur[parts.at(-1)!] = val;
 
+    onChange(next);
+  }
+
+  function setStyleOverrides(overrides: any) {
+    const next = structuredClone(block);
+    next.style = next.style ?? { overrides: {} };
+    next.style.overrides = { ...(next.style.overrides || {}), ...overrides };
     onChange(next);
   }
 
@@ -189,6 +202,8 @@ export function VisualInspector({
         type={block.type}
         props={block.props}
         setProp={setProp}
+        setProps={setProps}
+        setStyleOverrides={setStyleOverrides}
         setPropPath={setPropPath}
         siteId={siteId}
         assetsMap={assetsMap}

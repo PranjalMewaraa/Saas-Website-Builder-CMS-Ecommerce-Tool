@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import MenusEditorClient from "./menusEditorClient";
 
 export type MenuDoc = {
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function MenusListClient({ siteId, urlMode }: Props) {
+  const { toast, confirm } = useUI();
   const [menus, setMenus] = useState<MenuDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingMenu, setEditingMenu] = useState<MenuDoc | null>(null);
@@ -70,7 +72,10 @@ export default function MenusListClient({ siteId, urlMode }: Props) {
       setNewMenuName("");
     } catch (err) {
       console.error("Create menu failed:", err);
-      alert("Failed to create menu");
+      toast({
+        variant: "error",
+        title: "Failed to create menu",
+      });
     } finally {
       setActionLoading(null);
     }
@@ -78,7 +83,13 @@ export default function MenusListClient({ siteId, urlMode }: Props) {
 
   // ── Delete menu ─────────────────────────────────────────────────
   const handleDelete = async (menu: MenuDoc) => {
-    if (!confirm(`Delete menu "${menu.name}"?\nThis cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Delete menu?",
+      description: `Delete menu "${menu.name}"? This cannot be undone.`,
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
 
     setActionLoading(menu._id);
     try {
@@ -94,7 +105,10 @@ export default function MenusListClient({ siteId, urlMode }: Props) {
       if (editingMenu?._id === menu._id) setEditingMenu(null);
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete menu");
+      toast({
+        variant: "error",
+        title: "Failed to delete menu",
+      });
     } finally {
       setActionLoading(null);
     }
@@ -125,7 +139,10 @@ export default function MenusListClient({ siteId, urlMode }: Props) {
       );
     } catch (err) {
       console.error("Assign slot failed:", err);
-      alert("Failed to update menu slot");
+      toast({
+        variant: "error",
+        title: "Failed to update menu slot",
+      });
       refreshMenus(); // rollback on error
     } finally {
       setActionLoading(null);

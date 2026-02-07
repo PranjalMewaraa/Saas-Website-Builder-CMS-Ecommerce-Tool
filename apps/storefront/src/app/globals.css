@@ -1,20 +1,20 @@
 @import "tailwindcss";
 .theme-root {
-  color: var(--color-text, var(--color-dark, #111827));
   background-color: var(--color-bg, #ffffff);
 }
-.theme-root :where(p,h1,h2,h3,h4,h5,h6,li,span,small,blockquote) {
+.theme-root :where(p, h1, h2, h3, h4, h5, h6, li, span, small, blockquote) {
   color: inherit;
 }
 .theme-root a {
   color: var(--color-primary, #2563eb);
 }
 .theme-root a:not([class*="text-"]):not([class*="bg-"]) {
-  color: var(--color-primary, #2563eb);
+  color: var(--color-text, #000);
 }
-.theme-root :where(button, a[role="button"], a.btn, a.button):not([class*="bg-"]) {
+.theme-root
+  :where(button, a[role="button"], a.btn, a.button):not([class*="bg-"]) {
   background-color: var(--color-primary, #2563eb);
-  color: var(--color-on-primary, #ffffff);
+  color: var(--color-stone-950, #ffffff);
 }
 .card {
   border: 1px solid #ddd;

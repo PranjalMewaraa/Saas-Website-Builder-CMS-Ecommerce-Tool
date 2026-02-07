@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { da } from "zod/locales";
+import { useUI } from "@/app/_components/ui/UiProvider";
 
 export default function PublishClient({ siteId }: { siteId: string }) {
+  const { toast } = useUI();
   const [lastSnap, setLastSnap] = useState<string>("");
   const [url, setUrl] = useState();
   return (
@@ -20,11 +21,22 @@ export default function PublishClient({ siteId }: { siteId: string }) {
             { method: "POST" },
           );
           const data = await res.json();
-          if (!data.ok) return alert(data.error || "Publish failed");
+          if (!data.ok) {
+            toast({
+              variant: "error",
+              title: "Publish failed",
+              description: data.error || "Publish failed",
+            });
+            return;
+          }
           console.log(data);
           setLastSnap(data.snapshot_id);
           setUrl(data.storefront_url);
-          alert("Published ✅");
+          toast({
+            variant: "success",
+            title: "Published",
+            description: "Snapshot published successfully.",
+          });
         }}
         type="button"
       >

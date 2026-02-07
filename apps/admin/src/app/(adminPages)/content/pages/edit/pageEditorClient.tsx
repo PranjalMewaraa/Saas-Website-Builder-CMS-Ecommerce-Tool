@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useUI } from "@/app/_components/ui/UiProvider";
 import {
   GripVertical,
   Plus,
@@ -53,6 +54,7 @@ export default function PageEditorClient({
   pageId: string;
   urlMode?: string;
 }) {
+  const { toast, confirm, prompt } = useUI();
   const { mode, setMode } = useEditorMode("visual", urlMode, [
     "form",
     "json",
@@ -204,7 +206,7 @@ export default function PageEditorClient({
       id,
       type,
       props: defaults,
-      style: { presetId: undefined, overrides: {} },
+      style: defaultStyleFor(type),
     });
 
     setPage({ ...page, draft_layout: next });
@@ -265,16 +267,27 @@ export default function PageEditorClient({
   }
 
   async function saveBlockAsTemplate(block: any) {
-    const name = prompt(
-      "Enter a name for this block template",
-      block.type.replace("/V1", ""),
-    );
+    const name = await prompt({
+      title: "Template name",
+      defaultValue: block.type.replace("/V1", ""),
+      placeholder: "Template name",
+      confirmText: "Continue",
+    });
     if (!name) return;
-    const makeTenantWide = confirm(
-      "Make this template available across all sites (tenant-wide)?\n\nOK = Yes (tenant-wide)\nCancel = No (this site only)",
-    );
+    const makeTenantWide = await confirm({
+      title: "Template scope",
+      description:
+        "Make this template available across all sites (tenant-wide)?",
+      confirmText: "Tenant-wide",
+      cancelText: "This site only",
+    });
     const scope = makeTenantWide ? "tenant" : "site";
-    const tagsText = prompt("Enter tags (comma-separated)", "");
+    const tagsText = await prompt({
+      title: "Tags",
+      placeholder: "comma, separated, tags",
+      defaultValue: "",
+      confirmText: "Save",
+    });
     const tags = (tagsText || "")
       .split(",")
       .map((s) => s.trim())
@@ -299,7 +312,14 @@ export default function PageEditorClient({
       },
     );
     const data = await res.json();
-    if (!data.ok) return alert(data.error || "Failed to save template");
+    if (!data.ok) {
+      toast({
+        variant: "error",
+        title: "Failed to save template",
+        description: data.error || "Failed to save template",
+      });
+      return;
+    }
     setBlockTemplates((prev) => [data.template, ...prev]);
   }
 
@@ -388,7 +408,12 @@ export default function PageEditorClient({
                   <button
                     onClick={() => {
                       const res = safeJsonParse(layoutJson);
-                      if (!res.ok) return alert(res.error);
+                      if (!res.ok)
+                        return toast({
+                          variant: "error",
+                          title: "Invalid JSON",
+                          description: res.error,
+                        });
                       saveLayout(res.value);
                     }}
                     className="bg-black text-white px-4 py-2 rounded"
@@ -978,4 +1003,18 @@ function defaultPropsFor(type: string) {
       rows: [],
     };
   return {};
+}
+
+function defaultStyleFor(type: string) {
+  if (type === "Footer/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        bg: { type: "solid", color: "#0f172a" },
+        textColor: "#94a3b8",
+      },
+      responsive: {},
+    };
+  }
+  return { presetId: undefined, overrides: {}, responsive: {} };
 }

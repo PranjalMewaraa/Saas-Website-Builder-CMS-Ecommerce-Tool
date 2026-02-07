@@ -91,6 +91,124 @@ function seedLayout(template: string) {
     };
   }
 
+  if (template === "privacy") {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: "sec_main",
+          label: "Privacy Policy",
+          blocks: [
+            {
+              id: `b_${Date.now()}_hdr`,
+              type: "Header/V1",
+              props: {
+                menuId: "menu_main",
+                ctaText: "Shop",
+                ctaHref: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_rt`,
+              type: "Utility/RichText",
+              props: {
+                html: `<h1>Privacy Policy</h1>
+<p>Last updated: {{date}}</p>
+<p>We value your privacy. This policy explains what we collect, why we collect it, and how we use it.</p>
+<h2>Information We Collect</h2>
+<p>Examples: name, email, address, payment details, and usage data.</p>
+<h2>How We Use Information</h2>
+<p>To provide and improve services, process orders, communicate with you, and comply with legal requirements.</p>
+<h2>Sharing</h2>
+<p>We may share data with service providers for processing and fulfillment. We do not sell your personal data.</p>
+<h2>Your Rights</h2>
+<p>You can request access, correction, or deletion of your data by contacting us.</p>
+<h2>Contact</h2>
+<p>privacy@yourdomain.com</p>`,
+              },
+              style: {
+                overrides: { maxWidth: "800px" },
+                responsive: {},
+              },
+            },
+            {
+              id: `b_${Date.now()}_ftr`,
+              type: "Footer/V1",
+              props: { menuId: "menu_footer" },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  if (template === "terms") {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: "sec_main",
+          label: "Terms & Conditions",
+          blocks: [
+            {
+              id: `b_${Date.now()}_hdr`,
+              type: "Header/V1",
+              props: {
+                menuId: "menu_main",
+                ctaText: "Shop",
+                ctaHref: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_rt`,
+              type: "Utility/RichText",
+              props: {
+                html: `<h1>Terms & Conditions</h1>
+<p>Last updated: {{date}}</p>
+<p>By accessing or using this site, you agree to the following terms.</p>
+<h2>Use of Site</h2>
+<p>You agree not to misuse the site or attempt to disrupt service.</p>
+<h2>Orders & Payments</h2>
+<p>All prices are subject to change. Orders may be cancelled or refunded according to our policies.</p>
+<h2>Intellectual Property</h2>
+<p>All content is owned by the company or its licensors.</p>
+<h2>Limitation of Liability</h2>
+<p>We are not liable for indirect or consequential damages.</p>
+<h2>Contact</h2>
+<p>support@yourdomain.com</p>`,
+              },
+              style: {
+                overrides: { maxWidth: "800px" },
+                responsive: {},
+              },
+            },
+            {
+              id: `b_${Date.now()}_ftr`,
+              type: "Footer/V1",
+              props: { menuId: "menu_footer" },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   if (template === "landing") {
     return {
       version: 1,
@@ -136,7 +254,13 @@ function seedLayout(template: string) {
               id: `b_${Date.now()}_ftr`,
               type: "Footer/V1",
               props: { menuId: "menu_footer" },
-              style: { overrides: {}, responsive: {} },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
             },
           ],
         },
@@ -178,7 +302,13 @@ function seedLayout(template: string) {
               id: `b_${Date.now()}_ftr`,
               type: "Footer/V1",
               props: { menuId: "menu_footer" },
-              style: { overrides: {}, responsive: {} },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
             },
           ],
         },
@@ -218,7 +348,13 @@ function seedLayout(template: string) {
               id: `b_${Date.now()}_ftr`,
               type: "Footer/V1",
               props: { menuId: "menu_footer" },
-              style: { overrides: {}, responsive: {} },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
             },
           ],
         },
@@ -341,18 +477,37 @@ export async function POST(req: Request) {
     const _id = newPageId();
     const now = new Date();
 
-    await col.insertOne({
-      _id,
-      tenant_id,
-      site_id,
-      slug,
-      name,
-      seo: src.seo ?? {},
-      draft_layout: src.draft_layout ?? seedLayout("blank"),
-      created_at: now,
-      updated_at: now,
-      created_by: session.user.user_id,
-    } as any);
+    try {
+      await col.insertOne({
+        _id,
+        tenant_id,
+        site_id,
+        slug,
+        name,
+        seo: src.seo ?? {},
+        draft_layout: src.draft_layout ?? seedLayout("blank"),
+        created_at: now,
+        updated_at: now,
+        created_by: session.user.user_id,
+      } as any);
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        const existing = await col.findOne({
+          tenant_id,
+          site_id,
+          slug,
+        } as any);
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "Slug already exists",
+            page_id: existing?._id,
+          },
+          { status: 409 },
+        );
+      }
+      throw err;
+    }
 
     return NextResponse.json({ ok: true, page_id: _id });
   }
@@ -377,25 +532,44 @@ export async function POST(req: Request) {
   } as any);
   if (exists)
     return NextResponse.json(
-      { ok: false, error: "Slug already exists" },
+      { ok: false, error: "Slug already exists", page_id: exists._id },
       { status: 409 },
     );
 
   const _id = newPageId();
   const now = new Date();
 
-  await col.insertOne({
-    _id,
-    tenant_id,
-    site_id,
-    slug,
-    name,
-    seo: {},
-    draft_layout: seedLayout(template),
-    created_at: now,
-    updated_at: now,
-    created_by: session.user.user_id,
-  } as any);
+  try {
+    await col.insertOne({
+      _id,
+      tenant_id,
+      site_id,
+      slug,
+      name,
+      seo: {},
+      draft_layout: seedLayout(template),
+      created_at: now,
+      updated_at: now,
+      created_by: session.user.user_id,
+    } as any);
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      const existing = await col.findOne({
+        tenant_id,
+        site_id,
+        slug,
+      } as any);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Slug already exists",
+          page_id: existing?._id,
+        },
+        { status: 409 },
+      );
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true, page_id: _id });
 }
@@ -524,6 +698,7 @@ export async function DELETE(req: Request) {
     { _id: page_id as any, tenant_id, site_id } as any,
     {
       $set: {
+        slug: `${page.slug}__deleted__${page_id}`,
         deleted_at: new Date(),
         deleted_by: session.user.user_id,
         updated_at: new Date(),

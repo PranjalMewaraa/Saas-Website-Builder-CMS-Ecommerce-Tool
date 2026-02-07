@@ -69,6 +69,11 @@ function normalizeMenusBySlot(snapshot: any) {
   };
 }
 
+const DEFAULT_FOOTER_STYLE = {
+  bg: { type: "solid", color: "#0f172a" },
+  textColor: "#94a3b8",
+};
+
 export async function RenderPage(args: {
   layout: unknown;
   ctx: RenderContext;
@@ -83,7 +88,7 @@ export async function RenderPage(args: {
 
   console.log(
     "RenderPage ctx.snapshot",
-    ctx.snapshot.pages["/"].layout.sections[0].blocks[1],
+    ctx.snapshot.pages["/"].layout.sections[0].blocks[4],
   );
 
   const css = buildResponsiveCss(parsedLayout);
@@ -153,9 +158,22 @@ async function BlockRenderer({
 
   const def = getBlock(block.type);
 
+  let styleSource = block.style;
+  if (
+    block.type === "Footer/V1" &&
+    (!styleSource?.presetId &&
+      (!styleSource?.overrides ||
+        Object.keys(styleSource.overrides).length === 0))
+  ) {
+    styleSource = {
+      ...(styleSource || {}),
+      overrides: { ...DEFAULT_FOOTER_STYLE },
+    };
+  }
+
   // presets live in snapshot.stylePresets (map)
   const finalStyle = computeFinalStyle({
-    style: block.style,
+    style: styleSource,
     presets: ctx.snapshot.stylePresets,
     assets: ctx.snapshot.assets,
   });
