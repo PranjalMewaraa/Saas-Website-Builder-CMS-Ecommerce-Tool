@@ -97,6 +97,7 @@ export default function ProductGridVisualStub(props: any) {
           key={product.id}
           product={product}
           detailPathPrefix={detailPathPrefix}
+          clickable={false}
         />
       ))}
     </div>
