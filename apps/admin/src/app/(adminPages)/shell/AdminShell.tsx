@@ -131,6 +131,12 @@ export default function AdminShell({
       icon: Settings,
       group: "Settings",
     },
+    {
+      label: "Plugins",
+      href: "/settings/plugins",
+      icon: Settings,
+      group: "Settings",
+    },
   ];
 
   const grouped = useMemo(() => {
