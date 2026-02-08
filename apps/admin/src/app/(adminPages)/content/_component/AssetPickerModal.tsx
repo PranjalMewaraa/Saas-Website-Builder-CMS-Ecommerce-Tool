@@ -12,7 +12,12 @@ export default function AssetPickerModal({
   siteId: string;
   open: boolean;
   onClose: () => void;
-  onPick: (asset: { key: string; url: string; alt?: string }) => void;
+  onPick: (asset: {
+    _id?: string;
+    key: string;
+    url: string;
+    alt?: string;
+  }) => void;
 }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,13 +25,28 @@ export default function AssetPickerModal({
 
   async function loadAssets() {
     setLoading(true);
-    const res = await fetch(
-      `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-      { cache: "no-store" },
-    );
-    const data = await res.json();
-    setAssets(data.assets ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(
+        `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) {
+        setAssets([]);
+        return;
+      }
+      const text = await res.text();
+      if (!text) {
+        setAssets([]);
+        return;
+      }
+      const data = JSON.parse(text);
+      setAssets(data.assets ?? []);
+    } catch (e) {
+      console.error("Failed to load assets", e);
+      setAssets([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {

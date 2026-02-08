@@ -107,7 +107,8 @@ export default function ImageField({
         onClose={() => setOpen(false)}
         onPick={(picked) => {
           console.log("Picked asset in ImageField:", picked);
-          onChangeAssetId(picked.key); // ✅ FIX
+          const nextId = picked._id || picked.key;
+          onChangeAssetId(nextId);
           onChangeAssetUrl?.(picked.url);
           setLocalUrl(picked.url);
           if (!altValue) onChangeAlt(picked.alt || "");

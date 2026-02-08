@@ -50,11 +50,12 @@ export function useAssetsMap(siteId: string) {
   }, [siteId]);
 
   const map = useMemo(() => {
-    return Object.fromEntries(
-      assets
-        .filter((a) => a.key) // safety
-        .map((a) => [a.key, a]), // ✅ USE KEY
-    ) as Record<string, AssetMeta>;
+    const entries: [string, AssetMeta][] = [];
+    for (const a of assets) {
+      if (a._id) entries.push([a._id, a]);
+      if (a.key && a.key !== a._id) entries.push([a.key, a]);
+    }
+    return Object.fromEntries(entries) as Record<string, AssetMeta>;
   }, [assets]);
 
   return { assets, assetsMap: map, loading, refresh };
