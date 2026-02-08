@@ -91,6 +91,10 @@ function BuilderBlockPreview({
         <LayoutSectionRenderer
           props={block.props || { rows: [] }}
           assets={snapshot.assets}
+          forms={snapshot.forms}
+          handle={snapshot.handle}
+          previewToken={snapshot.previewToken}
+          mode="builder"
         />
       </div>
     );

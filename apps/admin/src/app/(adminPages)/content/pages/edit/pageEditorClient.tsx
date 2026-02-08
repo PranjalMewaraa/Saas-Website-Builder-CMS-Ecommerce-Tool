@@ -463,6 +463,7 @@ export default function PageEditorClient({
                 }
                 assetsMap={assetsMap}
                 menus={menus}
+                forms={Object.fromEntries((forms || []).map((f: any) => [f._id, f]))}
                 showGrid={showGrid}
                 showOutlines={showOutlines}
                 zoom={zoom}
@@ -488,6 +489,7 @@ export default function PageEditorClient({
                     siteId={siteId}
                     assetsMap={assetsMap}
                     menus={menus}
+                    forms={forms}
                     themePalette={themePalette}
                     onDeleteBlock={(id: string) => {
                       const idx = blocks.findIndex((b: any) => b.id === id);

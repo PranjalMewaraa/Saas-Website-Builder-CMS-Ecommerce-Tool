@@ -76,6 +76,7 @@ export type LayoutAtomicBlock = {
     | "Atomic/Menu"
     | "Atomic/Countdown"
     | "Atomic/Embed"
+    | "Atomic/Form"
     | "Atomic/Group";
   props: any;
   style?: LayoutStyle;
@@ -174,6 +175,7 @@ export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
   "Atomic/Menu",
   "Atomic/Countdown",
   "Atomic/Embed",
+  "Atomic/Form",
   "Atomic/Group",
 ];
 
@@ -357,6 +359,18 @@ export function createAtomicBlock(
         code: "",
         src: "",
         title: "Embed",
+      },
+      style: { width: "100%" },
+    };
+  }
+  if (type === "Atomic/Form") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        formId: "",
+        title: "",
+        submitText: "Submit",
       },
       style: { width: "100%" },
     };

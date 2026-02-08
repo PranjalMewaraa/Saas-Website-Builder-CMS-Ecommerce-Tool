@@ -382,6 +382,7 @@ export default function LayoutInspector({
   siteId,
   assetsMap,
   menus = [],
+  forms = [],
   themePalette = [],
   onDeleteBlock,
   onChangeBlock,
@@ -391,6 +392,7 @@ export default function LayoutInspector({
   siteId: string;
   assetsMap: any;
   menus?: any[];
+  forms?: any[];
   themePalette?: string[];
   onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
@@ -412,6 +414,10 @@ export default function LayoutInspector({
 
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : createDefaultSectionProps();
+  const formOptions = (forms || []).map((f: any) => ({
+    value: f._id,
+    label: f.name ? `${f.name} — ${f._id}` : f._id,
+  }));
 
   function applyUpdate(mutator: (draft: LayoutSectionProps) => void) {
     const next = structuredClone(props);
@@ -992,6 +998,53 @@ export default function LayoutInspector({
                   draftAtom.props = { ...draftAtom.props, size: v };
                 })
               }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Form" && (
+          <>
+            {formOptions.length ? (
+              <Select
+                label="Form"
+                value={atom.props?.formId || ""}
+                options={formOptions}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+              />
+            ) : (
+              <Field
+                label="Form Id"
+                value={atom.props?.formId || ""}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+                placeholder="form_xxx"
+              />
+            )}
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+            <Field
+              label="Submit Text"
+              value={atom.props?.submitText || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, submitText: v };
+                })
+              }
+              placeholder="Submit"
             />
           </>
         )}
@@ -1777,7 +1830,7 @@ function Select({
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: Array<string | { label: string; value: string }>;
   onChange: (val: string) => void;
 }) {
   return (
@@ -1788,11 +1841,20 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
+        {options.map((o) => {
+          if (typeof o === "string") {
+            return (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            );
+          }
+          return (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          );
+        })}
       </select>
     </label>
   );

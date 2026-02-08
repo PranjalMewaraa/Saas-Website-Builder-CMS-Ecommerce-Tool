@@ -34,6 +34,10 @@ export function BlockPropsForm({
   const [richMode, setRichMode] = useState<"visual" | "html">("visual");
   const assignedHeader = menus.find((m: any) => m.slot === "header");
   const assignedFooter = menus.find((m: any) => m.slot === "footer");
+  const formOptions = (forms || []).map((f: any) => ({
+    value: f._id,
+    label: f.name ? `${f.name} — ${f._id}` : f._id,
+  }));
 
   useEffect(() => {
     if (type === "Header/V1" && !props.menuId && assignedHeader?._id) {

@@ -1,5 +1,6 @@
 import React from "react";
 import * as Icons from "lucide-react";
+import FormV1 from "../blocks/Form/FormV1";
 import {
   resolveLayoutStyle,
   resolveRowLayoutStyle,
@@ -142,6 +143,10 @@ function renderAtomicBlock(
   assets: any,
   menus?: any,
   previewQuery?: string,
+  forms?: any,
+  handle?: string,
+  previewToken?: string,
+  mode?: "published" | "preview" | "builder",
 ) {
   const style = resolveLayoutStyle(block.style);
   const type = block.type;
@@ -496,6 +501,37 @@ function renderAtomicBlock(
     );
   }
 
+  if (type === "Atomic/Form") {
+    const formId = props.formId || "";
+    const form = forms?.[formId];
+    return (
+      form?.schema ? (
+        <FormV1
+          formId={formId}
+          schema={form.schema}
+          handle={handle || ""}
+          mode={mode}
+          previewToken={previewToken}
+          title={props.title}
+          submitText={props.submitText}
+          contentWidth="full"
+        />
+      ) : (
+        <div
+          style={{
+            ...style,
+            border: "1px dashed rgba(0,0,0,0.2)",
+            padding: "16px",
+            fontSize: "12px",
+            color: "rgba(0,0,0,0.5)",
+          }}
+        >
+          {formId ? `Form: ${formId}` : "Select a form"}
+        </div>
+      )
+    );
+  }
+
   if (type === "Atomic/Group") {
     const outerStyle = resolveLayoutStyle(block.style || {});
     const groupStyle = resolveLayoutStyle(props.style || {});
@@ -544,6 +580,10 @@ function renderRows(
   assets: any,
   menus?: any,
   previewQuery?: string,
+  forms?: any,
+  handle?: string,
+  previewToken?: string,
+  mode?: "published" | "preview" | "builder",
 ) {
   return rows.map((row) => {
     const rowPreset =
@@ -589,7 +629,16 @@ function renderRows(
               {renderVideoLayer(colVideo)}
               {(col.blocks || []).map((b) => (
                 <div key={b.id} data-atomic-id={b.id}>
-                  {renderAtomicBlock(b, assets, menus, previewQuery)}
+                  {renderAtomicBlock(
+                    b,
+                    assets,
+                    menus,
+                    previewQuery,
+                    forms,
+                    handle,
+                    previewToken,
+                    mode,
+                  )}
                 </div>
               ))}
             </div>
@@ -606,11 +655,19 @@ export function LayoutSectionRenderer({
   assets,
   menus,
   previewQuery,
+  forms,
+  handle,
+  previewToken,
+  mode,
 }: {
   props: LayoutSectionProps;
   assets?: any;
   menus?: any;
   previewQuery?: string;
+  forms?: any;
+  handle?: string;
+  previewToken?: string;
+  mode?: "published" | "preview" | "builder";
 }) {
   const sectionStyle = resolveLayoutStyle(props.style);
   const video = getBackgroundVideo(props.style);
@@ -649,7 +706,16 @@ export function LayoutSectionRenderer({
         </>
       ) : null}
       <div style={{ position: "relative", zIndex: 2 }}>
-        {renderRows(props.rows || [], assets, menus, previewQuery)}
+        {renderRows(
+          props.rows || [],
+          assets,
+          menus,
+          previewQuery,
+          forms,
+          handle,
+          previewToken,
+          mode,
+        )}
       </div>
     </section>
   );

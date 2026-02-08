@@ -6,6 +6,7 @@ import { resolveWrapperStyle } from "./style-resolver";
 import { buildResponsiveCss } from "./responsive-css";
 import { StyleWrapper } from "./StyleWrapper";
 import { LayoutSectionRenderer } from "./layout-section";
+import FormV1 from "../blocks/Form/FormV1";
 
 export type RenderContext = {
   tenantId: string;
@@ -90,6 +91,11 @@ export async function RenderPage(args: {
     ctx.snapshot?.is_draft && ctx.snapshot?.previewToken && ctx.snapshot?.handle
       ? `handle=${encodeURIComponent(ctx.snapshot.handle)}&token=${encodeURIComponent(ctx.snapshot.previewToken)}`
       : "";
+  const mode = ctx.snapshot?.__mode === "builder"
+    ? "builder"
+    : ctx.snapshot?.is_draft
+      ? "preview"
+      : "published";
 
   console.log(
     "RenderPage ctx.snapshot",
@@ -164,6 +170,10 @@ async function BlockRenderer({
           assets={ctx.snapshot.assets}
           menus={ctx.snapshot.menus}
           previewQuery={previewQuery}
+          forms={ctx.snapshot.forms}
+          handle={ctx.snapshot.handle}
+          previewToken={ctx.snapshot.previewToken}
+          mode={mode}
         />
       </div>
     );
@@ -382,10 +392,11 @@ async function BlockRenderer({
   }
 
   // forms binding
-  if (block.type.startsWith("Form/")) {
+  if (block.type.startsWith("Form/") || block.type === "Atomic/Form") {
     const formId = props.formId;
     const form = ctx.snapshot.forms?.[formId];
     const Comp = def.render;
+    const isAtomic = block.type === "Atomic/Form";
 
     if (!form?.schema) {
       return (
@@ -404,6 +415,27 @@ async function BlockRenderer({
     const isPreview = !!ctx.snapshot?.is_draft;
 
     const mode = isBuilder ? "builder" : isPreview ? "preview" : "published";
+
+    if (isAtomic) {
+      return (
+        <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+          <div className={`${innerClass} __inner`} style={innerStyle}>
+            <StyleWrapper style={block.style}>
+              <FormV1
+                formId={formId}
+                schema={form.schema}
+                handle={ctx.snapshot.handle}
+                mode={mode}
+                previewToken={ctx.snapshot.previewToken}
+                title={props.title}
+                submitText={props.submitText}
+                contentWidth="full"
+              />
+            </StyleWrapper>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>

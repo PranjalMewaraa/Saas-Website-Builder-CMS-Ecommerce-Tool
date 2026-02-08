@@ -103,7 +103,7 @@ export default function FormV1(props: {
             ? "1280px"
             : props.contentWidth === "2xl"
               ? "1536px"
-              : "1280px";
+              : undefined;
 
   return (
     <section>

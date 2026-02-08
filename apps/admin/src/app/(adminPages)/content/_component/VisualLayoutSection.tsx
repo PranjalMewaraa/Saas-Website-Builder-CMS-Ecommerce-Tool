@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import * as Icons from "lucide-react";
+import FormV1 from "../../../../../../../packages/blocks/Form/FormV1";
 import {
   Plus,
   ArrowUp,
@@ -62,6 +63,7 @@ function renderAtomicPreview(
   block: LayoutAtomicBlock,
   assetsMap: any,
   menus?: any[],
+  forms?: Record<string, any>,
 ) {
   const style = resolveLayoutStyle(block.style);
   const props = block.props || {};
@@ -403,6 +405,64 @@ function renderAtomicPreview(
     );
   }
 
+  if (block.type === "Atomic/Form") {
+    const formId = props.formId || "";
+    const form = (forms || {})[formId];
+    const dummySchema = {
+      fields: [
+        {
+          id: "fld_name",
+          name: "name",
+          label: "Full Name",
+          type: "text",
+          required: true,
+          placeholder: "Jane Doe",
+        },
+        {
+          id: "fld_email",
+          name: "email",
+          label: "Email",
+          type: "email",
+          required: true,
+          placeholder: "you@example.com",
+        },
+        {
+          id: "fld_message",
+          name: "message",
+          label: "Message",
+          type: "textarea",
+          required: true,
+          placeholder: "How can we help?",
+        },
+      ],
+      successMessage: "Thanks! We will get back to you soon.",
+    };
+    if (form?.schema) {
+      return (
+        <FormV1
+          formId={formId}
+          schema={form.schema}
+          handle=""
+          mode="builder"
+          title={props.title}
+          submitText={props.submitText}
+          contentWidth="full"
+        />
+      );
+    }
+    return (
+      <FormV1
+        formId={formId || "demo_form"}
+        schema={dummySchema}
+        handle=""
+        mode="builder"
+        title={props.title || "Contact Us"}
+        submitText={props.submitText || "Send Message"}
+        contentWidth="full"
+      />
+    );
+  }
+
   return (
     <div className="text-xs text-red-500">Unknown: {block.type}</div>
   );
@@ -448,6 +508,7 @@ export default function VisualLayoutSection({
   selection,
   assetsMap,
   menus,
+  forms,
   onSelect,
   onChangeBlock,
   showOutlines = true,
@@ -458,6 +519,7 @@ export default function VisualLayoutSection({
   selection: LayoutSelection | null;
   assetsMap: any;
   menus?: any[];
+  forms?: Record<string, any>;
   onSelect: (sel: LayoutSelection) => void;
   onChangeBlock: (nextBlock: any) => void;
   showOutlines?: boolean;
@@ -534,6 +596,11 @@ export default function VisualLayoutSection({
       type: "Atomic/Embed",
       title: "Embed",
       description: "Iframe or HTML embed",
+    },
+    {
+      type: "Atomic/Form",
+      title: "Form",
+      description: "Embed a saved form",
     },
     {
       type: "Atomic/Group",
@@ -1073,7 +1140,7 @@ export default function VisualLayoutSection({
                         >
                           {ga.type === "Atomic/Group"
                             ? renderGroupLayout(ga)
-                            : renderAtomicPreview(ga, assetsMap, menus)}
+                            : renderAtomicPreview(ga, assetsMap, menus, forms)}
                         </div>
                       ))}
                       <button
@@ -1508,7 +1575,7 @@ export default function VisualLayoutSection({
                                   </div>
                                   {atomic.type === "Atomic/Group"
                                     ? renderGroupLayout(atomic)
-                                    : renderAtomicPreview(atomic, assetsMap, menus)}
+                                    : renderAtomicPreview(atomic, assetsMap, menus, forms)}
                                 </div>
                               );
                             })}
