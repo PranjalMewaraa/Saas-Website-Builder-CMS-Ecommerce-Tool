@@ -3,6 +3,7 @@ import { requireSession } from "@acme/auth";
 import { sitesCollection } from "@acme/db-mongo/sites.repo";
 import { pool } from "@acme/db-mysql";
 import { newId, nowSql } from "@acme/db-mysql/id";
+import { ensureCommercePages } from "@/lib/auto-pages";
 
 function slugify(v: string) {
   return v
@@ -58,6 +59,8 @@ export async function POST(req: Request) {
      VALUES (?, ?, ?, 'brand', 'USD', 'UTC', 'active', ?, ?, ?)`,
     [store_id, tenant_id, name, ts, ts, null],
   );
+
+  await ensureCommercePages(tenant_id, site_id);
 
   return NextResponse.json({ ok: true, site: doc });
 }

@@ -721,6 +721,27 @@ function defaultPropsFor(type: string) {
 
   if (type === "ProductGrid/V1")
     return { title: "Featured Products", limit: 8 };
+  if (type === "CartPage/V1")
+    return {
+      title: "Your cart",
+      emptyTitle: "Your cart is empty",
+      emptyCtaText: "Browse products",
+      emptyCtaHref: "/products",
+      checkoutText: "Checkout",
+      checkoutMode: "create-order",
+      checkoutHref: "/checkout",
+    };
+  if (type === "CartSummary/V1")
+    return { title: "Summary", checkoutText: "Checkout", checkoutHref: "/checkout" };
+  if (type === "AddToCart/V1")
+    return {
+      productId: "",
+      title: "Product",
+      priceCents: 12900,
+      image: "",
+      buttonText: "Add to cart",
+      quantity: 1,
+    };
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };
 

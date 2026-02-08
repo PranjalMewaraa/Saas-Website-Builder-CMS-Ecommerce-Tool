@@ -362,6 +362,56 @@ function seedLayout(template: string) {
     };
   }
 
+  if (template === "cart") {
+    return {
+      version: 1,
+      sections: [
+        {
+          id: "sec_main",
+          label: "Cart",
+          blocks: [
+            {
+              id: `b_${Date.now()}_hdr`,
+              type: "Header/V1",
+              props: {
+                menuId: "menu_main",
+                ctaText: "Shop",
+                ctaHref: "/products",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_cart`,
+              type: "CartPage/V1",
+              props: {
+                title: "Your cart",
+                emptyTitle: "Your cart is empty",
+                emptyCtaText: "Browse products",
+                emptyCtaHref: "/products",
+                checkoutText: "Checkout",
+                checkoutMode: "create-order",
+                checkoutHref: "/checkout",
+              },
+              style: { overrides: {}, responsive: {} },
+            },
+            {
+              id: `b_${Date.now()}_ftr`,
+              type: "Footer/V1",
+              props: { menuId: "menu_footer" },
+              style: {
+                overrides: {
+                  bg: { type: "solid", color: "#0f172a" },
+                  textColor: "#94a3b8",
+                },
+                responsive: {},
+              },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   // blank (default)
   return {
     version: 1,

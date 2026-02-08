@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function FormV1(props: {
   handle: string;
@@ -15,6 +15,17 @@ export default function FormV1(props: {
   const [submitting, setSubmitting] = useState(false);
   const [ok, setOk] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [handle, setHandle] = useState(props.handle || "");
+
+  useEffect(() => {
+    if (props.handle) {
+      setHandle(props.handle);
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("storefront_handle") || "";
+    if (stored) setHandle(stored);
+  }, [props.handle]);
 
   const fields = useMemo(() => props.schema?.fields ?? [], [props.schema]);
   const endpoint =
@@ -40,7 +51,7 @@ export default function FormV1(props: {
     const ts = Number(fd.get("_ts") || 0) || Date.now();
 
     const payload: any = {
-      handle: props.handle,
+      handle,
       form_id: props.formId,
       data,
       hp,
@@ -54,22 +65,32 @@ export default function FormV1(props: {
       return;
     }
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const json = await res.json();
-    if (!json.ok) {
-      setErrors(json.errors || { _global: json.error || "Submit failed" });
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {
+        json = { ok: res.ok };
+      }
+
+      if (!json.ok) {
+        setErrors(json.errors || { _global: json.error || "Submit failed" });
+        return;
+      }
+
+      setOk(json.message || "Submitted.");
+      (e.currentTarget as HTMLFormElement).reset();
+    } catch {
+      setErrors({ _global: "Submit failed" });
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    setOk(json.message || "Submitted.");
-    (e.currentTarget as HTMLFormElement).reset();
-    setSubmitting(false);
   }
   const maxWidth =
     props.contentWidth === "sm"

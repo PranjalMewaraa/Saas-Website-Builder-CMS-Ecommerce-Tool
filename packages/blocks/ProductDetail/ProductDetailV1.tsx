@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ProductCardV1 from "../ProductGrid/ProductCardBlocks/ProductCardV1";
+import AddToCartV1 from "../cart/AddToCartV1";
 import { getPublishedProductBySlug, listRelatedProducts } from "./productDetail.data";
 
 type Props = {
@@ -151,9 +152,15 @@ export default async function ProductDetailV1({
               </p>
             )}
 
-            <button className="mt-4 inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white">
-              Add to cart
-            </button>
+            <div className="mt-4">
+              <AddToCartV1
+                productId={product.id}
+                title={product.title}
+                priceCents={product.base_price_cents}
+                image={primaryImage?.url}
+                buttonText="Add to cart"
+              />
+            </div>
 
             {product.attributes?.length ? (
               <div className="pt-4 border-t border-slate-200">

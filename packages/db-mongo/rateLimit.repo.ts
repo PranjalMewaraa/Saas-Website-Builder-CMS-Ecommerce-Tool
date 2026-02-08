@@ -29,17 +29,40 @@ export async function consumeRateLimit(args: {
   const resetAt = new Date(now.getTime() + args.windowMs);
   const expiresAt = new Date(resetAt.getTime() + 60_000); // TTL buffer
 
-  const res = await col.findOneAndUpdate(
-    { _id: args.key },
-    {
-      $setOnInsert: { count: 0, reset_at: resetAt, expires_at: expiresAt },
-      $inc: { count: 1 },
+  let doc = await col.findOne({ _id: args.key });
+  if (!doc) {
+    doc = {
+      _id: args.key,
+      count: 1,
+      reset_at: resetAt,
+      expires_at: expiresAt,
+    } as RateLimitDoc;
+    await col.insertOne(doc);
+  } else {
+    const shouldReset = doc.reset_at && doc.reset_at <= now;
+    const update: any = {
       $set: { expires_at: expiresAt },
-    },
-    { upsert: true, returnDocument: "after" }
-  );
+    };
+    if (shouldReset) {
+      update.$set.count = 1;
+      update.$set.reset_at = resetAt;
+    } else {
+      update.$inc = { count: 1 };
+    }
+    const res = await col.findOneAndUpdate({ _id: args.key }, update, {
+      returnDocument: "after",
+    });
+    doc =
+      (res.value as RateLimitDoc) ||
+      (await col.findOne({ _id: args.key })) ||
+      ({
+        _id: args.key,
+        count: 1,
+        reset_at: resetAt,
+        expires_at: expiresAt,
+      } as RateLimitDoc);
+  }
 
-  const doc = res.value;
   const allowed = doc.count <= args.limit;
   const remaining = Math.max(0, args.limit - doc.count);
 

@@ -741,7 +741,11 @@ function getBlockGroups(types: string[], searchText: string) {
     {
       title: "Commerce",
       items: filtered.filter(
-        (t) => t.startsWith("Product") || t.startsWith("Pricing"),
+        (t) =>
+          t.startsWith("Product") ||
+          t.startsWith("Pricing") ||
+          t.startsWith("Cart") ||
+          t.startsWith("AddToCart"),
       ),
     },
     {
@@ -799,6 +803,9 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("ProductGrid")) return "Products";
   if (type.startsWith("ProductList")) return "Product List";
   if (type.startsWith("ProductDetail")) return "Product Detail";
+  if (type.startsWith("CartPage")) return "Cart";
+  if (type.startsWith("CartSummary")) return "Cart Summary";
+  if (type.startsWith("AddToCart")) return "Add to Cart";
   if (type.startsWith("Form")) return "Form";
   if (type.startsWith("Banner")) return "CTA";
   if (type.startsWith("Features")) return "Features";
@@ -874,6 +881,31 @@ function defaultPropsFor(type: string) {
       showRelated: true,
       relatedLimit: 4,
       detailPathPrefix: "/products",
+    };
+  if (type === "CartPage/V1")
+    return {
+      title: "Your cart",
+      emptyTitle: "Your cart is empty",
+      emptyCtaText: "Browse products",
+      emptyCtaHref: "/products",
+      checkoutText: "Checkout",
+      checkoutMode: "create-order",
+      checkoutHref: "/checkout",
+    };
+  if (type === "CartSummary/V1")
+    return {
+      title: "Summary",
+      checkoutText: "Checkout",
+      checkoutHref: "/checkout",
+    };
+  if (type === "AddToCart/V1")
+    return {
+      productId: "",
+      title: "Product",
+      priceCents: 12900,
+      image: "",
+      buttonText: "Add to cart",
+      quantity: 1,
     };
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };
@@ -1020,6 +1052,7 @@ function defaultStyleFor(type: string) {
       overrides: {
         bg: { type: "solid", color: "#0f172a" },
         textColor: "#94a3b8",
+        padding: { top: 64, right: 24, bottom: 32, left: 24 },
       },
       responsive: {},
     };

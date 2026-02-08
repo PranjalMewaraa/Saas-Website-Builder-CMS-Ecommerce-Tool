@@ -728,6 +728,129 @@ export function BlockPropsForm({
     );
   }
 
+  if (type === "CartPage/V1") {
+    return (
+      <div className="space-y-3">
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+          placeholder="Your cart"
+        />
+        <Field
+          label="emptyTitle"
+          value={props.emptyTitle || ""}
+          onChange={(v: any) => setProp("emptyTitle", v)}
+          placeholder="Your cart is empty"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="emptyCtaText"
+            value={props.emptyCtaText || ""}
+            onChange={(v: any) => setProp("emptyCtaText", v)}
+            placeholder="Browse products"
+          />
+          <Field
+            label="emptyCtaHref"
+            value={props.emptyCtaHref || ""}
+            onChange={(v: any) => setProp("emptyCtaHref", v)}
+            placeholder="/products"
+          />
+        </div>
+        <Select
+          label="checkoutMode"
+          value={props.checkoutMode || "create-order"}
+          onChange={(v: any) => setProp("checkoutMode", v)}
+          options={["create-order", "link"]}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="checkoutText"
+            value={props.checkoutText || ""}
+            onChange={(v: any) => setProp("checkoutText", v)}
+            placeholder="Checkout"
+          />
+          <Field
+            label="checkoutHref"
+            value={props.checkoutHref || ""}
+            onChange={(v: any) => setProp("checkoutHref", v)}
+            placeholder="/checkout"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "CartSummary/V1") {
+    return (
+      <div className="space-y-3">
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+          placeholder="Summary"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="checkoutText"
+            value={props.checkoutText || ""}
+            onChange={(v: any) => setProp("checkoutText", v)}
+            placeholder="Checkout"
+          />
+          <Field
+            label="checkoutHref"
+            value={props.checkoutHref || ""}
+            onChange={(v: any) => setProp("checkoutHref", v)}
+            placeholder="/checkout"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "AddToCart/V1") {
+    return (
+      <div className="space-y-3">
+        <Field
+          label="productId"
+          value={props.productId || ""}
+          onChange={(v: any) => setProp("productId", v)}
+          placeholder="product_id"
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+          placeholder="Product title"
+        />
+        <NumberField
+          label="priceCents"
+          value={Number(props.priceCents || 0)}
+          onChange={(v: any) => setProp("priceCents", Number(v))}
+        />
+        <Field
+          label="image"
+          value={props.image || ""}
+          onChange={(v: any) => setProp("image", v)}
+          placeholder="https://..."
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="buttonText"
+            value={props.buttonText || ""}
+            onChange={(v: any) => setProp("buttonText", v)}
+            placeholder="Add to cart"
+          />
+          <NumberField
+            label="quantity"
+            value={Number(props.quantity || 1)}
+            onChange={(v: any) => setProp("quantity", Number(v))}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (type === "Hero" || type === "Hero/V1") {
     const bg = props.bg || { type: "none" };
 
@@ -1814,6 +1937,27 @@ function defaultPropsFor(type: string) {
       showRelated: true,
       relatedLimit: 4,
       detailPathPrefix: "/products",
+    };
+  if (type === "CartPage/V1")
+    return {
+      title: "Your cart",
+      emptyTitle: "Your cart is empty",
+      emptyCtaText: "Browse products",
+      emptyCtaHref: "/products",
+      checkoutText: "Checkout",
+      checkoutMode: "create-order",
+      checkoutHref: "/checkout",
+    };
+  if (type === "CartSummary/V1")
+    return { title: "Summary", checkoutText: "Checkout", checkoutHref: "/checkout" };
+  if (type === "AddToCart/V1")
+    return {
+      productId: "",
+      title: "Product",
+      priceCents: 12900,
+      image: "",
+      buttonText: "Add to cart",
+      quantity: 1,
     };
   if (type === "Form/V1")
     return { formId: "", title: "Contact us", submitText: "Send" };

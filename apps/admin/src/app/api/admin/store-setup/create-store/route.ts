@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession, requireModule } from "@acme/auth";
 import { pool } from "@acme/db-mysql";
 import { newId, nowSql } from "@acme/db-mysql/id";
+import { ensureCommercePages } from "@/lib/auto-pages";
 
 export async function POST(req: Request) {
   const session = await requireSession();
@@ -28,6 +29,10 @@ export async function POST(req: Request) {
       body.industry,
     ],
   );
+
+  if (site_id) {
+    await ensureCommercePages(tenant_id, site_id);
+  }
 
   return NextResponse.json({ ok: true, store_id: finalStoreId });
 }

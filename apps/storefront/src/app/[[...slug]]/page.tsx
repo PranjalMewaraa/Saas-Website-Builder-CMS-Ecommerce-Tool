@@ -6,6 +6,7 @@ import { getMongoDb, getSnapshotById, getSiteByHandle } from "@acme/db-mongo";
 import type { Metadata } from "next";
 import { buildSeo } from "@acme/renderer/seo";
 import { organizationSchema, webpageSchema } from "@acme/renderer/seo/jsonld";
+import { ShoppingCart } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export function normalizePath(slugParts?: string[]) {
@@ -54,7 +55,7 @@ export async function resolveSite() {
   }
 
   // 3. fallback
-  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "pranjal-site");
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "nikee");
 }
 
 export async function generateMetadata({
@@ -163,6 +164,8 @@ export default async function StorefrontPage({
     if (onPrimary) themeTokens["--color-on-primary"] = onPrimary;
   }
 
+  const hasCartPage = Boolean(snapshot.pages?.["/cart"]);
+
   return (
     <>
       <script
@@ -173,10 +176,7 @@ export default async function StorefrontPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(web) }}
       />
-      <div
-        className="theme-root"
-        style={themeTokens as React.CSSProperties}
-      >
+      <div className="theme-root" style={themeTokens as React.CSSProperties}>
         <RenderPage
           layout={page.layout}
           ctx={{
@@ -187,6 +187,16 @@ export default async function StorefrontPage({
             search,
           }}
         />
+        {hasCartPage ? (
+          <a
+            href="/cart"
+            aria-label="Open cart"
+            title="Cart"
+            className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <ShoppingCart size={18} strokeWidth={2} className="pointer-events-none" />
+          </a>
+        ) : null}
       </div>
     </>
   );

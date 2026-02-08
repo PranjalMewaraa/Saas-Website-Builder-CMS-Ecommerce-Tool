@@ -86,6 +86,12 @@ export default function AdminShell({
       group: "Content",
     },
     {
+      label: "Form Submissions",
+      href: "/content/forms/submissions",
+      icon: FileText,
+      group: "Manage",
+    },
+    {
       label: "Previews",
       href: "/content/preview",
       icon: Eye,
@@ -100,6 +106,18 @@ export default function AdminShell({
       href: "/products",
       icon: ShoppingBag,
       group: "Commerce",
+    },
+    {
+      label: "Orders",
+      href: "/orders",
+      icon: ShoppingBag,
+      group: "Commerce",
+    },
+    {
+      label: "Order Management",
+      href: "/orders",
+      icon: ShoppingBag,
+      group: "Manage",
     },
     {
       label: "Domains",

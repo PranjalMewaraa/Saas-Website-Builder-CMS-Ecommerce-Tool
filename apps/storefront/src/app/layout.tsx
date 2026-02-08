@@ -4,6 +4,7 @@ import "./globals.css";
 import { headers } from "next/headers";
 import { getSiteByHandle, getMongoDb } from "@acme/db-mongo";
 import { reportVitals } from "./_component/webVital";
+import StorefrontProviders from "./_component/StorefrontProviders";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -31,7 +32,7 @@ export async function resolveSite() {
     if (site) return site;
   }
 
-  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "pranjal-site");
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "nikee");
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -62,7 +63,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <StorefrontProviders>{children}</StorefrontProviders>
       </body>
     </html>
   );

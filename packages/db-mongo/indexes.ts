@@ -134,4 +134,24 @@ export async function ensureMongoIndexes() {
       { tenant_id: 1, action: 1, created_at: -1 },
       { name: "idx_audit_action_created" }
     );
+
+  // orders
+  await db
+    .collection("orders")
+    .createIndex(
+      { tenant_id: 1, site_id: 1, created_at: -1 },
+      { name: "idx_orders_site_created" }
+    );
+  await db
+    .collection("orders")
+    .createIndex(
+      { tenant_id: 1, site_id: 1, status: 1 },
+      { name: "idx_orders_site_status" }
+    );
+  await db
+    .collection("orders")
+    .createIndex(
+      { tenant_id: 1, site_id: 1, order_number: 1 },
+      { unique: true, name: "uq_orders_site_number" }
+    );
 }

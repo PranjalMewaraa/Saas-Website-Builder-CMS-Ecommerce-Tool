@@ -25,6 +25,7 @@ export * from "./tenants.repo";
 export * from "./sites.repo";
 export * from "./indexes";
 export * from "./themes.repo";
+export * from "./orders.repo";
 export * from "./menu.repo";
 export * from "./pages.repo";
 export * from "./stylePresets.repo";

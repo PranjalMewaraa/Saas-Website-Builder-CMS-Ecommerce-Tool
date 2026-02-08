@@ -119,7 +119,7 @@ export default function FooterV1({
             ? "1280px"
             : contentWidth === "2xl"
               ? "1536px"
-              : "1280px";
+              : undefined;
   const resolvedPanelBg =
     panelBg && panelBg.type
       ? panelBg
@@ -157,10 +157,7 @@ export default function FooterV1({
 
   return (
     <footer className="w-full">
-      <div
-        className="mx-auto max-w-7xl px-6 pt-16 pb-8 lg:px-8"
-        style={{ maxWidth: maxWidth }}
-      >
+      <div className="mx-auto w-full" style={maxWidth ? { maxWidth } : undefined}>
         {layout === "simple" ? (
           <div className="px-6 py-10 md:px-10" style={panelStyle}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

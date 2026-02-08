@@ -8,6 +8,9 @@ import ProductListV1 from "../ProductList/ProductListV1";
 import ProductListVisualStub from "../ProductList/ProductList.visual";
 import ProductDetailV1 from "../ProductDetail/ProductDetailV1";
 import ProductDetailVisualStub from "../ProductDetail/ProductDetail.visual";
+import CartPageV1 from "../cart/CartPageV1";
+import CartSummaryV1 from "../cart/CartSummaryV1";
+import AddToCartV1 from "../cart/AddToCartV1";
 import FormV1 from "../Form/FormV1";
 import Hero from "../Hero/HeroV1";
 import {
@@ -31,6 +34,9 @@ import {
   ProductHighlightV1Schema,
   ProductListV1Schema,
   ProductDetailV1Schema,
+  CartPageV1Schema,
+  CartSummaryV1Schema,
+  AddToCartV1Schema,
 } from "../../schemas/blocks/commerce";
 import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
@@ -147,6 +153,24 @@ export const BLOCKS: Record<
       }
       return React.createElement(ProductDetailV1 as any, props);
     },
+  },
+
+  "CartPage/V1": {
+    type: "CartPage/V1",
+    schema: CartPageV1Schema,
+    render: (props: any) => React.createElement(CartPageV1 as any, props),
+  },
+
+  "CartSummary/V1": {
+    type: "CartSummary/V1",
+    schema: CartSummaryV1Schema,
+    render: (props: any) => React.createElement(CartSummaryV1 as any, props),
+  },
+
+  "AddToCart/V1": {
+    type: "AddToCart/V1",
+    schema: AddToCartV1Schema,
+    render: (props: any) => React.createElement(AddToCartV1 as any, props),
   },
 
   "Form/V1": {

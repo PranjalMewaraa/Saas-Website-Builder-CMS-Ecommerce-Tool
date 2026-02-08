@@ -1,5 +1,5 @@
 import React from "react";
-import { getBlock } from "../blocks";
+import { getBlock } from "../blocks/registry";
 import { PageLayoutSchema } from "../schemas";
 import { computeFinalStyle } from "./style-merge";
 import { resolveWrapperStyle } from "./style-resolver";
@@ -72,6 +72,7 @@ function normalizeMenusBySlot(snapshot: any) {
 const DEFAULT_FOOTER_STYLE = {
   bg: { type: "solid", color: "#0f172a" },
   textColor: "#94a3b8",
+  padding: { top: 64, right: 24, bottom: 32, left: 24 },
 };
 
 export async function RenderPage(args: {

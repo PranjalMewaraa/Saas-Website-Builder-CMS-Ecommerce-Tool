@@ -39,3 +39,28 @@ export const ProductDetailV1Schema = z.object({
   relatedLimit: z.coerce.number().int().min(0).max(12).default(4),
   detailPathPrefix: z.string().optional(),
 });
+
+export const CartPageV1Schema = z.object({
+  title: z.string().optional(),
+  emptyTitle: z.string().optional(),
+  emptyCtaText: z.string().optional(),
+  emptyCtaHref: z.string().optional(),
+  checkoutText: z.string().optional(),
+  checkoutMode: z.enum(["link", "create-order"]).optional(),
+  checkoutHref: z.string().optional(),
+});
+
+export const CartSummaryV1Schema = z.object({
+  title: z.string().optional(),
+  checkoutText: z.string().optional(),
+  checkoutHref: z.string().optional(),
+});
+
+export const AddToCartV1Schema = z.object({
+  productId: z.string().optional(),
+  title: z.string().optional(),
+  priceCents: z.coerce.number().int().optional(),
+  image: z.string().optional(),
+  buttonText: z.string().optional(),
+  quantity: z.coerce.number().int().min(1).optional(),
+});
