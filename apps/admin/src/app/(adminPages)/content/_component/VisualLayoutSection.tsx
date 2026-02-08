@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import * as Icons from "lucide-react";
 import {
   Plus,
   ArrowUp,
@@ -145,6 +146,7 @@ function renderAtomicPreview(
 
   if (block.type === "Atomic/Icon") {
     const size = props.size ?? 24;
+    const Icon = props.icon ? (Icons as any)[props.icon] : null;
     return (
       <span
         style={{
@@ -157,7 +159,7 @@ function renderAtomicPreview(
           lineHeight: 1,
         }}
       >
-        {props.icon || "★"}
+        {Icon ? <Icon size={size} /> : props.icon || "★"}
       </span>
     );
   }

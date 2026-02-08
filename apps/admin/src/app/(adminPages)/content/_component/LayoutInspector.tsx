@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import ImageField from "./ImageField";
 import ColorPickerInput from "./ColorPickerInput";
 
@@ -86,6 +87,48 @@ const ROW_PRESET_PREVIEWS: Record<
     cols: 3,
   },
 };
+
+const ICON_OPTIONS = [
+  "ShoppingBag",
+  "ShoppingCart",
+  "Tag",
+  "Gift",
+  "Sparkles",
+  "Star",
+  "BadgePercent",
+  "CreditCard",
+  "Truck",
+  "Package",
+  "Heart",
+  "ThumbsUp",
+  "ArrowRight",
+  "ArrowUpRight",
+  "ChevronRight",
+  "Link",
+  "Mail",
+  "Phone",
+  "MessageCircle",
+  "Info",
+  "HelpCircle",
+  "Shield",
+  "Lock",
+  "User",
+  "Users",
+  "Globe",
+  "MapPin",
+  "Clock",
+  "Calendar",
+  "Camera",
+  "Play",
+  "Video",
+  "Image",
+  "Search",
+  "Filter",
+  "Plus",
+  "Minus",
+  "Check",
+  "X",
+];
 
 
 const CARD_PRESETS = {
@@ -857,15 +900,14 @@ export default function LayoutInspector({
 
         {atom.type === "Atomic/Icon" && (
           <>
-            <Field
+            <IconPicker
               label="Icon"
-              value={atom.props?.icon || "★"}
+              value={atom.props?.icon || ""}
               onChange={(v) =>
                 updateAtomic((draftAtom) => {
                   draftAtom.props = { ...draftAtom.props, icon: v };
                 })
               }
-              placeholder="★"
             />
             <UnitField
               label="Size"
@@ -990,9 +1032,9 @@ export default function LayoutInspector({
               }
             />
             {!atom.props?.ordered && (
-              <Field
+              <IconPicker
                 label="Icon"
-                value={atom.props?.icon || "•"}
+                value={atom.props?.icon || ""}
                 onChange={(v) =>
                   updateAtomic((draftAtom) => {
                     draftAtom.props = { ...draftAtom.props, icon: v };
@@ -1477,6 +1519,94 @@ export default function LayoutInspector({
   }
 
   return null;
+}
+
+function IconPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const items = ICON_OPTIONS.filter((name) =>
+    name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const Current = value ? (LucideIcons as any)[value] : null;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
+      <button
+        type="button"
+        className="w-full border rounded-lg px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-2">
+          {Current ? <Current className="h-4 w-4" /> : null}
+          <span className="text-sm text-gray-700">{value || "None"}</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? "Close" : "Pick"}</span>
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Pick an icon</div>
+              <button
+                type="button"
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <input
+              className="mt-3 w-full border rounded-md px-2 py-1.5 text-sm"
+              placeholder="Search icons"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="mt-3 max-h-64 overflow-auto grid grid-cols-6 gap-2">
+              <button
+                type="button"
+                className="border rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+                title="None"
+              >
+                None
+              </button>
+              {items.map((name) => {
+                const Icon = (LucideIcons as any)[name];
+                if (!Icon) return null;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className="border rounded-md px-2 py-2 text-xs hover:bg-gray-50 flex items-center justify-center"
+                    onClick={() => {
+                      onChange(name);
+                      setOpen(false);
+                    }}
+                    title={name}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function Field({

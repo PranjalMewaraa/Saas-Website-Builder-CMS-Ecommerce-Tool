@@ -1,4 +1,5 @@
 import React from "react";
+import * as Icons from "lucide-react";
 import {
   resolveLayoutStyle,
   resolveRowLayoutStyle,
@@ -208,6 +209,7 @@ function renderAtomicBlock(
 
   if (type === "Atomic/Icon") {
     const size = props.size ?? 24;
+    const Icon = props.icon ? (Icons as any)[props.icon] : null;
     return (
       <span
         style={{
@@ -220,7 +222,7 @@ function renderAtomicBlock(
           lineHeight: 1,
         }}
       >
-        {props.icon || "★"}
+        {Icon ? <Icon size={size} /> : props.icon || "★"}
       </span>
     );
   }
