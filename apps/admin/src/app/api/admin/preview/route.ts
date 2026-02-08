@@ -107,8 +107,8 @@ export async function POST(req: Request) {
 
   // ✅ IMPORTANT: preview page lives in storefront (usually :3002)
   const storefrontOrigin =
-    process.env.STOREFRONT_ORIGIN || "http://localhost:3000";
-  const previewUrl = `${storefrontOrigin}/preview?handle=${encodeURIComponent(
+    process.env.STOREFRONT_ORIGIN || "http://localhost:3002";
+  const previewUrl = `${storefrontOrigin}/?handle=${encodeURIComponent(
     site.handle,
   )}&token=${encodeURIComponent(token)}`;
 

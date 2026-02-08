@@ -86,6 +86,10 @@ export async function RenderPage(args: {
     ...args.ctx,
     snapshot: normalizeMenusBySlot(args.ctx.snapshot),
   };
+  const previewQuery =
+    ctx.snapshot?.is_draft && ctx.snapshot?.previewToken && ctx.snapshot?.handle
+      ? `handle=${encodeURIComponent(ctx.snapshot.handle)}&token=${encodeURIComponent(ctx.snapshot.previewToken)}`
+      : "";
 
   console.log(
     "RenderPage ctx.snapshot",
@@ -126,7 +130,12 @@ export async function RenderPage(args: {
               style={secInnerStyle}
             >
               {(sec.blocks || []).map((b: any) => (
-                <BlockRenderer key={b.id} block={b} ctx={ctx} />
+                <BlockRenderer
+                  key={b.id}
+                  block={b}
+                  ctx={ctx}
+                  previewQuery={previewQuery}
+                />
               ))}
             </div>
           </div>
@@ -139,9 +148,11 @@ export async function RenderPage(args: {
 async function BlockRenderer({
   block,
   ctx,
+  previewQuery,
 }: {
   block: any;
   ctx: RenderContext;
+  previewQuery?: string;
 }) {
   const DEFAULT_IMAGE =
     "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
@@ -152,6 +163,7 @@ async function BlockRenderer({
           props={block.props || { rows: [] }}
           assets={ctx.snapshot.assets}
           menus={ctx.snapshot.menus}
+          previewQuery={previewQuery}
         />
       </div>
     );
@@ -195,6 +207,9 @@ async function BlockRenderer({
   }
 
   const props = safeProps(def.schema, block.props);
+  if (previewQuery && (block.type.startsWith("Header/") || block.type.startsWith("Footer/"))) {
+    (props as any).previewQuery = previewQuery;
+  }
   if (props?.bg && ctx.snapshot.assets) {
     const assets = ctx.snapshot.assets;
 

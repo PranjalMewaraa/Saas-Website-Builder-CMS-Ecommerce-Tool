@@ -136,7 +136,12 @@ function resolveAssetUrl(assetId: string | undefined, assets: any) {
   return a?.url || "";
 }
 
-function renderAtomicBlock(block: LayoutAtomic, assets: any, menus?: any) {
+function renderAtomicBlock(
+  block: LayoutAtomic,
+  assets: any,
+  menus?: any,
+  previewQuery?: string,
+) {
   const style = resolveLayoutStyle(block.style);
   const type = block.type;
   const props = block.props || {};
@@ -403,7 +408,10 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any, menus?: any) {
         {tree.map((node: any) => (
           <li key={node.id} style={{ position: "relative" }}>
             <a
-              href={node.ref?.href || node.ref?.slug || "#"}
+              href={appendPreviewQuery(
+                node.ref?.href || node.ref?.slug || "#",
+                previewQuery,
+              )}
               style={{
                 color: "inherit",
                 textDecoration: "none",
@@ -529,7 +537,12 @@ function renderAtomicBlock(block: LayoutAtomic, assets: any, menus?: any) {
   );
 }
 
-function renderRows(rows: LayoutRow[], assets: any, menus?: any) {
+function renderRows(
+  rows: LayoutRow[],
+  assets: any,
+  menus?: any,
+  previewQuery?: string,
+) {
   return rows.map((row) => {
     const rowPreset =
       row.layout?.mode === "preset"
@@ -574,7 +587,7 @@ function renderRows(rows: LayoutRow[], assets: any, menus?: any) {
               {renderVideoLayer(colVideo)}
               {(col.blocks || []).map((b) => (
                 <div key={b.id} data-atomic-id={b.id}>
-                  {renderAtomicBlock(b, assets, menus)}
+                  {renderAtomicBlock(b, assets, menus, previewQuery)}
                 </div>
               ))}
             </div>
@@ -590,10 +603,12 @@ export function LayoutSectionRenderer({
   props,
   assets,
   menus,
+  previewQuery,
 }: {
   props: LayoutSectionProps;
   assets?: any;
   menus?: any;
+  previewQuery?: string;
 }) {
   const sectionStyle = resolveLayoutStyle(props.style);
   const video = getBackgroundVideo(props.style);
@@ -632,10 +647,32 @@ export function LayoutSectionRenderer({
         </>
       ) : null}
       <div style={{ position: "relative", zIndex: 2 }}>
-        {renderRows(props.rows || [], assets, menus)}
+        {renderRows(props.rows || [], assets, menus, previewQuery)}
       </div>
     </section>
   );
+}
+
+function appendPreviewQuery(href: string, previewQuery?: string) {
+  if (!previewQuery) return href;
+  if (
+    !href ||
+    href.startsWith("http") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("#")
+  ) {
+    return href;
+  }
+  const [base, hash] = href.split("#");
+  const [path, query] = base.split("?");
+  const params = new URLSearchParams(query || "");
+  const extra = new URLSearchParams(previewQuery);
+  extra.forEach((value, key) => {
+    if (!params.get(key)) params.set(key, value);
+  });
+  const qs = params.toString();
+  const joined = `${path}${qs ? `?${qs}` : ""}`;
+  return hash ? `${joined}#${hash}` : joined;
 }
 
 export const ROW_PRESET_OPTIONS = Object.entries(ROW_PRESETS).map(

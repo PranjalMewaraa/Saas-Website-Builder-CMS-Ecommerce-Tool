@@ -5,6 +5,7 @@ import { RenderPage } from "@acme/renderer";
 import { getMongoDb, getSnapshotById, getSiteByHandle } from "@acme/db-mongo";
 import type { Metadata } from "next";
 import { buildSeo } from "@acme/renderer/seo";
+import { redirect } from "next/navigation";
 import { organizationSchema, webpageSchema } from "@acme/renderer/seo/jsonld";
 import { ShoppingCart } from "lucide-react";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export function normalizePath(slugParts?: string[]) {
   return p === "" ? "/" : p;
 }
 
-export async function resolveSite() {
+export async function resolveSite(explicitHandle?: string) {
   const { headers } = await import("next/headers");
 
   const h = await headers();
@@ -30,9 +31,9 @@ export async function resolveSite() {
   // Read query params from RSC request header
   const search = h.get("x-search") || h.get("next-url") || "";
 
-  let handle: string | null = null;
+  let handle: string | null = explicitHandle || null;
 
-  if (search.includes("?")) {
+  if (!handle && search.includes("?")) {
     const url = new URL(search, "http://localhost");
     console.log("URLS", url);
     handle = url.searchParams.get("handle");
@@ -114,21 +115,48 @@ export async function generateMetadata({
 // ── Changed signature ────────────────────────────────────────
 export default async function StorefrontPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ slug?: string[] }>; // ← this is the key change
+  params: Promise<{ slug?: string[] }>;
+  searchParams?: Promise<{ handle?: string; token?: string }>;
 }) {
   // Await params (safe even if already resolved)
   const resolvedParams = await params;
-  const path = normalizePath(resolvedParams.slug);
+  const resolvedSearch = await searchParams;
+  let path = normalizePath(resolvedParams.slug);
 
-  const site = await resolveSite();
+  const site = await resolveSite(resolvedSearch?.handle);
   if (!site) return <div className="p-6">Site not found</div>;
 
-  if (!site.published_snapshot_id) {
-    return <div className="p-6">Site not published yet</div>;
+  const h = headers();
+  const host = (await h).get("host") || "";
+  const search = (await h).get("x-search") || (await h).get("next-url") || "";
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+
+  let token = resolvedSearch?.token || "";
+  if (!token && search.includes("?")) {
+    const url = new URL(search, "http://localhost");
+    token = url.searchParams.get("token") || "";
   }
 
-  const snapshot = await getSnapshotById(site.published_snapshot_id);
+  let snapshot: any = null;
+  const isPreview =
+    token && site.preview_token && token === site.preview_token;
+
+  if (isPreview && site.draft_snapshot_id) {
+    snapshot = await getSnapshotById(site.draft_snapshot_id);
+    if (path === "/preview") {
+      const target = site.handle
+        ? `/?handle=${site.handle}&token=${token}`
+        : `/?token=${token}`;
+      redirect(target);
+    }
+  } else {
+    if (!site.published_snapshot_id) {
+      return <div className="p-6">Site not published yet</div>;
+    }
+    snapshot = await getSnapshotById(site.published_snapshot_id);
+  }
   if (!snapshot) return <div className="p-6">Published snapshot missing</div>;
 
   let page = snapshot.pages?.[path] || null;
@@ -146,10 +174,6 @@ export default async function StorefrontPage({
     }
   }
   const meta = page.seo || {};
-  const h = headers();
-  const host = (await h).get("host") || "";
-  const search = (await h).get("x-search") || (await h).get("next-url") || "";
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
   const url = `${protocol}://${host}${path}`;
 
   const org = organizationSchema(site);
@@ -187,6 +211,11 @@ export default async function StorefrontPage({
             search,
           }}
         />
+        {isPreview ? (
+          <div className="fixed left-4 bottom-4 z-50 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-white shadow">
+            Draft Preview
+          </div>
+        ) : null}
         {hasCartPage ? (
           <a
             href="/cart"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import * as Icons from "lucide-react";
 
 type MenuNode = {
   id: string;
@@ -17,12 +18,18 @@ type Props = {
   layout?: "three-col" | "two-col" | "two-col-nav-cta";
   ctaText?: string;
   ctaHref?: string;
+  ctaIcon?: string;
   ctaSecondaryText?: string;
   ctaSecondaryHref?: string;
+  ctaSecondaryIcon?: string;
+  ctaTertiaryText?: string;
+  ctaTertiaryHref?: string;
+  ctaTertiaryIcon?: string;
   contentWidth: string;
   logoUrl?: string;
   logoAlt?: string;
   __editor?: boolean;
+  previewQuery?: string;
 };
 
 export default function HeaderV1({
@@ -30,12 +37,18 @@ export default function HeaderV1({
   layout = "three-col",
   ctaText,
   ctaHref,
+  ctaIcon,
   ctaSecondaryText,
   ctaSecondaryHref,
+  ctaSecondaryIcon,
+  ctaTertiaryText,
+  ctaTertiaryHref,
+  ctaTertiaryIcon,
   logoUrl,
   logoAlt,
   contentWidth,
   __editor,
+  previewQuery,
 }: Props) {
   const items = menu?.tree ?? [];
   const placeholderItems = [
@@ -59,7 +72,7 @@ export default function HeaderV1({
               : "1280px";
 
   const logoNode = logoUrl ? (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href={appendPreviewQuery("/", previewQuery)} className="flex items-center gap-2">
       <Image
         src={logoUrl}
         alt={logoAlt || "Logo"}
@@ -70,7 +83,7 @@ export default function HeaderV1({
       />
     </Link>
   ) : (
-    <Link href="/" className="font-semibold">
+    <Link href={appendPreviewQuery("/", previewQuery)} className="font-semibold">
       Store
     </Link>
   );
@@ -80,7 +93,7 @@ export default function HeaderV1({
       {navItems.map((n) => (
         <Link
           key={n.id}
-          href={n.ref?.slug || n.ref?.href || "#"}
+          href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
           className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
         >
           {n.label}
@@ -89,27 +102,61 @@ export default function HeaderV1({
     </nav>
   );
 
-  const ctaNode =
-    ctaText && ctaHref ? (
-      <div className="flex items-center gap-2">
-        {ctaSecondaryText && ctaSecondaryHref ? (
-          <Link
-            href={ctaSecondaryHref}
-            className="px-4 py-2 rounded-full border border-black/15 text-sm font-medium hover:border-black/25 transition"
-          >
-            {ctaSecondaryText}
-          </Link>
-        ) : null}
+  const primaryIcon = getIcon(ctaIcon);
+  const secondaryIcon = getIcon(ctaSecondaryIcon);
+  const tertiaryIcon = getIcon(ctaTertiaryIcon);
+
+  const hasAnyCta =
+    (ctaText && ctaHref) ||
+    (ctaSecondaryText && ctaSecondaryHref) ||
+    (ctaTertiaryText && ctaTertiaryHref) ||
+    (ctaIcon && ctaHref) ||
+    (ctaSecondaryIcon && ctaSecondaryHref) ||
+    (ctaTertiaryIcon && ctaTertiaryHref);
+
+  const ctaNode = hasAnyCta ? (
+    <div className="flex items-center gap-2">
+      {ctaTertiaryHref && (ctaTertiaryText || tertiaryIcon) ? (
         <Link
-          href={ctaHref}
+          href={appendPreviewQuery(ctaTertiaryHref, previewQuery)}
+          className="px-3 py-2 rounded-full text-sm font-medium text-black/70 hover:text-black transition"
+        >
+          {tertiaryIcon ? <tertiaryIcon className="h-4 w-4 inline-block" /> : null}
+          {ctaTertiaryText ? (
+            <span className={tertiaryIcon ? "ml-2" : ""}>{ctaTertiaryText}</span>
+          ) : null}
+        </Link>
+      ) : null}
+      {ctaSecondaryHref && (ctaSecondaryText || secondaryIcon) ? (
+        <Link
+          href={appendPreviewQuery(ctaSecondaryHref, previewQuery)}
+          className="px-4 py-2 rounded-full border border-black/15 text-sm font-medium hover:border-black/25 transition"
+        >
+          {secondaryIcon ? (
+            <secondaryIcon className="h-4 w-4 inline-block" />
+          ) : null}
+          {ctaSecondaryText ? (
+            <span className={secondaryIcon ? "ml-2" : ""}>
+              {ctaSecondaryText}
+            </span>
+          ) : null}
+        </Link>
+      ) : null}
+      {ctaHref && (ctaText || primaryIcon) ? (
+        <Link
+          href={appendPreviewQuery(ctaHref, previewQuery)}
           className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
         >
-          {ctaText}
+          {primaryIcon ? <primaryIcon className="h-4 w-4 inline-block" /> : null}
+          {ctaText ? (
+            <span className={primaryIcon ? "ml-2" : ""}>{ctaText}</span>
+          ) : null}
         </Link>
-      </div>
-    ) : (
-      <div className="w-[1px] h-8 bg-black/10" />
-    );
+      ) : null}
+    </div>
+  ) : (
+    <div className="w-[1px] h-8 bg-black/10" />
+  );
 
   return (
     <header className="w-full border-b border-black/10 bg-white/70 backdrop-blur">
@@ -147,4 +194,27 @@ export default function HeaderV1({
       </div>
     </header>
   );
+}
+
+function appendPreviewQuery(href: string, previewQuery?: string) {
+  if (!previewQuery) return href;
+  if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("#")) {
+    return href;
+  }
+  const [base, hash] = href.split("#");
+  const [path, query] = base.split("?");
+  const params = new URLSearchParams(query || "");
+  const extra = new URLSearchParams(previewQuery);
+  extra.forEach((value, key) => {
+    if (!params.get(key)) params.set(key, value);
+  });
+  const qs = params.toString();
+  const joined = `${path}${qs ? `?${qs}` : ""}`;
+  return hash ? `${joined}#${hash}` : joined;
+}
+
+function getIcon(name?: string) {
+  if (!name) return null;
+  const icon = (Icons as any)[name];
+  return typeof icon === "function" ? icon : null;
 }

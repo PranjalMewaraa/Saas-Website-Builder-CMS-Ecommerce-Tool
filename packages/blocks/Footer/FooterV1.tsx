@@ -35,6 +35,7 @@ type Props = {
   panelRadius?: number;
   panelTextColor?: string;
   __editor?: boolean;
+  previewQuery?: string;
 };
 
 export default function FooterV1({
@@ -55,6 +56,7 @@ export default function FooterV1({
   panelRadius,
   panelTextColor,
   __editor,
+  previewQuery,
 }: Props) {
   const items = menu?.tree ?? [];
   const placeholderItems = [
@@ -163,7 +165,7 @@ export default function FooterV1({
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="space-y-3">
                 {logoUrl ? (
-                  <Link href="/" className="inline-flex items-center">
+                  <Link href={appendPreviewQuery("/", previewQuery)} className="inline-flex items-center">
                     <Image
                       src={logoUrl}
                       alt={logoAlt || "Logo"}
@@ -181,10 +183,10 @@ export default function FooterV1({
               </div>
               {navItems.length ? (
                 <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-                  {navItems.slice(0, 6).map((n) => (
+                {navItems.slice(0, 6).map((n) => (
                     <Link
                       key={n.id}
-                      href={n.ref?.slug || n.ref?.href || "#"}
+                      href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
                       className="transition-opacity hover:opacity-100 opacity-80"
                     >
                       {n.label}
@@ -199,7 +201,7 @@ export default function FooterV1({
             <div className="grid grid-cols-1 gap-10 md:grid-cols-4 md:gap-8">
               <div className="md:col-span-1">
                 {logoUrl ? (
-                  <Link href="/" className="inline-flex items-center mb-4">
+                  <Link href={appendPreviewQuery("/", previewQuery)} className="inline-flex items-center mb-4">
                     <Image
                       src={logoUrl}
                       alt={logoAlt || "Logo"}
@@ -230,7 +232,7 @@ export default function FooterV1({
                         {group.map((n) => (
                           <li key={n.id}>
                             <Link
-                              href={n.ref?.slug || n.ref?.href || "#"}
+                              href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
                               className="transition-opacity hover:opacity-100 opacity-80"
                             >
                               {n.label}
@@ -500,4 +502,21 @@ function socialButtonStyle(
 
   // pill default
   return base;
+}
+
+function appendPreviewQuery(href: string, previewQuery?: string) {
+  if (!previewQuery) return href;
+  if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("#")) {
+    return href;
+  }
+  const [base, hash] = href.split("#");
+  const [path, query] = base.split("?");
+  const params = new URLSearchParams(query || "");
+  const extra = new URLSearchParams(previewQuery);
+  extra.forEach((value, key) => {
+    if (!params.get(key)) params.set(key, value);
+  });
+  const qs = params.toString();
+  const joined = `${path}${qs ? `?${qs}` : ""}`;
+  return hash ? `${joined}#${hash}` : joined;
 }
