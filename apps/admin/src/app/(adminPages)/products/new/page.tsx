@@ -1,7 +1,5 @@
 import { requireSession } from "@acme/auth";
 import ProductCreateClient from "./ProductCreateClient";
-import Nav from "@/app/_components/Nav";
-import ProductWizard from "@/app/_components/ProductWizard";
 
 export default async function NewProductPage({
   searchParams,
@@ -18,11 +16,9 @@ export default async function NewProductPage({
 
   return (
     <div>
-      {/* <Nav siteId={siteId} storeId={storeId} /> */}
-
       <div className="p-6 space-y-4">
         <h1 className="text-xl font-semibold">Create Product</h1>
-        <ProductWizard siteId={siteId} />
+        <ProductCreateClient siteId={siteId} storeId={storeId} />
       </div>
     </div>
   );

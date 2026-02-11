@@ -22,6 +22,13 @@ export function normalizePath(slugParts?: string[]) {
 }
 
 export async function resolveSite(explicitHandle?: string) {
+  return resolveSiteWithId(undefined, explicitHandle);
+}
+
+export async function resolveSiteWithId(
+  explicitSiteId?: string | null,
+  explicitHandle?: string | null,
+) {
   const { headers } = await import("next/headers");
 
   const h = await headers();
@@ -31,16 +38,23 @@ export async function resolveSite(explicitHandle?: string) {
   // Read query params from RSC request header
   const search = h.get("x-search") || h.get("next-url") || "";
 
+  let siteId: string | null = explicitSiteId || null;
   let handle: string | null = explicitHandle || null;
 
   if (!handle && search.includes("?")) {
     const url = new URL(search, "http://localhost");
-    console.log("URLS", url);
     handle = url.searchParams.get("handle");
+    siteId = siteId || url.searchParams.get("sid");
   }
 
   const db = await getMongoDb();
   const sites = db.collection("sites");
+
+  // 0. exact site id (preferred for admin preview/publish links)
+  if (siteId) {
+    const site = await sites.findOne({ _id: siteId as any });
+    if (site) return site;
+  }
 
   // 1. localhost → query param
   if ((host === "localhost" || host === "127.0.0.1") && handle) {
@@ -118,14 +132,16 @@ export default async function StorefrontPage({
   searchParams,
 }: {
   params: Promise<{ slug?: string[] }>;
-  searchParams?: Promise<{ handle?: string; token?: string }>;
+  searchParams?: Promise<{ handle?: string; token?: string; sid?: string }>;
 }) {
   // Await params (safe even if already resolved)
   const resolvedParams = await params;
   const resolvedSearch = await searchParams;
   let path = normalizePath(resolvedParams.slug);
-
-  const site = await resolveSite(resolvedSearch?.handle);
+  const site = await resolveSiteWithId(
+    resolvedSearch?.sid || null,
+    resolvedSearch?.handle || null,
+  );
   if (!site) return <div className="p-6">Site not found</div>;
 
   const h = headers();
@@ -140,15 +156,14 @@ export default async function StorefrontPage({
   }
 
   let snapshot: any = null;
-  const isPreview =
-    token && site.preview_token && token === site.preview_token;
+  const isPreview = token && site.preview_token && token === site.preview_token;
 
   if (isPreview && site.draft_snapshot_id) {
     snapshot = await getSnapshotById(site.draft_snapshot_id);
     if (path === "/preview") {
       const target = site.handle
-        ? `/?handle=${site.handle}&token=${token}`
-        : `/?token=${token}`;
+        ? `/?handle=${site.handle}&sid=${site._id}&token=${token}`
+        : `/?sid=${site._id}&token=${token}`;
       redirect(target);
     }
   } else {
@@ -223,7 +238,11 @@ export default async function StorefrontPage({
             title="Cart"
             className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
           >
-            <ShoppingCart size={18} strokeWidth={2} className="pointer-events-none" />
+            <ShoppingCart
+              size={18}
+              strokeWidth={2}
+              className="pointer-events-none"
+            />
           </a>
         ) : null}
       </div>

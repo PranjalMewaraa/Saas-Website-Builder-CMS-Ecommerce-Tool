@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     process.env.STOREFRONT_ORIGIN || "http://localhost:3002";
   const previewUrl = `${storefrontOrigin}/?handle=${encodeURIComponent(
     site.handle,
-  )}&token=${encodeURIComponent(token)}`;
+  )}&sid=${encodeURIComponent(site_id)}&token=${encodeURIComponent(token)}`;
 
   return NextResponse.json({ ok: true, snapshot_id, previewUrl });
 }

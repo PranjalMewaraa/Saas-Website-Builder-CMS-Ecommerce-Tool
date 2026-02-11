@@ -120,6 +120,12 @@ export default function AdminShell({
       group: "Manage",
     },
     {
+      label: "Inventory Management",
+      href: "/manage/inventory",
+      icon: ShoppingBag,
+      group: "Manage",
+    },
+    {
       label: "Domains",
       href: "/settings/domains",
       icon: Globe,

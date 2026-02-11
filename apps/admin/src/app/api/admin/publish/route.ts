@@ -114,7 +114,7 @@ export async function POST(req: Request) {
   const STOREFRONT_BASE_URL =
     process.env.STOREFRONT_BASE_URL || "http://localhost:3002";
 
-  const storefront_url = `${STOREFRONT_BASE_URL}/?handle=${site.handle}`;
+  const storefront_url = `${STOREFRONT_BASE_URL}/?handle=${encodeURIComponent(site.handle)}&sid=${encodeURIComponent(site_id)}`;
 
   return NextResponse.json({
     ok: true,

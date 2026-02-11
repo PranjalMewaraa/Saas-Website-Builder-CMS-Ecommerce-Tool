@@ -95,6 +95,16 @@ export default async function ProductDetailV1({
   const comparePrice = product.compare_at_price_cents
     ? product.compare_at_price_cents / 100
     : null;
+  const inventoryQty = (product.variants || []).reduce(
+    (sum: number, v: any) => sum + Number(v.inventory_qty || 0),
+    0,
+  );
+  const stockLabel =
+    inventoryQty <= 0
+      ? "Out of Stock"
+      : inventoryQty <= 5
+        ? "Low Stock"
+        : "In Stock";
 
   const related = showRelated
     ? await listRelatedProducts({
@@ -145,6 +155,7 @@ export default async function ProductDetailV1({
                 </span>
               )}
             </div>
+            <div className="text-sm text-slate-600">{stockLabel}</div>
 
             {product.description && (
               <p className="text-slate-600 leading-relaxed">
@@ -159,6 +170,7 @@ export default async function ProductDetailV1({
                 priceCents={product.base_price_cents}
                 image={primaryImage?.url}
                 buttonText="Add to cart"
+                inventoryQty={inventoryQty}
               />
             </div>
 

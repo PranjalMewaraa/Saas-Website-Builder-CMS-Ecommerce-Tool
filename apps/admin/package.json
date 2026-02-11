@@ -11,7 +11,8 @@
     "seed:tenant-site": "tsx scripts/seed-tenant-site.ts",
     "mongo:indexes": "tsx scripts/mongo-indexes.ts",
     "seed:mysql": "tsx scripts/seed-mysql.ts",
-    "seed:snapshot": "tsx scripts/seed-snapshot.ts"
+    "seed:snapshot": "tsx scripts/seed-snapshot.ts",
+    "seed:commerce-v2": "tsx scripts/seed-commerce-v2-backfill.ts"
   },
   "dependencies": {
     "@acme/auth": "workspace:*",

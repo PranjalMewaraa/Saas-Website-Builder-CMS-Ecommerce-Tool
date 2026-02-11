@@ -54,6 +54,11 @@ export default async function ContentDashboard({
       desc: "Map custom domains to this site",
       href: `/settings/domains?site_id=${siteId}`,
     },
+    {
+      title: "Commerce V2",
+      desc: "Store preset + category attributes + inventory",
+      href: `/commerce-v2?site_id=${siteId}`,
+    },
   ];
 
   return (

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const handle = slugify(name);
   const site_id = `site_${Date.now()}`;
-  const store_id = newId("store").slice(0, 20);
+  const store_id = newId("store").slice(0, 26);
   const ts = nowSql();
 
   const col = await sitesCollection();

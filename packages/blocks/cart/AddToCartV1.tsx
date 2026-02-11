@@ -10,6 +10,7 @@ type Props = {
   image?: string;
   buttonText?: string;
   quantity?: number;
+  inventoryQty?: number;
   __editor?: boolean;
 };
 
@@ -20,10 +21,14 @@ export default function AddToCartV1({
   image,
   buttonText = "Add to cart",
   quantity = 1,
+  inventoryQty,
   __editor,
 }: Props) {
   const cart = useCartOptional();
   const [added, setAdded] = useState(false);
+
+  const outOfStock =
+    typeof inventoryQty === "number" ? inventoryQty <= 0 : false;
 
   if (!cart || __editor || !productId) {
     return (
@@ -38,12 +43,13 @@ export default function AddToCartV1({
 
   return (
     <button
-      className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white"
+      className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
       type="button"
+      disabled={outOfStock}
       onClick={() => {
         cart.addItem({
           product_id: productId,
-          title,
+          title: title || "Product",
           price_cents: priceCents,
           image,
           qty: quantity,
@@ -52,7 +58,7 @@ export default function AddToCartV1({
         setTimeout(() => setAdded(false), 1200);
       }}
     >
-      {added ? "Added" : buttonText}
+      {outOfStock ? "Out of stock" : added ? "Added" : buttonText}
     </button>
   );
 }

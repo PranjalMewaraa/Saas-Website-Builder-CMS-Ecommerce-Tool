@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@acme/auth";
 import { getMongoDb, getOrderById, updateOrderStatus } from "@acme/db-mongo";
+import { pool } from "@acme/db-mysql";
+
+function parseMaybeJson(value: any) {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(String(value));
+  } catch {
+    return {};
+  }
+}
 
 export async function GET(
   req: Request,
@@ -14,6 +25,35 @@ export async function GET(
 
   if (!site_id) {
     return NextResponse.json({ ok: false, error: "site_id required" }, { status: 400 });
+  }
+
+  const [rows] = await pool.query<any[]>(
+    `SELECT * FROM commerce_orders WHERE tenant_id = ? AND site_id = ? AND id = ? LIMIT 1`,
+    [tenant_id, site_id, id],
+  );
+  if (rows[0]) {
+    const [items] = await pool.query<any[]>(
+      `SELECT * FROM commerce_order_items WHERE tenant_id = ? AND order_id = ? ORDER BY created_at ASC`,
+      [tenant_id, id],
+    );
+    const order = {
+      _id: rows[0].id,
+      order_number: rows[0].order_number,
+      status: rows[0].status,
+      total_cents: rows[0].total_cents,
+      customer: parseMaybeJson(rows[0].customer_json),
+      shipping_address: parseMaybeJson(rows[0].shipping_json),
+      items: (items || []).map((i) => ({
+        product_id: i.product_id,
+        variant_id: i.variant_id,
+        title: i.title,
+        qty: i.quantity,
+        price_cents: i.price_cents,
+      })),
+      created_at: rows[0].created_at,
+      source: "mysql_v2",
+    };
+    return NextResponse.json({ ok: true, order });
   }
 
   const order = await getOrderById(tenant_id, site_id, id);
@@ -39,6 +79,18 @@ export async function PATCH(
     return NextResponse.json({ ok: false, error: "status required" }, { status: 400 });
   }
 
+  const [rows] = await pool.query<any[]>(
+    `SELECT * FROM commerce_orders WHERE tenant_id = ? AND site_id = ? AND id = ? LIMIT 1`,
+    [tenant_id, site_id, id],
+  );
+  if (rows[0]) {
+    await pool.query(
+      `UPDATE commerce_orders SET status = ?, updated_at = NOW() WHERE tenant_id = ? AND site_id = ? AND id = ?`,
+      [status, tenant_id, site_id, id],
+    );
+    return NextResponse.json({ ok: true });
+  }
+
   const order = await getOrderById(tenant_id, site_id, id);
   const prevStatus = order?.status;
 
@@ -46,7 +98,7 @@ export async function PATCH(
 
   if (order?.customer?.email && prevStatus !== status) {
     const db = await getMongoDb();
-    const site = await db.collection("sites").findOne({ _id: site_id });
+    const site = await db.collection("sites").findOne({ _id: site_id } as any);
     await sendOrderStatusEmail({
       to: order.customer.email,
       orderNumber: order.order_number,

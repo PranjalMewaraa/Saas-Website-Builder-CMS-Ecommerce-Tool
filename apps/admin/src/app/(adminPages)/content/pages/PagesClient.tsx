@@ -82,6 +82,7 @@ const TEMPLATE_DEFAULT_SLUGS: Record<string, string> = {
 type Page = {
   _id: string;
   name?: string;
+  title?: string;
   slug: string;
 };
 
@@ -135,7 +136,7 @@ export default function PagesClient({ siteId }: Props) {
     if (!term) return pages;
     return pages.filter(
       (p) =>
-        (p.name || "").toLowerCase().includes(term) ||
+        (p.name || p.title || "").toLowerCase().includes(term) ||
         p.slug.toLowerCase().includes(term),
     );
   }, [pages, search]);
@@ -230,7 +231,7 @@ export default function PagesClient({ siteId }: Props) {
   async function duplicatePage(page: Page) {
     const newName = await prompt({
       title: "New page name",
-      defaultValue: `Copy of ${page.name || page.slug}`,
+      defaultValue: `Copy of ${page.name || page.title || page.slug}`,
       placeholder: "Page name",
       confirmText: "Continue",
     });
@@ -359,7 +360,7 @@ export default function PagesClient({ siteId }: Props) {
               >
                 <div className="min-w-0">
                   <div className="font-medium text-gray-900 truncate">
-                    {p.name || "Untitled Page"}
+                    {p.name || p.title || "Untitled Page"}
                   </div>
                   <div className="text-xs font-mono text-gray-500 mt-0.5 truncate">
                     {p.slug}

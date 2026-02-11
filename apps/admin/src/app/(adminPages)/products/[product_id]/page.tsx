@@ -1,5 +1,5 @@
 import { requireSession, requireModule } from "@acme/auth";
-import { getProduct, listProductCategoryIds } from "@acme/db-mysql";
+import { getProduct, getProductV2, listProductCategoryIds } from "@acme/db-mysql";
 import ProductEditClient from "./productEditClient";
 
 export default async function ProductEditPage({
@@ -19,10 +19,17 @@ export default async function ProductEditPage({
 
   await requireModule({ tenant_id, site_id: siteId, module: "catalog" });
 
-  const product = await getProduct(tenant_id, product_id);
-  const categoryIds = product
-    ? await listProductCategoryIds(tenant_id, product_id)
-    : [];
+  let product: any = null;
+  if (storeId) {
+    product = await getProductV2({ tenant_id, store_id: storeId, product_id });
+  }
+  if (!product) {
+    const legacy = await getProduct(tenant_id, product_id);
+    const categoryIds = legacy
+      ? await listProductCategoryIds(tenant_id, product_id)
+      : [];
+    product = legacy ? { ...legacy, category_ids: categoryIds } : null;
+  }
 
   return (
     <div className="p-6 space-y-4">
@@ -30,7 +37,7 @@ export default async function ProductEditPage({
       <ProductEditClient
         siteId={siteId}
         storeId={storeId}
-        product={product ? { ...product, category_ids: categoryIds } : null}
+        product={product}
       />
     </div>
   );
