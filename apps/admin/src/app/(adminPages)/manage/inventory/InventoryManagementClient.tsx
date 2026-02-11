@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useUI } from "@/app/_components/ui/UiProvider";
+
+type InventoryItem = {
+  product_id: string;
+  variant_id?: string;
+  title: string;
+  sku?: string;
+  inventory_qty: number | string;
+};
 
 export default function InventoryManagementClient({
   siteId,
@@ -11,158 +19,355 @@ export default function InventoryManagementClient({
   storeId: string;
 }) {
   const { toast } = useUI();
-  const [q, setQ] = useState("");
-  const [items, setItems] = useState<any[]>([]);
+
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [delta, setDelta] = useState<Record<string, number>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  function rowKey(it: any) {
-    return it.variant_id || it.product_id;
-  }
+  // Track pending changes
+  const [changes, setChanges] = useState<Record<string, number>>({});
 
-  async function refresh(search = q) {
-    if (!siteId || !storeId) return;
-    setLoading(true);
-    const res = await fetch(
-      `/api/admin/v2/inventory?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&q=${encodeURIComponent(search)}`,
-      { cache: "no-store" },
-    );
-    const data = await res.json().catch(() => ({}));
-    setLoading(false);
-    if (!res.ok) {
-      toast({
-        variant: "error",
-        title: "Failed to load inventory",
-        description: data?.error || "Unknown error",
-      });
-      return;
-    }
-    setItems(data.items || []);
-  }
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const fetchInventory = useCallback(
+    async (search: string) => {
+      if (!siteId || !storeId) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(
+          `/api/admin/v2/inventory?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&q=${encodeURIComponent(search)}`,
+          { cache: "no-store" },
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to load inventory");
+        }
+
+        setItems(data.items || []);
+      } catch (err: any) {
+        setError(err.message || "Could not load inventory");
+        toast({
+          variant: "error",
+          title: "Error",
+          description: err.message || "Failed to load inventory",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [siteId, storeId, toast],
+  );
 
   useEffect(() => {
-    refresh("");
-  }, [siteId, storeId]);
+    fetchInventory(debouncedQuery);
+  }, [debouncedQuery, fetchInventory]);
+
+  // Initial load
+  useEffect(() => {
+    if (siteId && storeId) {
+      fetchInventory("");
+    }
+  }, [siteId, storeId, fetchInventory]);
+
+  const getRowKey = (item: InventoryItem) => item.variant_id || item.product_id;
+
+  const updateDelta = (key: string, value: number) => {
+    setChanges((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const applyChange = async (item: InventoryItem) => {
+    const key = getRowKey(item);
+    const delta = changes[key] ?? 0;
+
+    if (delta === 0) return;
+
+    // Optional: warn on large changes
+    if (Math.abs(delta) > 100) {
+      if (
+        !confirm(
+          `Apply large change of ${delta > 0 ? "+" : ""}${delta} to ${item.title}?`,
+        )
+      ) {
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/admin/v2/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          site_id: siteId,
+          store_id: storeId,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          delta_quantity: delta,
+          change_type: delta > 0 ? "restock" : "manual_adjustment",
+          reason:
+            delta > 0
+              ? "Restock from Manage/Inventory"
+              : "Manual adjustment / correction",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data?.error || "Update failed");
+
+      toast({
+        variant: "success",
+        title: "Updated",
+        description: `${Math.abs(delta)} unit${Math.abs(delta) !== 1 ? "s" : ""} ${delta > 0 ? "added" : "removed"}`,
+      });
+
+      // Clear change & refresh
+      setChanges((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+
+      fetchInventory(debouncedQuery);
+    } catch (err: any) {
+      toast({
+        variant: "error",
+        title: "Failed to update",
+        description: err.message || "Unknown error",
+      });
+    }
+  };
+
+  const isDirty = Object.keys(changes).length > 0;
 
   if (!siteId || !storeId) {
     return (
-      <div className="text-sm text-gray-600">
-        Select `site_id` and `store_id` to manage inventory.
+      <div className="p-6 text-center text-gray-500">
+        Please select a site and store to manage inventory.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 p-4 max-w-7xl mx-auto">
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold">Inventory Management</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Manage stock for the <b>active store</b> only.
+        <h1 className="text-2xl font-bold text-gray-900">
+          Inventory Management
+        </h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Update stock levels for the currently active store
         </p>
       </div>
 
-      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-        `Delta` means stock change amount:
-        <b> +10</b> adds 10 units, <b>-3</b> removes 3 units, <b>0</b> makes no change.
+      {/* Info box */}
+      <div className="rounded-lg border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm">
+        <div className="font-medium text-blue-800 mb-1">
+          How to adjust stock:
+        </div>
+        <ul className="text-blue-700 space-y-0.5 text-xs leading-relaxed">
+          <li>
+            • Enter <span className="font-bold text-green-700">+number</span> to
+            add stock (restock)
+          </li>
+          <li>
+            • Enter <span className="font-bold text-red-700">-number</span> to
+            remove stock (damage, loss, sale correction)
+          </li>
+          <li>
+            • Click <span className="font-medium">Apply</span> to save the
+            change
+          </li>
+        </ul>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search title / SKU"
-          className="border rounded p-2 w-full max-w-md"
-        />
+      {/* Search */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-xl">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchInventory(query)}
+            placeholder="Search by product name or SKU..."
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
         <button
-          className="px-3 py-2 border rounded"
-          onClick={() => refresh(q)}
+          onClick={() => fetchInventory(query)}
           disabled={loading}
+          className={`
+            px-5 py-2.5 rounded-lg font-medium text-sm transition
+            ${
+              loading
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+            }
+          `}
         >
-          Search
+          {loading ? "Loading..." : "Search"}
         </button>
       </div>
 
-      <div className="border rounded overflow-x-auto bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left p-2">Product</th>
-              <th className="text-left p-2">SKU</th>
-              <th className="text-left p-2">Current</th>
-              <th className="text-left p-2">Delta</th>
-              <th className="text-left p-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it) => (
-              <tr key={rowKey(it)} className="border-b">
-                <td className="p-2">{it.title}</td>
-                <td className="p-2">{it.sku || "-"}</td>
-                <td className="p-2">{Number(it.inventory_qty || 0)}</td>
-                <td className="p-2">
-                  <input
-                    type="number"
-                    className="border rounded p-1 w-24"
-                    value={delta[rowKey(it)] ?? 0}
-                    onChange={(e) =>
-                      setDelta((prev) => ({
-                        ...prev,
-                        [rowKey(it)]: Number(e.target.value || 0),
-                      }))
-                    }
-                  />
-                </td>
-                <td className="p-2">
-                  <button
-                    className="px-2 py-1 border rounded"
-                    onClick={async () => {
-                      const d = Number(delta[rowKey(it)] ?? 0);
-                      if (!d) return;
-                      const res = await fetch("/api/admin/v2/inventory", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          site_id: siteId,
-                          store_id: storeId,
-                          product_id: it.product_id,
-                          variant_id: it.variant_id,
-                          delta_quantity: d,
-                          change_type: d > 0 ? "restock" : "manual_adjustment",
-                          reason: d > 0 ? "Restock from Manage/Inventory" : "Manual adjustment",
-                        }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok) {
-                        toast({
-                          variant: "error",
-                          title: "Inventory update failed",
-                          description: data?.error || "Unknown error",
-                        });
-                        return;
-                      }
-                      toast({ variant: "success", title: "Inventory updated" });
-                      setDelta((prev) => ({ ...prev, [rowKey(it)]: 0 }));
-                      refresh(q);
-                    }}
-                  >
-                    Apply
-                  </button>
-                  <div className="text-[11px] text-gray-500 mt-1">
-                    Use + for restock, - for shrink/damage.
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 ? (
+      {/* Table */}
+      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <td className="p-3 text-gray-500" colSpan={5}>
-                  No inventory rows found.
-                </td>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  SKU
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Current Stock
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Adjustment
+                </th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-12 text-center text-gray-500"
+                  >
+                    Loading inventory...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-8 text-center text-red-600"
+                  >
+                    {error}
+                  </td>
+                </tr>
+              ) : items.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-4 py-12 text-center text-gray-500"
+                  >
+                    No products found {query ? `for "${query}"` : ""}
+                  </td>
+                </tr>
+              ) : (
+                items.map((item) => {
+                  const key = getRowKey(item);
+                  const delta = changes[key] ?? 0;
+                  const hasChange = delta !== 0;
+
+                  return (
+                    <tr
+                      key={key}
+                      className={`
+                        hover:bg-blue-50/40 transition-colors
+                        ${hasChange ? "bg-yellow-50/60" : ""}
+                      `}
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                        {item.title}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {item.sku || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                        {Number(item.inventory_qty) || 0}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={delta}
+                            onChange={(e) =>
+                              updateDelta(key, Number(e.target.value))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") applyChange(item);
+                            }}
+                            step="1"
+                            className={`
+                              w-28 rounded border px-3 py-1.5 text-center text-sm
+                              focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none
+                              ${
+                                delta > 0
+                                  ? "border-green-400 bg-green-50"
+                                  : delta < 0
+                                    ? "border-red-400 bg-red-50"
+                                    : "border-gray-300"
+                              }
+                            `}
+                          />
+                          {hasChange && (
+                            <span className="text-xs font-medium whitespace-nowrap">
+                              {delta > 0 ? `+${delta}` : delta}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => applyChange(item)}
+                          disabled={!hasChange}
+                          className={`
+                            px-4 py-1.5 rounded-md text-sm font-medium transition
+                            ${
+                              hasChange
+                                ? "bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800"
+                                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            }
+                          `}
+                        >
+                          Apply
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Footer hint */}
+      {isDirty && (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          You have unsaved changes. Click <strong>Apply</strong> on each row to
+          save.
+        </div>
+      )}
     </div>
   );
 }

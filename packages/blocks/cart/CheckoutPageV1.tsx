@@ -128,6 +128,9 @@ export default function CheckoutPageV1({
               >
                 <div>
                   <div className="font-medium text-slate-900">{item.title}</div>
+                  {item.variant_label ? (
+                    <div className="text-xs text-slate-500">{item.variant_label}</div>
+                  ) : null}
                   <div className="text-xs text-slate-500">Qty {item.qty}</div>
                 </div>
                 <div className="font-medium text-slate-900">

@@ -69,6 +69,7 @@ export async function POST(req: Request) {
       store_category_id: body.store_category_id,
       attributes: body.attributes || {},
       image_urls: Array.isArray(body.image_urls) ? body.image_urls.map(String) : [],
+      variants: Array.isArray(body.variants) ? body.variants : undefined,
     });
     return NextResponse.json({ ok: true, product });
   } catch (e: any) {
@@ -110,6 +111,7 @@ export async function PUT(req: Request) {
       store_category_id:
         body.store_category_id === undefined ? undefined : body.store_category_id,
       attributes: body.attributes && typeof body.attributes === "object" ? body.attributes : undefined,
+      variants: Array.isArray(body.variants) ? body.variants : undefined,
     });
     return NextResponse.json({ ok: true, product });
   } catch (e: any) {

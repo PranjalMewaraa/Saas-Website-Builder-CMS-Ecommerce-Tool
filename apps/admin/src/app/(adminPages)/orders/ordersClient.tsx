@@ -301,16 +301,29 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
                       <div className="text-xs text-gray-500">
                         SKU: {item.sku || "-"} · Qty {item.qty}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        Product ID: {item.product_id || "-"}
-                        {item.variant_id ? ` · Variant: ${item.variant_id}` : ""}
-                      </div>
                       {item.slug ? (
                         <div className="text-xs text-gray-500 truncate">/{item.slug}</div>
                       ) : null}
+                      {(item.brand_name || (item.category_names || []).length) ? (
+                        <div className="text-xs text-gray-500 truncate">
+                          {item.brand_name ? `Brand: ${item.brand_name}` : ""}
+                          {item.brand_name && (item.category_names || []).length
+                            ? " · "
+                            : ""}
+                          {(item.category_names || []).length
+                            ? `Category: ${(item.category_names || []).join(", ")}`
+                            : ""}
+                        </div>
+                      ) : null}
+                      {item.variant_label ? (
+                        <div className="text-xs text-gray-500 truncate">
+                          {item.variant_label}
+                        </div>
+                      ) : null}
                       {item.variant_options &&
                       typeof item.variant_options === "object" &&
-                      Object.keys(item.variant_options).length ? (
+                      Object.keys(item.variant_options).length &&
+                      !item.variant_label ? (
                         <div className="text-xs text-gray-500 truncate">
                           {Object.entries(item.variant_options)
                             .map(([k, v]) => `${k}: ${String(v)}`)

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useCartOptional } from "./cart-context";
+import type { CartItem } from "./cart-context";
 
 type Props = {
   title?: string;
@@ -14,7 +15,7 @@ type Props = {
   __editor?: boolean;
 };
 
-const DEMO_ITEMS = [
+const DEMO_ITEMS: CartItem[] = [
   {
     product_id: "p_1",
     variant_id: undefined,
@@ -115,6 +116,9 @@ export default function CartPageV1({
                 <div className="text-sm font-medium text-slate-900">
                   {item.title}
                 </div>
+                {item.variant_label ? (
+                  <div className="mt-0.5 text-xs text-slate-500">{item.variant_label}</div>
+                ) : null}
                 <div className="mt-1 text-xs text-slate-500">
                   ${(item.price_cents / 100).toFixed(2)}
                 </div>

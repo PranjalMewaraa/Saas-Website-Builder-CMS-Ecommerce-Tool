@@ -1,6 +1,6 @@
 // app/[...slug]/page.tsx     ← or wherever this file lives
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { RenderPage } from "@acme/renderer";
 import { getMongoDb, getSnapshotById, getSiteByHandle } from "@acme/db-mongo";
 import type { Metadata } from "next";
@@ -29,9 +29,8 @@ export async function resolveSiteWithId(
   explicitSiteId?: string | null,
   explicitHandle?: string | null,
 ) {
-  const { headers } = await import("next/headers");
-
   const h = await headers();
+  const cookieStore = await cookies();
 
   const host = (h.get("host") || "").split(":")[0];
 
@@ -45,6 +44,9 @@ export async function resolveSiteWithId(
     const url = new URL(search, "http://localhost");
     handle = url.searchParams.get("handle");
     siteId = siteId || url.searchParams.get("sid");
+  }
+  if (!handle) {
+    handle = cookieStore.get("storefront_handle")?.value || null;
   }
 
   const db = await getMongoDb();
@@ -137,16 +139,20 @@ export default async function StorefrontPage({
   // Await params (safe even if already resolved)
   const resolvedParams = await params;
   const resolvedSearch = await searchParams;
+  const cookieStore = await cookies();
+  const persistedHandle =
+    resolvedSearch?.handle ||
+    cookieStore.get("storefront_handle")?.value ||
+    "";
   let path = normalizePath(resolvedParams.slug);
   const site = await resolveSiteWithId(
     resolvedSearch?.sid || null,
-    resolvedSearch?.handle || null,
+    persistedHandle || null,
   );
   if (!site) return <div className="p-6">Site not found</div>;
 
   const h = headers();
   const host = (await h).get("host") || "";
-  const search = (await h).get("x-search") || (await h).get("next-url") || "";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
 
   // IMPORTANT:
@@ -203,6 +209,11 @@ export default async function StorefrontPage({
   }
 
   const hasCartPage = Boolean(snapshot.pages?.["/cart"]);
+  const persistParams = new URLSearchParams();
+  if (persistedHandle) persistParams.set("handle", persistedHandle);
+  if (resolvedSearch?.sid) persistParams.set("sid", resolvedSearch.sid);
+  if (isPreview && token) persistParams.set("token", token);
+  const persistQuery = persistParams.toString();
 
   return (
     <>
@@ -222,7 +233,8 @@ export default async function StorefrontPage({
             storeId: site.store_id,
             snapshot,
             path,
-            search,
+            search: persistQuery ? `?${persistQuery}` : "",
+            mode: isPreview ? "preview" : "published",
           }}
         />
         {isPreview ? (
@@ -232,7 +244,7 @@ export default async function StorefrontPage({
         ) : null}
         {hasCartPage ? (
           <a
-            href="/cart"
+            href={persistQuery ? `/cart?${persistQuery}` : "/cart"}
             aria-label="Open cart"
             title="Cart"
             className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"

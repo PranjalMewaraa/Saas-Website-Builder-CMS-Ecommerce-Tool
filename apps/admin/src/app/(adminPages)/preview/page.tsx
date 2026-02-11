@@ -107,6 +107,7 @@ export default async function PreviewPage({
           snapshot,
           path,
           search: search ? `?${search}` : "",
+          mode: "preview",
         }}
       />
     </div>

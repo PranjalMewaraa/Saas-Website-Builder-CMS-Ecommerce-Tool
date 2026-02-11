@@ -7,7 +7,12 @@ export type StorefrontProduct = {
   compare_at_price_cents: number | null;
   brand_id: string | null;
   categories: string[];
-  images: Array<{ url: string; alt: string | null; sort_order: number }>;
+  images: Array<{
+    url: string;
+    alt: string | null;
+    sort_order: number;
+    variant_id?: string | null;
+  }>;
   variants: Array<{
     id: string;
     sku: string | null;
@@ -32,6 +37,27 @@ export type ProductFilterMeta = {
   priceMin: number;
   priceMax: number;
 };
+
+function parseOptionsJson(raw: any): Record<string, string> {
+  if (!raw) return {};
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    const key = String(k || "").trim();
+    const value = v == null ? "" : String(v).trim();
+    if (!key || !value) continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 export async function getStoreFilterMeta(args: {
   tenant_id: string;
@@ -398,15 +424,30 @@ async function assembleProducts(
 ): Promise<StorefrontProduct[]> {
   const { pool } = await import("../../db-mysql");
 
-  const [images] = await pool.query<any[]>(
-    `
-    SELECT product_id, url, alt, sort_order
-    FROM product_images
-    WHERE tenant_id = ? AND product_id IN (?)
-    ORDER BY sort_order ASC
-    `,
-    [tenant_id, productIds],
-  );
+  let images: any[] = [];
+  try {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, variant_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+      `,
+      [tenant_id, productIds],
+    );
+    images = rows;
+  } catch {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+      `,
+      [tenant_id, productIds],
+    );
+    images = rows.map((r) => ({ ...r, variant_id: null }));
+  }
 
   const [variants] = await pool.query<any[]>(
     `
@@ -484,7 +525,8 @@ async function assembleProducts(
       (c: { category_id: any }) => c.category_id,
     ),
     images: (imageMap[p.id] || []).map(
-      (i: { url: any; alt: any; sort_order: any }) => ({
+      (i: { variant_id: any; url: any; alt: any; sort_order: any }) => ({
+        variant_id: i.variant_id,
         url: i.url,
         alt: i.alt,
         sort_order: i.sort_order,
@@ -504,7 +546,7 @@ async function assembleProducts(
         price_cents: v.price_cents,
         compare_at_price_cents: v.compare_at_price_cents,
         inventory_qty: v.inventory_qty,
-        options: v.options_json || {},
+        options: parseOptionsJson(v.options_json),
       }),
     ),
     attributes: [

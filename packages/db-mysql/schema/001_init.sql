@@ -103,15 +103,20 @@ CREATE TABLE IF NOT EXISTS product_images (
   id          VARCHAR(26) PRIMARY KEY,
   tenant_id   VARCHAR(26) NOT NULL,
   product_id  VARCHAR(26) NOT NULL,
+  variant_id  VARCHAR(26) NULL,
   url         VARCHAR(2048) NOT NULL,
   alt         VARCHAR(255) NULL,
   sort_order  INT NOT NULL DEFAULT 0,
   created_at  DATETIME NOT NULL,
 
   INDEX idx_images_product (tenant_id, product_id, sort_order),
+  INDEX idx_images_variant (tenant_id, variant_id),
   CONSTRAINT fk_images_product
     FOREIGN KEY (product_id) REFERENCES products(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+  CONSTRAINT fk_images_variant
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+    ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Product-category mapping

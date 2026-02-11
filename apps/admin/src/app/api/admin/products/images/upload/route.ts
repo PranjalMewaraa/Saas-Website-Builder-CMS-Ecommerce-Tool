@@ -24,6 +24,7 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
   const product_id = form.get("product_id") as string;
+  const variant_id = (form.get("variant_id") as string) || "";
   const file = form.get("file") as File | null;
   const alt = (form.get("alt") as string) || "";
 
@@ -57,18 +58,49 @@ export async function POST(req: Request) {
     const image_id = newId("img").slice(0, 21);
     const ts = nowSql();
 
-    await conn.query(
-      `INSERT INTO product_images
-       (id, tenant_id, product_id, url, alt, sort_order, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [image_id, tenant_id, product_id, publicUrl, alt, 0, ts],
-    );
+    if (variant_id) {
+      const [variantRows] = await conn.query<any[]>(
+        `SELECT id FROM product_variants
+         WHERE id = ? AND tenant_id = ? AND product_id = ?
+         LIMIT 1`,
+        [variant_id, tenant_id, product_id],
+      );
+      if (!variantRows.length) {
+        throw new Error("Invalid variant_id");
+      }
+    }
+
+    try {
+      await conn.query(
+        `INSERT INTO product_images
+         (id, tenant_id, product_id, variant_id, url, alt, sort_order, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [image_id, tenant_id, product_id, variant_id || null, publicUrl, alt, 0, ts],
+      );
+    } catch (e: any) {
+      const msg = String(e?.message || "");
+      if (msg.includes("Unknown column 'variant_id'")) {
+        if (variant_id) {
+          throw new Error(
+            "Variant image support requires DB migration: run 003_variant_images.sql",
+          );
+        }
+        await conn.query(
+          `INSERT INTO product_images
+           (id, tenant_id, product_id, url, alt, sort_order, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [image_id, tenant_id, product_id, publicUrl, alt, 0, ts],
+        );
+      } else {
+        throw e;
+      }
+    }
 
     await conn.commit();
 
     return Response.json({
       ok: true,
-      image: { id: image_id, url: publicUrl, alt },
+      image: { id: image_id, variant_id: variant_id || null, url: publicUrl, alt },
     });
   } catch (err) {
     await conn.rollback();

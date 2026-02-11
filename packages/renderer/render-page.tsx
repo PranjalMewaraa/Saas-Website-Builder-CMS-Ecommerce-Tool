@@ -88,15 +88,26 @@ export async function RenderPage(args: {
     ...args.ctx,
     snapshot: normalizeMenusBySlot(args.ctx.snapshot),
   };
+  const mode =
+    args.ctx.mode ||
+    (ctx.snapshot?.__mode === "builder"
+      ? "builder"
+      : ctx.snapshot?.is_draft
+        ? "preview"
+        : "published");
   const previewQuery =
-    ctx.snapshot?.is_draft && ctx.snapshot?.previewToken && ctx.snapshot?.handle
+    mode === "preview" && ctx.snapshot?.previewToken && ctx.snapshot?.handle
       ? `handle=${encodeURIComponent(ctx.snapshot.handle)}&token=${encodeURIComponent(ctx.snapshot.previewToken)}`
       : "";
-  const mode = ctx.snapshot?.__mode === "builder"
-    ? "builder"
-    : ctx.snapshot?.is_draft
-      ? "preview"
-      : "published";
+  const rawSearch = (ctx.search || "").replace(/^\?/, "");
+  const searchParams = new URLSearchParams(rawSearch);
+  const persistedHandle = searchParams.get("handle") || "";
+  const persistedSid = searchParams.get("sid") || "";
+  const publishQuery = new URLSearchParams();
+  if (persistedHandle) publishQuery.set("handle", persistedHandle);
+  if (persistedSid) publishQuery.set("sid", persistedSid);
+  const navigationQuery =
+    mode === "preview" ? previewQuery : publishQuery.toString();
   ctx.mode = mode;
 
   const css = buildResponsiveCss(parsedLayout);
@@ -137,7 +148,7 @@ export async function RenderPage(args: {
                   key={b.id}
                   block={b}
                   ctx={ctx}
-                  previewQuery={previewQuery}
+                  previewQuery={navigationQuery}
                 />
               ))}
             </div>

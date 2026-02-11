@@ -1,7 +1,6 @@
-import Link from "next/link";
 import ProductCardV1 from "../ProductGrid/ProductCardBlocks/ProductCardV1";
-import AddToCartV1 from "../cart/AddToCartV1";
 import { getPublishedProductBySlug, listRelatedProducts } from "./productDetail.data";
+import ProductDetailClient from "./ProductDetailClient";
 
 type Props = {
   tenantId: string;
@@ -90,22 +89,6 @@ export default async function ProductDetailV1({
       full: "max-w-full",
     }[contentWidth] || "max-w-7xl";
 
-  const primaryImage = product.images?.[0];
-  const price = product.base_price_cents / 100;
-  const comparePrice = product.compare_at_price_cents
-    ? product.compare_at_price_cents / 100
-    : null;
-  const inventoryQty = (product.variants || []).reduce(
-    (sum: number, v: any) => sum + Number(v.inventory_qty || 0),
-    0,
-  );
-  const stockLabel =
-    inventoryQty <= 0
-      ? "Out of Stock"
-      : inventoryQty <= 5
-        ? "Low Stock"
-        : "In Stock";
-
   const related = showRelated
     ? await listRelatedProducts({
         tenant_id: tenantId,
@@ -118,81 +101,7 @@ export default async function ProductDetailV1({
   return (
     <section className="py-12 md:py-16">
       <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthClass}`}>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-            {primaryImage ? (
-              <img
-                src={primaryImage.url}
-                alt={primaryImage.alt || product.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="aspect-[4/5] flex items-center justify-center text-slate-400">
-                No image
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <div className="text-sm text-slate-500">
-              <Link href={basePath || "/products"} className="hover:underline">
-                Products
-              </Link>
-              <span className="mx-2">/</span>
-              <span>{product.title}</span>
-            </div>
-
-            <h1 className="text-3xl font-semibold text-slate-900">
-              {product.title}
-            </h1>
-            <div className="flex items-baseline gap-3">
-              <span className="text-2xl font-semibold text-slate-900">
-                ${price.toFixed(2)}
-              </span>
-              {comparePrice && comparePrice > price && (
-                <span className="text-sm text-slate-500 line-through">
-                  ${comparePrice.toFixed(2)}
-                </span>
-              )}
-            </div>
-            <div className="text-sm text-slate-600">{stockLabel}</div>
-
-            {product.description && (
-              <p className="text-slate-600 leading-relaxed">
-                {product.description}
-              </p>
-            )}
-
-            <div className="mt-4">
-              <AddToCartV1
-                productId={product.id}
-                title={product.title}
-                priceCents={product.base_price_cents}
-                image={primaryImage?.url}
-                buttonText="Add to cart"
-                inventoryQty={inventoryQty}
-              />
-            </div>
-
-            {product.attributes?.length ? (
-              <div className="pt-4 border-t border-slate-200">
-                <div className="text-sm font-medium text-slate-700 mb-2">
-                  Details
-                </div>
-                <div className="grid gap-2 text-sm text-slate-600">
-                  {product.attributes.map((attr) => (
-                    <div key={attr.code} className="flex items-center gap-2">
-                      <span className="font-medium text-slate-700">
-                        {attr.name}:
-                      </span>
-                      <span>{String(attr.value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        <ProductDetailClient product={product} basePath={basePath || "/products"} />
 
         {showRelated && related.length > 0 && (
           <div className="mt-12">
@@ -203,7 +112,7 @@ export default async function ProductDetailV1({
               {related.map((p) => (
                 <ProductCardV1
                   key={p.id}
-                  product={p}
+                  product={p as any}
                   detailPathPrefix={basePath || "/products"}
                 />
               ))}

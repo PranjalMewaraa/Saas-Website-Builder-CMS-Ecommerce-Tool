@@ -47,8 +47,16 @@ export async function GET(
     if (productIds.length) {
       const [productRows] = await pool.query<any[]>(
         `SELECT p.id, p.slug, p.description,
+                b.name AS brand_name,
+                sc.name AS store_category_name,
                 pi.url AS image_url
          FROM products p
+         LEFT JOIN brands b
+           ON b.tenant_id = p.tenant_id
+          AND b.id = p.brand_id
+         LEFT JOIN store_categories sc
+           ON sc.tenant_id = p.tenant_id
+          AND sc.id = p.store_category_id
          LEFT JOIN (
            SELECT tenant_id, product_id, MIN(sort_order) AS min_sort
            FROM product_images
@@ -65,6 +73,27 @@ export async function GET(
       productMap = Object.fromEntries(
         (productRows || []).map((r: any) => [String(r.id), r]),
       );
+    }
+
+    let productCategoryNames: Record<string, string[]> = {};
+    if (productIds.length) {
+      const [catRows] = await pool.query<any[]>(
+        `SELECT pc.product_id, c.name
+         FROM product_categories pc
+         JOIN categories c
+           ON c.tenant_id = pc.tenant_id
+          AND c.id = pc.category_id
+         WHERE pc.tenant_id = ? AND pc.product_id IN (?)`,
+        [tenant_id, productIds],
+      );
+      for (const row of catRows || []) {
+        const pid = String(row.product_id || "");
+        if (!pid) continue;
+        if (!productCategoryNames[pid]) productCategoryNames[pid] = [];
+        if (row.name && !productCategoryNames[pid].includes(String(row.name))) {
+          productCategoryNames[pid].push(String(row.name));
+        }
+      }
     }
 
     let variantMap: Record<string, any> = {};
@@ -94,9 +123,30 @@ export async function GET(
         slug: productMap[String(i.product_id)]?.slug || "",
         description: productMap[String(i.product_id)]?.description || "",
         image_url: productMap[String(i.product_id)]?.image_url || "",
-        variant_options: parseMaybeJson(
-          variantMap[String(i.variant_id || "")]?.options_json || null,
+        brand_name: productMap[String(i.product_id)]?.brand_name || "",
+        category_names: Array.from(
+          new Set(
+            [
+              productMap[String(i.product_id)]?.store_category_name || "",
+              ...(productCategoryNames[String(i.product_id)] || []),
+            ].filter(Boolean),
+          ),
         ),
+        variant_options: parseMaybeJson(variantMap[String(i.variant_id || "")]?.options_json || null),
+        variant_label: (() => {
+          const opts = parseMaybeJson(
+            variantMap[String(i.variant_id || "")]?.options_json || null,
+          );
+          if (!opts || typeof opts !== "object") return "";
+          const entries = Object.entries(opts).filter(
+            ([k, v]) =>
+              k !== "default" &&
+              v != null &&
+              String(v).trim() !== "" &&
+              String(v).toLowerCase() !== "true",
+          );
+          return entries.map(([k, v]) => `${k}: ${String(v)}`).join(" · ");
+        })(),
         qty: i.quantity,
         price_cents: i.price_cents,
         line_total_cents:

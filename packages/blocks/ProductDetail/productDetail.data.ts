@@ -1,11 +1,67 @@
 import type { StorefrontProduct } from "../ProductList/productList.data";
 import { getPublishedProductsByIds } from "../ProductList/productList.data";
+import { getProductV2BySlug } from "../../db-mysql/commerceV2.repo";
 
 export async function getPublishedProductBySlug(args: {
   tenant_id: string;
   store_id: string;
   slug: string;
 }): Promise<StorefrontProduct | null> {
+  const v2Product = await getProductV2BySlug({
+    tenant_id: args.tenant_id,
+    store_id: args.store_id,
+    slug: args.slug,
+  });
+  if (v2Product) {
+    return {
+      id: String(v2Product.id),
+      slug: String(v2Product.slug),
+      title: String(v2Product.title),
+      description: v2Product.description == null ? null : String(v2Product.description),
+      base_price_cents: Number(v2Product.base_price_cents || 0),
+      compare_at_price_cents:
+        v2Product.compare_at_price_cents == null
+          ? null
+          : Number(v2Product.compare_at_price_cents),
+      brand_id: v2Product.brand_id ? String(v2Product.brand_id) : null,
+      categories: Array.isArray(v2Product.categories)
+        ? v2Product.categories.map((c: any) => String(c))
+        : [],
+      images: Array.isArray(v2Product.images)
+        ? v2Product.images.map((img: any) => ({
+            url: String(img.url || ""),
+            alt: img.alt == null ? null : String(img.alt),
+            sort_order: Number(img.sort_order || 0),
+            variant_id: img.variant_id ? String(img.variant_id) : null,
+          }))
+        : [],
+      variants: Array.isArray(v2Product.variants)
+        ? v2Product.variants.map((v: any) => ({
+            id: String(v.id),
+            sku: v.sku == null ? null : String(v.sku),
+            price_cents: Number(v.price_cents || 0),
+            compare_at_price_cents:
+              v.compare_at_price_cents == null
+                ? null
+                : Number(v.compare_at_price_cents),
+            inventory_qty: Number(v.inventory_qty || 0),
+            options:
+              v.options && typeof v.options === "object" && !Array.isArray(v.options)
+                ? v.options
+                : {},
+          }))
+        : [],
+      attributes: Array.isArray(v2Product.attributes)
+        ? v2Product.attributes.map((a: any) => ({
+            code: String(a.code || ""),
+            name: String(a.name || a.code || ""),
+            type: String(a.type || "text"),
+            value: a.value ?? null,
+          }))
+        : [],
+    };
+  }
+
   const { pool } = await import("../../db-mysql");
 
   const [rows] = await pool.query<any[]>(

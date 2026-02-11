@@ -8,6 +8,7 @@ export type ProductImage = {
   url: string;
   alt: string | null;
   sort_order: number;
+  variant_id?: string | null;
 };
 
 export type ProductVariant = {
@@ -25,6 +26,27 @@ export type ProductAttribute = {
   type: string;
   value: string | number | boolean | string[] | null;
 };
+
+function parseOptionsJson(raw: any): Record<string, string> {
+  if (!raw) return {};
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    const key = String(k || "").trim();
+    const value = v == null ? "" : String(v).trim();
+    if (!key || !value) continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 export type StorefrontProduct = {
   id: string;
@@ -101,15 +123,30 @@ export async function listPublishedProductsForStore(args: {
   const productIds = products.map((p) => p.id);
 
   // 2️⃣ Images
-  const [images] = await pool.query<any[]>(
-    `
-    SELECT product_id, url, alt, sort_order
-    FROM product_images
-    WHERE tenant_id = ? AND product_id IN (?)
-    ORDER BY sort_order ASC
-  `,
-    [args.tenant_id, productIds],
-  );
+  let images: any[] = [];
+  try {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, variant_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+    `,
+      [args.tenant_id, productIds],
+    );
+    images = rows;
+  } catch {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+    `,
+      [args.tenant_id, productIds],
+    );
+    images = rows.map((r) => ({ ...r, variant_id: null }));
+  }
 
   // 3️⃣ Variants
   const [variants] = await pool.query<any[]>(
@@ -201,7 +238,8 @@ export async function listPublishedProductsForStore(args: {
     ),
 
     images: (imageMap[p.id] || []).map(
-      (i: { url: any; alt: any; sort_order: any }) => ({
+      (i: { variant_id: any; url: any; alt: any; sort_order: any }) => ({
+        variant_id: i.variant_id,
         url: i.url,
         alt: i.alt,
         sort_order: i.sort_order,
@@ -222,7 +260,7 @@ export async function listPublishedProductsForStore(args: {
         price_cents: v.price_cents,
         compare_at_price_cents: v.compare_at_price_cents,
         inventory_qty: v.inventory_qty,
-        options: v.options_json || {},
+        options: parseOptionsJson(v.options_json),
       }),
     ),
 

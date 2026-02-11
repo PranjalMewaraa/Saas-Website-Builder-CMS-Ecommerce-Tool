@@ -12,6 +12,103 @@ type AttrType =
   | "color"
   | "date";
 
+type VariantInput = {
+  id?: string | null;
+  sku?: string | null;
+  price_cents?: number;
+  compare_at_price_cents?: number | null;
+  inventory_qty?: number;
+  options?: Record<string, any> | null;
+};
+
+function parseOptionsJson(raw: any): Record<string, string> {
+  if (!raw) return {};
+  let parsed: any = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    const key = String(k || "").trim();
+    const value = v == null ? "" : String(v).trim();
+    if (!key || !value) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+function normalizeVariantInputs(
+  rawVariants: VariantInput[] | undefined,
+  fallbackPriceCents: number,
+  fallbackInventoryQty: number,
+  fallbackSku: string | null,
+) {
+  const list = Array.isArray(rawVariants) ? rawVariants : [];
+  const normalized = list
+    .map((v) => ({
+      id: v?.id ? String(v.id) : null,
+      sku: v?.sku == null || String(v.sku).trim() === "" ? null : String(v.sku).trim(),
+      price_cents:
+        v?.price_cents == null
+          ? Number(fallbackPriceCents || 0)
+          : Math.max(0, Number(v.price_cents || 0)),
+      compare_at_price_cents:
+        v?.compare_at_price_cents == null
+          ? null
+          : Math.max(0, Number(v.compare_at_price_cents || 0)),
+      inventory_qty:
+        v?.inventory_qty == null
+          ? Math.max(0, Number(fallbackInventoryQty || 0))
+          : Math.max(0, Number(v.inventory_qty || 0)),
+      options: parseOptionsJson(v?.options),
+    }))
+    .filter((v) => Number.isFinite(v.price_cents) && Number.isFinite(v.inventory_qty));
+
+  if (!normalized.length) {
+    return [
+      {
+        id: null,
+        sku: fallbackSku,
+        price_cents: Math.max(0, Number(fallbackPriceCents || 0)),
+        compare_at_price_cents: null,
+        inventory_qty: Math.max(0, Number(fallbackInventoryQty || 0)),
+        options: { default: "default" },
+      },
+    ];
+  }
+  return normalized;
+}
+
+async function listProductImagesSafe(args: {
+  tenant_id: string;
+  product_id: string;
+}) {
+  try {
+    const [rows] = await pool.query<any[]>(
+      `SELECT id, variant_id, url, alt, sort_order
+       FROM product_images
+       WHERE tenant_id = ? AND product_id = ?
+       ORDER BY sort_order ASC, created_at ASC`,
+      [args.tenant_id, args.product_id],
+    );
+    return rows;
+  } catch {
+    const [rows] = await pool.query<any[]>(
+      `SELECT id, url, alt, sort_order
+       FROM product_images
+       WHERE tenant_id = ? AND product_id = ?
+       ORDER BY sort_order ASC, created_at ASC`,
+      [args.tenant_id, args.product_id],
+    );
+    return (rows as any[]).map((r) => ({ ...r, variant_id: null }));
+  }
+}
+
 export function listStoreTypePresets() {
   return STORE_TYPE_PRESETS;
 }
@@ -334,6 +431,7 @@ export async function createProductV2(args: {
   store_category_id: string;
   attributes: Record<string, any>;
   image_urls?: string[];
+  variants?: VariantInput[];
 }) {
   const conn = await pool.getConnection();
   const ts = nowSql();
@@ -409,22 +507,34 @@ export async function createProductV2(args: {
       ],
     );
 
-    const variant_id = newId("var").slice(0, 26);
-    await conn.query(
-      `INSERT INTO product_variants
-       (id, tenant_id, product_id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, NULL, JSON_OBJECT('default', true), ?, ?, ?)`,
-      [
-        variant_id,
-        args.tenant_id,
-        product_id,
-        args.sku ?? null,
-        args.base_price_cents,
-        Math.max(0, Number(args.inventory_quantity || 0)),
-        ts,
-        ts,
-      ],
+    const variants = normalizeVariantInputs(
+      args.variants,
+      Number(args.base_price_cents || 0),
+      Number(args.inventory_quantity || 0),
+      args.sku ?? null,
     );
+    const createdVariantIds: string[] = [];
+    for (const variant of variants) {
+      const variant_id = variant.id || newId("var").slice(0, 26);
+      await conn.query(
+        `INSERT INTO product_variants
+         (id, tenant_id, product_id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?)`,
+        [
+          variant_id,
+          args.tenant_id,
+          product_id,
+          variant.sku,
+          variant.price_cents,
+          variant.compare_at_price_cents,
+          JSON.stringify(variant.options || {}),
+          variant.inventory_qty,
+          ts,
+          ts,
+        ],
+      );
+      createdVariantIds.push(variant_id);
+    }
 
     await conn.query(
       `INSERT INTO store_products
@@ -478,22 +588,26 @@ export async function createProductV2(args: {
       }
     }
 
-    await conn.query(
-      `INSERT INTO inventory_logs
-       (id, tenant_id, store_id, product_id, variant_id, change_type, quantity_before, quantity_after, delta_quantity, changed_by, reason, created_at)
-       VALUES (?, ?, ?, ?, ?, 'restock', 0, ?, ?, ?, 'Initial stock', ?)`,
-      [
-        newId("ilog").slice(0, 26),
-        args.tenant_id,
-        args.store_id,
-        product_id,
-        variant_id,
-        Math.max(0, Number(args.inventory_quantity || 0)),
-        Math.max(0, Number(args.inventory_quantity || 0)),
-        "system",
-        ts,
-      ],
-    );
+    for (const variant_id of createdVariantIds) {
+      const variant = variants.find((v) => (v.id || variant_id) === variant_id);
+      const qty = Math.max(0, Number(variant?.inventory_qty || 0));
+      await conn.query(
+        `INSERT INTO inventory_logs
+         (id, tenant_id, store_id, product_id, variant_id, change_type, quantity_before, quantity_after, delta_quantity, changed_by, reason, created_at)
+         VALUES (?, ?, ?, ?, ?, 'restock', 0, ?, ?, ?, 'Initial stock', ?)`,
+        [
+          newId("ilog").slice(0, 26),
+          args.tenant_id,
+          args.store_id,
+          product_id,
+          variant_id,
+          qty,
+          qty,
+          "system",
+          ts,
+        ],
+      );
+    }
 
     await conn.commit();
     return { product_id, slug };
@@ -510,14 +624,24 @@ export async function listProductsV2(args: {
   store_id: string;
 }) {
   const [rows] = await pool.query<any[]>(
-    `SELECT p.*, sp.is_published, sc.name as category_name, b.name as brand_name, v.inventory_qty
+    `SELECT
+      p.*,
+      sp.is_published,
+      sc.name as category_name,
+      b.name as brand_name,
+      COALESCE(vstats.inventory_qty, 0) as inventory_qty,
+      COALESCE(vstats.variant_count, 0) as variant_count,
+      COALESCE(vstats.min_price_cents, p.base_price_cents) as min_variant_price_cents
      FROM products p
      JOIN store_products sp ON sp.product_id = p.id AND sp.tenant_id = p.tenant_id AND sp.store_id = ?
      LEFT JOIN store_categories sc ON sc.id = p.store_category_id AND sc.tenant_id = p.tenant_id
      LEFT JOIN brands b ON b.id = p.brand_id AND b.tenant_id = p.tenant_id
-     LEFT JOIN product_variants v ON v.product_id = p.id AND v.tenant_id = p.tenant_id
+     LEFT JOIN (
+       SELECT tenant_id, product_id, SUM(inventory_qty) as inventory_qty, COUNT(*) as variant_count, MIN(price_cents) as min_price_cents
+       FROM product_variants
+       GROUP BY tenant_id, product_id
+     ) vstats ON vstats.product_id = p.id AND vstats.tenant_id = p.tenant_id
      WHERE p.tenant_id = ?
-     GROUP BY p.id
      ORDER BY p.created_at DESC`,
     [args.store_id, args.tenant_id],
   );
@@ -530,19 +654,38 @@ export async function getProductV2(args: {
   product_id: string;
 }) {
   const [rows] = await pool.query<any[]>(
-    `SELECT p.*, sp.is_published, sc.name as category_name, b.name as brand_name, v.id as variant_id, v.inventory_qty
+    `SELECT p.*, sp.is_published, sc.name as category_name, b.name as brand_name
      FROM products p
      JOIN store_products sp ON sp.product_id = p.id AND sp.tenant_id = p.tenant_id AND sp.store_id = ?
      LEFT JOIN store_categories sc ON sc.id = p.store_category_id AND sc.tenant_id = p.tenant_id
      LEFT JOIN brands b ON b.id = p.brand_id AND b.tenant_id = p.tenant_id
-     LEFT JOIN product_variants v ON v.product_id = p.id AND v.tenant_id = p.tenant_id
      WHERE p.tenant_id = ? AND p.id = ?
-     ORDER BY v.created_at ASC
      LIMIT 1`,
     [args.store_id, args.tenant_id, args.product_id],
   );
   const product = rows[0] || null;
   if (!product) return null;
+
+  const [variantRows] = await pool.query<any[]>(
+    `SELECT id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty
+     FROM product_variants
+     WHERE tenant_id = ? AND product_id = ?
+     ORDER BY created_at ASC`,
+    [args.tenant_id, args.product_id],
+  );
+  const variants = variantRows.map((v) => ({
+    id: v.id,
+    sku: v.sku,
+    price_cents: Number(v.price_cents || 0),
+    compare_at_price_cents:
+      v.compare_at_price_cents == null ? null : Number(v.compare_at_price_cents),
+    inventory_qty: Number(v.inventory_qty || 0),
+    options: parseOptionsJson(v.options_json),
+  }));
+  const inventory_qty = variants.reduce(
+    (sum, v) => sum + Math.max(0, Number(v.inventory_qty || 0)),
+    0,
+  );
 
   const [attrRows] = await pool.query<any[]>(
     `SELECT a.code, a.name, a.type,
@@ -563,7 +706,11 @@ export async function getProductV2(args: {
       r.value_date ??
       (r.value_json ? JSON.parse(r.value_json) : null);
   }
-  return { ...product, attributes };
+  const images = await listProductImagesSafe({
+    tenant_id: args.tenant_id,
+    product_id: args.product_id,
+  });
+  return { ...product, attributes, variants, inventory_qty, images };
 }
 
 function parseAttributeValueOptional(
@@ -631,6 +778,7 @@ export async function updateProductV2(args: {
   brand_id?: string | null;
   store_category_id?: string | null;
   attributes?: Record<string, any>;
+  variants?: VariantInput[];
 }) {
   const conn = await pool.getConnection();
   const ts = nowSql();
@@ -648,12 +796,12 @@ export async function updateProductV2(args: {
     if (!product) throw new Error("PRODUCT_NOT_FOUND");
 
     const [vRows] = await conn.query<any[]>(
-      `SELECT id, sku, inventory_qty FROM product_variants
+      `SELECT id, sku, price_cents, compare_at_price_cents, inventory_qty FROM product_variants
        WHERE tenant_id = ? AND product_id = ?
-       ORDER BY created_at ASC LIMIT 1 FOR UPDATE`,
+       ORDER BY created_at ASC FOR UPDATE`,
       [args.tenant_id, args.product_id],
     );
-    const variant = vRows[0] || null;
+    const firstVariant = vRows[0] || null;
 
     let brand_id = args.brand_id === undefined ? product.brand_id : args.brand_id;
     if (!brand_id) {
@@ -701,18 +849,53 @@ export async function updateProductV2(args: {
       ],
     );
 
-    if (variant) {
+    if (args.variants !== undefined) {
+      const variants = normalizeVariantInputs(
+        args.variants,
+        args.base_price_cents == null
+          ? Number(firstVariant?.price_cents || product.base_price_cents || 0)
+          : Number(args.base_price_cents || 0),
+        args.inventory_quantity == null
+          ? Number(firstVariant?.inventory_qty || 0)
+          : Number(args.inventory_quantity || 0),
+        args.sku === undefined ? (firstVariant?.sku ?? product.sku ?? null) : args.sku,
+      );
+      await conn.query(
+        `DELETE FROM product_variants WHERE tenant_id = ? AND product_id = ?`,
+        [args.tenant_id, args.product_id],
+      );
+      for (const variant of variants) {
+        const id = variant.id || newId("var").slice(0, 26);
+        await conn.query(
+          `INSERT INTO product_variants
+           (id, tenant_id, product_id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?)`,
+          [
+            id,
+            args.tenant_id,
+            args.product_id,
+            variant.sku,
+            variant.price_cents,
+            variant.compare_at_price_cents,
+            JSON.stringify(variant.options || {}),
+            variant.inventory_qty,
+            ts,
+            ts,
+          ],
+        );
+      }
+    } else if (firstVariant) {
       await conn.query(
         `UPDATE product_variants
          SET sku = ?, price_cents = ?, inventory_qty = ?, updated_at = ?
          WHERE tenant_id = ? AND id = ?`,
         [
-          args.sku === undefined ? variant.sku : args.sku,
+          args.sku === undefined ? firstVariant.sku : args.sku,
           args.base_price_cents == null ? Number(product.base_price_cents || 0) : Number(args.base_price_cents),
-          args.inventory_quantity == null ? Number(variant.inventory_qty || 0) : Math.max(0, Number(args.inventory_quantity)),
+          args.inventory_quantity == null ? Number(firstVariant.inventory_qty || 0) : Math.max(0, Number(args.inventory_quantity)),
           ts,
           args.tenant_id,
-          variant.id,
+          firstVariant.id,
         ],
       );
     }
@@ -1048,7 +1231,7 @@ export async function getProductV2BySlug(args: {
   slug: string;
 }) {
   const [rows] = await pool.query<any[]>(
-    `SELECT p.*, sp.is_published, v.id as variant_id, v.inventory_qty, v.price_cents as variant_price
+    `SELECT p.*, sp.is_published, v.id as variant_id, v.inventory_qty, v.price_cents as variant_price, v.options_json
      FROM products p
      JOIN store_products sp ON sp.product_id = p.id AND sp.tenant_id = p.tenant_id AND sp.store_id = ?
      LEFT JOIN product_variants v ON v.product_id = p.id AND v.tenant_id = p.tenant_id
@@ -1058,20 +1241,23 @@ export async function getProductV2BySlug(args: {
   );
   if (!rows.length) return null;
   const product = rows[0];
-  const [images] = await pool.query<any[]>(
-    `SELECT url, alt, sort_order FROM product_images WHERE tenant_id = ? AND product_id = ? ORDER BY sort_order ASC`,
-    [args.tenant_id, product.id],
-  );
+  const images = await listProductImagesSafe({
+    tenant_id: args.tenant_id,
+    product_id: product.id,
+  });
   const attrs = await getProductAttributesForCard({
     tenant_id: args.tenant_id,
     store_id: args.store_id,
     product_id: product.id,
   });
-  const variants = rows.map((r) => ({
-    id: r.variant_id,
-    inventory_qty: Number(r.inventory_qty || 0),
-    price_cents: Number(r.variant_price || product.base_price_cents || 0),
-  }));
+  const variants = rows
+    .filter((r) => !!r.variant_id)
+    .map((r) => ({
+      id: r.variant_id,
+      inventory_qty: Number(r.inventory_qty || 0),
+      price_cents: Number(r.variant_price || product.base_price_cents || 0),
+      options: parseOptionsJson(r.options_json),
+    }));
   return {
     ...product,
     images,

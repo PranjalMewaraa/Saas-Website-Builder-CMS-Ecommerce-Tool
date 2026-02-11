@@ -38,15 +38,17 @@ export default async function StoresPage({
       </div>
 
       {/* ✅ Main store selector */}
-      <MainStoreSelector
-        siteId={siteId}
-        stores={stores}
-        currentStoreId={currentStoreId}
-      />
+      <div className="flex gap-4 items-start">
+        <MainStoreSelector
+          siteId={siteId}
+          stores={stores}
+          currentStoreId={currentStoreId}
+        />
 
-      {/* Store list + trash */}
-      <div className="pt-4">
-        <StoresClient siteId={siteId} />
+        {/* Store list + trash */}
+        <div className="p-4 w-full bg-white rounded-xl shadow-sm">
+          <StoresClient siteId={siteId} />
+        </div>
       </div>
     </div>
   );
