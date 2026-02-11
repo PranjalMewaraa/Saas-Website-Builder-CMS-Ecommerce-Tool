@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  JSXElementConstructor,
-  Key,
-  ReactElement,
-  ReactNode,
-  ReactPortal,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUI } from "@/app/_components/ui/UiProvider";
 import {
   ChevronDown,
@@ -22,6 +13,7 @@ import {
   GripVertical,
   FileText,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import EditorModeToggle from "../_component/EditorModeToggle";
 import { useEditorMode } from "../_component/useEditorMode";
@@ -62,7 +54,7 @@ export default function FormsClient({
   const [schema, setSchema] = useState<any>({ fields: [] });
   const [schemaJson, setSchemaJson] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
-    "idle"
+    "idle",
   );
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +65,7 @@ export default function FormsClient({
         `/api/admin/forms?site_id=${encodeURIComponent(siteId)}`,
         {
           cache: "no-store",
-        }
+        },
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -93,7 +85,7 @@ export default function FormsClient({
 
   const active = useMemo(
     () => forms.find((f) => f._id === activeId),
-    [forms, activeId]
+    [forms, activeId],
   );
 
   useEffect(() => {
@@ -118,7 +110,7 @@ export default function FormsClient({
             name,
             draft_schema: schema,
           }),
-        }
+        },
       );
       if (!res.ok) throw new Error("Save failed");
       setSaveStatus("success");
@@ -130,7 +122,7 @@ export default function FormsClient({
       toast({
         variant: "error",
         title: "Save failed",
-        description: "Check console for details.",
+        description: "Check console.",
       });
     }
   }
@@ -180,204 +172,225 @@ export default function FormsClient({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          <p>Loading forms...</p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          <Loader2 className="h-10 w-10 animate-spin" />
+          <p className="text-lg font-medium">Loading forms...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="grid lg:grid-cols-[340px_1fr] gap-6 p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Sidebar */}
-      <div className="border rounded-xl bg-card shadow-sm h-fit">
-        <div className="p-4 border-b bg-muted/40">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Forms</h2>
-            <button
-              onClick={createNew}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              New Form
-            </button>
-          </div>
-        </div>
-
-        <div className="p-3 space-y-1 max-h-[70vh] overflow-y-auto">
-          {forms.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No forms yet. Create your first one!
-            </div>
-          ) : (
-            forms.map((f) => (
+    <div className="container mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        {/* Sidebar – Forms List */}
+        <div className="flex h-fit flex-col rounded-xl border bg-card shadow-sm">
+          <div className="border-b bg-muted/50 p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold tracking-tight">Forms</h2>
               <button
-                key={f._id}
-                onClick={() => setActiveId(f._id)}
-                className={`
-                  w-full text-left px-4 py-2.5 rounded-lg transition-colors
-                  ${
-                    f._id === activeId
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }
-                `}
+                onClick={createNew}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
               >
-                <div className="font-medium">{f.name || "Untitled Form"}</div>
-                <div className="text-xs opacity-70 font-mono truncate">
-                  {f._id}
-                </div>
+                <Plus className="h-4 w-4" />
+                New Form
               </button>
-            ))
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3">
+            {forms.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                No forms created yet.
+                <br />
+                Start by clicking "New Form".
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {forms.map((f) => (
+                  <button
+                    key={f._id}
+                    onClick={() => setActiveId(f._id)}
+                    className={`
+                      group flex w-full flex-col rounded-lg px-4 py-3 text-left transition
+                      ${
+                        f._id === activeId
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "hover:bg-muted/70"
+                      }
+                    `}
+                  >
+                    <div className="font-medium leading-tight">
+                      {f.name || "Untitled Form"}
+                    </div>
+                    <div className="mt-0.5 text-xs font-mono opacity-70">
+                      {f._id}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {activeId && (
+            <div className="border-t p-4 text-sm">
+              <a
+                href={`/content/forms/submissions?site_id=${encodeURIComponent(siteId)}&form_id=${encodeURIComponent(activeId)}`}
+                className="inline-flex items-center gap-2 text-primary hover:underline"
+              >
+                <FileText className="h-4 w-4" />
+                View submissions
+              </a>
+            </div>
           )}
         </div>
 
-        {activeId && (
-          <div className="p-4 border-t text-sm">
-            <a
-              href={`/content/forms/submissions?site_id=${encodeURIComponent(siteId)}&form_id=${encodeURIComponent(activeId)}`}
-              className="text-primary hover:underline flex items-center gap-1.5"
-            >
-              <FileText className="h-4 w-4" />
-              View submissions
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* Main content */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Form Builder
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Site: <strong>{siteId}</strong> · Form ID:{" "}
-              <strong className="font-mono">{activeId || "—"}</strong>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <EditorModeToggle mode={mode} setMode={setMode} />
-
-            <button
-              onClick={save}
-              disabled={saveStatus === "saving" || !activeId || !name.trim()}
-              className={`
-                inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium
-                ${saveStatus === "success" ? "bg-green-600 text-white" : "bg-black text-white hover:bg-black/90"}
-                disabled:opacity-60 transition-colors
-              `}
-            >
-              {saveStatus === "saving" ? (
-                <>Saving…</>
-              ) : saveStatus === "success" ? (
-                <>Saved ✓</>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Draft
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {!activeId ? (
-          <div className="border border-dashed rounded-xl p-12 text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-40" />
-            <h3 className="font-medium text-lg mb-2">No form selected</h3>
-            <p className="text-sm">
-              Create a new form or select one from the list
-            </p>
-          </div>
-        ) : (
-          <div className="border rounded-xl bg-card shadow-sm p-6 space-y-6">
-            {/* Form Name & Success Message */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Form Name</label>
-                <input
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Contact Us Form"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Success Message</label>
-                <input
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={schema.successMessage || ""}
-                  onChange={(e) =>
-                    setSchema({ ...schema, successMessage: e.target.value })
-                  }
-                  placeholder="Thank you! We'll get back to you soon."
-                />
-              </div>
+        {/* Main Area */}
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Form Builder
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Site: <strong>{siteId}</strong> · Form:{" "}
+                <strong className="font-mono">{activeId || "—"}</strong>
+              </p>
             </div>
 
-            {mode === "json" ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <FileText className="h-5 w-5" />
-                  <span>Schema JSON</span>
-                </div>
-                <textarea
-                  className="w-full h-96 font-mono text-sm p-4 border rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background"
-                  value={schemaJson}
-                  onChange={(e) => setSchemaJson(e.target.value)}
-                  spellCheck={false}
-                />
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      const parsed = safeJsonParse(schemaJson);
-                      if (!parsed.ok)
-                        return toast({
-                          variant: "error",
-                          title: "Save failed",
-                          description: parsed.error,
-                        });
-                      setSchema(parsed.value);
-                    }}
-                    className="px-4 py-2 border rounded-lg text-sm hover:bg-muted"
-                  >
-                    Apply JSON
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const parsed = safeJsonParse(schemaJson);
-                      if (!parsed.ok)
-                        return toast({
-                          variant: "error",
-                          title: "Save failed",
-                          description: parsed.error,
-                        });
-                      setSchema(parsed.value);
-                      await save();
-                    }}
-                    className="px-5 py-2 bg-black text-white rounded-lg text-sm hover:bg-black/90"
-                  >
+            <div className="flex flex-wrap items-center gap-3">
+              <EditorModeToggle mode={mode} setMode={setMode} />
+
+              <button
+                onClick={save}
+                disabled={saveStatus === "saving" || !activeId || !name.trim()}
+                className={`
+                  inline-flex min-w-[140px] items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium shadow-sm transition
+                  ${
+                    saveStatus === "success"
+                      ? "bg-green-600 text-white"
+                      : saveStatus === "saving"
+                        ? "bg-primary/80 text-white cursor-wait"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }
+                  disabled:opacity-60
+                `}
+              >
+                {saveStatus === "saving" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {saveStatus === "saving" ? (
+                  "Saving..."
+                ) : saveStatus === "success" ? (
+                  "Saved ✓"
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
                     Save Draft
-                  </button>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {!activeId ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-16 text-center">
+              <FileText className="mb-4 h-14 w-14 text-muted-foreground/50" />
+              <h3 className="text-xl font-medium">No form selected</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Select a form from the list or create a new one
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border bg-card shadow-sm p-6 lg:p-8 space-y-8">
+              {/* Name + Success Message */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Form Name</label>
+                  <input
+                    className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Contact Form"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Success Message</label>
+                  <input
+                    className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm transition focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    value={schema.successMessage || ""}
+                    onChange={(e) =>
+                      setSchema({ ...schema, successMessage: e.target.value })
+                    }
+                    placeholder="Thank you! We'll get back to you soon."
+                  />
                 </div>
               </div>
-            ) : (
-              <FormSchemaForm
-                schema={schema}
-                onChange={(next) => {
-                  setSchema(next);
-                  setSchemaJson(JSON.stringify(next, null, 2));
-                }}
-              />
-            )}
-          </div>
-        )}
+
+              {mode === "json" ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <FileText className="h-5 w-5" />
+                    <span className="font-medium">Schema (JSON)</span>
+                  </div>
+                  <textarea
+                    className="h-96 w-full rounded-lg border bg-background p-4 font-mono text-sm shadow-inner focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    value={schemaJson}
+                    onChange={(e) => setSchemaJson(e.target.value)}
+                    spellCheck={false}
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        const parsed = safeJsonParse(schemaJson);
+                        if (!parsed.ok) {
+                          toast({
+                            variant: "error",
+                            title: "Invalid JSON",
+                            description: parsed.error,
+                          });
+                          return;
+                        }
+                        setSchema(parsed.value);
+                      }}
+                      className="rounded-lg border px-5 py-2.5 text-sm hover:bg-muted"
+                    >
+                      Apply Changes
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const parsed = safeJsonParse(schemaJson);
+                        if (!parsed.ok) {
+                          toast({
+                            variant: "error",
+                            title: "Invalid JSON",
+                            description: parsed.error,
+                          });
+                          return;
+                        }
+                        setSchema(parsed.value);
+                        await save();
+                      }}
+                      className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                      Save Draft
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <FormSchemaForm
+                  schema={schema}
+                  onChange={(next) => {
+                    setSchema(next);
+                    setSchemaJson(JSON.stringify(next, null, 2));
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -429,12 +442,12 @@ function FormSchemaForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium text-lg">Form Fields</h3>
+        <h3 className="text-xl font-semibold tracking-tight">Form Fields</h3>
         <button
           onClick={addField}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 text-sm font-medium"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-5 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition"
         >
           <Plus className="h-4 w-4" />
           Add Field
@@ -442,39 +455,39 @@ function FormSchemaForm({
       </div>
 
       {fields.length === 0 ? (
-        <div className="border border-dashed rounded-xl p-10 text-center text-muted-foreground">
-          <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
-          <p className="font-medium">No fields yet</p>
-          <p className="text-sm mt-1">
-            Click "Add Field" to start building your form
+        <div className="rounded-xl border border-dashed p-16 text-center">
+          <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground/60" />
+          <p className="text-lg font-medium">No fields yet</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Add your first field to start building the form
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {fields.map((field: any, index: number) => (
             <div
               key={field.id}
-              className="border rounded-xl p-5 bg-muted/30 hover:bg-muted/50 transition-colors group"
+              className="group relative rounded-xl border bg-muted/30 p-6 shadow-sm transition hover:border-primary/40 hover:bg-muted/50"
             >
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div className="flex flex-1 items-center gap-4">
+                  <GripVertical className="h-6 w-6 cursor-grab text-muted-foreground/70" />
                   <div>
-                    <div className="font-medium">
-                      {field.label || "Unnamed field"}
+                    <div className="font-semibold">
+                      {field.label || "Unnamed"}
                     </div>
-                    <div className="text-xs text-muted-foreground font-mono">
-                      name: {field.name}
+                    <div className="mt-0.5 text-xs font-mono text-muted-foreground">
+                      key: {field.name}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
                   <button
                     title="Move up"
                     disabled={index === 0}
                     onClick={() => moveField(index, -1)}
-                    className="p-1.5 rounded hover:bg-muted disabled:opacity-40"
+                    className="rounded p-2 hover:bg-muted disabled:opacity-40"
                   >
                     <ArrowUp className="h-4 w-4" />
                   </button>
@@ -482,51 +495,47 @@ function FormSchemaForm({
                     title="Move down"
                     disabled={index === fields.length - 1}
                     onClick={() => moveField(index, 1)}
-                    className="p-1.5 rounded hover:bg-muted disabled:opacity-40"
+                    className="rounded p-2 hover:bg-muted disabled:opacity-40"
                   >
                     <ArrowDown className="h-4 w-4" />
                   </button>
                   <button
-                    title="Delete field"
+                    title="Delete"
                     onClick={() => removeField(index)}
-                    className="p-1.5 rounded hover:bg-red-50 text-red-600"
+                    className="rounded p-2 text-red-600 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">
-                    Field Name (key)
-                  </label>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Field Key</label>
                   <input
-                    className="w-full border rounded-lg px-3 py-2 text-sm font-mono"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                     value={field.name || ""}
                     onChange={(e) =>
                       updateField(index, { name: e.target.value })
                     }
-                    placeholder="email"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Label</label>
                   <input
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                     value={field.label || ""}
                     onChange={(e) =>
                       updateField(index, { label: e.target.value })
                     }
-                    placeholder="Email Address"
                   />
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Type</label>
                   <select
-                    className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                     value={field.type || "text"}
                     onChange={(e) =>
                       updateField(index, { type: e.target.value })
@@ -540,19 +549,18 @@ function FormSchemaForm({
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Placeholder</label>
                   <input
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                     value={field.placeholder || ""}
                     onChange={(e) =>
                       updateField(index, { placeholder: e.target.value })
                     }
-                    placeholder="you@example.com"
                   />
                 </div>
 
-                <div className="flex items-end pb-2">
+                <div className="flex items-center pt-6">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -560,19 +568,19 @@ function FormSchemaForm({
                       onChange={(e) =>
                         updateField(index, { required: e.target.checked })
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <span className="text-sm font-medium">Required</span>
                   </label>
                 </div>
 
                 {field.type === "select" && (
-                  <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
+                  <div className="col-span-2 lg:col-span-3 space-y-2">
                     <label className="text-sm font-medium">
                       Options (comma separated)
                     </label>
                     <input
-                      className="w-full border rounded-lg px-3 py-2 text-sm"
+                      className="w-full rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                       value={(field.options || []).join(", ")}
                       onChange={(e) =>
                         updateField(index, {
@@ -582,17 +590,17 @@ function FormSchemaForm({
                             .filter(Boolean),
                         })
                       }
-                      placeholder="Option 1, Option 2, Option 3"
+                      placeholder="Yes, No, Maybe"
                     />
                   </div>
                 )}
 
-                <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
+                <div className="col-span-2 lg:col-span-3 space-y-2">
                   <label className="text-sm font-medium">
-                    Help text (optional)
+                    Help text / description
                   </label>
                   <input
-                    className="w-full border rounded-lg px-3 py-2 text-sm"
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20"
                     value={field.helpText || ""}
                     onChange={(e) =>
                       updateField(index, { helpText: e.target.value })
@@ -606,109 +614,65 @@ function FormSchemaForm({
         </div>
       )}
 
-      {/* Simple live preview */}
+      {/* Live Preview */}
       {fields.length > 0 && (
-        <div className="border rounded-xl p-6 bg-white/60 mt-8">
-          <h4 className="font-medium mb-4 flex items-center gap-2">
+        <div className="mt-12 rounded-xl border bg-gradient-to-b from-white to-gray-50/80 p-8 shadow-sm">
+          <h4 className="mb-6 flex items-center gap-2 text-lg font-semibold">
             <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Form Preview (approximate)
+            Live Form Preview
           </h4>
-          <div className="space-y-5 max-w-xl mx-auto">
-            {fields.map(
-              (f: {
-                id: Key | null | undefined;
-                label:
-                  | string
-                  | number
-                  | bigint
-                  | boolean
-                  | ReactElement<unknown, string | JSXElementConstructor<any>>
-                  | Iterable<ReactNode>
-                  | ReactPortal
-                  | Promise<
-                      | string
-                      | number
-                      | bigint
-                      | boolean
-                      | ReactPortal
-                      | ReactElement<
-                          unknown,
-                          string | JSXElementConstructor<any>
-                        >
-                      | Iterable<ReactNode>
-                      | null
-                      | undefined
-                    >
-                  | null
-                  | undefined;
-                required: any;
-                type: string | undefined;
-                placeholder: string | undefined;
-                options: any;
-                helpText:
-                  | string
-                  | number
-                  | bigint
-                  | boolean
-                  | ReactElement<unknown, string | JSXElementConstructor<any>>
-                  | Iterable<ReactNode>
-                  | ReactPortal
-                  | Promise<
-                      | string
-                      | number
-                      | bigint
-                      | boolean
-                      | ReactPortal
-                      | ReactElement<
-                          unknown,
-                          string | JSXElementConstructor<any>
-                        >
-                      | Iterable<ReactNode>
-                      | null
-                      | undefined
-                    >
-                  | null
-                  | undefined;
-              }) => (
-                <div key={f.id} className="space-y-1.5">
-                  <label className="block text-sm font-medium">
-                    {f.label}
-                    {f.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  {f.type === "textarea" ? (
-                    <textarea
-                      className="w-full border rounded-lg px-3 py-2 min-h-[100px] text-sm"
-                      placeholder={f.placeholder}
-                      disabled
-                    />
-                  ) : f.type === "select" ? (
-                    <select
-                      className="w-full border rounded-lg px-3 py-2 text-sm"
-                      disabled
-                    >
-                      <option value="">{f.placeholder || "Select..."}</option>
-                      {(f.options || []).map((o: string) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={f.type}
-                      className="w-full border rounded-lg px-3 py-2 text-sm"
-                      placeholder={f.placeholder}
-                      disabled
-                    />
-                  )}
-                  {f.helpText && (
-                    <p className="text-xs text-muted-foreground">
-                      {f.helpText}
-                    </p>
-                  )}
-                </div>
-              )
-            )}
+
+          <div className="mx-auto max-w-2xl space-y-6 rounded-lg border bg-white p-8 shadow">
+            {fields.map((f: any) => (
+              <div key={f.id} className="space-y-2">
+                <label className="block text-sm font-medium">
+                  {f.label}
+                  {f.required && <span className="ml-1 text-red-500">*</span>}
+                </label>
+
+                {f.type === "textarea" ? (
+                  <textarea
+                    className="h-28 w-full rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm"
+                    placeholder={f.placeholder}
+                    disabled
+                  />
+                ) : f.type === "select" ? (
+                  <select
+                    className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm"
+                    disabled
+                  >
+                    <option value="">
+                      {f.placeholder || "Choose an option..."}
+                    </option>
+                    {(f.options || []).map((o: string) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={f.type}
+                    className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm"
+                    placeholder={f.placeholder}
+                    disabled
+                  />
+                )}
+
+                {f.helpText && (
+                  <p className="text-xs text-muted-foreground">{f.helpText}</p>
+                )}
+              </div>
+            ))}
+
+            <div className="pt-4">
+              <button
+                disabled
+                className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground opacity-70"
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
       )}
