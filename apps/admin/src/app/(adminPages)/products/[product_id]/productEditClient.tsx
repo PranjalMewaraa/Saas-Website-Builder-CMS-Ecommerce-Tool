@@ -14,10 +14,12 @@ type CategoryAttr = {
 export default function ProductEditClient({
   siteId,
   storeId,
+  catalogId,
   product,
 }: {
   siteId: string;
   storeId: string;
+  catalogId?: string;
   product: any | null;
 }) {
   const [brands, setBrands] = useState<any[]>([]);
@@ -178,7 +180,9 @@ export default function ProductEditClient({
           }
         }
 
-        window.location.href = `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
+        window.location.href = catalogId
+          ? `/products?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(catalogId)}`
+          : `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
       }}
     >
       {error ? <div className="text-sm text-red-600">{error}</div> : null}

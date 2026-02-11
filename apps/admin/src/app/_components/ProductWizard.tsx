@@ -79,28 +79,22 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
         setLoading(true);
         setError(null);
 
-        const [attrRes, storeRes, brandRes, catRes] = await Promise.all([
+        const [attrRes, storeRes] = await Promise.all([
           fetch("/api/admin/attributes"),
           fetch("/api/admin/stores"),
-          fetch(`/api/admin/brands?site_id=${encodeURIComponent(siteId)}`),
-          fetch(`/api/admin/categories?site_id=${encodeURIComponent(siteId)}`),
         ]);
 
-        if (!attrRes.ok || !storeRes.ok || !brandRes.ok || !catRes.ok) {
+        if (!attrRes.ok || !storeRes.ok) {
           throw new Error("Failed to load data");
         }
 
-        const [attrData, storeData, brandData, catData] = await Promise.all([
+        const [attrData, storeData] = await Promise.all([
           attrRes.json(),
           storeRes.json(),
-          brandRes.json(),
-          catRes.json(),
         ]);
 
         setAttributes(attrData.attributes ?? []);
         setStores(storeData.stores ?? []);
-        setBrands(brandData.brands ?? []);
-        setCategories(catData.categories ?? []);
       } catch (err: any) {
         setError(err.message || "Failed to load initial data");
       } finally {
@@ -109,7 +103,33 @@ export default function ProductWizard({ siteId }: ProductWizardProps) {
     }
 
     fetchInitialData();
-  }, []);
+  }, [siteId]);
+
+  useEffect(() => {
+    async function fetchScopedCatalog() {
+      if (!storeId) {
+        setBrands([]);
+        setCategories([]);
+        return;
+      }
+      const [brandRes, catRes] = await Promise.all([
+        fetch(
+          `/api/admin/brands?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+        ),
+        fetch(
+          `/api/admin/categories?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+        ),
+      ]);
+      if (!brandRes.ok || !catRes.ok) return;
+      const [brandData, catData] = await Promise.all([
+        brandRes.json(),
+        catRes.json(),
+      ]);
+      setBrands(brandData.brands ?? []);
+      setCategories(catData.categories ?? []);
+    }
+    fetchScopedCatalog();
+  }, [siteId, storeId]);
 
   // ────────────────────────────────────────────────
   //  Derived values

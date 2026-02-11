@@ -19,6 +19,7 @@ import {
   setProductsStatus,
   setProductStatus,
 } from "../../../../../../../packages/db-mysql";
+import { resolveStoreId } from "@/lib/store-scope";
 
 export async function GET(req: Request) {
   const session = await requireSession();
@@ -26,7 +27,11 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
-  const store_id = searchParams.get("store_id") || "";
+  const store_id = await resolveStoreId({
+    tenant_id,
+    site_id,
+    store_id: searchParams.get("store_id") || "",
+  });
   const product_id = searchParams.get("product_id") || "";
   const status = searchParams.get("status") || "";
 

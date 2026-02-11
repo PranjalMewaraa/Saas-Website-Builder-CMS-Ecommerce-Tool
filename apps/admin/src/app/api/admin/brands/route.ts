@@ -14,6 +14,7 @@ import {
   createBrandV2,
 } from "@acme/db-mysql";
 import { pool } from "@acme/db-mysql";
+import { resolveStoreId } from "@/lib/store-scope";
 
 export async function GET(req: Request) {
   const session = await requireSession();
@@ -21,7 +22,11 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
-  const store_id = searchParams.get("store_id") || "";
+  const store_id = await resolveStoreId({
+    tenant_id,
+    site_id,
+    store_id: searchParams.get("store_id") || "",
+  });
 
   await requireModule({ tenant_id, site_id, module: "catalog" });
 
@@ -41,7 +46,11 @@ export async function POST(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const site_id = searchParams.get("site_id") || "";
-  const store_id = searchParams.get("store_id") || "";
+  const store_id = await resolveStoreId({
+    tenant_id,
+    site_id,
+    store_id: searchParams.get("store_id") || "",
+  });
 
   await requireModule({ tenant_id, site_id, module: "catalog" });
 

@@ -27,8 +27,27 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [selected, setSelected] = useState<Order | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+
+  async function loadOrderDetail(orderId: string) {
+    setDetailLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${encodeURIComponent(orderId)}?site_id=${encodeURIComponent(siteId)}`,
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok || !data?.order) {
+        throw new Error(data?.error || "Failed to load order detail");
+      }
+      setSelected(data.order);
+    } catch {
+      toast({ title: "Failed to load order details", variant: "error" });
+    } finally {
+      setDetailLoading(false);
+    }
+  }
 
   async function loadOrders() {
     if (!siteId) return;
@@ -39,10 +58,6 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
       const res = await fetch(`/api/admin/orders?${qs.toString()}`);
       const data = await res.json();
       setOrders(data.orders || []);
-      if (selected) {
-        const next = (data.orders || []).find((o: Order) => o._id === selected._id);
-        setSelected(next || null);
-      }
     } catch {
       toast({ title: "Failed to load orders", variant: "error" });
     } finally {
@@ -150,7 +165,7 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
               <div className="text-right">
                 <button
                   className="text-sm font-medium text-blue-600 hover:underline"
-                  onClick={() => setSelected(order)}
+                  onClick={() => loadOrderDetail(order._id)}
                 >
                   View
                 </button>
@@ -197,7 +212,8 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
                       body: JSON.stringify({ status: nextStatus }),
                     });
                     toast({ title: "Order status updated" });
-                    setSelected({ ...selected, status: nextStatus });
+                    await loadOrderDetail(selected._id);
+                    await loadOrders();
                   } catch {
                     toast({ title: "Failed to update order", variant: "error" });
                   }
@@ -253,6 +269,9 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
             </div>
 
             <div className="mt-4 border rounded-lg divide-y">
+              {detailLoading ? (
+                <div className="p-3 text-sm text-gray-500">Loading details...</div>
+              ) : null}
               {selectedItems.map((item: any, i: number) => (
                 <div
                   key={`${item.product_id}-${i}`}

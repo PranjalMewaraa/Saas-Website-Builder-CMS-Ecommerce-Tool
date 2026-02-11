@@ -1,6 +1,8 @@
 import { requireSession, requireModule } from "@acme/auth";
 import { getStore, listBrandsByStore, listStores } from "@acme/db-mysql";
 import BrandCreateClient from "./BrandCreateClient";
+import { resolveStoreId } from "@/lib/store-scope";
+import { redirect } from "next/navigation";
 
 export default async function BrandsPage({
   searchParams,
@@ -14,9 +16,18 @@ export default async function BrandsPage({
   const tenant_id = session.user.tenant_id;
 
   const siteId = params.site_id || "site_demo";
-  const storeId = params.store_id || "";
+  const storeId = await resolveStoreId({
+    tenant_id,
+    site_id: siteId,
+    store_id: params.store_id || "",
+  });
 
   await requireModule({ tenant_id, site_id: siteId, module: "catalog" });
+  if (!params.store_id && storeId) {
+    redirect(
+      `/brands?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+    );
+  }
 
   const stores = await listStores(tenant_id);
   const store = await getStore(tenant_id, storeId);

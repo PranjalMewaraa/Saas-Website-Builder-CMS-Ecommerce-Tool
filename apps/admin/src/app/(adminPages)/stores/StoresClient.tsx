@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import StoreActionsClient from "./storeActionsClient";
 
 type Tab = "active" | "archived";
@@ -11,6 +10,7 @@ export default function StoresClient({ siteId }: { siteId: string }) {
   const [stores, setStores] = useState<any[]>([]);
   const [archivedCount, setArchivedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [switchingStoreId, setSwitchingStoreId] = useState<string>("");
 
   async function fetchList() {
     setLoading(true);
@@ -28,6 +28,11 @@ export default function StoresClient({ siteId }: { siteId: string }) {
   useEffect(() => {
     fetchList();
   }, [siteId, tab]);
+
+  async function openStoreCatalog(storeId: string) {
+    setSwitchingStoreId(storeId);
+    window.location.href = `/products?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(storeId)}`;
+  }
 
   return (
     <div className="space-y-4">
@@ -86,14 +91,16 @@ export default function StoresClient({ siteId }: { siteId: string }) {
               </div>
 
               <div className="flex items-center gap-2">
-                <Link
-                  className="px-3 py-2 rounded bg-black text-white"
-                  href={`/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(
-                    s.id,
-                  )}`}
+                <button
+                  type="button"
+                  className="px-3 py-2 rounded bg-black text-white disabled:opacity-60"
+                  onClick={() => openStoreCatalog(s.id)}
+                  disabled={switchingStoreId === s.id}
                 >
-                  Manage Catalog
-                </Link>
+                  {switchingStoreId === s.id
+                    ? "Opening..."
+                    : "Manage Catalog"}
+                </button>
                 <StoreActionsClient
                   siteId={siteId}
                   storeId={s.id}

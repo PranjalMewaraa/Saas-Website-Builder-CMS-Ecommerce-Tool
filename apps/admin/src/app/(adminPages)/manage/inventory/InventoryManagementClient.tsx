@@ -16,6 +16,10 @@ export default function InventoryManagementClient({
   const [loading, setLoading] = useState(false);
   const [delta, setDelta] = useState<Record<string, number>>({});
 
+  function rowKey(it: any) {
+    return it.variant_id || it.product_id;
+  }
+
   async function refresh(search = q) {
     if (!siteId || !storeId) return;
     setLoading(true);
@@ -81,7 +85,7 @@ export default function InventoryManagementClient({
           </thead>
           <tbody>
             {items.map((it) => (
-              <tr key={it.variant_id || it.product_id} className="border-b">
+              <tr key={rowKey(it)} className="border-b">
                 <td className="p-2">{it.title}</td>
                 <td className="p-2">{it.sku || "-"}</td>
                 <td className="p-2">{Number(it.inventory_qty || 0)}</td>
@@ -89,11 +93,11 @@ export default function InventoryManagementClient({
                   <input
                     type="number"
                     className="border rounded p-1 w-24"
-                    value={delta[it.product_id] ?? 0}
+                    value={delta[rowKey(it)] ?? 0}
                     onChange={(e) =>
                       setDelta((prev) => ({
                         ...prev,
-                        [it.product_id]: Number(e.target.value || 0),
+                        [rowKey(it)]: Number(e.target.value || 0),
                       }))
                     }
                   />
@@ -102,7 +106,7 @@ export default function InventoryManagementClient({
                   <button
                     className="px-2 py-1 border rounded"
                     onClick={async () => {
-                      const d = Number(delta[it.product_id] ?? 0);
+                      const d = Number(delta[rowKey(it)] ?? 0);
                       if (!d) return;
                       const res = await fetch("/api/admin/v2/inventory", {
                         method: "POST",
@@ -127,7 +131,7 @@ export default function InventoryManagementClient({
                         return;
                       }
                       toast({ variant: "success", title: "Inventory updated" });
-                      setDelta((prev) => ({ ...prev, [it.product_id]: 0 }));
+                      setDelta((prev) => ({ ...prev, [rowKey(it)]: 0 }));
                       refresh(q);
                     }}
                   >
@@ -149,4 +153,3 @@ export default function InventoryManagementClient({
     </div>
   );
 }
-

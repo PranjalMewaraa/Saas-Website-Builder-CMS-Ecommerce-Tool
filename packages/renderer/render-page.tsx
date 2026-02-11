@@ -14,6 +14,7 @@ export type RenderContext = {
   snapshot: any; // published snapshot (or draft snapshot for preview/builder)
   path?: string;
   search?: string;
+  mode?: "builder" | "preview" | "published";
 };
 
 function safeProps(schema: any, props: any) {
@@ -96,11 +97,7 @@ export async function RenderPage(args: {
     : ctx.snapshot?.is_draft
       ? "preview"
       : "published";
-
-  console.log(
-    "RenderPage ctx.snapshot",
-    ctx.snapshot.pages["/"].layout.sections[0].blocks[4],
-  );
+  ctx.mode = mode;
 
   const css = buildResponsiveCss(parsedLayout);
 
@@ -127,7 +124,7 @@ export async function RenderPage(args: {
           <div
             key={sec.id}
             data-section-id={sec.id}
-            className={`${secOuterClass} border-2 border-black`}
+            className={secOuterClass}
             style={secOuterStyle}
           >
             {/* IMPORTANT: __section-inner is used by responsive-css selectors */}
@@ -173,7 +170,7 @@ async function BlockRenderer({
           forms={ctx.snapshot.forms}
           handle={ctx.snapshot.handle}
           previewToken={ctx.snapshot.previewToken}
-          mode={mode}
+          mode={ctx.mode || "published"}
         />
       </div>
     );

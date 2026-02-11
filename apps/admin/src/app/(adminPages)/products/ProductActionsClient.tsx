@@ -7,11 +7,13 @@ import { useUI } from "@/app/_components/ui/UiProvider";
 export default function ProductActionsClient({
   siteId,
   storeId,
+  catalogId,
   productId,
   status,
 }: {
   siteId: string;
   storeId: string;
+  catalogId?: string;
   productId: string;
   status: "draft" | "active" | "archived";
 }) {
@@ -56,7 +58,11 @@ export default function ProductActionsClient({
     <div className="flex items-center gap-2">
       <Link
         className="px-3 py-2 rounded border text-sm"
-        href={`/products/${encodeURIComponent(productId)}?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`}
+        href={
+          catalogId
+            ? `/products/${encodeURIComponent(productId)}?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(catalogId)}`
+            : `/products/${encodeURIComponent(productId)}?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`
+        }
       >
         Edit
       </Link>

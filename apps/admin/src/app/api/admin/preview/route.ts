@@ -17,6 +17,18 @@ function newDraftSnapshotId(site_id: string) {
   return `draft_${site_id}_${Date.now()}`;
 }
 
+function normalizeLocalOrigin(raw: string) {
+  try {
+    const u = new URL(raw);
+    if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+      u.protocol = "http:";
+    }
+    return u.origin;
+  } catch {
+    return "http://localhost:3002";
+  }
+}
+
 // Minimal typing to avoid ObjectId overload issues in TS
 type SiteDocLoose = {
   _id: any;
@@ -106,8 +118,9 @@ export async function POST(req: Request) {
   await setDraftSnapshotId(tenant_id, site_id, snapshot_id);
 
   // ✅ IMPORTANT: preview page lives in storefront (usually :3002)
-  const storefrontOrigin =
-    process.env.STOREFRONT_ORIGIN || "http://localhost:3002";
+  const storefrontOrigin = normalizeLocalOrigin(
+    process.env.STOREFRONT_ORIGIN || "http://localhost:3002",
+  );
   const previewUrl = `${storefrontOrigin}/?handle=${encodeURIComponent(
     site.handle,
   )}&sid=${encodeURIComponent(site_id)}&token=${encodeURIComponent(token)}`;

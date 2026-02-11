@@ -97,7 +97,7 @@ export default function AdminShell({
       icon: Eye,
       group: "Content",
     },
-    { label: "Builder", href: "/builder", icon: Code2, group: "Build" },
+    // { label: "Builder", href: "/builder", icon: Code2, group: "Build" },
     { label: "My Store", href: "/stores", icon: Store, group: "Commerce" },
     { label: "Brands", href: "/brands", icon: Tags, group: "Commerce" },
     { label: "Categories", href: "/categories", icon: Tags, group: "Commerce" },

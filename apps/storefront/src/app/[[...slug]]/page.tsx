@@ -149,11 +149,10 @@ export default async function StorefrontPage({
   const search = (await h).get("x-search") || (await h).get("next-url") || "";
   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
 
-  let token = resolvedSearch?.token || "";
-  if (!token && search.includes("?")) {
-    const url = new URL(search, "http://localhost");
-    token = url.searchParams.get("token") || "";
-  }
+  // IMPORTANT:
+  // Only explicit query param token should activate preview mode.
+  // Do not infer token from request headers to avoid accidental draft redirects.
+  const token = resolvedSearch?.token || "";
 
   let snapshot: any = null;
   const isPreview = token && site.preview_token && token === site.preview_token;

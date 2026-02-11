@@ -14,9 +14,11 @@ type CategoryAttr = {
 export default function ProductCreateClient({
   siteId,
   storeId,
+  catalogId,
 }: {
   siteId: string;
   storeId: string;
+  catalogId?: string;
 }) {
   const [brands, setBrands] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -194,7 +196,9 @@ export default function ProductCreateClient({
           setUploading(false);
         }
 
-        window.location.href = `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
+        window.location.href = catalogId
+          ? `/products?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(catalogId)}`
+          : `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
       }}
     >
       {error ? <div className="text-sm text-red-600">{error}</div> : null}

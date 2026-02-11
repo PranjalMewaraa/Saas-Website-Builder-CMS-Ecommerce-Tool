@@ -11,8 +11,10 @@ export async function ensureCommercePages(tenant_id: string, site_id: string) {
     const existing = await col.findOne({ tenant_id, site_id, slug });
     if (existing) {
       const existingTitle = String(
-        existing.name || existing.title || "",
-      ).trim().toLowerCase();
+        (existing as any).name || existing.title || "",
+      )
+        .trim()
+        .toLowerCase();
       const shouldFixTitle =
         !existingTitle ||
         existingTitle === "untitled" ||
