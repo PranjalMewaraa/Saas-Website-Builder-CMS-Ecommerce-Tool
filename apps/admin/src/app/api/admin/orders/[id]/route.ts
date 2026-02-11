@@ -36,6 +36,48 @@ export async function GET(
       `SELECT * FROM commerce_order_items WHERE tenant_id = ? AND order_id = ? ORDER BY created_at ASC`,
       [tenant_id, id],
     );
+    const productIds = Array.from(
+      new Set((items || []).map((i: any) => String(i.product_id || "")).filter(Boolean)),
+    );
+    const variantIds = Array.from(
+      new Set((items || []).map((i: any) => String(i.variant_id || "")).filter(Boolean)),
+    );
+
+    let productMap: Record<string, any> = {};
+    if (productIds.length) {
+      const [productRows] = await pool.query<any[]>(
+        `SELECT p.id, p.slug, p.description,
+                pi.url AS image_url
+         FROM products p
+         LEFT JOIN (
+           SELECT tenant_id, product_id, MIN(sort_order) AS min_sort
+           FROM product_images
+           WHERE tenant_id = ?
+           GROUP BY tenant_id, product_id
+         ) pim ON pim.tenant_id = p.tenant_id AND pim.product_id = p.id
+         LEFT JOIN product_images pi
+           ON pi.tenant_id = pim.tenant_id
+          AND pi.product_id = pim.product_id
+          AND pi.sort_order = pim.min_sort
+         WHERE p.tenant_id = ? AND p.id IN (?)`,
+        [tenant_id, tenant_id, productIds],
+      );
+      productMap = Object.fromEntries(
+        (productRows || []).map((r: any) => [String(r.id), r]),
+      );
+    }
+
+    let variantMap: Record<string, any> = {};
+    if (variantIds.length) {
+      const [variantRows] = await pool.query<any[]>(
+        `SELECT id, sku, options_json FROM product_variants WHERE tenant_id = ? AND id IN (?)`,
+        [tenant_id, variantIds],
+      );
+      variantMap = Object.fromEntries(
+        (variantRows || []).map((r: any) => [String(r.id), r]),
+      );
+    }
+
     const order = {
       _id: rows[0].id,
       order_number: rows[0].order_number,
@@ -44,11 +86,23 @@ export async function GET(
       customer: parseMaybeJson(rows[0].customer_json),
       shipping_address: parseMaybeJson(rows[0].shipping_json),
       items: (items || []).map((i) => ({
+        id: i.id,
         product_id: i.product_id,
         variant_id: i.variant_id,
         title: i.title,
+        sku: i.sku || variantMap[String(i.variant_id || "")]?.sku || null,
+        slug: productMap[String(i.product_id)]?.slug || "",
+        description: productMap[String(i.product_id)]?.description || "",
+        image_url: productMap[String(i.product_id)]?.image_url || "",
+        variant_options: parseMaybeJson(
+          variantMap[String(i.variant_id || "")]?.options_json || null,
+        ),
         qty: i.quantity,
         price_cents: i.price_cents,
+        line_total_cents:
+          i.line_total_cents != null
+            ? Number(i.line_total_cents)
+            : Number(i.price_cents || 0) * Number(i.quantity || 0),
       })),
       created_at: rows[0].created_at,
       source: "mysql_v2",

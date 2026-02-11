@@ -38,7 +38,12 @@ export default async function BrandsPage({
   return (
     <div>
       <div className="p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Brands</h1>
+        <div>
+          <h1 className="text-xl font-semibold">Brands</h1>
+          <p className="text-sm text-gray-500">
+            Add brand/distributor entries for the selected store. Brand stores allow one primary brand.
+          </p>
+        </div>
 
         <BrandCreateClient
           siteId={siteId}

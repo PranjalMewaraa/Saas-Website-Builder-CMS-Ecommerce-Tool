@@ -24,7 +24,12 @@ export default async function StoresPage({
   return (
     <div className="p-6 space-y-6">
       <div className="w-full flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Stores</h1>
+        <div>
+          <h1 className="text-xl font-semibold">Stores</h1>
+          <p className="text-sm text-gray-500">
+            Create and manage stores. Set one main active store for this site.
+          </p>
+        </div>
         <Link href={"/store-setup"}>
           <button className="bg-black text-white rounded-md py-3 px-6">
             Setup New Store

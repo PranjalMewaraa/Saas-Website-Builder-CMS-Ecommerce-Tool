@@ -54,7 +54,17 @@ export default function InventoryManagementClient({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Inventory Management</h1>
+      <div>
+        <h1 className="text-xl font-semibold">Inventory Management</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Manage stock for the <b>active store</b> only.
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+        `Delta` means stock change amount:
+        <b> +10</b> adds 10 units, <b>-3</b> removes 3 units, <b>0</b> makes no change.
+      </div>
 
       <div className="flex gap-2">
         <input
@@ -137,6 +147,9 @@ export default function InventoryManagementClient({
                   >
                     Apply
                   </button>
+                  <div className="text-[11px] text-gray-500 mt-1">
+                    Use + for restock, - for shrink/damage.
+                  </div>
                 </td>
               </tr>
             ))}

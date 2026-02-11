@@ -53,7 +53,12 @@ export default async function CategoriesPage({
   return (
     <div>
       <div className="p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Categories</h1>
+        <div>
+          <h1 className="text-xl font-semibold">Categories</h1>
+          <p className="text-sm text-gray-500">
+            Create categories and define product attributes users must fill while creating products.
+          </p>
+        </div>
 
         <CategoryCreateClient
           siteId={siteId}

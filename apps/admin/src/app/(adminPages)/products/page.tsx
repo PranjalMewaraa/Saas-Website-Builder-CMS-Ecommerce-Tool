@@ -42,6 +42,9 @@ export default async function ProductsPage({
             <div className="text-xs text-gray-500">
               Store: <span className="font-mono">{storeId || "-"}</span>
             </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Add products for this store, manage publish state, and edit inventory-ready details.
+            </p>
           </div>
 
           <Link
