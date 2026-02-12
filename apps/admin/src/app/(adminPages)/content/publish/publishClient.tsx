@@ -3,14 +3,21 @@
 import { useState } from "react";
 import { useUI } from "@/app/_components/ui/UiProvider";
 
-export default function PublishClient({ siteId }: { siteId: string }) {
+export default function PublishClient({
+  siteId,
+  siteName,
+}: {
+  siteId: string;
+  siteName?: string;
+}) {
   const { toast } = useUI();
   const [lastSnap, setLastSnap] = useState<string>("");
   const [url, setUrl] = useState();
   return (
     <div className="border rounded p-4 space-y-3 max-w-xl">
       <div className="text-sm opacity-70">
-        Site: <b>{siteId}</b>
+        Site: <b>{siteName || "Untitled Site"}</b>
+        <span className="ml-1 text-xs">(Ref: {siteId.slice(-8)})</span>
       </div>
 
       <button

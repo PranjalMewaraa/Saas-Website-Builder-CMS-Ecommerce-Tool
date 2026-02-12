@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+function shortRef(value?: string) {
+  if (!value) return "";
+  return value.length > 10 ? value.slice(-10) : value;
+}
+
 export default function SubmissionsClient({
   siteId,
   formId,
@@ -14,6 +19,7 @@ export default function SubmissionsClient({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
   const [formNameMap, setFormNameMap] = useState<Record<string, string>>({});
+  const activeFormName = formNameMap[formId] || "Unknown form";
 
   async function load() {
     setLoading(true);
@@ -62,7 +68,8 @@ export default function SubmissionsClient({
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-500">
-        Site: <b>{siteId}</b> · Form: <b>{formId}</b>
+        Site: <b>{siteId}</b> · Form: <b>{activeFormName}</b>
+        {formId ? <span> (Ref: {shortRef(formId)})</span> : null}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -99,7 +106,10 @@ export default function SubmissionsClient({
         <div className="divide-y">
           {filtered.map((r) => (
             <div key={r._id} className="grid grid-cols-4 gap-2 px-4 py-3 text-sm">
-              <div className="font-medium">{r._id}</div>
+              <div>
+                <div className="font-medium">Entry</div>
+                <div className="text-xs text-gray-500">{shortRef(r._id)}</div>
+              </div>
               <div className="text-gray-600">
                 {formNameMap[r.form_id] || r.form_id}
               </div>
@@ -129,8 +139,10 @@ export default function SubmissionsClient({
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-lg font-semibold">Submission</div>
-                <div className="text-xs text-gray-500">{selected._id}</div>
+                <div className="text-lg font-semibold">Submission Details</div>
+                <div className="text-xs text-gray-500">
+                  Ref: {shortRef(selected._id)}
+                </div>
               </div>
               <button
                 className="text-sm text-gray-500 hover:text-gray-700"

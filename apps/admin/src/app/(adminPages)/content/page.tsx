@@ -181,7 +181,7 @@ async function getCommerceStats(
   siteId?: string,
 ) {
   if (!storeId || !siteId)
-    return { products: 0, publishedProducts: 0, orders: 0 };
+    return { products: 0, publishedProducts: 0, orders: 0, storeName: "" };
 
   try {
     const [[{ c: products = "0" }]] = await pool.query(
@@ -198,14 +198,19 @@ async function getCommerceStats(
       `SELECT COUNT(*) as c FROM commerce_orders WHERE tenant_id = ? AND site_id = ?`,
       [tenantId, siteId],
     );
+    const [[storeRow]] = await pool.query(
+      `SELECT name FROM stores WHERE tenant_id = ? AND id = ? LIMIT 1`,
+      [tenantId, storeId],
+    );
 
     return {
       products: Number(products),
       publishedProducts: Number(publishedProducts),
       orders: Number(orders),
+      storeName: (storeRow as any)?.name || "",
     };
   } catch {
-    return { products: 0, publishedProducts: 0, orders: 0 };
+    return { products: 0, publishedProducts: 0, orders: 0, storeName: "" };
   }
 }
 
@@ -261,7 +266,7 @@ export default async function ContentDashboard({
         <h2 className="text-2xl font-semibold text-neutral-900">
           Site not found
         </h2>
-        <p className="mt-3 text-neutral-500">ID: {site_id}</p>
+        <p className="mt-3 text-neutral-500">Reference: {site_id}</p>
       </div>
     );
   }
@@ -305,7 +310,12 @@ export default async function ContentDashboard({
         </h1>
         <p className="text-base text-neutral-500">
           Site Selected •{" "}
-          <span className="font-medium text-neutral-700">{site_id}</span>
+          <span className="font-medium text-neutral-700">
+            {stats.site.name || "Untitled Site"}
+          </span>
+          <span className="ml-1 text-xs text-neutral-400">
+            (Ref: {site_id.slice(-8)})
+          </span>
         </p>
       </header>
 
@@ -414,13 +424,16 @@ export default async function ContentDashboard({
           <div className="mt-5 space-y-3 text-sm text-neutral-600">
             <p>
               Showing data for site{" "}
-              <strong className="text-neutral-800">{site_id}</strong>
+              <strong className="text-neutral-800">
+                {stats.site.name || "Untitled Site"}
+              </strong>
             </p>
             <p>
               Store:{" "}
               {stats.site.store_id ? (
                 <span className="font-medium text-neutral-800">
-                  {stats.site.store_id}
+                  {commerce.storeName ||
+                    `Store ${stats.site.store_id.slice(-6)}`}
                 </span>
               ) : (
                 <span className="italic text-neutral-400">not connected</span>

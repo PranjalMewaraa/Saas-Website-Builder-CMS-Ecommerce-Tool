@@ -159,8 +159,8 @@ export default function StoresClient({ siteId }: { siteId: string }) {
                         <span className="hidden sm:inline text-gray-300">
                           •
                         </span>
-                        <span className="font-mono text-xs text-gray-400 truncate max-w-[150px]">
-                          ID: {store.id}
+                        <span className="text-xs text-gray-400 truncate max-w-[150px]">
+                          Ref: {store.id.slice(-8)}
                         </span>
                       </div>
                     </div>

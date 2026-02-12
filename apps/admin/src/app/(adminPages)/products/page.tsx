@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireSession, requireModule } from "@acme/auth";
+import { getStore } from "@acme/db-mysql";
 import ProductsClient from "./ProductsClient";
 import { resolveStoreId } from "@/lib/store-scope";
 import { redirect } from "next/navigation";
@@ -32,6 +33,8 @@ export default async function ProductsPage({
       `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
     );
   }
+  const store = storeId ? await getStore(tenant_id, storeId) : null;
+  const storeLabel = store?.name || (storeId ? `Store ${storeId.slice(-6)}` : "—");
 
   return (
     <div>
@@ -40,7 +43,7 @@ export default async function ProductsPage({
           <div>
             <h1 className="text-xl font-semibold">Products</h1>
             <div className="text-xs text-gray-500">
-              Store: <span className="font-mono">{storeId || "-"}</span>
+              Store: <span className="font-medium">{storeLabel}</span>
             </div>
             <p className="text-sm text-gray-500 mt-1">
               Add products for this store, manage publish state, and edit inventory-ready details.

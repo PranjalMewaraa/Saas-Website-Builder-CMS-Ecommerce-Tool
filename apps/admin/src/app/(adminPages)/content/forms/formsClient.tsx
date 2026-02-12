@@ -39,6 +39,11 @@ function newId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 }
 
+function shortRef(value?: string) {
+  if (!value) return "";
+  return value.length > 10 ? value.slice(-10) : value;
+}
+
 export default function FormsClient({
   siteId,
   urlMode,
@@ -224,8 +229,8 @@ export default function FormsClient({
                     <div className="font-medium leading-tight">
                       {f.name || "Untitled Form"}
                     </div>
-                    <div className="mt-0.5 text-xs font-mono opacity-70">
-                      {f._id}
+                    <div className="mt-0.5 text-xs opacity-70">
+                      Ref: {shortRef(f._id)}
                     </div>
                   </button>
                 ))}
@@ -255,7 +260,12 @@ export default function FormsClient({
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Site: <strong>{siteId}</strong> · Form:{" "}
-                <strong className="font-mono">{activeId || "—"}</strong>
+                <strong>{active?.name || "—"}</strong>
+                {activeId ? (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    (Ref: {shortRef(activeId)})
+                  </span>
+                ) : null}
               </p>
             </div>
 
