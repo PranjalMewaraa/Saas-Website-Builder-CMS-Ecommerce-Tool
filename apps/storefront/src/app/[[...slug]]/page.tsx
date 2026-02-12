@@ -45,6 +45,9 @@ export async function resolveSiteWithId(
     handle = url.searchParams.get("handle");
     siteId = siteId || url.searchParams.get("sid");
   }
+  if (!siteId) {
+    siteId = cookieStore.get("storefront_sid")?.value || null;
+  }
   if (!handle) {
     handle = cookieStore.get("storefront_handle")?.value || null;
   }
@@ -140,13 +143,15 @@ export default async function StorefrontPage({
   const resolvedParams = await params;
   const resolvedSearch = await searchParams;
   const cookieStore = await cookies();
+  const persistedSid =
+    resolvedSearch?.sid || cookieStore.get("storefront_sid")?.value || "";
   const persistedHandle =
     resolvedSearch?.handle ||
     cookieStore.get("storefront_handle")?.value ||
     "";
   let path = normalizePath(resolvedParams.slug);
   const site = await resolveSiteWithId(
-    resolvedSearch?.sid || null,
+    persistedSid || null,
     persistedHandle || null,
   );
   if (!site) return <div className="p-6">Site not found</div>;
@@ -210,8 +215,10 @@ export default async function StorefrontPage({
 
   const hasCartPage = Boolean(snapshot.pages?.["/cart"]);
   const persistParams = new URLSearchParams();
-  if (persistedHandle) persistParams.set("handle", persistedHandle);
-  if (resolvedSearch?.sid) persistParams.set("sid", resolvedSearch.sid);
+  const effectiveHandle = persistedHandle || String(site.handle || "");
+  const effectiveSid = persistedSid || String(site._id || "");
+  if (effectiveHandle) persistParams.set("handle", effectiveHandle);
+  if (effectiveSid) persistParams.set("sid", effectiveSid);
   if (isPreview && token) persistParams.set("token", token);
   const persistQuery = persistParams.toString();
 
