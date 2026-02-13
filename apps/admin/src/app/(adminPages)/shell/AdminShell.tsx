@@ -270,7 +270,7 @@ export default function AdminShell({
         ${!hasSite ? "blur-md" : "blur-0"}`}
       >
         <div className="p-4 max-w-400 mx-auto min-h-screen">
-          <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.02)] min-h-[calc(100vh-64px)] p-8">
+          <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-4xl shadow-[0_20px_50px_rgba(0,0,0,0.02)] min-h-[calc(100vh-64px)] ">
             {children}
           </div>
         </div>
