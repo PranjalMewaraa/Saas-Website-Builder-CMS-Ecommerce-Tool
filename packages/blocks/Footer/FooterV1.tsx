@@ -13,8 +13,16 @@ type Menu = {
   tree?: MenuNode[];
 };
 
+type FooterMenuGroup = {
+  menuId: string;
+  title?: string;
+  textSize?: "xs" | "sm" | "base";
+  textStyle?: "normal" | "medium" | "semibold";
+};
+
 type Props = {
   menu: Menu | null;
+  menus?: Record<string, Menu> | null;
   logoUrl?: string;
   logoAlt?: string;
   contentWidth?: string;
@@ -41,12 +49,14 @@ type Props = {
   panelBorderWidth?: number;
   panelRadius?: number;
   panelTextColor?: string;
+  menuGroups?: FooterMenuGroup[];
   __editor?: boolean;
   previewQuery?: string;
 };
 
 export default function FooterV1({
   menu,
+  menus,
   logoUrl,
   logoAlt,
   contentWidth,
@@ -62,42 +72,64 @@ export default function FooterV1({
   panelBorderWidth,
   panelRadius,
   panelTextColor,
+  menuGroups,
   __editor,
   previewQuery,
 }: Props) {
-  const items = menu?.tree ?? [];
-  const placeholderItems = [
-    { id: "ph-1", label: "Features", ref: { href: "#" } },
-    { id: "ph-2", label: "Pricing", ref: { href: "#" } },
-    { id: "ph-3", label: "Integrations", ref: { href: "#" } },
-    { id: "ph-4", label: "About", ref: { href: "#" } },
-    { id: "ph-5", label: "Blog", ref: { href: "#" } },
-    { id: "ph-6", label: "Careers", ref: { href: "#" } },
-    { id: "ph-7", label: "Privacy", ref: { href: "#" } },
-    { id: "ph-8", label: "Terms", ref: { href: "#" } },
-    { id: "ph-9", label: "Support", ref: { href: "#" } },
-  ];
-  const navItems = items.length ? items : __editor ? placeholderItems : [];
-  const columnTitles =
-    navItems.length >= 7
+  const placeholderItems = defaultPlaceholderItems();
+  const normalizedGroups = (menuGroups || [])
+    .filter((g) => g?.menuId)
+    .map((group, idx) => {
+      const tree = menus?.[group.menuId]?.tree || [];
+      const fallbackTitle = `Menu ${idx + 1}`;
+      return {
+        id: `group-${idx}-${group.menuId}`,
+        title: group.title?.trim() || fallbackTitle,
+        textSize: group.textSize || "sm",
+        textStyle: group.textStyle || "normal",
+        items: tree.length
+          ? tree
+          : __editor
+            ? placeholderItems.slice(0, 4).map((n, i) => ({
+                ...n,
+                id: `${group.menuId}-ph-${i}`,
+              }))
+            : [],
+      };
+    })
+    .filter((g) => g.items.length > 0);
+
+  const fallbackItems = menu?.tree ?? [];
+  const fallbackNavItems =
+    fallbackItems.length ? fallbackItems : __editor ? placeholderItems : [];
+  const fallbackColumnTitles =
+    fallbackNavItems.length >= 7
       ? ["Product", "Company", "Legal"]
-      : navItems.length >= 4
+      : fallbackNavItems.length >= 4
         ? ["Links", "More"]
         : ["Links"];
-  const columnCount =
-    navItems.length >= 7
+  const fallbackColumnCount =
+    fallbackNavItems.length >= 7
       ? 3
-      : navItems.length >= 4
+      : fallbackNavItems.length >= 4
         ? 2
-        : navItems.length
+        : fallbackNavItems.length
           ? 1
           : 0;
-  const itemsPerColumn = columnCount
-    ? Math.ceil(navItems.length / columnCount)
+  const fallbackItemsPerColumn = fallbackColumnCount
+    ? Math.ceil(fallbackNavItems.length / fallbackColumnCount)
     : 0;
-  const columns = Array.from({ length: columnCount }, (_, idx) =>
-    navItems.slice(idx * itemsPerColumn, (idx + 1) * itemsPerColumn),
-  );
+  const fallbackColumns = Array.from({ length: fallbackColumnCount }, (_, idx) => ({
+    id: `fallback-${idx}`,
+    title: fallbackColumnTitles[idx] || "Links",
+    textSize: "sm" as const,
+    textStyle: "normal" as const,
+    items: fallbackNavItems.slice(
+      idx * fallbackItemsPerColumn,
+      (idx + 1) * fallbackItemsPerColumn,
+    ),
+  }));
+  const columns = normalizedGroups.length ? normalizedGroups : fallbackColumns;
   const defaultSocials = __editor
     ? ["https://x.com/", "https://github.com/", "https://linkedin.com/"]
     : [];
@@ -134,7 +166,7 @@ export default function FooterV1({
             : contentWidth === "2xl"
               ? "1536px"
               : undefined;
-  const resolvedPanelBg =
+  const resolvedPanelBg: NonNullable<Props["panelBg"]> =
     panelBg && panelBg.type
       ? panelBg
       : {
@@ -199,9 +231,9 @@ export default function FooterV1({
                   {brandDescription}
                 </p>
               </div>
-              {navItems.length ? (
+              {columns.length ? (
                 <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-                  {navItems.slice(0, 6).map((n) => (
+                  {columns[0].items.slice(0, 6).map((n) => (
                     <Link
                       key={n.id}
                       href={appendPreviewQuery(
@@ -251,11 +283,20 @@ export default function FooterV1({
                 <div className="grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-3">
                   {columns.map((group, idx) => (
                     <div key={`col-${idx}`}>
-                      <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
-                        {columnTitles[idx] || "Links"}
+                      <h3
+                        className="mb-4 text-xs uppercase tracking-[0.2em] opacity-80"
+                        style={resolveTextStyle(group.textStyle)}
+                      >
+                        {group.title || "Links"}
                       </h3>
-                      <ul className="space-y-3 text-sm">
-                        {group.map((n) => (
+                      <ul
+                        className="space-y-3"
+                        style={resolveTextListStyle(
+                          group.textSize,
+                          group.textStyle,
+                        )}
+                      >
+                        {group.items.map((n) => (
                           <li key={n.id}>
                             <Link
                               href={appendPreviewQuery(
@@ -339,6 +380,40 @@ export default function FooterV1({
       `}</style>
     </footer>
   );
+}
+
+function defaultPlaceholderItems(): MenuNode[] {
+  return [
+    { id: "ph-1", label: "Features", ref: { href: "#" } },
+    { id: "ph-2", label: "Pricing", ref: { href: "#" } },
+    { id: "ph-3", label: "Integrations", ref: { href: "#" } },
+    { id: "ph-4", label: "About", ref: { href: "#" } },
+    { id: "ph-5", label: "Blog", ref: { href: "#" } },
+    { id: "ph-6", label: "Careers", ref: { href: "#" } },
+    { id: "ph-7", label: "Privacy", ref: { href: "#" } },
+    { id: "ph-8", label: "Terms", ref: { href: "#" } },
+    { id: "ph-9", label: "Support", ref: { href: "#" } },
+  ];
+}
+
+function resolveTextStyle(
+  style?: FooterMenuGroup["textStyle"],
+): React.CSSProperties {
+  if (style === "medium") return { fontWeight: 500 };
+  if (style === "semibold") return { fontWeight: 600 };
+  return { fontWeight: 400 };
+}
+
+function resolveTextListStyle(
+  size?: FooterMenuGroup["textSize"],
+  style?: FooterMenuGroup["textStyle"],
+): React.CSSProperties {
+  const fontSize =
+    size === "xs" ? "12px" : size === "base" ? "16px" : "14px";
+  return {
+    fontSize,
+    ...resolveTextStyle(style),
+  };
 }
 
 function resolveSocialIcon(url: string) {

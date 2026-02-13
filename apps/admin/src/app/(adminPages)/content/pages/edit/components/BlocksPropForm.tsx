@@ -233,6 +233,29 @@ export function BlockPropsForm({
 
   if (type === "Footer/V1") {
     const panelBg = props.panelBg || { type: "gradient" };
+    const footerMenuGroups = Array.isArray(props.menuGroups)
+      ? props.menuGroups
+      : props.menuId
+        ? [
+            {
+              menuId: props.menuId,
+              title: "Links",
+              textSize: "sm",
+              textStyle: "normal",
+            },
+          ]
+        : [];
+    const applyFooterMenuGroups = (nextGroups: any[]) => {
+      setProp("menuGroups", nextGroups);
+      if ((!props.menuId || !props.menuId.trim()) && nextGroups[0]?.menuId) {
+        setProp("menuId", nextGroups[0].menuId);
+      }
+    };
+    const updateFooterMenuGroup = (idx: number, patch: Record<string, any>) => {
+      const next = [...footerMenuGroups];
+      next[idx] = { ...(next[idx] || {}), ...patch };
+      applyFooterMenuGroups(next);
+    };
     const footerPresets = [
       {
         id: "midnight",
@@ -478,9 +501,141 @@ export function BlockPropsForm({
     ];
     return (
       <div className="space-y-3">
+        <div className="space-y-2 border rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Menu Sections</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
+              onClick={() => {
+                const fallbackMenuId = props.menuId || assignedFooter?._id || "";
+                const defaultMenuId =
+                  fallbackMenuId || menus?.[0]?._id || "";
+                applyFooterMenuGroups([
+                  ...footerMenuGroups,
+                  {
+                    menuId: defaultMenuId,
+                    title: `Links ${footerMenuGroups.length + 1}`,
+                    textSize: "sm",
+                    textStyle: "normal",
+                  },
+                ]);
+              }}
+            >
+              Add Menu Section
+            </button>
+          </div>
+          {footerMenuGroups.length ? (
+            <div className="space-y-3">
+              {footerMenuGroups.map((group: any, idx: number) => (
+                <div key={`footer-menu-group-${idx}`} className="border rounded p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Section {idx + 1}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={idx === 0}
+                        onClick={() => {
+                          const next = [...footerMenuGroups];
+                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                          applyFooterMenuGroups(next);
+                        }}
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={idx === footerMenuGroups.length - 1}
+                        onClick={() => {
+                          const next = [...footerMenuGroups];
+                          [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                          applyFooterMenuGroups(next);
+                        }}
+                      >
+                        Down
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => {
+                          applyFooterMenuGroups(
+                            footerMenuGroups.filter((_: any, i: number) => i !== idx),
+                          );
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                  {menus.length ? (
+                    <label className="block space-y-1">
+                      <div className="text-xs font-medium">Menu</div>
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 text-sm"
+                        value={group.menuId || ""}
+                        onChange={(e) =>
+                          updateFooterMenuGroup(idx, { menuId: e.target.value })
+                        }
+                      >
+                        <option value="">(select a menu)</option>
+                        {menus.map((m: any) => (
+                          <option key={m._id} value={m._id}>
+                            {m.name}
+                            {m.slot ? ` (${m.slot})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <Field
+                      label="Menu ID"
+                      value={group.menuId || ""}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { menuId: v })
+                      }
+                      placeholder="menu_footer"
+                    />
+                  )}
+                  <Field
+                    label="Section Title"
+                    value={group.title || ""}
+                    onChange={(v: any) => updateFooterMenuGroup(idx, { title: v })}
+                    placeholder={`Links ${idx + 1}`}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Select
+                      label="Text Size"
+                      value={group.textSize || "sm"}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { textSize: v })
+                      }
+                      options={["xs", "sm", "base"]}
+                    />
+                    <Select
+                      label="Text Style"
+                      value={group.textStyle || "normal"}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { textStyle: v })
+                      }
+                      options={["normal", "medium", "semibold"]}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              Add one or more menu sections. Each section can use a different menu and title.
+            </div>
+          )}
+        </div>
         {menus.length ? (
           <label className="block space-y-1.5">
-            <div className="text-sm font-medium">Menu</div>
+            <div className="text-sm font-medium">Fallback Menu (legacy)</div>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm"
               value={props.menuId || ""}
@@ -2072,6 +2227,14 @@ function defaultPropsFor(type: string) {
   if (type === "Footer/V1")
     return {
       menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
       layout: "multi-column",
       description: "Building better digital experiences since 2023.",
       badgeText: "Designed for modern storefronts",

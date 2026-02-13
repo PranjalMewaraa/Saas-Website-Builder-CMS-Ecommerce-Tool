@@ -690,7 +690,18 @@ function defaultPropsFor(type: string) {
       ctaSecondaryHref: "/about",
       contentWidth: "xl",
     };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
+    };
   if (type === "Hero/V1")
     return {
       variant: "basic",

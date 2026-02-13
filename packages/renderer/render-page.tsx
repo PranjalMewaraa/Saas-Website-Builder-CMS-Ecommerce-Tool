@@ -323,8 +323,20 @@ async function BlockRenderer({
       props.slot ?? (block.type.startsWith("Header/") ? "header" : "footer");
 
     let menu: any = null;
+    let menusById: Record<string, any> = {};
 
     if (ctx.snapshot.menus && typeof ctx.snapshot.menus === "object") {
+      menusById = Object.entries(ctx.snapshot.menus).reduce(
+        (acc, [key, value]) => {
+          if (!value || typeof value !== "object") return acc;
+          const typed = value as any;
+          const tree = Array.isArray(typed.tree) ? typed.tree : [];
+          const id = typed.id || key;
+          if (id) acc[id] = { id, tree };
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
       if (props.menuId && ctx.snapshot.menus[props.menuId]) {
         menu = ctx.snapshot.menus[props.menuId];
       } else {
@@ -339,6 +351,7 @@ async function BlockRenderer({
             <Comp
               {...props}
               menu={menu}
+              menus={block.type.startsWith("Footer/") ? menusById : undefined}
               logoUrl={ctx.snapshot.theme.brands?.logoUrl}
             />
           </StyleWrapper>

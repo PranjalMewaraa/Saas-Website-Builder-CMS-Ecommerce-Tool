@@ -52,12 +52,21 @@ export function VisualBlockRenderer({
 
   const Component = def.render;
   let menuProp: any = undefined;
+  let menusById: Record<string, any> | undefined = undefined;
   if (block.type.startsWith("Header/") || block.type.startsWith("Footer/")) {
     const slot = block.type.startsWith("Header/") ? "header" : "footer";
     const byId = menus?.find((m: any) => m._id === block.props?.menuId);
     const bySlot = menus?.find((m: any) => m.slot === slot);
     const menu = byId || bySlot;
     menuProp = menu ? { tree: menu.draft_tree ?? [] } : null;
+    if (block.type.startsWith("Footer/")) {
+      menusById = (menus || []).reduce((acc: Record<string, any>, m: any) => {
+        const id = m?._id;
+        if (!id) return acc;
+        acc[id] = { id, tree: m.draft_tree ?? [] };
+        return acc;
+      }, {});
+    }
   }
 
   return (
@@ -78,7 +87,7 @@ export function VisualBlockRenderer({
     `}
     >
       <StyleWrapper style={block.style}>
-        <Component {...block.props} menu={menuProp} __editor />
+        <Component {...block.props} menu={menuProp} menus={menusById} __editor />
       </StyleWrapper>
     </div>
   );
