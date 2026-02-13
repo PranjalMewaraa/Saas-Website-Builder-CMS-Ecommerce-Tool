@@ -52,6 +52,7 @@ type Props = {
   menuGroups?: FooterMenuGroup[];
   __editor?: boolean;
   previewQuery?: string;
+  footerTemplate?: 1 | 2 | 3;
 };
 
 export default function FooterV1({
@@ -75,6 +76,7 @@ export default function FooterV1({
   menuGroups,
   __editor,
   previewQuery,
+  footerTemplate = 1,
 }: Props) {
   const placeholderItems = defaultPlaceholderItems();
   const normalizedGroups = (menuGroups || [])
@@ -100,8 +102,11 @@ export default function FooterV1({
     .filter((g) => g.items.length > 0);
 
   const fallbackItems = menu?.tree ?? [];
-  const fallbackNavItems =
-    fallbackItems.length ? fallbackItems : __editor ? placeholderItems : [];
+  const fallbackNavItems = fallbackItems.length
+    ? fallbackItems
+    : __editor
+      ? placeholderItems
+      : [];
   const fallbackColumnTitles =
     fallbackNavItems.length >= 7
       ? ["Product", "Company", "Legal"]
@@ -119,16 +124,19 @@ export default function FooterV1({
   const fallbackItemsPerColumn = fallbackColumnCount
     ? Math.ceil(fallbackNavItems.length / fallbackColumnCount)
     : 0;
-  const fallbackColumns = Array.from({ length: fallbackColumnCount }, (_, idx) => ({
-    id: `fallback-${idx}`,
-    title: fallbackColumnTitles[idx] || "Links",
-    textSize: "sm" as const,
-    textStyle: "normal" as const,
-    items: fallbackNavItems.slice(
-      idx * fallbackItemsPerColumn,
-      (idx + 1) * fallbackItemsPerColumn,
-    ),
-  }));
+  const fallbackColumns = Array.from(
+    { length: fallbackColumnCount },
+    (_, idx) => ({
+      id: `fallback-${idx}`,
+      title: fallbackColumnTitles[idx] || "Links",
+      textSize: "sm" as const,
+      textStyle: "normal" as const,
+      items: fallbackNavItems.slice(
+        idx * fallbackItemsPerColumn,
+        (idx + 1) * fallbackItemsPerColumn,
+      ),
+    }),
+  );
   const columns = normalizedGroups.length ? normalizedGroups : fallbackColumns;
   const defaultSocials = __editor
     ? ["https://x.com/", "https://github.com/", "https://linkedin.com/"]
@@ -408,8 +416,7 @@ function resolveTextListStyle(
   size?: FooterMenuGroup["textSize"],
   style?: FooterMenuGroup["textStyle"],
 ): React.CSSProperties {
-  const fontSize =
-    size === "xs" ? "12px" : size === "base" ? "16px" : "14px";
+  const fontSize = size === "xs" ? "12px" : size === "base" ? "16px" : "14px";
   return {
     fontSize,
     ...resolveTextStyle(style),

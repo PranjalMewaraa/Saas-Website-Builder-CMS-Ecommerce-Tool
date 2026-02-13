@@ -15,7 +15,6 @@ export const HeroSchema = z
     align: z.enum(["left", "center", "right"]).default("left"),
     contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),
     minHeight: z.number().int().min(240).max(980).default(520),
-
     bg: z
       .object({
         type: z.enum(["none", "image", "video"]).optional(),
