@@ -24,7 +24,14 @@ type Props = {
   badgeStyle?: "pill" | "outline" | "soft" | "glass" | "text" | "tag";
   showSocials?: boolean;
   socialLinks?: string[];
-  socialStyle?: "pill" | "outline" | "soft" | "glass" | "square" | "minimal" | "label";
+  socialStyle?:
+    | "pill"
+    | "outline"
+    | "soft"
+    | "glass"
+    | "square"
+    | "minimal"
+    | "label";
   panelBg?: {
     type?: "none" | "solid" | "gradient";
     color?: string;
@@ -106,7 +113,12 @@ export default function FooterV1({
         icon: iconMeta.icon,
       };
     })
-    .filter(Boolean) as Array<{ id: string; label: string; href: string; icon: any }>;
+    .filter(Boolean) as Array<{
+    id: string;
+    label: string;
+    href: string;
+    icon: any;
+  }>;
   const brandDescription =
     description || "Building better digital experiences since 2023.";
   const brandBadge = badgeText || "Designed for modern storefronts";
@@ -159,13 +171,19 @@ export default function FooterV1({
 
   return (
     <footer className="w-full">
-      <div className="mx-auto w-full" style={maxWidth ? { maxWidth } : undefined}>
+      <div
+        className="mx-auto w-full p-6"
+        style={maxWidth ? { maxWidth } : undefined}
+      >
         {layout === "simple" ? (
           <div className="px-6 py-10 md:px-10" style={panelStyle}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="space-y-3">
                 {logoUrl ? (
-                  <Link href={appendPreviewQuery("/", previewQuery)} className="inline-flex items-center">
+                  <Link
+                    href={appendPreviewQuery("/", previewQuery)}
+                    className="inline-flex items-center"
+                  >
                     <Image
                       src={logoUrl}
                       alt={logoAlt || "Logo"}
@@ -183,10 +201,13 @@ export default function FooterV1({
               </div>
               {navItems.length ? (
                 <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-                {navItems.slice(0, 6).map((n) => (
+                  {navItems.slice(0, 6).map((n) => (
                     <Link
                       key={n.id}
-                      href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
+                      href={appendPreviewQuery(
+                        n.ref?.slug || n.ref?.href || "#",
+                        previewQuery,
+                      )}
                       className="transition-opacity hover:opacity-100 opacity-80"
                     >
                       {n.label}
@@ -201,7 +222,10 @@ export default function FooterV1({
             <div className="grid grid-cols-1 gap-10 md:grid-cols-4 md:gap-8">
               <div className="md:col-span-1">
                 {logoUrl ? (
-                  <Link href={appendPreviewQuery("/", previewQuery)} className="inline-flex items-center mb-4">
+                  <Link
+                    href={appendPreviewQuery("/", previewQuery)}
+                    className="inline-flex items-center mb-4"
+                  >
                     <Image
                       src={logoUrl}
                       alt={logoAlt || "Logo"}
@@ -217,7 +241,9 @@ export default function FooterV1({
                   {brandDescription}
                 </p>
                 {brandBadge ? (
-                  <div className="mt-6">{renderBadge(brandBadge, badgeStyle)}</div>
+                  <div className="mt-6">
+                    {renderBadge(brandBadge, badgeStyle)}
+                  </div>
                 ) : null}
               </div>
 
@@ -232,7 +258,10 @@ export default function FooterV1({
                         {group.map((n) => (
                           <li key={n.id}>
                             <Link
-                              href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
+                              href={appendPreviewQuery(
+                                n.ref?.slug || n.ref?.href || "#",
+                                previewQuery,
+                              )}
                               className="transition-opacity hover:opacity-100 opacity-80"
                             >
                               {n.label}
@@ -268,7 +297,9 @@ export default function FooterV1({
                   >
                     <Icon size={16} />
                     {socialStyle === "label" ? (
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{s.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>
+                        {s.label}
+                      </span>
                     ) : null}
                   </a>
                 );
@@ -341,9 +372,7 @@ function renderBadge(text: string, style: Props["badgeStyle"]) {
 
   if (style === "text") {
     return (
-      <span style={{ ...base, opacity: 0.85, letterSpacing: 0.3 }}>
-        {text}
-      </span>
+      <span style={{ ...base, opacity: 0.85, letterSpacing: 0.3 }}>{text}</span>
     );
   }
 
@@ -506,7 +535,12 @@ function socialButtonStyle(
 
 function appendPreviewQuery(href: string, previewQuery?: string) {
   if (!previewQuery) return href;
-  if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("#")) {
+  if (
+    !href ||
+    href.startsWith("http") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("#")
+  ) {
     return href;
   }
   const [base, hash] = href.split("#");
