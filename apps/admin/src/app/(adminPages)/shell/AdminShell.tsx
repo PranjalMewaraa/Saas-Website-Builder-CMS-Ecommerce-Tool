@@ -174,13 +174,13 @@ export default function AdminShell({
         className={`fixed left-0 top-0 h-screen w-[280px] z-50 transition-all duration-700 
         ${!hasSite ? "blur-md scale-95 opacity-50 pointer-events-none" : "blur-0 scale-100 opacity-100"}`}
       >
-        <div className="h-full m-4 bg-white/70 backdrop-blur-xl border border-white/40 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
+        <div className="h-full m-4 bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden">
           {/* Logo Section */}
           <div className="px-6 py-8">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 bg-gradient-to-br from-indigo-600 to-cyan-500 rounded-lg shadow-inner" />
               <span className="font-bold tracking-tighter text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                KUGLOO
+                ADMIN
               </span>
             </div>
           </div>

@@ -704,6 +704,7 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Hero/V1")
     return {
+      heroPreset: "Basic",
       variant: "basic",
       headline: "Headline",
       subhead: "Subhead",
@@ -716,6 +717,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none",
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

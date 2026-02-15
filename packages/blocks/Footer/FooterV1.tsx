@@ -60,7 +60,7 @@ export default function FooterV1({
   menus,
   logoUrl,
   logoAlt,
-  contentWidth,
+  contentWidth = "2xl",
   layout = "multi-column",
   description,
   badgeText,

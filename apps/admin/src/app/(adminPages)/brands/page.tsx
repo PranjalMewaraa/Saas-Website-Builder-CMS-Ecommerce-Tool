@@ -39,16 +39,21 @@ export default async function BrandsPage({
     <div>
       <div className="p-6 space-y-4">
         <div>
-          <h1 className="text-xl font-semibold">Brands</h1>
-          <p className="text-sm text-gray-500">
-            Add brand/distributor entries for the selected store. Brand stores allow one primary brand.
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Brand Management
+          </h1>
+          <p className="text-sm text-slate-500">
+            Configure and manage entities for your site.
           </p>
         </div>
 
         <BrandCreateClient
           siteId={siteId}
           storeId={storeId}
-          storeType={(store?.store_type as "brand" | "distributor" | undefined) || "brand"}
+          storeType={
+            (store?.store_type as "brand" | "distributor" | undefined) ||
+            "brand"
+          }
           initialBrands={brands}
           stores={stores}
         />

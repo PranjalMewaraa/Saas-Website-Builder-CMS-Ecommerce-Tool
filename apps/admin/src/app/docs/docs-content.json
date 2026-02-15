@@ -1,0 +1,189 @@
+{
+  "title": "Comprehensive User Documentation",
+  "sections": [
+    {
+      "id": "1.-getting-started",
+      "title": "1. 🚀 Getting Started",
+      "subsections": [
+        {
+          "id": "1.1-platform-overview",
+          "title": "1.1 Platform Overview",
+          "subsections": [],
+          "content": "The platform is an all-in-one visual website builder plus ecommerce management system designed for teams that want to create, publish, and operate online stores without stitching multiple tools together. It is built for founders, marketers, designers, catalog managers, and operations teams. Core capability areas include visual page building, theme and style management, SEO controls, form and menu configuration, and store-scoped commerce operations such as products, categories, variants, inventory, and orders. Architecturally, content and publishing state are managed separately from structured commerce data, then composed at runtime on storefront. This keeps editing safe (draft mode), publishing controlled (snapshot model), and operations reliable (store scope and structured workflows).\n\nSteps:\n- Identify your role: content, catalog, operations, admin.\n- Confirm active site and store context before editing.\n- Start with onboarding flow and default home page.\n\nPointers:\n- Treat draft and published as separate states.\n- Most “missing product” issues are scope-related.\n- Publish after validated changes, not during experimentation."
+        },
+        {
+          "id": "1.2-account-setup",
+          "title": "1.2 Account Setup",
+          "subsections": [],
+          "content": "Account setup should be completed with a clean handoff from authentication to onboarding. Users create an account, complete verification if enabled in environment, then sign in and land in onboarding where site setup starts. Password reset should be tested early by admins to ensure support readiness. Team-based installations should document role expectations from day one (owner/admin/editor/operator) and avoid giving broad privileges by default. If role/permission mapping is managed via module access, verify module availability immediately after login so users are not blocked mid-setup. Good setup discipline prevents downstream confusion around inaccessible screens, missing modules, or unauthorized edits.\n\nSteps:\n- Create account with valid email and password.\n- Complete verification (if applicable).\n- Login and finish onboarding site creation.\n- Test logout/login and password reset once.\n\nPointers:\n- Keep owner account recovery-safe.\n- Use least privilege for non-admin users.\n- Confirm catalog and builder modules are enabled."
+        },
+        {
+          "id": "1.3-dashboard-overview",
+          "title": "1.3 Dashboard Overview",
+          "subsections": [],
+          "content": "The admin dashboard is the control center for content, commerce, and operations. Navigation is grouped by function: Content (pages, assets, menus, forms, theme, SEO, publish), Catalog (stores, brands, categories, products), and Manage (inventory, orders, submissions). Workspace behavior is context-sensitive: many screens rely on site and store identifiers. Teams must internalize workspace context as a first check before any action. Switching stores/projects should be explicit and verified through page-level indicators. Dashboard cards are informative but not authoritative for scope-sensitive operations; always cross-check current context in URL and screen labels before bulk actions.\n\nSteps:\n- Open dashboard and verify selected site.\n- Switch to intended store/project context.\n- Navigate by module, not by bookmark alone.\n\nPointers:\n- Do not perform catalog operations without store confirmation.\n- Keep one browser tab per store during heavy operations.\n- Use manage screens for daily operational checks."
+        }
+      ],
+      "content": ""
+    },
+    {
+      "id": "2.-web-builder-site-builder",
+      "title": "2. 🏗 Web Builder (Site Builder)",
+      "subsections": [
+        {
+          "id": "2.1-site-setup",
+          "title": "2.1 Site Setup",
+          "subsections": [],
+          "content": "Site setup establishes the foundational web container where pages, menus, forms, and theme settings live. You can start with templates or blank setup depending on launch speed vs design control. For faster onboarding, start with default pages and customize incrementally. Subdomain and custom domain setup should be completed before launch rehearsal so SSL and DNS propagation issues surface early. Keep naming conventions consistent (site name, handle, route strategy) to reduce SEO and routing confusion later. If multiple environments exist, separate staging and production naming conventions clearly.\n\nSteps:\n- Create new site from onboarding or site manager.\n- Choose template or blank start.\n- Confirm home page (`/`) exists.\n- Configure subdomain/custom domain.\n- Validate SSL status before launch.\n\nPointers:\n- Freeze route conventions early.\n- Keep one canonical primary domain.\n- Avoid late route rewrites after content indexing starts."
+        },
+        {
+          "id": "2.2-visual-page-builder",
+          "title": "2.2 Visual Page Builder",
+          "subsections": [],
+          "content": "The visual page builder allows drag-and-drop style composition with inspector-based property and styling controls. The interface generally has three layers: canvas (what you build), inspector (what you edit), and insertion dialogs (what you add). For predictable output, build pages using structural hierarchy instead of random standalone blocks. Start with high-level section structure, then place content blocks, then style and responsive tuning. Visual builder supports direct manipulation and contextual controls; hover actions may reveal add/reorder tools. Always save draft and run quick preview checks on key routes before publish.\n\nSteps:\n- Open page editor from Pages list.\n- Add section/layout and then content blocks.\n- Edit selected block properties in inspector.\n- Reorder/duplicate/delete as needed.\n- Save and preview key routes.\n\nPointers:\n- Edit the correct layer (section/row/column/block).\n- Keep spacing rhythm consistent.\n- Validate canvas behavior on mobile breakpoints."
+        },
+        {
+          "id": "2.3-components-blocks",
+          "title": "2.3 Components / Blocks",
+          "subsections": [],
+          "content": "Blocks are reusable functional UI units that accelerate page creation. Common blocks include Hero, text, image/media, buttons, forms, sliders, accordions, feature grids, testimonials, pricing tables, and custom code areas. Use blocks as composable building units, not fixed templates. Configure each block with content props and style props in inspector. For high-conversion pages, prioritize hierarchy: Hero -> benefits/features -> social proof -> CTA -> FAQ. Keep CTA blocks clear and singular in purpose. For dynamic blocks (forms, menus, product blocks), validate bindings (form ID/menu ID/data source) before publish.\n\nSteps:\n- Add block via Add New Block dialog.\n- Configure content fields first.\n- Configure style fields next.\n- Verify connected dependencies (menu/form/product).\n\nPointers:\n- Avoid overloading one page with too many block types.\n- Reuse proven block patterns across pages.\n- Reserve custom code blocks for advanced use cases only."
+        },
+        {
+          "id": "2.4-styling-and-design",
+          "title": "2.4 Styling & Design",
+          "subsections": [],
+          "content": "Styling controls should be managed with system thinking: global tokens first, local overrides second. Typography, colors, spacing, and theme presets should be standardized early to keep UI coherent and maintainable. Over-customization at block level creates long-term friction during redesigns. Use global styles and theme settings for brand foundations, then apply targeted local overrides only where needed. Custom CSS should be minimal and documented; undocumented custom CSS becomes a maintenance risk. Treat style decisions as reusable standards, not isolated per-page tweaks.\n\nSteps:\n- Define typography scale and primary/secondary palette.\n- Set theme defaults globally.\n- Apply block-level overrides only for exceptions.\n- Test contrast and readability on all major sections.\n\nPointers:\n- Keep color usage semantically consistent.\n- Build a spacing baseline (8/12/16/24 etc.).\n- Track custom CSS snippets in internal changelog."
+        },
+        {
+          "id": "2.5-responsive-design",
+          "title": "2.5 Responsive Design",
+          "subsections": [],
+          "content": "Responsive editing ensures pages look intentional on desktop, tablet, and mobile. Do not assume desktop layouts will naturally collapse correctly. Test each key page at breakpoints and tune visibility, spacing, and stacking behavior. Hide non-essential decorative elements on mobile when they hurt clarity or performance. Use layout controls (column behavior, gap, alignment) instead of ad-hoc hacks for breakpoint fixes. Responsive quality directly impacts conversion and user trust, especially on commerce pages where most traffic is mobile-heavy.\n\nSteps:\n- Switch through desktop/tablet/mobile views in editor.\n- Verify section spacing and text readability.\n- Adjust visibility controls for low-priority elements.\n- Recheck CTA prominence on mobile.\n\nPointers:\n- Mobile-first validation is mandatory for product pages.\n- Avoid tiny text and dense columns on phone width.\n- Keep thumb-friendly CTA/button spacing."
+        },
+        {
+          "id": "2.6-seo-settings",
+          "title": "2.6 SEO Settings",
+          "subsections": [],
+          "content": "SEO settings exist at both page and site level. Each page should have a distinct title and meta description aligned to user intent and actual content. Configure Open Graph values so social sharing appears professional and consistent. Use canonical URLs when duplicates or variant-like routes could exist. Robots settings should be explicit for private/test pages to avoid accidental indexing. Generate and verify sitemap behavior after major page additions. SEO should be part of content workflow, not post-launch cleanup.\n\nSteps:\n- Set page title/meta for every important route.\n- Configure OG image/title/description.\n- Confirm canonical URL for indexable pages.\n- Review robots directives before publish.\n\nPointers:\n- Avoid duplicate titles across core pages.\n- Match metadata to page intent, not keyword stuffing.\n- Revisit SEO fields after major copy updates."
+        },
+        {
+          "id": "2.7-publishing",
+          "title": "2.7 Publishing",
+          "subsections": [],
+          "content": "Publishing moves validated draft content to live storefront via snapshot flow. Treat publishing as release management, not just a final button click. Pre-publish checks should include page routing, menu links, form bindings, and key commerce blocks. Use preview mode for draft verification but keep preview links internal. After publish, always run a post-publish sanity pass on home, listing, detail, and cart routes. If issues appear after publish, use version history/rollback strategy where available and document the incident.\n\nSteps:\n- Preview critical pages.\n- Run pre-publish checklist.\n- Publish snapshot.\n- Verify live routes.\n- Log release notes.\n\nPointers:\n- Do not publish partially validated content.\n- Keep a rollback-ready release habit.\n- Separate staging checks from production publish cadence."
+        },
+        {
+          "id": "2.8-detailed-module-menus",
+          "title": "2.8 Detailed Module: Menus",
+          "subsections": [],
+          "content": "Menus are structural navigation contracts, not just UI labels. In this platform, menu configuration directly affects header and footer rendering, route discoverability, and crawlability for important pages. A properly designed menu system reduces user friction and increases conversion by making it obvious where users can go next. In practice, you should design menus around real user intent: primary commercial actions (Shop, Categories, Offers), trust actions (About, Contact), and policy/support actions (Privacy, Terms, Help). Avoid overloaded top-level menus with too many equal-priority items. Keep top navigation shallow and use footer navigation for broader informational depth.\n\nFor block bindings, header/footer blocks can use explicit menu IDs, or slot-based defaults where supported. Footer now supports multiple menu groups with custom titles and per-group text style controls. This enables professional “multi-column” footers without custom coding. If menu links break after page slug changes, update menu references immediately and run publish again. Treat route changes as release events because menus, CTAs, and SEO all depend on route stability.\n\nSteps:\n1. Open `Content → Menus`.\n2. Create or edit a menu with clear naming.\n3. Add links in a user-intent order.\n4. Assign slot or bind menu ID in Header/Footer blocks.\n5. For footer, create multiple menu groups and set custom titles.\n6. Preview navigation flow on desktop/mobile.\n7. Publish snapshot.\n\nPointers:\n- Keep primary navigation minimal and conversion-focused.\n- Use footer for legal/support/deep links.\n- Re-validate menus after slug or page structure updates.\n- Use consistent menu naming so editors can bind quickly."
+        },
+        {
+          "id": "2.9-detailed-module-forms",
+          "title": "2.9 Detailed Module: Forms",
+          "subsections": [],
+          "content": "Forms are operational capture points for leads, support, and customer communications. A form that looks good but has weak schema design or no submission process is a business risk. In this platform, form creation is split into schema definition and page integration. Schema design should prioritize clarity: ask only required fields, label them clearly, and avoid ambiguous field names. Use consistent naming conventions for field IDs to support downstream processing and exports.\n\nAfter creating forms, ensure blocks are correctly bound through `formId`. If using multiple forms (contact, quote request, support), keep purpose-specific forms separate to avoid mixing submission intent. Submission handling must be operationalized: assign ownership, review frequency, and expected response SLAs. Teams often forget this and only discover missed submissions later. Include submissions review in daily ops.\n\nWhen troubleshooting, check three layers: form schema exists, block binding is correct, and submission endpoint responses are successful. If UI shows “Submitting…” indefinitely, verify client reset handling and backend response shape. For public trust, keep confirmation behavior clear and avoid silent failures.\n\nSteps:\n1. Open `Content → Forms` and create form schema.\n2. Add fields, required flags, and options where needed.\n3. Save form and copy/confirm form ID.\n4. Add Form block (or Atomic Form) to target page.\n5. Bind `formId` and set title/submit button text.\n6. Submit test entry from storefront.\n7. Verify in submissions management screen.\n\nPointers:\n- One intent per form is better than one mega-form.\n- Keep required fields minimal to improve completion rate.\n- Always test form submission before publish.\n- Assign internal owner for submission response workflow."
+        },
+        {
+          "id": "2.10-detailed-module-layoutsection-block",
+          "title": "2.10 Detailed Module: Layout/Section Block",
+          "subsections": [],
+          "content": "Layout/Section is the high-control compositional engine for advanced page building. It uses a hierarchical model: Section → Row → Column → Atomic blocks. This structure allows designers to recreate modern landing page systems with consistent spacing and alignment while preserving renderer compatibility. Section controls outer framing and background behavior. Row controls content arrangement strategy (preset/manual, gap, justify/align). Columns contain content stacks and local style boundaries. Atomic blocks provide final content units (text, image, button, video, icon, form, group, etc.).\n\nCurrent defaults are intentional: section starts centered (`display:flex`, `justify:center`) and rows use a practical max width (`1208px`) for consistent reading/composition behavior. This avoids full-bleed layout drift and improves parity between editor and storefront. For speed, use row presets for common compositions. Switch to manual mode only when custom grid/flex behavior is required. Group block can be used inside columns for reusable micro-components like feature cards and pricing cells.\n\nMost mistakes happen when editing wrong hierarchy level. If row alignment seems broken, verify whether styles were accidentally applied to section or column. Use inspector grouping order: layout first, spacing second, color/border third, typography last.\n\nSteps:\n1. Add `Layout/Section` block.\n2. Add first row (preset or manual mode).\n3. Configure row columns and gap/alignment.\n4. Add columns and insert atomic blocks.\n5. Style section/row/col progressively.\n6. Test responsive behavior and adjust.\n7. Save and preview/publish.\n\nPointers:\n- Preserve spacing rhythm across rows for clean visual flow.\n- Avoid over-nesting unless component complexity requires it.\n- Use group block for repeatable patterns.\n- Validate mobile stacking after desktop composition."
+        },
+        {
+          "id": "2.11-detailed-module-theme",
+          "title": "2.11 Detailed Module: Theme",
+          "subsections": [],
+          "content": "Theme controls are your global design system. They should define default colors, typographic tone, and baseline visual identity so individual block editing does not become a maintenance burden. Teams that use theme tokens effectively can rebrand faster and keep cross-page consistency high. Teams that overuse one-off overrides usually face inconsistent UI and expensive redesign cycles.\n\nStart by defining primary/secondary colors, neutral text/background scale, and contrast-safe combinations. Then establish typography standards (heading/body scales and weights). Ensure button/link defaults align with brand and accessibility goals. Theme values should be treated as defaults; use block-level overrides only when a specific section requires exception styling. Inconsistent exception usage is a warning sign that global theme needs refinement.\n\nWhen theme edits are made, run visual checks on key pages (Home, Product List, PDP, Cart) before publish. Theme changes can have broad impact and should be released with controlled validation. If primary color is intended for buttons and links, verify fallback logic behaves correctly when explicit classes are absent.\n\nSteps:\n1. Open `Content → Theme`.\n2. Configure base colors and text defaults.\n3. Set typographic hierarchy and readable sizes.\n4. Save and review key pages in draft.\n5. Adjust only targeted overrides where necessary.\n6. Publish after visual QA.\n\nPointers:\n- Theme-first styling reduces long-term maintenance.\n- Always check contrast on colored backgrounds.\n- Keep override usage intentional and documented.\n- Re-test critical conversion pages after theme updates."
+        },
+        {
+          "id": "2.12-detailed-module-assets",
+          "title": "2.12 Detailed Module: Assets",
+          "subsections": [],
+          "content": "Assets are foundational to perceived quality, performance, and accessibility. Good asset management is not just upload-and-forget. Use consistent naming, clear alt text, and optimized dimensions. Large or inconsistent media often causes slower pages and uneven visual output. Keep a standard for hero images, product images, and content illustrations so layouts feel intentional.\n\nIn editor flows, asset picker reliability depends on upload finalization and state refresh. If newly uploaded assets do not appear immediately, refresh/reopen picker context. Avoid embedding random external URLs for core brand visuals unless required; managed assets provide better control and portability. For product catalogs, image consistency directly affects conversion and trust. For SEO and accessibility, alt text should be meaningful (not keyword stuffing, not empty unless decorative).\n\nOperationally, define periodic cleanup for unused assets and a convention for media ownership. Teams often accumulate orphan assets over time, which increases confusion and storage overhead. If CDN or endpoint changes are introduced, validate that existing asset references still resolve properly in both draft and published snapshots.\n\nSteps:\n1. Open `Content → Assets`.\n2. Upload optimized media with clear names.\n3. Add/verify alt text.\n4. Use asset picker in block inspector.\n5. Confirm rendering in preview and storefront.\n6. Run periodic cleanup and organization.\n\nPointers:\n- Standardize image dimensions per use-case.\n- Always verify alt text on important visuals.\n- Recheck assets after domain/CDN config changes.\n- Keep placeholders temporary; replace before launch."
+        }
+      ],
+      "content": ""
+    },
+    {
+      "id": "3.-ecommerce-setup",
+      "title": "3. 🛒 Ecommerce Setup",
+      "subsections": [
+        {
+          "id": "3.1-store-setup",
+          "title": "3.1 Store Setup",
+          "subsections": [],
+          "content": "Store setup activates commerce behavior and defines operational rules. Configure currency, tax, shipping zones, payment gateways, and checkout defaults before high-traffic launch. Store settings should align with legal and financial requirements in your region. If multiple stores exist under one tenant, each should have clearly scoped catalog ownership and operational responsibility. Make sure checkout and payment configuration are verified with test orders prior to launch. Incomplete store settings can cause order failures even if pages and products render correctly.\n\nSteps:\n- Enable ecommerce for site/store.\n- Configure store-level settings.\n- Set currency and tax strategy.\n- Add shipping zones and rates.\n- Connect payment methods.\n- Test checkout end-to-end.\n\nPointers:\n- Keep policy pages aligned with checkout behavior.\n- Validate taxes and shipping with realistic test carts.\n- Reconfirm settings after major region expansion."
+        },
+        {
+          "id": "3.2-catalog-management",
+          "title": "3.2 Catalog Management",
+          "subsections": [
+            {
+              "id": "3.2.1-categories",
+              "title": "3.2.1 Categories",
+              "subsections": [],
+              "content": "Categories organize product discoverability and influence filtering UX. Use clear, user-facing names and avoid over-nesting unless catalog size justifies it. For each category, configure attributes that matter for buyer decisions (size, color, material, compatibility, etc.). Category SEO settings should target intent relevant to that catalog slice. Keep category naming aligned with navigation labels and collection names to avoid customer confusion.\n\nSteps:\n- Create category name and slug.\n- Add parent category if nested.\n- Define required and optional attributes.\n- Save and verify filter behavior.\n\nPointers:\n- Start flat, then nest only when necessary.\n- Keep slugs stable after indexing.\n- Use category edit modal for controlled schema updates."
+            },
+            {
+              "id": "3.2.2-brands",
+              "title": "3.2.2 Brands",
+              "subsections": [],
+              "content": "Brands (or distributors) provide merchant-side organization and storefront trust signals. Use consistent naming and logos where supported. Brand pages can be strong SEO and browsing hubs when catalog volume is high. If store type has business rules (single brand vs multiple), enforce them operationally.\n\nSteps:\n- Create brand entry under selected store.\n- Add descriptive metadata/logo where available.\n- Link products to appropriate brand.\n\nPointers:\n- Avoid duplicate brand spellings.\n- Keep brand naming customer-readable.\n- Review brand coverage in product list regularly."
+            },
+            {
+              "id": "3.2.3-products",
+              "title": "3.2.3 Products",
+              "subsections": [],
+              "content": "Product quality drives conversion. Every product should include accurate title, rich description, clear imagery, pricing, SKU, inventory, and mapped category/brand. Use structured descriptions (benefits, specs, care/instructions) instead of long unformatted text blocks. Product SEO should reflect real search intent and avoid generic metadata. For media, prioritize consistent image framing and resolution standards.\n\nSteps:\n- Add product basics (name, price, SKU, stock).\n- Select category and brand.\n- Fill category-driven attributes.\n- Upload primary and supporting images.\n- Save and publish product state.\n\nPointers:\n- Incomplete attributes reduce filter quality.\n- Keep titles descriptive but concise.\n- Standardize image style for catalog cohesion."
+            },
+            {
+              "id": "3.2.4-variants",
+              "title": "3.2.4 Variants",
+              "subsections": [],
+              "content": "Variants support option-based product combinations (e.g., size/color). Use explicit SKU strategy per variant to avoid fulfillment errors. Price overrides and stock tracking should be configured at variant level where needed. Variant imagery is essential when visual differences impact conversion (colorways, finishes, packaging). Keep option naming normalized to avoid duplicate semantic values (e.g., “Grey” vs “Gray”).\n\nSteps:\n- Define variant options (size/color/etc.).\n- Generate or assign variant SKUs.\n- Set price override if needed.\n- Set inventory per variant.\n- Upload variant-specific images.\n\nPointers:\n- Never reuse ambiguous SKUs.\n- Keep option values standardized.\n- Verify PDP selection updates image and stock correctly."
+            },
+            {
+              "id": "3.2.5-collections",
+              "title": "3.2.5 Collections",
+              "subsections": [],
+              "content": "Collections are merchandising layers independent of strict taxonomy. Manual collections are curated; automated collections use rules. Use manual for campaigns/seasonal storytelling and automated for scalability. Collections improve discovery and landing page conversion when tied to audience intent.\n\nSteps:\n- Create collection (manual or automated).\n- Add products or define rules.\n- Place collection on page/block.\n\nPointers:\n- Keep collection names customer-friendly.\n- Time-box seasonal collections and retire cleanly.\n- Audit rule logic after catalog changes."
+            }
+          ],
+          "content": "Catalog management is store-scoped and should be treated as a structured data workflow. Categories and attributes define product information quality; brands/distributors define commercial structure; products/variants define sellable inventory. Collections help merchandising. Do not build catalog randomly—define taxonomy first, then attributes, then product entry standards. This prevents inconsistent filters, weak search relevance, and messy PDP layouts.\n\nSteps:\n- Define category tree first.\n- Define reusable attributes per category.\n- Add brands and assign ownership.\n- Create products with complete metadata.\n- Add variants and inventory.\n\nPointers:\n- One strong taxonomy beats many shallow categories.\n- Keep attribute names standardized.\n- Audit catalog consistency weekly."
+        },
+        {
+          "id": "3.3-inventory-management",
+          "title": "3.3 Inventory Management",
+          "subsections": [],
+          "content": "Inventory controls stock availability and customer trust. Use centralized adjustment flows and maintain consistency between catalog edits and stock operations. Low stock alert handling should be procedural, not ad-hoc. Bulk updates are useful for restocks but require strict scope verification to prevent cross-store mistakes.\n\nSteps:\n- Open inventory screen in correct store scope.\n- Search SKU/product.\n- Apply adjustments (+/-).\n- Save and verify reflected quantities.\n\nPointers:\n- Confirm store scope before bulk actions.\n- Log significant manual adjustments.\n- Review low-stock SKUs daily."
+        },
+        {
+          "id": "3.4-orders",
+          "title": "3.4 Orders",
+          "subsections": [],
+          "content": "Orders management is the operational heartbeat. Define status workflow clearly (new, processing, shipped, delivered, cancelled, etc.) and enforce it across team members. Use order notes to preserve decision context. Export orders for finance/reconciliation as needed. Refund handling should follow policy and accounting controls.\n\nSteps:\n- Review new orders queue.\n- Open order detail and verify customer/address/items.\n- Update status by fulfillment stage.\n- Add notes and process refunds if required.\n- Export reports periodically.\n\nPointers:\n- Don’t skip item-level verification.\n- Keep status updates timely.\n- Use notes for internal traceability."
+        },
+        {
+          "id": "3.5-customers",
+          "title": "3.5 Customers",
+          "subsections": [],
+          "content": "Customer records connect orders, preferences, and support workflows. Grouping customers helps segmentation for marketing and service. Manual customer creation is useful for assisted sales or B2B contexts. Keep customer data quality high to improve downstream communication and retention efforts.\n\nSteps:\n- Review customer profiles regularly.\n- Group customers by lifecycle/value where needed.\n- Use order history to support service decisions.\n- Add manual customer records only with clean data.\n\nPointers:\n- Avoid duplicate customer records.\n- Standardize phone/address formats.\n- Respect privacy and data handling policies."
+        },
+        {
+          "id": "3.6-discounts-and-coupons",
+          "title": "3.6 Discounts & Coupons",
+          "subsections": [],
+          "content": "Discounts influence conversion and margin simultaneously, so configure carefully. Define offer type (percentage, fixed, shipping), usage limits, expiry windows, and eligibility clearly. Test discount behavior with realistic carts before launch. Avoid stacking scenarios that unintentionally erode margin. Keep promotional naming clear for support and analytics.\n\nSteps:\n- Create discount code.\n- Choose discount type and value.\n- Set usage limits and expiry.\n- Test in checkout flow.\n- Monitor performance and abuse patterns.\n\nPointers:\n- Time-box high-impact promotions.\n- Use clear campaign naming conventions.\n- Review edge cases (minimum spend, excluded items).\n\n---"
+        }
+      ],
+      "content": ""
+    },
+    {
+      "id": "final-operational-notes",
+      "title": "Final Operational Notes",
+      "subsections": [],
+      "content": "- Always validate scope first (site/store).\n- Always validate state second (draft/published).\n- Publish only after checklist completion.\n- Keep documentation and release notes updated.\n\n---"
+    }
+  ]
+}

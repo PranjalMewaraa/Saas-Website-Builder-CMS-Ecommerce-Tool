@@ -1066,6 +1066,12 @@ export function BlockPropsForm({
     return (
       <div className="space-y-3">
         <Select
+          label="Hero Preset"
+          value={props.heroPreset || "Basic"}
+          onChange={(v: any) => setProp("heroPreset", v)}
+          options={["Basic", "Advanced"]}
+        />
+        <Select
           label="Variant"
           value={variant}
           onChange={(v: any) => {
@@ -1279,6 +1285,18 @@ export function BlockPropsForm({
                 {bg.overlayOpacity ?? 0.45}
               </div>
             </label>
+          </div>
+        ) : null}
+
+        {variant === "basic" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm opacity-70">Basic Background</div>
+            <ColorPickerInput
+              label="Background Color"
+              value={bg.color || "#0f172a"}
+              onChange={(v: any) => setPropPath("bg.color", v)}
+              placeholder="#0f172a"
+            />
           </div>
         ) : null}
 
@@ -2243,6 +2261,7 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Hero/V1")
     return {
+      heroPreset: "Basic",
       variant: "basic",
       headline: "Headline",
       subhead: "Subhead",
@@ -2255,6 +2274,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none",
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

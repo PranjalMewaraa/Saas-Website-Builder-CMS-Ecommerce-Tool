@@ -979,6 +979,18 @@ function BlockPropsForm({
           </div>
         ) : null}
 
+        {variant === "basic" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm opacity-70">Basic Background</div>
+            <Field
+              label="Background Color"
+              value={bg.color || "#0f172a"}
+              onChange={(v: any) => setPropPath("bg.color", v)}
+              placeholder="#0f172a"
+            />
+          </div>
+        ) : null}
+
         <div className="text-xs opacity-60">
           Tip: For Image/Video variants, only store Asset IDs. Renderer will
           resolve URLs from snapshot assets.
@@ -1083,6 +1095,7 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Hero")
     return {
+      heroPreset: "Basic",
       variant: "basic", // basic | image | video
       headline: "Headline",
       subhead: "Subhead",
@@ -1095,6 +1108,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none", // none | image | video
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

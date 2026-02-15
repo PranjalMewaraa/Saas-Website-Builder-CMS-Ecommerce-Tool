@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import ImageField from "../_component/ImageField";
 import { useAssetsMap } from "../_component/useAssetsMap";
 
-// Make searchParams optional + Promise-typed (Next.js 15 style)
 export default function SiteSeoPage({
   searchParams,
 }: {
   searchParams?: Promise<{ site_id?: string }>;
 }) {
-  // We'll resolve it once and store in state
   const [siteId, setSiteId] = useState<string | undefined>(undefined);
   const [seo, setSeo] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -23,24 +21,18 @@ export default function SiteSeoPage({
   const [confirmInput, setConfirmInput] = useState("");
   const router = useRouter();
 
-  // Resolve searchParams promise once on mount
   useEffect(() => {
     let cancelled = false;
-
     async function resolveSearchParams() {
       try {
-        // Await the promise — this is the Next.js 15+ recommended way
         const params = await searchParams;
         if (cancelled) return;
-
         const id = params?.site_id;
-
         if (!id) {
           setError("No site_id provided in URL");
           setLoading(false);
           return;
         }
-
         setSiteId(id);
       } catch (err) {
         if (!cancelled) {
@@ -49,54 +41,31 @@ export default function SiteSeoPage({
         }
       }
     }
-
     resolveSearchParams();
-
     return () => {
       cancelled = true;
     };
-  }, [searchParams]); // ← re-run only if searchParams ref changes (rare)
+  }, [searchParams]);
 
-  // Only fetch when we have a valid siteId
   const { assetsMap } = useAssetsMap(siteId);
 
   useEffect(() => {
     if (!siteId) return;
-
     let isCurrent = true;
-
     async function fetchSeo() {
       try {
         setLoading(true);
-        setError(null);
-
         const res = await fetch(`/api/admin/seo/site?site_id=${siteId}`);
-
-        if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error("SEO settings not found for this site");
-          }
-          throw new Error(`Server responded with ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error("Failed to load settings");
         const data = await res.json();
-        if (isCurrent) {
-          setSeo(data.site_seo || {});
-        }
+        if (isCurrent) setSeo(data.site_seo || {});
       } catch (err) {
-        console.error("Failed to load SEO:", err);
-        if (isCurrent) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load SEO settings",
-          );
-        }
+        if (isCurrent) setError("Failed to load SEO settings");
       } finally {
         if (isCurrent) setLoading(false);
       }
     }
-
     fetchSeo();
-
     return () => {
       isCurrent = false;
     };
@@ -121,225 +90,237 @@ export default function SiteSeoPage({
   }, [siteId]);
 
   async function save() {
-    if (!siteId) {
-      setError("Cannot save: missing site ID");
-      return;
-    }
-
+    if (!siteId) return;
     setSaving(true);
     setError(null);
     setSaveMessage(null);
-
     try {
       const res = await fetch("/api/admin/seo/site", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ site_id: siteId, site_seo: seo }),
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to save (${res.status})`);
-      }
-
-      setSaveMessage("Settings saved successfully ✓");
-      setTimeout(() => setSaveMessage(null), 4000);
+      if (!res.ok) throw new Error("Save failed");
+      setSaveMessage("Changes synced successfully");
+      setTimeout(() => setSaveMessage(null), 3000);
     } catch (err) {
-      console.error("Save failed:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to save SEO settings",
-      );
+      setError("Failed to save changes");
     } finally {
       setSaving(false);
     }
   }
 
-  // Early return while resolving searchParams
-  if (siteId === undefined && !error) {
-    return (
-      <div className="p-6 py-12 text-center text-gray-500">
-        Loading page parameters...
-      </div>
-    );
-  }
+  // --- Styles ---
+  const glassCard =
+    "bg-white/70 backdrop-blur-md border border-gray-200/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-3xl p-8";
+  const inputStyle =
+    "w-full bg-gray-50/50 border border-gray-200 rounded-2xl px-5 py-4 text-sm transition-all focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none placeholder:text-gray-400 font-medium";
+  const labelStyle =
+    "block text-[13px] font-semibold text-gray-500 ml-1 mb-2 uppercase tracking-wider";
 
-  if (!siteId) {
+  if (siteId === undefined && !error)
     return (
-      <div className="p-6 text-red-600">
-        Error: Missing or invalid site_id in URL parameters
+      <div className="flex items-center justify-center h-screen animate-pulse text-gray-400 font-medium">
+        Initializing...
       </div>
     );
-  }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-semibold">Site SEO</h1>
+    <div className="min-h-screen bg-white text-[#1D1D1F] p-8 md:p-12 font-sans antialiased">
+      <div className="max-w-full mx-auto space-y-10">
+        {/* Header Section */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <p className="text-blue-600 font-semibold text-sm mb-1 uppercase tracking-[0.2em]">
+              Configuration
+            </p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Site SEO
+            </h1>
+          </div>
+          <button
+            onClick={save}
+            disabled={saving || loading}
+            className={`px-8 py-3 rounded-full font-semibold transition-all shadow-lg active:scale-95 ${
+              saving
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-black text-white hover:shadow-xl hover:bg-gray-800"
+            }`}
+          >
+            {saving ? "Updating..." : "Save Changes"}
+          </button>
+        </header>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
+        {/* Notifications */}
+        {(error || saveMessage) && (
+          <div
+            className={`p-4 rounded-2xl text-sm font-medium animate-in fade-in slide-in-from-top-2 ${error ? "bg-red-50 text-red-600 border border-red-100" : "bg-blue-50 text-blue-600 border border-blue-100"}`}
+          >
+            {error || saveMessage}
+          </div>
+        )}
 
-      {saveMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-          {saveMessage}
-        </div>
-      )}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8">
+            {/* Main Form Card */}
+            <div className={glassCard}>
+              <div className="space-y-8">
+                <div>
+                  <label className={labelStyle}>Brand Identity</label>
+                  <input
+                    placeholder="Site Name"
+                    className={inputStyle}
+                    value={seo.siteName || ""}
+                    onChange={(e) =>
+                      setSeo({ ...seo, siteName: e.target.value })
+                    }
+                  />
+                </div>
 
-      {loading ? (
-        <div className="py-8 text-center text-gray-500">
-          Loading SEO settings...
-        </div>
-      ) : (
-        <>
-          <div className="space-y-4">
-            <input
-              placeholder="Site Name"
-              className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={seo.siteName || ""}
-              onChange={(e) => setSeo({ ...seo, siteName: e.target.value })}
-              disabled={saving}
-            />
+                <div>
+                  <label className={labelStyle}>Search Appearance</label>
+                  <input
+                    placeholder="Title Template (e.g. %s | Site Name)"
+                    className={inputStyle}
+                    value={seo.titleTemplate || ""}
+                    onChange={(e) =>
+                      setSeo({ ...seo, titleTemplate: e.target.value })
+                    }
+                  />
+                </div>
 
-            <input
-              placeholder="Title Template (e.g. %s | Site Name)"
-              className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={seo.titleTemplate || ""}
-              onChange={(e) =>
-                setSeo({ ...seo, titleTemplate: e.target.value })
-              }
-              disabled={saving}
-            />
+                <div>
+                  <label className={labelStyle}>Meta Description</label>
+                  <textarea
+                    placeholder="Provide a brief summary for search engines..."
+                    className={`${inputStyle} min-h-[120px] resize-none`}
+                    value={seo.defaultDescription || ""}
+                    onChange={(e) =>
+                      setSeo({ ...seo, defaultDescription: e.target.value })
+                    }
+                  />
+                </div>
 
-            <textarea
-              placeholder="Default Description (recommended 120–160 characters)"
-              className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-              value={seo.defaultDescription || ""}
-              onChange={(e) =>
-                setSeo({ ...seo, defaultDescription: e.target.value })
-              }
-              disabled={saving}
-            />
+                <div className="pt-4 border-t border-gray-100">
+                  <ImageField
+                    siteId={siteId!}
+                    label="Social Graph Image"
+                    assetIdValue={seo.globalOgImageAssetId || ""}
+                    altValue=""
+                    onChangeAssetId={(v) =>
+                      setSeo({ ...seo, globalOgImageAssetId: v })
+                    }
+                    onChangeAlt={() => {}}
+                    assetsMap={assetsMap}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <ImageField
-              siteId={siteId}
-              label="Global OG Image"
-              assetIdValue={seo.globalOgImageAssetId || ""}
-              altValue=""
-              onChangeAssetId={(v) =>
-                setSeo({ ...seo, globalOgImageAssetId: v })
-              }
-              onChangeAlt={() => {}}
-              assetsMap={assetsMap}
-            />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Custom Head HTML
-              </label>
+            {/* Advanced Section */}
+            <div className={glassCard}>
+              <label className={labelStyle}>Custom Header Scripts</label>
               <textarea
-                placeholder="<meta name=&quot;verification&quot; content=&quot;...&quot; />"
-                className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[140px] font-mono"
+                placeholder=" <meta name=... content=...>"
+                className={`${inputStyle} min-h-[160px] font-mono text-xs bg-gray-100 text-gray-900 border-none focus:ring-blue-500/40`}
                 value={seo.customHeadHtml || ""}
                 onChange={(e) =>
                   setSeo({ ...seo, customHeadHtml: e.target.value })
                 }
-                disabled={saving}
               />
-              <p className="text-xs text-gray-500">
-                Inject meta/link/script tags into every page head for this site.
+              <p className="mt-4 text-xs text-gray-400 leading-relaxed">
+                Use this to verify site ownership or inject global styles. Code
+                is injected directly into the <code>&lt;head&gt;</code> of all
+                pages.
               </p>
             </div>
-          </div>
 
-          <div className="pt-4">
-            <button
-              onClick={save}
-              disabled={saving || loading}
-              className={`
-                px-6 py-3 rounded font-medium text-white
-                ${
-                  saving
-                    ? "bg-gray-500 cursor-not-allowed"
-                    : "bg-black hover:bg-gray-800 active:bg-gray-900"
-                }
-                transition-colors
-              `}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-
-          <div className="pt-8">
-            <div className="border border-red-200 rounded-xl p-4 bg-red-50/40">
-              <div className="text-sm font-semibold text-red-700">
-                Danger Zone
-              </div>
-              <div className="text-sm text-red-600 mt-1">
-                Deleting a site removes its pages, assets, menus, templates, and
-                drafts. This cannot be undone.
+            {/* Danger Zone */}
+            <div className="bg-red-50/30 border border-red-100 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <h3 className="text-red-600 font-bold mb-1">
+                  Destructive Actions
+                </h3>
+                <p className="text-red-500/70 text-sm">
+                  Remove this site and all associated data permanently.
+                </p>
               </div>
               <button
-                className="mt-3 inline-flex items-center px-4 py-2 rounded text-white bg-red-600 hover:bg-red-700"
                 onClick={() => setConfirmDelete(true)}
+                className="px-6 py-3 rounded-2xl bg-white border border-red-200 text-red-600 font-semibold hover:bg-red-600 hover:text-white transition-all shadow-sm"
               >
                 Delete Site
               </button>
             </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
+      {/* Futuristic Modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-200/70 overflow-hidden">
-            <div className="p-6 space-y-3">
-              <div className="text-lg font-semibold">Delete Site</div>
-              <div className="text-sm text-gray-600">
-                Permanently delete this site? This will remove pages, assets,
-                menus, templates, and all drafts.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div
+            className="absolute inset-0 bg-gray-100/60 backdrop-blur-xl transition-opacity"
+            onClick={() => setConfirmDelete(false)}
+          />
+          <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 animate-in zoom-in-95 duration-200">
+            <div className="p-10 text-center">
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
               </div>
-              <div className="text-xs text-gray-500">
-                Type <b>{siteName || "this site"}</b> to confirm.
-              </div>
+              <h3 className="text-2xl font-bold mb-2">Are you sure?</h3>
+              <p className="text-gray-500 text-sm mb-8">
+                This action is irreversible. Enter <b>{siteName}</b> to confirm
+                deletion.
+              </p>
+
               <input
-                className="w-full border rounded px-3 py-2 text-sm"
-                placeholder="Type site name to confirm"
+                className={`${inputStyle} text-center mb-6`}
+                placeholder="Enter site name"
                 value={confirmInput}
                 onChange={(e) => setConfirmInput(e.target.value)}
               />
-            </div>
-            <div className="px-6 py-4 border-t bg-gray-50/70 flex justify-end gap-3">
-              <button
-                className="px-4 py-2 rounded border"
-                onClick={() => {
-                  setConfirmDelete(false);
-                  setConfirmInput("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className={`px-4 py-2 rounded text-white ${
-                  confirmInput.trim() &&
-                  siteName &&
-                  confirmInput.trim() === siteName
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-red-300 cursor-not-allowed"
-                }`}
-                onClick={async () => {
-                  if (!siteName || confirmInput.trim() !== siteName) return;
-                  setConfirmDelete(false);
-                  setConfirmInput("");
-                  await fetch(`/api/admin/sites?site_id=${siteId}`, {
-                    method: "DELETE",
-                  });
-                  router.push("/content/sites");
-                }}
-              >
-                Delete Site
-              </button>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  disabled={confirmInput !== siteName}
+                  className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                    confirmInput === siteName
+                      ? "bg-red-600 text-white shadow-lg shadow-red-200"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+                  onClick={async () => {
+                    await fetch(`/api/admin/sites?site_id=${siteId}`, {
+                      method: "DELETE",
+                    });
+                    router.push("/content/sites");
+                  }}
+                >
+                  Confirm Delete
+                </button>
+                <button
+                  className="w-full py-4 text-gray-500 font-semibold hover:text-black transition-colors"
+                  onClick={() => setConfirmDelete(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -180,7 +180,13 @@ export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
 ];
 
 export function createDefaultSectionProps(): LayoutSectionProps {
-  return { style: {}, rows: [] };
+  return {
+    style: {
+      display: "flex",
+      justify: "center",
+    },
+    rows: [],
+  };
 }
 
 export function createDefaultRow(): LayoutRow {
@@ -196,7 +202,10 @@ export function createDefaultRow(): LayoutRow {
       justify: "start",
       wrap: false,
     },
-    style: { padding: { top: 12, bottom: 12 } },
+    style: {
+      maxWidth: "1208px",
+      padding: { top: 12, bottom: 12 },
+    },
     cols: [createDefaultCol()],
   };
 }
