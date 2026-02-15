@@ -38,7 +38,7 @@ export default function ImageField({
   const defaultImage =
     "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 
-  const resolvedUrl = asset?.url || assetUrlValue || localUrl || defaultImage;
+  const resolvedUrl = asset?.url || localUrl || assetUrlValue || defaultImage;
 
   // --- Styles ---
   const subLabelStyle =
@@ -134,11 +134,11 @@ export default function ImageField({
         open={open}
         onClose={() => setOpen(false)}
         onPick={(picked) => {
+          setLocalUrl(picked.url || "");
           const nextId = picked._id || picked.key;
           onChangeAssetId(nextId);
           onChangeAssetUrl?.(picked.url);
-          setLocalUrl(picked.url);
-          if (!altValue) onChangeAlt(picked.alt || "");
+          if (!altValue && picked.alt) onChangeAlt(picked.alt);
         }}
       />
     </div>

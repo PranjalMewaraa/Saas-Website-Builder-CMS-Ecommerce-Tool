@@ -1144,14 +1144,9 @@ export function BlockPropsForm({
               assetIdValue={bg.imageAssetId || ""}
               altValue={bg.imageAlt || ""}
               onChangeAssetId={(v: any) => {
-                console.log("Id", v);
-
                 setPropPath("bg.imageAssetId", v);
-                setPropPath(
-                  "bg.imageUrl",
-                  `https://d64ppqfrcykxw.cloudfront.net/${v}`,
-                );
               }}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.imageUrl", v)}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
               assetUrlValue={assetUrlValue || bg.imageUrl || DEFAULT_IMAGE}
@@ -1194,8 +1189,10 @@ export function BlockPropsForm({
               assetIdValue={bg.videoAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.videoAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoUrl", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoUrl || ""}
             />
 
             <ImageField
@@ -1204,8 +1201,10 @@ export function BlockPropsForm({
               assetIdValue={bg.posterAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.posterAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoPoster", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoPoster || ""}
             />
 
             <div className="grid grid-cols-2 gap-2">

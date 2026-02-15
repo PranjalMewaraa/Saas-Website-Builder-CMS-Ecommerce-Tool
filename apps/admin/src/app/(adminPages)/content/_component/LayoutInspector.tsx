@@ -658,6 +658,22 @@ export default function LayoutInspector({
           }
         />
 
+        <ResponsiveRowLayoutFields
+          row={row}
+          onChange={(bp, patch) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.responsive = target.layout.responsive || {};
+              target.layout.responsive[bp] = {
+                ...(target.layout.responsive[bp] || {}),
+                ...patch,
+              };
+            })
+          }
+        />
+
         <StyleFields
           style={row.style}
           palette={themePalette}
@@ -769,6 +785,11 @@ export default function LayoutInspector({
               onChangeAlt={(v: any) =>
                 updateAtomic((draftAtom) => {
                   draftAtom.props = { ...draftAtom.props, alt: v };
+                })
+              }
+              onChangeAssetUrl={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
                 })
               }
               assetsMap={assetsMap}
@@ -1881,6 +1902,102 @@ function Checkbox({
   );
 }
 
+function ResponsiveRowLayoutFields({
+  row,
+  onChange,
+}: {
+  row: any;
+  onChange: (
+    bp: "tablet" | "mobile",
+    patch: {
+      display?: "grid" | "flex";
+      columns?: number;
+      gap?: number | string;
+      align?: "start" | "center" | "end" | "stretch";
+      justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+      wrap?: boolean;
+    },
+  ) => void;
+}) {
+  const [bp, setBp] = useState<"tablet" | "mobile">("tablet");
+  const override = row.layout?.responsive?.[bp] || {};
+  const display = override.display || row.layout?.display || "grid";
+
+  return (
+    <details className="border rounded-lg p-3 bg-white shadow-sm">
+      <summary className="cursor-pointer text-sm font-medium">
+        Responsive Row Layout
+      </summary>
+      <div className="mt-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-[11px] text-gray-500">
+          Set only what should change on {bp}. Everything else inherits desktop.
+        </div>
+
+        <Select
+          label="Display"
+          value={display}
+          options={["grid", "flex"]}
+          onChange={(v) => onChange(bp, { display: v as "grid" | "flex" })}
+        />
+
+        {display === "grid" ? (
+          <NumberField
+            label="Columns"
+            value={Number(override.columns || 0)}
+            onChange={(n) => onChange(bp, { columns: n || undefined })}
+          />
+        ) : (
+          <Checkbox
+            label="Wrap"
+            value={!!override.wrap}
+            onChange={(v) => onChange(bp, { wrap: v })}
+          />
+        )}
+
+        <UnitField
+          label="Gap"
+          value={override.gap || ""}
+          onChange={(v) => onChange(bp, { gap: v })}
+          placeholder="16"
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Align"
+            value={override.align || row.layout?.align || "stretch"}
+            options={["start", "center", "end", "stretch"]}
+            onChange={(v) => onChange(bp, { align: v as any })}
+          />
+          <Select
+            label="Justify"
+            value={override.justify || row.layout?.justify || "start"}
+            options={["start", "center", "end", "between", "around", "evenly"]}
+            onChange={(v) => onChange(bp, { justify: v as any })}
+          />
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function StyleFields({
   style,
   palette = [],
@@ -1894,15 +2011,24 @@ function StyleFields({
   assetsMap?: any;
   onChange: (next: any) => void;
 }) {
-  const s = style || {};
+  const [bp, setBp] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const root = style || {};
+  const s =
+    bp === "desktop"
+      ? root
+      : root?.responsive?.[bp] || {};
   const resolvedBg =
     s.bg ?? (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
   const bgType = resolvedBg.type || "none";
 
   function set(path: string, val: any) {
-    const next = structuredClone(s);
+    const next = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? next
+        : (((next.responsive ||= {})[bp] ||= {}) as Record<string, any>);
     const parts = path.split(".");
-    let cur = next;
+    let cur = target;
     for (let i = 0; i < parts.length - 1; i++) {
       cur = cur[parts[i]] ??= {};
     }
@@ -1911,21 +2037,49 @@ function StyleFields({
   }
 
   function setBg(next: any) {
-    const updated = structuredClone(s);
-    updated.bg = { ...(updated.bg || {}), ...next };
+    const updated = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? updated
+        : (((updated.responsive ||= {})[bp] ||= {}) as Record<string, any>);
+    target.bg = { ...(target.bg || {}), ...next };
     if (next.type === "none") {
-      updated.bgColor = undefined;
+      target.bgColor = undefined;
     }
     if (next.type === "solid") {
-      const color = next.color ?? updated.bg?.color;
-      if (color) updated.bgColor = color;
+      const color = next.color ?? target.bg?.color;
+      if (color) target.bgColor = color;
     }
     onChange(updated);
   }
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-medium">Style</div>
+      <div className="space-y-2">
+        <div className="text-sm font-medium">Style</div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["desktop", "tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+        {bp !== "desktop" ? (
+          <div className="text-[11px] text-gray-500">
+            Editing {bp} override. Empty fields inherit desktop values.
+          </div>
+        ) : null}
+      </div>
 
       <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">

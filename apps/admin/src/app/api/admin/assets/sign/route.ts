@@ -13,12 +13,14 @@ function newKey(args: {
 }
 
 export async function POST(req: Request) {
+  const reqId = `asset_sign_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
   try {
     const session = await requireSession();
     const tenant_id = session.user.tenant_id;
 
     const { searchParams } = new URL(req.url);
     const site_id = searchParams.get("site_id") || "";
+    console.info("[assets/sign] start", { reqId, tenant_id, site_id });
 
     await requireModule({ tenant_id, site_id, module: "assets" });
 
@@ -34,7 +36,13 @@ export async function POST(req: Request) {
 
     const Bucket = process.env.S3_BUCKET || "";
     const cdnBase = process.env.CDN_BASE_URL || "";
-    console.log("Bucket ", Bucket, " cdn ", cdnBase);
+    console.info("[assets/sign] env check", {
+      reqId,
+      hasBucket: !!Bucket,
+      hasCdnBase: !!cdnBase,
+      s3Region: process.env.S3_REGION || "(inferred)",
+      s3Endpoint: process.env.S3_ENDPOINT || process.env.S3_ENDPOINT2 || "(none)",
+    });
     if (!Bucket)
       return NextResponse.json(
         { ok: false, error: "Missing S3_BUCKET" },
@@ -72,6 +80,12 @@ export async function POST(req: Request) {
       upload: presigned, // { url, fields }
     });
   } catch (e: any) {
+    console.error("[assets/sign] failed", {
+      reqId,
+      message: e?.message || "sign_failed",
+      name: e?.name,
+      stack: e?.stack,
+    });
     return NextResponse.json(
       { ok: false, error: e?.message || "sign_failed" },
       { status: 500 },

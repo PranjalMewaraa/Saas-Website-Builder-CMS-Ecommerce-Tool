@@ -35,6 +35,24 @@ type LayoutRow = {
     align?: LayoutStyle["align"];
     justify?: LayoutStyle["justify"];
     wrap?: boolean;
+    responsive?: {
+      tablet?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+      mobile?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+    };
   };
   cols?: LayoutCol[];
 };
@@ -163,7 +181,7 @@ function renderAtomicBlock(
 
   if (type === "Atomic/Image") {
     const src =
-      props.src || resolveAssetUrl(props.assetId, assets) || DEFAULT_IMAGE;
+      resolveAssetUrl(props.assetId, assets) || props.src || DEFAULT_IMAGE;
     const imgStyle: React.CSSProperties = {
       ...style,
       width: toCssSizeValue(props.width) || style.width,
@@ -606,6 +624,7 @@ function renderRows(
       >
         {renderVideoLayer(rowVideo)}
         <div
+          data-row-layout-id={row.id}
           style={{
             ...rowLayoutStyle,
             position: "relative",
@@ -651,6 +670,7 @@ function renderRows(
 }
 
 export function LayoutSectionRenderer({
+  blockId,
   props,
   assets,
   menus,
@@ -660,6 +680,7 @@ export function LayoutSectionRenderer({
   previewToken,
   mode,
 }: {
+  blockId?: string;
   props: LayoutSectionProps;
   assets?: any;
   menus?: any;
@@ -673,7 +694,10 @@ export function LayoutSectionRenderer({
   const video = getBackgroundVideo(props.style);
 
   return (
-    <section style={{ ...sectionStyle, position: video ? "relative" : undefined }}>
+    <section
+      data-layout-section-id={blockId || ""}
+      style={{ ...sectionStyle, position: video ? "relative" : undefined }}
+    >
       {video ? (
         <>
           <video

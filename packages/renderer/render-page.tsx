@@ -174,6 +174,7 @@ async function BlockRenderer({
     return (
       <div data-block-id={block.id}>
         <LayoutSectionRenderer
+          blockId={block.id}
           props={block.props || { rows: [] }}
           assets={ctx.snapshot.assets}
           menus={ctx.snapshot.menus}

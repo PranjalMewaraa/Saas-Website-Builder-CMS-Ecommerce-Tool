@@ -27,6 +27,7 @@ import {
   toCssSizeValue,
   getBackgroundVideo,
 } from "../../../../../../../packages/renderer/layout-style";
+import { buildResponsiveCss } from "../../../../../../../packages/renderer/responsive-css";
 
 const ROW_PRESETS: Record<string, { template: string; gap?: number | string }> =
   {
@@ -78,7 +79,7 @@ function renderAtomicPreview(
   }
 
   if (block.type === "Atomic/Image") {
-    const src = props.src || resolveAssetUrl(props.assetId, assetsMap);
+    const src = resolveAssetUrl(props.assetId, assetsMap) || props.src;
     const imgStyle: React.CSSProperties = {
       ...style,
       width: toCssSizeValue(props.width) || style.width,
@@ -611,6 +612,9 @@ export default function VisualLayoutSection({
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : { style: {}, rows: [] };
   const rows = props.rows || [];
+  const responsiveCss = buildResponsiveCss({
+    sections: [{ blocks: [block] }],
+  });
 
   const [addAtomicDialog, setAddAtomicDialog] = useState<{
     rowId: string;
@@ -1195,6 +1199,7 @@ export default function VisualLayoutSection({
 
   return (
     <div
+      data-block-id={block.id}
       className={`group relative rounded-xl border ${
         selection?.kind === "layout-section" && selection.blockId === block.id
           ? "ring-2 ring-blue-500 border-blue-300"
@@ -1234,12 +1239,16 @@ export default function VisualLayoutSection({
       </div>
 
       <div
+        data-layout-section-id={block.id}
         className="p-4 group"
         style={{
           ...resolveLayoutStyle(props.style),
           position: getBackgroundVideo(props.style) ? "relative" : undefined,
         }}
       >
+        {responsiveCss ? (
+          <style dangerouslySetInnerHTML={{ __html: responsiveCss }} />
+        ) : null}
         {renderVideoLayer(getBackgroundVideo(props.style))}
         <div style={{ position: "relative", zIndex: 2 }}>
         {rows.length === 0 ? (
@@ -1277,6 +1286,7 @@ export default function VisualLayoutSection({
               return (
                 <div
                   key={row.id}
+                  data-row-id={row.id}
                   draggable
                   className={`group relative rounded-lg ${
                     showOutlines
@@ -1365,6 +1375,7 @@ export default function VisualLayoutSection({
                   >
                     {renderVideoLayer(rowVideo)}
                     <div
+                      data-row-layout-id={row.id}
                       style={{
                         ...rowLayoutStyle,
                         position: "relative",
@@ -1382,6 +1393,7 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
+                          data-col-id={col.id}
                           draggable
                           className={`group/col relative rounded-lg ${
                             showOutlines

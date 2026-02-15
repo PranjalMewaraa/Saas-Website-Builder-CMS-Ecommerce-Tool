@@ -844,8 +844,10 @@ function BlockPropsForm({
               assetIdValue={bg.imageAssetId || ""}
               altValue={bg.imageAlt || ""}
               onChangeAssetId={(v: any) => setPropPath("bg.imageAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.imageUrl", v)}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
+              assetUrlValue={bg.imageUrl || ""}
             />
 
             <Field
@@ -885,8 +887,10 @@ function BlockPropsForm({
               assetIdValue={bg.videoAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.videoAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoUrl", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoUrl || ""}
             />
 
             <ImageField
@@ -895,8 +899,10 @@ function BlockPropsForm({
               assetIdValue={bg.posterAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.posterAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoPoster", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoPoster || ""}
             />
 
             <div className="grid grid-cols-2 gap-2">

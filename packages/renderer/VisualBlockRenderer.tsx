@@ -37,7 +37,10 @@ export function VisualBlockRenderer({
           }
         `}
       >
-        <LayoutSectionRenderer props={block.props || { rows: [] }} />
+        <LayoutSectionRenderer
+          blockId={block.id}
+          props={block.props || { rows: [] }}
+        />
       </div>
     );
   }

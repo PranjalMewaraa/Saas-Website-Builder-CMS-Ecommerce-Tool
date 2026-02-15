@@ -57,6 +57,10 @@ export type LayoutStyle = {
   lineHeight?: number | string;
   letterSpacing?: number | string;
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  responsive?: {
+    tablet?: Partial<LayoutStyle>;
+    mobile?: Partial<LayoutStyle>;
+  };
 };
 
 export type LayoutAtomicBlock = {
@@ -100,6 +104,24 @@ export type LayoutRow = {
     align?: LayoutStyle["align"];
     justify?: LayoutStyle["justify"];
     wrap?: boolean;
+    responsive?: {
+      tablet?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+      mobile?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+    };
   };
   cols: LayoutCol[];
 };
