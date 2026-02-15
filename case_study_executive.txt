@@ -1,0 +1,106 @@
+EXECUTIVE CASE STUDY
+SaaS Store Builder
+
+1) WHAT THIS PLATFORM IS
+A multi-tenant SaaS product that combines:
+- Visual website builder
+- Content management and publishing
+- Store-scoped e-commerce operations
+
+It enables merchants to go from account signup to a live storefront with catalog and orders from one admin panel.
+
+
+2) CORE BUSINESS PROBLEM
+Small and mid-size brands usually need separate tools for:
+- Site creation
+- Content editing
+- E-commerce operations
+- Publishing and previews
+
+This fragmentation increases cost, setup time, and operational errors.
+
+
+3) SOLUTION SUMMARY
+The platform unifies content + commerce in one system with:
+- Drag-and-drop visual page editing
+- Reusable blocks, templates, and themes
+- Snapshot-based publish model (draft vs live)
+- Store-scoped catalog (brands/categories/products/variants)
+- Cart/order/inventory operations
+- Form submissions and operational management screens
+
+
+4) DIFFERENTIATORS
+- True content + commerce unification.
+- Multi-tenant architecture with scoped module access.
+- Snapshot-based publishing for safer releases.
+- Store-scoped catalog model (clean tenant/store isolation).
+- Backward compatibility while rolling out V2 commerce.
+
+
+5) MARKET-FACING CAPABILITIES
+For creators/marketers:
+- Build and style pages visually
+- Manage assets, menus, forms, SEO
+- Publish safely with preview controls
+
+For operators/merchants:
+- Create stores and catalogs
+- Manage products, variants, inventory, orders
+- Track submissions and operations in admin
+
+
+6) PRODUCT STATUS (CURRENT)
+Delivered and working:
+- Visual builder + block system
+- Layout/Section nested architecture
+- Theme and style controls
+- Menus, forms, assets, SEO
+- Publish + preview flow
+- Store-scoped commerce V2 foundation
+- PDP/cart/order/inventory operational flow
+
+Recent enhancements:
+- Footer multi-menu groups with custom titles and typography controls
+- Hero preset architecture (Basic/Advanced scaffold)
+- Improved layout defaults for visual consistency
+- Preview token leakage fix
+- Category editing via modal UX + update API
+
+
+7) TECH STRATEGY (EXECUTIVE LEVEL)
+- Content domain in MongoDB
+- Commerce domain in MySQL
+- Shared renderer and schema system for runtime consistency
+- Additive migration strategy to avoid breaking existing customers/data
+
+
+8) USER VALUE
+- Faster launch: one system from design to sales.
+- Lower complexity: fewer tools and integrations.
+- Safer publishing: draft/live separation.
+- Better operations: order, inventory, and submission management in one place.
+
+
+9) SCALE POTENTIAL
+- Horizontal multi-tenant SaaS model
+- Extensible block/plugin architecture
+- Strong path to vertical presets (fashion/electronics/etc.)
+- Expansion into analytics, AI content generation, and advanced commerce automations
+
+
+10) NEXT STRATEGIC PRIORITIES
+- Standardize all catalog edit paths on V2 APIs
+- Improve test coverage for publish/order/inventory critical flows
+- Expand analytics and business intelligence views
+- Harden developer productivity through path consolidation and type cleanup
+
+
+11) OUTCOME
+This project has moved from a builder concept to an operational commerce-ready platform where customers can:
+- create a site,
+- build pages,
+- configure store catalog,
+- publish live,
+- and run orders/inventory,
+without leaving the product ecosystem.

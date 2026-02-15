@@ -16,20 +16,26 @@ export default function StorefrontProviders({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const handle = searchParams.get("handle");
+    const sid = searchParams.get("sid");
     if (handle) {
       window.localStorage.setItem("storefront_handle", handle);
-      return;
     }
+    if (sid) {
+      window.localStorage.setItem("storefront_sid", sid);
+    }
+    // Never persist preview token; otherwise published URLs can get forced into draft mode.
+    window.localStorage.removeItem("storefront_token");
 
     const stored = window.localStorage.getItem("storefront_handle");
-    if (!stored) return;
+    const storedSid = window.localStorage.getItem("storefront_sid");
+    if (!stored && !storedSid) return;
 
     const params = new URLSearchParams(searchParams.toString());
-    if (!params.get("handle")) {
-      params.set("handle", stored);
-      const next = `${pathname}?${params.toString()}`;
-      router.replace(next);
-    }
+    if (stored && !params.get("handle")) params.set("handle", stored);
+    if (storedSid && !params.get("sid")) params.set("sid", storedSid);
+    const next = `${pathname}?${params.toString()}`;
+    const current = `${pathname}?${searchParams.toString()}`;
+    if (next !== current) router.replace(next);
   }, [pathname, router, searchParams]);
 
   return <CartProvider>{children}</CartProvider>;

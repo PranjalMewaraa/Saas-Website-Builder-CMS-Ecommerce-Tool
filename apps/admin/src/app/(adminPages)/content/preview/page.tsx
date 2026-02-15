@@ -14,7 +14,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
   // Use the resolved values with fallback
   const siteId = params.site_id || "site_demo";
   const handle = params.handle || "demo-site";
-
+  console.log("PreviewPage params:", { siteId, handle });
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-semibold">Draft Preview</h1>

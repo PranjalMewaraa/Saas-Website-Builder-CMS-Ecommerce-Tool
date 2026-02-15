@@ -89,8 +89,13 @@ function BuilderBlockPreview({
     return (
       <div data-block-id={block.id}>
         <LayoutSectionRenderer
+          blockId={block.id}
           props={block.props || { rows: [] }}
           assets={snapshot.assets}
+          forms={snapshot.forms}
+          handle={snapshot.handle}
+          previewToken={snapshot.previewToken}
+          mode="builder"
         />
       </div>
     );

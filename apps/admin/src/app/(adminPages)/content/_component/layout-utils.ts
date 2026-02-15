@@ -57,6 +57,10 @@ export type LayoutStyle = {
   lineHeight?: number | string;
   letterSpacing?: number | string;
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  responsive?: {
+    tablet?: Partial<LayoutStyle>;
+    mobile?: Partial<LayoutStyle>;
+  };
 };
 
 export type LayoutAtomicBlock = {
@@ -76,6 +80,7 @@ export type LayoutAtomicBlock = {
     | "Atomic/Menu"
     | "Atomic/Countdown"
     | "Atomic/Embed"
+    | "Atomic/Form"
     | "Atomic/Group";
   props: any;
   style?: LayoutStyle;
@@ -99,6 +104,24 @@ export type LayoutRow = {
     align?: LayoutStyle["align"];
     justify?: LayoutStyle["justify"];
     wrap?: boolean;
+    responsive?: {
+      tablet?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+      mobile?: {
+        display?: "grid" | "flex";
+        columns?: number;
+        gap?: number | string;
+        align?: LayoutStyle["align"];
+        justify?: LayoutStyle["justify"];
+        wrap?: boolean;
+      };
+    };
   };
   cols: LayoutCol[];
 };
@@ -174,11 +197,18 @@ export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
   "Atomic/Menu",
   "Atomic/Countdown",
   "Atomic/Embed",
+  "Atomic/Form",
   "Atomic/Group",
 ];
 
 export function createDefaultSectionProps(): LayoutSectionProps {
-  return { style: {}, rows: [] };
+  return {
+    style: {
+      display: "flex",
+      justify: "center",
+    },
+    rows: [],
+  };
 }
 
 export function createDefaultRow(): LayoutRow {
@@ -194,7 +224,10 @@ export function createDefaultRow(): LayoutRow {
       justify: "start",
       wrap: false,
     },
-    style: { padding: { top: 12, bottom: 12 } },
+    style: {
+      maxWidth: "1208px",
+      padding: { top: 12, bottom: 12 },
+    },
     cols: [createDefaultCol()],
   };
 }
@@ -357,6 +390,18 @@ export function createAtomicBlock(
         code: "",
         src: "",
         title: "Embed",
+      },
+      style: { width: "100%" },
+    };
+  }
+  if (type === "Atomic/Form") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        formId: "",
+        title: "",
+        submitText: "Submit",
       },
       style: { width: "100%" },
     };

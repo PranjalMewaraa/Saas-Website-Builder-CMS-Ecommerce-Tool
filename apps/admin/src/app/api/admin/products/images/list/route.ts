@@ -22,13 +22,26 @@ export async function GET(req: Request) {
   const conn = await pool.getConnection();
 
   try {
-    const [rows] = await conn.query(
-      `SELECT id, url, alt, sort_order, created_at
-       FROM product_images 
-       WHERE tenant_id = ? AND product_id = ?
-       ORDER BY sort_order ASC, created_at ASC`,
-      [tenant_id, product_id],
-    );
+    let rows: any[] = [];
+    try {
+      const [withVariant] = await conn.query(
+        `SELECT id, variant_id, url, alt, sort_order, created_at
+         FROM product_images 
+         WHERE tenant_id = ? AND product_id = ?
+         ORDER BY sort_order ASC, created_at ASC`,
+        [tenant_id, product_id],
+      );
+      rows = withVariant as any[];
+    } catch {
+      const [legacy] = await conn.query(
+        `SELECT id, url, alt, sort_order, created_at
+         FROM product_images 
+         WHERE tenant_id = ? AND product_id = ?
+         ORDER BY sort_order ASC, created_at ASC`,
+        [tenant_id, product_id],
+      );
+      rows = (legacy as any[]).map((r) => ({ ...r, variant_id: null }));
+    }
 
     return Response.json({
       ok: true,

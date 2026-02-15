@@ -27,6 +27,14 @@ export default async function ProductGridV1({
     limit,
   });
 
+  console.log("[ProductGrid:render]", {
+    tenantId,
+    storeId,
+    limit,
+    renderedCount: products.length,
+    productIds: products.map((p) => p.id),
+  });
+
   const maxWidthClass =
     {
       sm: "max-w-3xl",

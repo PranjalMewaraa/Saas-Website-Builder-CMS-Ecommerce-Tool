@@ -27,8 +27,27 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [selected, setSelected] = useState<Order | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+
+  async function loadOrderDetail(orderId: string) {
+    setDetailLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${encodeURIComponent(orderId)}?site_id=${encodeURIComponent(siteId)}`,
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok || !data?.order) {
+        throw new Error(data?.error || "Failed to load order detail");
+      }
+      setSelected(data.order);
+    } catch {
+      toast({ title: "Failed to load order details", variant: "error" });
+    } finally {
+      setDetailLoading(false);
+    }
+  }
 
   async function loadOrders() {
     if (!siteId) return;
@@ -39,10 +58,6 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
       const res = await fetch(`/api/admin/orders?${qs.toString()}`);
       const data = await res.json();
       setOrders(data.orders || []);
-      if (selected) {
-        const next = (data.orders || []).find((o: Order) => o._id === selected._id);
-        setSelected(next || null);
-      }
     } catch {
       toast({ title: "Failed to load orders", variant: "error" });
     } finally {
@@ -94,6 +109,10 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
           <h1 className="text-2xl font-semibold">Orders</h1>
           <p className="text-sm text-gray-500">
             Track and resolve orders for this site.
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Tip: click <b>View</b> to open full order details, items, shipping, and
+            update status.
           </p>
         </div>
         <div className="text-sm text-gray-500">
@@ -150,7 +169,7 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
               <div className="text-right">
                 <button
                   className="text-sm font-medium text-blue-600 hover:underline"
-                  onClick={() => setSelected(order)}
+                  onClick={() => loadOrderDetail(order._id)}
                 >
                   View
                 </button>
@@ -197,7 +216,8 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
                       body: JSON.stringify({ status: nextStatus }),
                     });
                     toast({ title: "Order status updated" });
-                    setSelected({ ...selected, status: nextStatus });
+                    await loadOrderDetail(selected._id);
+                    await loadOrders();
                   } catch {
                     toast({ title: "Failed to update order", variant: "error" });
                   }
@@ -253,20 +273,74 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
             </div>
 
             <div className="mt-4 border rounded-lg divide-y">
-              {selectedItems.map((item: any, i: number) => (
+              {detailLoading ? (
+                <div className="p-3 text-sm text-gray-500">Loading details...</div>
+              ) : null}
+              {selectedItems.map((item: any, i: number) => {
+                const lineTotal =
+                  item.line_total_cents != null
+                    ? Number(item.line_total_cents)
+                    : Number(item.price_cents || 0) * Number(item.qty || 0);
+                return (
                 <div
-                  key={`${item.product_id}-${i}`}
-                  className="p-3 text-sm flex items-center justify-between"
+                  key={`${item.id || item.product_id}-${i}`}
+                  className="p-3 text-sm flex items-center justify-between gap-3"
                 >
-                  <div>
-                    <div className="font-medium">{item.title}</div>
-                    <div className="text-xs text-gray-500">Qty {item.qty}</div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.title || "Product"}
+                        className="h-14 w-14 rounded object-cover border border-gray-200 shrink-0"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded border border-gray-200 bg-gray-50 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{item.title}</div>
+                      <div className="text-xs text-gray-500">
+                        SKU: {item.sku || "-"} · Qty {item.qty}
+                      </div>
+                      {item.slug ? (
+                        <div className="text-xs text-gray-500 truncate">/{item.slug}</div>
+                      ) : null}
+                      {(item.brand_name || (item.category_names || []).length) ? (
+                        <div className="text-xs text-gray-500 truncate">
+                          {item.brand_name ? `Brand: ${item.brand_name}` : ""}
+                          {item.brand_name && (item.category_names || []).length
+                            ? " · "
+                            : ""}
+                          {(item.category_names || []).length
+                            ? `Category: ${(item.category_names || []).join(", ")}`
+                            : ""}
+                        </div>
+                      ) : null}
+                      {item.variant_label ? (
+                        <div className="text-xs text-gray-500 truncate">
+                          {item.variant_label}
+                        </div>
+                      ) : null}
+                      {item.variant_options &&
+                      typeof item.variant_options === "object" &&
+                      Object.keys(item.variant_options).length &&
+                      !item.variant_label ? (
+                        <div className="text-xs text-gray-500 truncate">
+                          {Object.entries(item.variant_options)
+                            .map(([k, v]) => `${k}: ${String(v)}`)
+                            .join(" · ")}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="text-sm font-semibold">
-                    ${((item.price_cents || 0) / 100).toFixed(2)}
+                  <div className="text-sm font-semibold text-right shrink-0">
+                    <div>${(lineTotal / 100).toFixed(2)}</div>
+                    <div className="text-xs text-gray-500 font-normal">
+                      ${((item.price_cents || 0) / 100).toFixed(2)} each
+                    </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               {!selectedItems.length && (
                 <div className="p-3 text-sm text-gray-500">No items</div>
               )}

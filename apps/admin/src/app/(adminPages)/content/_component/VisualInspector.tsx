@@ -323,30 +323,30 @@ export function VisualInspector({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Select
                   label="Container"
-                value={overrides.container ?? "boxed"}
-                onChange={(v: string) => setStyle("container", v)}
-                options={["boxed", "full"]}
-              />
-              <Select
-                label="Max Width"
-                value={overrides.maxWidth ?? "xl"}
-                onChange={(v: string) => setStyle("maxWidth", v)}
-                options={["sm", "md", "lg", "xl", "2xl"]}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {(["top", "right", "bottom", "left"] as const).map((side) => (
-                <NumberField
-                  key={side}
-                  label={`Padding ${side.toUpperCase()}`}
-                  value={overrides.padding?.[side] ?? 0}
-                  onChange={(n: number) => setStyle(`padding.${side}`, n)}
+                  value={overrides.container ?? "boxed"}
+                  onChange={(v: string) => setStyle("container", v)}
+                  options={["boxed", "full"]}
                 />
-              ))}
-            </div>
+                <Select
+                  label="Max Width"
+                  value={overrides.maxWidth ?? "xl"}
+                  onChange={(v: string) => setStyle("maxWidth", v)}
+                  options={["sm", "md", "lg", "xl", "2xl"]}
+                />
+              </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(["top", "right", "bottom", "left"] as const).map((side) => (
+                  <NumberField
+                    key={side}
+                    label={`Padding ${side.toUpperCase()}`}
+                    value={overrides.padding?.[side] ?? 0}
+                    onChange={(n: number) => setStyle(`padding.${side}`, n)}
+                  />
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {(["top", "right", "bottom", "left"] as const).map((side) => (
                   <NumberField
                     key={side}
@@ -364,84 +364,86 @@ export function VisualInspector({
               <Select
                 label="Type"
                 value={overrides.bg?.type ?? "none"}
-              onChange={(v: string) => setStyle("bg.type", v)}
-              options={["none", "solid", "gradient", "image"]}
-            />
-
-            {overrides.bg?.type === "solid" && (
-              <ColorPickerInput
-                label="Color"
-                value={overrides.bg?.color ?? ""}
-                onChange={(v: string) => setStyle("bg.color", v)}
-                placeholder="#ffffff"
-                palette={themePalette}
+                onChange={(v: string) => setStyle("bg.type", v)}
+                options={["none", "solid", "gradient", "image"]}
               />
-            )}
 
-            {overrides.bg?.type === "gradient" && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {overrides.bg?.type === "solid" && (
                 <ColorPickerInput
-                  label="From"
-                  value={overrides.bg?.gradient?.from ?? ""}
-                  onChange={(v: string) => setStyle("bg.gradient.from", v)}
-                  placeholder="#0f172a"
+                  label="Color"
+                  value={overrides.bg?.color ?? ""}
+                  onChange={(v: string) => setStyle("bg.color", v)}
+                  placeholder="#ffffff"
                   palette={themePalette}
                 />
-                <ColorPickerInput
-                  label="To"
-                  value={overrides.bg?.gradient?.to ?? ""}
-                  onChange={(v: string) => setStyle("bg.gradient.to", v)}
-                  placeholder="#38bdf8"
-                  palette={themePalette}
-                />
-                <Select
-                  label="Direction"
-                  value={overrides.bg?.gradient?.direction ?? "to-r"}
-                  onChange={(v: string) => setStyle("bg.gradient.direction", v)}
-                  options={["to-r", "to-l", "to-b", "to-t"]}
-                />
-              </div>
-            )}
+              )}
 
-            {overrides.bg?.type === "image" && (
-              <div className="space-y-3">
-                <ImageField
-                  siteId={siteId}
-                  label="Background Image"
-                  assetIdValue={overrides.bg?.imageAssetId || ""}
-                  altValue=""
-                  assetsMap={assetsMap}
-                  onChangeAssetId={(v: any) => setStyle("bg.imageAssetId", v)}
-                  onChangeAssetUrl={(v: any) => setStyle("bg.imageUrl", v)}
-                  onChangeAlt={() => {}}
-                />
-                <ColorPickerInput
-                  label="Overlay Color"
-                  value={overrides.bg?.overlayColor ?? ""}
-                  onChange={(v: string) => setStyle("bg.overlayColor", v)}
-                  placeholder="rgba(0,0,0,0.4)"
-                  palette={themePalette}
-                />
-                <div className="space-y-1.5">
-                  <div className="text-sm font-medium">Overlay Opacity</div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={overrides.bg?.overlayOpacity ?? 0.35}
-                    onChange={(e) =>
-                      setStyle("bg.overlayOpacity", Number(e.target.value))
-                    }
-                    className="w-full"
+              {overrides.bg?.type === "gradient" && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <ColorPickerInput
+                    label="From"
+                    value={overrides.bg?.gradient?.from ?? ""}
+                    onChange={(v: string) => setStyle("bg.gradient.from", v)}
+                    placeholder="#0f172a"
+                    palette={themePalette}
                   />
-                  <div className="text-xs text-right text-muted-foreground">
-                    {(overrides.bg?.overlayOpacity ?? 0.35).toFixed(2)}
+                  <ColorPickerInput
+                    label="To"
+                    value={overrides.bg?.gradient?.to ?? ""}
+                    onChange={(v: string) => setStyle("bg.gradient.to", v)}
+                    placeholder="#38bdf8"
+                    palette={themePalette}
+                  />
+                  <Select
+                    label="Direction"
+                    value={overrides.bg?.gradient?.direction ?? "to-r"}
+                    onChange={(v: string) =>
+                      setStyle("bg.gradient.direction", v)
+                    }
+                    options={["to-r", "to-l", "to-b", "to-t"]}
+                  />
+                </div>
+              )}
+
+              {overrides.bg?.type === "image" && (
+                <div className="space-y-3">
+                  <ImageField
+                    siteId={siteId}
+                    label="Background Image"
+                    assetIdValue={overrides.bg?.imageAssetId || ""}
+                    altValue=""
+                    assetsMap={assetsMap}
+                    onChangeAssetId={(v: any) => setStyle("bg.imageAssetId", v)}
+                    onChangeAssetUrl={(v: any) => setStyle("bg.imageUrl", v)}
+                    onChangeAlt={() => {}}
+                  />
+                  <ColorPickerInput
+                    label="Overlay Color"
+                    value={overrides.bg?.overlayColor ?? ""}
+                    onChange={(v: string) => setStyle("bg.overlayColor", v)}
+                    placeholder="rgba(0,0,0,0.4)"
+                    palette={themePalette}
+                  />
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-medium">Overlay Opacity</div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={overrides.bg?.overlayOpacity ?? 0.35}
+                      onChange={(e) =>
+                        setStyle("bg.overlayOpacity", Number(e.target.value))
+                      }
+                      className="w-full"
+                    />
+                    <div className="text-xs text-right text-muted-foreground">
+                      {(overrides.bg?.overlayOpacity ?? 0.35).toFixed(2)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </Section>
 
           <Section id="color" title="Color & Border">

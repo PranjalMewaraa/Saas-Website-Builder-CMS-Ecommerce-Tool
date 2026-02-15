@@ -844,8 +844,10 @@ function BlockPropsForm({
               assetIdValue={bg.imageAssetId || ""}
               altValue={bg.imageAlt || ""}
               onChangeAssetId={(v: any) => setPropPath("bg.imageAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.imageUrl", v)}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
+              assetUrlValue={bg.imageUrl || ""}
             />
 
             <Field
@@ -885,8 +887,10 @@ function BlockPropsForm({
               assetIdValue={bg.videoAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.videoAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoUrl", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoUrl || ""}
             />
 
             <ImageField
@@ -895,8 +899,10 @@ function BlockPropsForm({
               assetIdValue={bg.posterAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.posterAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoPoster", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoPoster || ""}
             />
 
             <div className="grid grid-cols-2 gap-2">
@@ -976,6 +982,18 @@ function BlockPropsForm({
                 {bg.overlayOpacity ?? 0.45}
               </div>
             </label>
+          </div>
+        ) : null}
+
+        {variant === "basic" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm opacity-70">Basic Background</div>
+            <Field
+              label="Background Color"
+              value={bg.color || "#0f172a"}
+              onChange={(v: any) => setPropPath("bg.color", v)}
+              placeholder="#0f172a"
+            />
           </div>
         ) : null}
 
@@ -1062,7 +1080,18 @@ function Select({ label, value, onChange, options }: any) {
 function defaultPropsFor(type: string) {
   if (type === "Header/V1")
     return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
+    };
   if (type === "Hero")
     return {
       headline: "Headline",
@@ -1072,6 +1101,7 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Hero")
     return {
+      heroPreset: "Basic",
       variant: "basic", // basic | image | video
       headline: "Headline",
       subhead: "Subhead",
@@ -1084,6 +1114,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none", // none | image | video
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

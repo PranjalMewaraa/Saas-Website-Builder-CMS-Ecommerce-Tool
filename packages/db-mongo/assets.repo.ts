@@ -70,19 +70,20 @@ export async function listAssetsForSnapshot(
   const col = await assetsCollection();
   const docs = await col
     .find({ tenant_id, site_id, is_deleted: { $ne: true } })
-    .project({ _id: 1, url: 1, alt: 1, width: 1, height: 1, mime: 1 })
+    .project({ _id: 1, key: 1, url: 1, alt: 1, width: 1, height: 1, mime: 1 })
     .toArray();
 
-  return Object.fromEntries(
-    docs.map((a: any) => [
-      a._id,
-      {
-        url: a.url,
-        alt: a.alt || "",
-        width: a.width,
-        height: a.height,
-        mime: a.mime,
-      },
-    ])
-  );
+  const entries: [string, any][] = [];
+  for (const a of docs as any[]) {
+    const value = {
+      url: a.url,
+      alt: a.alt || "",
+      width: a.width,
+      height: a.height,
+      mime: a.mime,
+    };
+    if (a._id) entries.push([a._id, value]);
+    if (a.key && a.key !== a._id) entries.push([a.key, value]);
+  }
+  return Object.fromEntries(entries);
 }

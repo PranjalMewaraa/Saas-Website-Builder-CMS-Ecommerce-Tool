@@ -30,7 +30,7 @@ export async function createTenant(args: { tenant_id: string; plan?: string }) {
     _id: args.tenant_id,
     plan: args.plan || "free",
     entitlements: {
-      catalog: false,
+      catalog: true,
       builder: true,
       themes: true,
       menus: true,

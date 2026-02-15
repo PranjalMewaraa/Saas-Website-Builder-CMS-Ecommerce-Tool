@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@acme/auth";
 import { createSite } from "@acme/db-mongo/sites.repo";
+import { getOrCreateHomePage } from "@acme/db-mongo/pages.repo";
 import { updateTenantOnboarding } from "@acme/db-mongo/tenants.repo";
 
 function id(prefix: string) {
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
     name,
     handle,
   });
+  await getOrCreateHomePage(tenant_id, site_id);
 
   await updateTenantOnboarding(tenant_id, {
     completed: true,

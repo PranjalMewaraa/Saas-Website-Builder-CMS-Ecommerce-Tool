@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -82,18 +83,24 @@ const TEMPLATE_DEFAULT_SLUGS: Record<string, string> = {
 type Page = {
   _id: string;
   name?: string;
+  title?: string;
   slug: string;
 };
 
 interface Props {
   siteId: string;
+  showOnboardingGuide?: boolean;
 }
 
-export default function PagesClient({ siteId }: Props) {
+export default function PagesClient({ siteId, showOnboardingGuide = false }: Props) {
   const { prompt, toast } = useUI();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [pages, setPages] = useState<Page[]>([]);
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [onboardingGuideOpen, setOnboardingGuideOpen] =
+    useState(showOnboardingGuide);
 
   const [deleteModal, setDeleteModal] = useState<{
     open: boolean;
@@ -135,7 +142,7 @@ export default function PagesClient({ siteId }: Props) {
     if (!term) return pages;
     return pages.filter(
       (p) =>
-        (p.name || "").toLowerCase().includes(term) ||
+        (p.name || p.title || "").toLowerCase().includes(term) ||
         p.slug.toLowerCase().includes(term),
     );
   }, [pages, search]);
@@ -230,7 +237,7 @@ export default function PagesClient({ siteId }: Props) {
   async function duplicatePage(page: Page) {
     const newName = await prompt({
       title: "New page name",
-      defaultValue: `Copy of ${page.name || page.slug}`,
+      defaultValue: `Copy of ${page.name || page.title || page.slug}`,
       placeholder: "Page name",
       confirmText: "Continue",
     });
@@ -277,6 +284,14 @@ export default function PagesClient({ siteId }: Props) {
         });
       }
     });
+  }
+
+  function closeOnboardingGuide() {
+    setOnboardingGuideOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("onboarding");
+    const qs = params.toString();
+    router.replace(qs ? `/content/pages?${qs}` : "/content/pages");
   }
 
   return (
@@ -359,7 +374,7 @@ export default function PagesClient({ siteId }: Props) {
               >
                 <div className="min-w-0">
                   <div className="font-medium text-gray-900 truncate">
-                    {p.name || "Untitled Page"}
+                    {p.name || p.title || "Untitled Page"}
                   </div>
                   <div className="text-xs font-mono text-gray-500 mt-0.5 truncate">
                     {p.slug}
@@ -415,6 +430,49 @@ export default function PagesClient({ siteId }: Props) {
       {/* ────────────────────────────────────────────────
           Create Modal – more modern / shadcn-like
       ──────────────────────────────────────────────── */}
+      {onboardingGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-2xl">
+            <div className="px-7 py-6 border-b bg-gradient-to-b from-indigo-50/80 to-white">
+              <h2 className="text-2xl font-semibold text-gray-900">Welcome. Your site is ready.</h2>
+              <p className="mt-2 text-sm text-gray-600">
+                A default <strong>Home</strong> page (<code>/</code>) has been created. Follow these steps to launch quickly.
+              </p>
+            </div>
+            <div className="px-7 py-6 space-y-4 text-sm text-gray-700">
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <div className="font-semibold text-gray-900">Step 1: Create pages</div>
+                <div className="mt-1">Use <strong>New Page</strong> to add About, Contact, Product List, and Product Detail pages.</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <div className="font-semibold text-gray-900">Step 2: Build visually</div>
+                <div className="mt-1">Open any page and edit using the visual builder. Add sections, rows, columns, and blocks.</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <div className="font-semibold text-gray-900">Step 3: Setup menus and forms</div>
+                <div className="mt-1">Go to <strong>Content → Menus</strong> and <strong>Content → Forms</strong>, then connect them in Header/Footer and Form blocks.</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <div className="font-semibold text-gray-900">Step 4: Setup store catalog</div>
+                <div className="mt-1">Create store, brands, categories, attributes, and products before publishing.</div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4">
+                <div className="font-semibold text-gray-900">Step 5: Publish</div>
+                <div className="mt-1">When ready, go to <strong>Content → Publish</strong> to push your draft live.</div>
+              </div>
+            </div>
+            <div className="px-7 py-5 border-t bg-gray-50/70 flex justify-end">
+              <button
+                onClick={closeOnboardingGuide}
+                className="px-5 py-2.5 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+              >
+                Got it, continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200/70 overflow-hidden transform transition-all scale-100">

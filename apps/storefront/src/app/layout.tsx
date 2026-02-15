@@ -32,7 +32,7 @@ export async function resolveSite() {
     if (site) return site;
   }
 
-  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "nikee");
+  return getSiteByHandle(process.env.DEFAULT_SITE_HANDLE || "prerana");
 }
 
 export async function generateMetadata(): Promise<Metadata> {

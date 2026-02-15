@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import ImageField from "./ImageField";
 import ColorPickerInput from "./ColorPickerInput";
 
@@ -86,6 +87,48 @@ const ROW_PRESET_PREVIEWS: Record<
     cols: 3,
   },
 };
+
+const ICON_OPTIONS = [
+  "ShoppingBag",
+  "ShoppingCart",
+  "Tag",
+  "Gift",
+  "Sparkles",
+  "Star",
+  "BadgePercent",
+  "CreditCard",
+  "Truck",
+  "Package",
+  "Heart",
+  "ThumbsUp",
+  "ArrowRight",
+  "ArrowUpRight",
+  "ChevronRight",
+  "Link",
+  "Mail",
+  "Phone",
+  "MessageCircle",
+  "Info",
+  "HelpCircle",
+  "Shield",
+  "Lock",
+  "User",
+  "Users",
+  "Globe",
+  "MapPin",
+  "Clock",
+  "Calendar",
+  "Camera",
+  "Play",
+  "Video",
+  "Image",
+  "Search",
+  "Filter",
+  "Plus",
+  "Minus",
+  "Check",
+  "X",
+];
 
 
 const CARD_PRESETS = {
@@ -339,6 +382,7 @@ export default function LayoutInspector({
   siteId,
   assetsMap,
   menus = [],
+  forms = [],
   themePalette = [],
   onDeleteBlock,
   onChangeBlock,
@@ -348,6 +392,7 @@ export default function LayoutInspector({
   siteId: string;
   assetsMap: any;
   menus?: any[];
+  forms?: any[];
   themePalette?: string[];
   onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
@@ -369,6 +414,10 @@ export default function LayoutInspector({
 
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : createDefaultSectionProps();
+  const formOptions = (forms || []).map((f: any) => ({
+    value: f._id,
+    label: f.name ? `${f.name} — ${f._id}` : f._id,
+  }));
 
   function applyUpdate(mutator: (draft: LayoutSectionProps) => void) {
     const next = structuredClone(props);
@@ -609,6 +658,22 @@ export default function LayoutInspector({
           }
         />
 
+        <ResponsiveRowLayoutFields
+          row={row}
+          onChange={(bp, patch) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.responsive = target.layout.responsive || {};
+              target.layout.responsive[bp] = {
+                ...(target.layout.responsive[bp] || {}),
+                ...patch,
+              };
+            })
+          }
+        />
+
         <StyleFields
           style={row.style}
           palette={themePalette}
@@ -720,6 +785,11 @@ export default function LayoutInspector({
               onChangeAlt={(v: any) =>
                 updateAtomic((draftAtom) => {
                   draftAtom.props = { ...draftAtom.props, alt: v };
+                })
+              }
+              onChangeAssetUrl={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
                 })
               }
               assetsMap={assetsMap}
@@ -857,15 +927,14 @@ export default function LayoutInspector({
 
         {atom.type === "Atomic/Icon" && (
           <>
-            <Field
+            <IconPicker
               label="Icon"
-              value={atom.props?.icon || "★"}
+              value={atom.props?.icon || ""}
               onChange={(v) =>
                 updateAtomic((draftAtom) => {
                   draftAtom.props = { ...draftAtom.props, icon: v };
                 })
               }
-              placeholder="★"
             />
             <UnitField
               label="Size"
@@ -954,6 +1023,53 @@ export default function LayoutInspector({
           </>
         )}
 
+        {atom.type === "Atomic/Form" && (
+          <>
+            {formOptions.length ? (
+              <Select
+                label="Form"
+                value={atom.props?.formId || ""}
+                options={formOptions}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+              />
+            ) : (
+              <Field
+                label="Form Id"
+                value={atom.props?.formId || ""}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+                placeholder="form_xxx"
+              />
+            )}
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+            <Field
+              label="Submit Text"
+              value={atom.props?.submitText || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, submitText: v };
+                })
+              }
+              placeholder="Submit"
+            />
+          </>
+        )}
+
         {atom.type === "Atomic/Badge" && (
           <>
             <Select
@@ -990,9 +1106,9 @@ export default function LayoutInspector({
               }
             />
             {!atom.props?.ordered && (
-              <Field
+              <IconPicker
                 label="Icon"
-                value={atom.props?.icon || "•"}
+                value={atom.props?.icon || ""}
                 onChange={(v) =>
                   updateAtomic((draftAtom) => {
                     draftAtom.props = { ...draftAtom.props, icon: v };
@@ -1479,6 +1595,94 @@ export default function LayoutInspector({
   return null;
 }
 
+function IconPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const items = ICON_OPTIONS.filter((name) =>
+    name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const Current = value ? (LucideIcons as any)[value] : null;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
+      <button
+        type="button"
+        className="w-full border rounded-lg px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-2">
+          {Current ? <Current className="h-4 w-4" /> : null}
+          <span className="text-sm text-gray-700">{value || "None"}</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? "Close" : "Pick"}</span>
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Pick an icon</div>
+              <button
+                type="button"
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <input
+              className="mt-3 w-full border rounded-md px-2 py-1.5 text-sm"
+              placeholder="Search icons"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="mt-3 max-h-64 overflow-auto grid grid-cols-6 gap-2">
+              <button
+                type="button"
+                className="border rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+                title="None"
+              >
+                None
+              </button>
+              {items.map((name) => {
+                const Icon = (LucideIcons as any)[name];
+                if (!Icon) return null;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className="border rounded-md px-2 py-2 text-xs hover:bg-gray-50 flex items-center justify-center"
+                    onClick={() => {
+                      onChange(name);
+                      setOpen(false);
+                    }}
+                    title={name}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function Field({
   label,
   value,
@@ -1647,7 +1851,7 @@ function Select({
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: Array<string | { label: string; value: string }>;
   onChange: (val: string) => void;
 }) {
   return (
@@ -1658,11 +1862,20 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
+        {options.map((o) => {
+          if (typeof o === "string") {
+            return (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            );
+          }
+          return (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          );
+        })}
       </select>
     </label>
   );
@@ -1689,6 +1902,102 @@ function Checkbox({
   );
 }
 
+function ResponsiveRowLayoutFields({
+  row,
+  onChange,
+}: {
+  row: any;
+  onChange: (
+    bp: "tablet" | "mobile",
+    patch: {
+      display?: "grid" | "flex";
+      columns?: number;
+      gap?: number | string;
+      align?: "start" | "center" | "end" | "stretch";
+      justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+      wrap?: boolean;
+    },
+  ) => void;
+}) {
+  const [bp, setBp] = useState<"tablet" | "mobile">("tablet");
+  const override = row.layout?.responsive?.[bp] || {};
+  const display = override.display || row.layout?.display || "grid";
+
+  return (
+    <details className="border rounded-lg p-3 bg-white shadow-sm">
+      <summary className="cursor-pointer text-sm font-medium">
+        Responsive Row Layout
+      </summary>
+      <div className="mt-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-[11px] text-gray-500">
+          Set only what should change on {bp}. Everything else inherits desktop.
+        </div>
+
+        <Select
+          label="Display"
+          value={display}
+          options={["grid", "flex"]}
+          onChange={(v) => onChange(bp, { display: v as "grid" | "flex" })}
+        />
+
+        {display === "grid" ? (
+          <NumberField
+            label="Columns"
+            value={Number(override.columns || 0)}
+            onChange={(n) => onChange(bp, { columns: n || undefined })}
+          />
+        ) : (
+          <Checkbox
+            label="Wrap"
+            value={!!override.wrap}
+            onChange={(v) => onChange(bp, { wrap: v })}
+          />
+        )}
+
+        <UnitField
+          label="Gap"
+          value={override.gap || ""}
+          onChange={(v) => onChange(bp, { gap: v })}
+          placeholder="16"
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Align"
+            value={override.align || row.layout?.align || "stretch"}
+            options={["start", "center", "end", "stretch"]}
+            onChange={(v) => onChange(bp, { align: v as any })}
+          />
+          <Select
+            label="Justify"
+            value={override.justify || row.layout?.justify || "start"}
+            options={["start", "center", "end", "between", "around", "evenly"]}
+            onChange={(v) => onChange(bp, { justify: v as any })}
+          />
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function StyleFields({
   style,
   palette = [],
@@ -1702,15 +2011,24 @@ function StyleFields({
   assetsMap?: any;
   onChange: (next: any) => void;
 }) {
-  const s = style || {};
+  const [bp, setBp] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const root = style || {};
+  const s =
+    bp === "desktop"
+      ? root
+      : root?.responsive?.[bp] || {};
   const resolvedBg =
     s.bg ?? (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
   const bgType = resolvedBg.type || "none";
 
   function set(path: string, val: any) {
-    const next = structuredClone(s);
+    const next = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? next
+        : (((next.responsive ||= {})[bp] ||= {}) as Record<string, any>);
     const parts = path.split(".");
-    let cur = next;
+    let cur = target;
     for (let i = 0; i < parts.length - 1; i++) {
       cur = cur[parts[i]] ??= {};
     }
@@ -1719,21 +2037,49 @@ function StyleFields({
   }
 
   function setBg(next: any) {
-    const updated = structuredClone(s);
-    updated.bg = { ...(updated.bg || {}), ...next };
+    const updated = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? updated
+        : (((updated.responsive ||= {})[bp] ||= {}) as Record<string, any>);
+    target.bg = { ...(target.bg || {}), ...next };
     if (next.type === "none") {
-      updated.bgColor = undefined;
+      target.bgColor = undefined;
     }
     if (next.type === "solid") {
-      const color = next.color ?? updated.bg?.color;
-      if (color) updated.bgColor = color;
+      const color = next.color ?? target.bg?.color;
+      if (color) target.bgColor = color;
     }
     onChange(updated);
   }
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-medium">Style</div>
+      <div className="space-y-2">
+        <div className="text-sm font-medium">Style</div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["desktop", "tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+        {bp !== "desktop" ? (
+          <div className="text-[11px] text-gray-500">
+            Editing {bp} override. Empty fields inherit desktop values.
+          </div>
+        ) : null}
+      </div>
 
       <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">

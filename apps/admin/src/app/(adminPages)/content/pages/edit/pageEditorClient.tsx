@@ -338,7 +338,9 @@ export default function PageEditorClient({
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b pb-4 pt-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">{page.name || page.slug}</h1>
+            <h1 className="text-2xl font-semibold">
+              {page.name || page.title || page.slug}
+            </h1>
             <p className="text-sm text-muted-foreground">
               Site: {siteId} · Page: {page.slug}
             </p>
@@ -463,6 +465,7 @@ export default function PageEditorClient({
                 }
                 assetsMap={assetsMap}
                 menus={menus}
+                forms={Object.fromEntries((forms || []).map((f: any) => [f._id, f]))}
                 showGrid={showGrid}
                 showOutlines={showOutlines}
                 zoom={zoom}
@@ -488,6 +491,7 @@ export default function PageEditorClient({
                     siteId={siteId}
                     assetsMap={assetsMap}
                     menus={menus}
+                    forms={forms}
                     themePalette={themePalette}
                     onDeleteBlock={(id: string) => {
                       const idx = blocks.findIndex((b: any) => b.id === id);
@@ -837,9 +841,21 @@ function defaultPropsFor(type: string) {
       ctaSecondaryHref: "/about",
       contentWidth: "xl",
     };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
+    };
   if (type === "Hero/V1")
     return {
+      heroPreset: "Basic",
       variant: "basic",
       headline: "Headline",
       subhead: "Subhead",
@@ -852,6 +868,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none",
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",
@@ -1039,7 +1056,10 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Layout/Section")
     return {
-      style: {},
+      style: {
+        display: "flex",
+        justify: "center",
+      },
       rows: [],
     };
   return {};

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -33,6 +34,10 @@ export function BlockPropsForm({
   const [richMode, setRichMode] = useState<"visual" | "html">("visual");
   const assignedHeader = menus.find((m: any) => m.slot === "header");
   const assignedFooter = menus.find((m: any) => m.slot === "footer");
+  const formOptions = (forms || []).map((f: any) => ({
+    value: f._id,
+    label: f.name ? `${f.name} — ${f._id}` : f._id,
+  }));
 
   useEffect(() => {
     if (type === "Header/V1" && !props.menuId && assignedHeader?._id) {
@@ -100,6 +105,55 @@ export function BlockPropsForm({
           value={props.ctaHref || ""}
           onChange={(v: any) => setProp("ctaHref", v)}
           placeholder="/products"
+        />
+        <IconPicker
+          label="ctaIcon"
+          value={props.ctaIcon || ""}
+          onChange={(v: any) => setProp("ctaIcon", v)}
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="ctaSecondaryText"
+            value={props.ctaSecondaryText || ""}
+            onChange={(v: any) => setProp("ctaSecondaryText", v)}
+            placeholder="Learn more"
+          />
+          <Field
+            label="ctaSecondaryHref"
+            value={props.ctaSecondaryHref || ""}
+            onChange={(v: any) => setProp("ctaSecondaryHref", v)}
+            placeholder="/about"
+          />
+          <IconPicker
+            label="ctaSecondaryIcon"
+            value={props.ctaSecondaryIcon || ""}
+            onChange={(v: any) => setProp("ctaSecondaryIcon", v)}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="ctaTertiaryText"
+            value={props.ctaTertiaryText || ""}
+            onChange={(v: any) => setProp("ctaTertiaryText", v)}
+            placeholder="Contact"
+          />
+          <Field
+            label="ctaTertiaryHref"
+            value={props.ctaTertiaryHref || ""}
+            onChange={(v: any) => setProp("ctaTertiaryHref", v)}
+            placeholder="/contact"
+          />
+          <IconPicker
+            label="ctaTertiaryIcon"
+            value={props.ctaTertiaryIcon || ""}
+            onChange={(v: any) => setProp("ctaTertiaryIcon", v)}
+          />
+        </div>
+        <Select
+          label="Layout"
+          value={props.layout || "three-col"}
+          onChange={(v: any) => setProp("layout", v)}
+          options={["three-col", "two-col", "two-col-nav-cta"]}
         />
         <Select
           label="Width"
@@ -179,6 +233,29 @@ export function BlockPropsForm({
 
   if (type === "Footer/V1") {
     const panelBg = props.panelBg || { type: "gradient" };
+    const footerMenuGroups = Array.isArray(props.menuGroups)
+      ? props.menuGroups
+      : props.menuId
+        ? [
+            {
+              menuId: props.menuId,
+              title: "Links",
+              textSize: "sm",
+              textStyle: "normal",
+            },
+          ]
+        : [];
+    const applyFooterMenuGroups = (nextGroups: any[]) => {
+      setProp("menuGroups", nextGroups);
+      if ((!props.menuId || !props.menuId.trim()) && nextGroups[0]?.menuId) {
+        setProp("menuId", nextGroups[0].menuId);
+      }
+    };
+    const updateFooterMenuGroup = (idx: number, patch: Record<string, any>) => {
+      const next = [...footerMenuGroups];
+      next[idx] = { ...(next[idx] || {}), ...patch };
+      applyFooterMenuGroups(next);
+    };
     const footerPresets = [
       {
         id: "midnight",
@@ -424,9 +501,141 @@ export function BlockPropsForm({
     ];
     return (
       <div className="space-y-3">
+        <div className="space-y-2 border rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Menu Sections</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
+              onClick={() => {
+                const fallbackMenuId = props.menuId || assignedFooter?._id || "";
+                const defaultMenuId =
+                  fallbackMenuId || menus?.[0]?._id || "";
+                applyFooterMenuGroups([
+                  ...footerMenuGroups,
+                  {
+                    menuId: defaultMenuId,
+                    title: `Links ${footerMenuGroups.length + 1}`,
+                    textSize: "sm",
+                    textStyle: "normal",
+                  },
+                ]);
+              }}
+            >
+              Add Menu Section
+            </button>
+          </div>
+          {footerMenuGroups.length ? (
+            <div className="space-y-3">
+              {footerMenuGroups.map((group: any, idx: number) => (
+                <div key={`footer-menu-group-${idx}`} className="border rounded p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Section {idx + 1}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={idx === 0}
+                        onClick={() => {
+                          const next = [...footerMenuGroups];
+                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                          applyFooterMenuGroups(next);
+                        }}
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={idx === footerMenuGroups.length - 1}
+                        onClick={() => {
+                          const next = [...footerMenuGroups];
+                          [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                          applyFooterMenuGroups(next);
+                        }}
+                      >
+                        Down
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs border rounded px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => {
+                          applyFooterMenuGroups(
+                            footerMenuGroups.filter((_: any, i: number) => i !== idx),
+                          );
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                  {menus.length ? (
+                    <label className="block space-y-1">
+                      <div className="text-xs font-medium">Menu</div>
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 text-sm"
+                        value={group.menuId || ""}
+                        onChange={(e) =>
+                          updateFooterMenuGroup(idx, { menuId: e.target.value })
+                        }
+                      >
+                        <option value="">(select a menu)</option>
+                        {menus.map((m: any) => (
+                          <option key={m._id} value={m._id}>
+                            {m.name}
+                            {m.slot ? ` (${m.slot})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <Field
+                      label="Menu ID"
+                      value={group.menuId || ""}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { menuId: v })
+                      }
+                      placeholder="menu_footer"
+                    />
+                  )}
+                  <Field
+                    label="Section Title"
+                    value={group.title || ""}
+                    onChange={(v: any) => updateFooterMenuGroup(idx, { title: v })}
+                    placeholder={`Links ${idx + 1}`}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Select
+                      label="Text Size"
+                      value={group.textSize || "sm"}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { textSize: v })
+                      }
+                      options={["xs", "sm", "base"]}
+                    />
+                    <Select
+                      label="Text Style"
+                      value={group.textStyle || "normal"}
+                      onChange={(v: any) =>
+                        updateFooterMenuGroup(idx, { textStyle: v })
+                      }
+                      options={["normal", "medium", "semibold"]}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              Add one or more menu sections. Each section can use a different menu and title.
+            </div>
+          )}
+        </div>
         {menus.length ? (
           <label className="block space-y-1.5">
-            <div className="text-sm font-medium">Menu</div>
+            <div className="text-sm font-medium">Fallback Menu (legacy)</div>
             <select
               className="w-full border rounded-lg px-3 py-2 text-sm"
               value={props.menuId || ""}
@@ -857,6 +1066,12 @@ export function BlockPropsForm({
     return (
       <div className="space-y-3">
         <Select
+          label="Hero Preset"
+          value={props.heroPreset || "Basic"}
+          onChange={(v: any) => setProp("heroPreset", v)}
+          options={["Basic", "Advanced"]}
+        />
+        <Select
           label="Variant"
           value={variant}
           onChange={(v: any) => {
@@ -929,14 +1144,9 @@ export function BlockPropsForm({
               assetIdValue={bg.imageAssetId || ""}
               altValue={bg.imageAlt || ""}
               onChangeAssetId={(v: any) => {
-                console.log("Id", v);
-
                 setPropPath("bg.imageAssetId", v);
-                setPropPath(
-                  "bg.imageUrl",
-                  `https://d64ppqfrcykxw.cloudfront.net/${v}`,
-                );
               }}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.imageUrl", v)}
               onChangeAlt={(v: any) => setPropPath("bg.imageAlt", v)}
               assetsMap={assetsMap}
               assetUrlValue={assetUrlValue || bg.imageUrl || DEFAULT_IMAGE}
@@ -979,8 +1189,10 @@ export function BlockPropsForm({
               assetIdValue={bg.videoAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.videoAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoUrl", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoUrl || ""}
             />
 
             <ImageField
@@ -989,8 +1201,10 @@ export function BlockPropsForm({
               assetIdValue={bg.posterAssetId || ""}
               altValue={""}
               onChangeAssetId={(v: any) => setPropPath("bg.posterAssetId", v)}
+              onChangeAssetUrl={(v: any) => setPropPath("bg.videoPoster", v)}
               onChangeAlt={() => {}}
               assetsMap={assetsMap}
+              assetUrlValue={bg.videoPoster || ""}
             />
 
             <div className="grid grid-cols-2 gap-2">
@@ -1070,6 +1284,18 @@ export function BlockPropsForm({
                 {bg.overlayOpacity ?? 0.45}
               </div>
             </label>
+          </div>
+        ) : null}
+
+        {variant === "basic" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm opacity-70">Basic Background</div>
+            <ColorPickerInput
+              label="Background Color"
+              value={bg.color || "#0f172a"}
+              onChange={(v: any) => setPropPath("bg.color", v)}
+              placeholder="#0f172a"
+            />
           </div>
         ) : null}
 
@@ -1567,6 +1793,140 @@ export function BlockPropsForm({
     </div>
   );
 }
+
+const ICON_OPTIONS = [
+  "ShoppingBag",
+  "ShoppingCart",
+  "Tag",
+  "Gift",
+  "Sparkles",
+  "Star",
+  "BadgePercent",
+  "CreditCard",
+  "Truck",
+  "Package",
+  "Heart",
+  "ThumbsUp",
+  "ArrowRight",
+  "ArrowUpRight",
+  "ChevronRight",
+  "Link",
+  "Mail",
+  "Phone",
+  "MessageCircle",
+  "Info",
+  "HelpCircle",
+  "Shield",
+  "Lock",
+  "User",
+  "Users",
+  "Globe",
+  "MapPin",
+  "Clock",
+  "Calendar",
+  "Camera",
+  "Play",
+  "Video",
+  "Image",
+  "Search",
+  "Filter",
+  "Plus",
+  "Minus",
+  "Check",
+  "X",
+];
+
+function IconPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const items = ICON_OPTIONS.filter((name) =>
+    name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const Current = value ? (LucideIcons as any)[value] : null;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
+      <button
+        type="button"
+        className="w-full border rounded-lg px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-2">
+          {Current ? <Current className="h-4 w-4" /> : null}
+          <span className="text-sm text-gray-700">
+            {value || "None"}
+          </span>
+        </div>
+        <span className="text-xs text-gray-500">
+          {open ? "Close" : "Pick"}
+        </span>
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Pick an icon</div>
+              <button
+                type="button"
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <input
+              className="mt-3 w-full border rounded-md px-2 py-1.5 text-sm"
+              placeholder="Search icons"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="mt-3 max-h-64 overflow-auto grid grid-cols-6 gap-2">
+              <button
+                type="button"
+                className="border rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+                title="None"
+              >
+                None
+              </button>
+              {items.map((name) => {
+                const Icon = (LucideIcons as any)[name];
+                if (!Icon) return null;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className="border rounded-md px-2 py-2 text-xs hover:bg-gray-50 flex items-center justify-center"
+                    onClick={() => {
+                      onChange(name);
+                      setOpen(false);
+                    }}
+                    title={name}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 function Field({ label, value, onChange, placeholder }: any) {
   return (
     <label className="block space-y-1.5">
@@ -1884,6 +2244,14 @@ function defaultPropsFor(type: string) {
   if (type === "Footer/V1")
     return {
       menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
       layout: "multi-column",
       description: "Building better digital experiences since 2023.",
       badgeText: "Designed for modern storefronts",
@@ -1892,6 +2260,7 @@ function defaultPropsFor(type: string) {
     };
   if (type === "Hero/V1")
     return {
+      heroPreset: "Basic",
       variant: "basic",
       headline: "Headline",
       subhead: "Subhead",
@@ -1904,6 +2273,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none",
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

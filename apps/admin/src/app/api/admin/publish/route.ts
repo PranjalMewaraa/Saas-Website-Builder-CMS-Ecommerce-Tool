@@ -18,6 +18,18 @@ function newSnapshotId(site_id: string) {
   return `snap_${site_id}_${Date.now()}`;
 }
 
+function normalizeLocalOrigin(raw: string) {
+  try {
+    const u = new URL(raw);
+    if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+      u.protocol = "http:";
+    }
+    return u.origin;
+  } catch {
+    return "http://localhost:3002";
+  }
+}
+
 type SiteDocLoose = {
   _id: any;
   tenant_id: string;
@@ -111,10 +123,11 @@ export async function POST(req: Request) {
     { $set: { published_snapshot_id: snapshot_id, updated_at: new Date() } },
   );
 
-  const STOREFRONT_BASE_URL =
-    process.env.STOREFRONT_BASE_URL || "http://localhost:3002";
+  const STOREFRONT_BASE_URL = normalizeLocalOrigin(
+    process.env.STOREFRONT_BASE_URL || "http://localhost:3002",
+  );
 
-  const storefront_url = `${STOREFRONT_BASE_URL}/?handle=${site.handle}`;
+  const storefront_url = `${STOREFRONT_BASE_URL}/?handle=${encodeURIComponent(site.handle)}&sid=${encodeURIComponent(site_id)}`;
 
   return NextResponse.json({
     ok: true,

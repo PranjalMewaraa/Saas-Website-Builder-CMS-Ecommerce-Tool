@@ -9,12 +9,34 @@ export async function ensureCommercePages(tenant_id: string, site_id: string) {
 
   async function ensurePage(slug: string, title: string, layout: any) {
     const existing = await col.findOne({ tenant_id, site_id, slug });
-    if (existing) return;
+    if (existing) {
+      const existingTitle = String(
+        (existing as any).name || existing.title || "",
+      )
+        .trim()
+        .toLowerCase();
+      const shouldFixTitle =
+        !existingTitle ||
+        existingTitle === "untitled" ||
+        existingTitle === "untitled page";
+      const patch: any = { updated_at: new Date() };
+      if (shouldFixTitle) {
+        patch.name = title;
+        patch.title = title;
+        patch["seo.title"] = title;
+      }
+      if (!existing.draft_layout) {
+        patch.draft_layout = layout;
+      }
+      await col.updateOne({ _id: existing._id }, { $set: patch });
+      return;
+    }
     await col.insertOne({
       _id: newPageId(),
       tenant_id,
       site_id,
       slug,
+      name: title,
       title,
       draft_layout: layout,
       seo: { title, description: "" },
@@ -38,6 +60,41 @@ export async function ensureCommercePages(tenant_id: string, site_id: string) {
       responsive: {},
     },
   };
+
+  await ensurePage("/", "Home", {
+    version: 1,
+    sections: [
+      {
+        id: "sec_home_main",
+        label: "Home",
+        blocks: [
+          headerBlock,
+          {
+            id: `b_${Date.now()}_hero`,
+            type: "Hero/V1",
+            props: {
+              title: "Welcome to your store",
+              subtitle: "Discover products curated for you.",
+              ctaText: "Shop now",
+              ctaHref: "/products",
+            },
+            style: { overrides: {}, responsive: {} },
+          },
+          {
+            id: `b_${Date.now()}_grid`,
+            type: "ProductGrid/V1",
+            props: {
+              title: "Featured Products",
+              limit: 8,
+              detailPathPrefix: "/products",
+            },
+            style: { overrides: {}, responsive: {} },
+          },
+          footerBlock,
+        ],
+      },
+    ],
+  });
 
   await ensurePage("/products", "Products", {
     version: 1,

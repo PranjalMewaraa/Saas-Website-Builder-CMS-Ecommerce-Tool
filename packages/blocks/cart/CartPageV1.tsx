@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useCartOptional } from "./cart-context";
+import type { CartItem } from "./cart-context";
 
 type Props = {
   title?: string;
@@ -14,9 +15,10 @@ type Props = {
   __editor?: boolean;
 };
 
-const DEMO_ITEMS = [
+const DEMO_ITEMS: CartItem[] = [
   {
     product_id: "p_1",
+    variant_id: undefined,
     title: "Everyday Backpack",
     price_cents: 12900,
     image:
@@ -25,6 +27,7 @@ const DEMO_ITEMS = [
   },
   {
     product_id: "p_2",
+    variant_id: undefined,
     title: "Stoneware Mug",
     price_cents: 2400,
     image:
@@ -113,6 +116,9 @@ export default function CartPageV1({
                 <div className="text-sm font-medium text-slate-900">
                   {item.title}
                 </div>
+                {item.variant_label ? (
+                  <div className="mt-0.5 text-xs text-slate-500">{item.variant_label}</div>
+                ) : null}
                 <div className="mt-1 text-xs text-slate-500">
                   ${(item.price_cents / 100).toFixed(2)}
                 </div>
@@ -285,13 +291,29 @@ export default function CartPageV1({
                   if (!cart) return;
                   try {
                     setCreating(true);
+                    const validateRes = await fetch("/api/v2/cart/validate", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        site_id: siteHint.site_id,
+                        handle: siteHint.handle,
+                        items: cart.items,
+                      }),
+                    });
+                    if (validateRes.ok) {
+                      const vData = await validateRes.json();
+                      const invalid = (vData.items || []).find((i: any) => !i.ok);
+                      if (invalid) {
+                        throw new Error("Some items are out of stock");
+                      }
+                    }
                     if (typeof window !== "undefined") {
                       window.localStorage.setItem(
                         "cart_customer_info",
                         JSON.stringify(form)
                       );
                     }
-                    const res = await fetch("/api/orders", {
+                    let res = await fetch("/api/v2/orders", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
@@ -315,6 +337,33 @@ export default function CartPageV1({
                         },
                       }),
                     });
+                    if (!res.ok) {
+                      // Legacy fallback path
+                      res = await fetch("/api/orders", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          items: cart.items,
+                          subtotal_cents: cart.subtotal_cents,
+                          total_cents: cart.total_cents,
+                          site_id: siteHint.site_id,
+                          handle: siteHint.handle,
+                          customer: {
+                            name: form.name,
+                            email: form.email,
+                            phone: form.phone,
+                          },
+                          shipping_address: {
+                            address1: form.address1,
+                            address2: form.address2,
+                            city: form.city,
+                            state: form.state,
+                            zip: form.zip,
+                            country: form.country,
+                          },
+                        }),
+                      });
+                    }
                     const data = await res.json();
                     if (data?.order_number) {
                       setOrderNumber(data.order_number);

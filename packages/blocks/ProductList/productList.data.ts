@@ -7,7 +7,12 @@ export type StorefrontProduct = {
   compare_at_price_cents: number | null;
   brand_id: string | null;
   categories: string[];
-  images: Array<{ url: string; alt: string | null; sort_order: number }>;
+  images: Array<{
+    url: string;
+    alt: string | null;
+    sort_order: number;
+    variant_id?: string | null;
+  }>;
   variants: Array<{
     id: string;
     sku: string | null;
@@ -32,6 +37,27 @@ export type ProductFilterMeta = {
   priceMin: number;
   priceMax: number;
 };
+
+function parseOptionsJson(raw: any): Record<string, string> {
+  if (!raw) return {};
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed)) {
+    const key = String(k || "").trim();
+    const value = v == null ? "" : String(v).trim();
+    if (!key || !value) continue;
+    out[key] = value;
+  }
+  return out;
+}
 
 export async function getStoreFilterMeta(args: {
   tenant_id: string;
@@ -76,6 +102,21 @@ export async function getStoreFilterMeta(args: {
     [args.tenant_id, args.store_id],
   );
 
+  const [storeCategoryRows] = await pool.query<any[]>(
+    `
+    SELECT DISTINCT sc.id, sc.name, sc.parent_id
+    FROM store_products sp
+    JOIN products p ON p.id = sp.product_id AND p.tenant_id = sp.tenant_id
+    JOIN store_categories sc ON sc.id = p.store_category_id AND sc.tenant_id = p.tenant_id
+    WHERE sp.tenant_id = ?
+      AND sp.store_id = ?
+      AND sp.is_published = 1
+      AND p.status = 'active'
+    ORDER BY sc.name ASC
+    `,
+    [args.tenant_id, args.store_id],
+  );
+
   const [[priceRow]] = await pool.query<any[]>(
     `
     SELECT MIN(p.base_price_cents) as min_price, MAX(p.base_price_cents) as max_price
@@ -109,6 +150,26 @@ export async function getStoreFilterMeta(args: {
     [args.tenant_id, args.store_id],
   );
 
+  const [attrRowsV2] = await pool.query<any[]>(
+    `
+    SELECT 
+      a.code,
+      a.name,
+      a.type,
+      COALESCE(v.value_text, v.value_number, v.value_bool, v.value_color, v.value_date) as value,
+      v.value_json
+    FROM store_products sp
+    JOIN products p ON p.id = sp.product_id AND p.tenant_id = sp.tenant_id
+    JOIN store_product_attribute_values v ON v.product_id = p.id AND v.tenant_id = p.tenant_id AND v.store_id = sp.store_id
+    JOIN store_category_attributes a ON a.id = v.attribute_id
+    WHERE sp.tenant_id = ?
+      AND sp.store_id = ?
+      AND sp.is_published = 1
+      AND p.status = 'active'
+    `,
+    [args.tenant_id, args.store_id],
+  );
+
   const attrMap = new Map<
     string,
     { code: string; name: string; values: Set<string> }
@@ -123,11 +184,25 @@ export async function getStoreFilterMeta(args: {
     }
     attrMap.get(code)!.values.add(value);
   }
+  for (const row of attrRowsV2) {
+    const code = String(row.code);
+    const name = String(row.name || row.code);
+    const value = row.value_json
+      ? JSON.stringify(JSON.parse(String(row.value_json)))
+      : row.value == null
+        ? ""
+        : String(row.value);
+    if (!value) continue;
+    if (!attrMap.has(code)) {
+      attrMap.set(code, { code, name, values: new Set() });
+    }
+    attrMap.get(code)!.values.add(value);
+  }
 
   return {
     store_type: store?.store_type ?? null,
     brands: brandRows.map((b) => ({ id: String(b.id), name: String(b.name) })),
-    categories: categoryRows.map((c) => ({
+    categories: [...categoryRows, ...storeCategoryRows].map((c) => ({
       id: String(c.id),
       name: String(c.name),
       parent_id: c.parent_id ? String(c.parent_id) : null,
@@ -349,15 +424,30 @@ async function assembleProducts(
 ): Promise<StorefrontProduct[]> {
   const { pool } = await import("../../db-mysql");
 
-  const [images] = await pool.query<any[]>(
-    `
-    SELECT product_id, url, alt, sort_order
-    FROM product_images
-    WHERE tenant_id = ? AND product_id IN (?)
-    ORDER BY sort_order ASC
-    `,
-    [tenant_id, productIds],
-  );
+  let images: any[] = [];
+  try {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, variant_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+      `,
+      [tenant_id, productIds],
+    );
+    images = rows;
+  } catch {
+    const [rows] = await pool.query<any[]>(
+      `
+      SELECT product_id, url, alt, sort_order
+      FROM product_images
+      WHERE tenant_id = ? AND product_id IN (?)
+      ORDER BY sort_order ASC
+      `,
+      [tenant_id, productIds],
+    );
+    images = rows.map((r) => ({ ...r, variant_id: null }));
+  }
 
   const [variants] = await pool.query<any[]>(
     `
@@ -397,10 +487,31 @@ async function assembleProducts(
     [tenant_id, productIds],
   );
 
+  const [attrsV2] = await pool.query<any[]>(
+    `
+    SELECT 
+      v.product_id,
+      a.code,
+      a.name,
+      a.type,
+      v.value_text,
+      v.value_number,
+      v.value_bool,
+      v.value_color,
+      v.value_date,
+      v.value_json
+    FROM store_product_attribute_values v
+    JOIN store_category_attributes a ON a.id = v.attribute_id
+    WHERE v.tenant_id = ? AND v.product_id IN (?)
+    `,
+    [tenant_id, productIds],
+  );
+
   const imageMap = groupBy(images, "product_id");
   const variantMap = groupBy(variants, "product_id");
   const categoryMap = groupBy(categories, "product_id");
   const attributeMap = groupBy(attrs, "product_id");
+  const attributeV2Map = groupBy(attrsV2, "product_id");
 
   return productRows.map((p) => ({
     id: p.id,
@@ -414,7 +525,8 @@ async function assembleProducts(
       (c: { category_id: any }) => c.category_id,
     ),
     images: (imageMap[p.id] || []).map(
-      (i: { url: any; alt: any; sort_order: any }) => ({
+      (i: { variant_id: any; url: any; alt: any; sort_order: any }) => ({
+        variant_id: i.variant_id,
         url: i.url,
         alt: i.alt,
         sort_order: i.sort_order,
@@ -434,32 +546,58 @@ async function assembleProducts(
         price_cents: v.price_cents,
         compare_at_price_cents: v.compare_at_price_cents,
         inventory_qty: v.inventory_qty,
-        options: v.options_json || {},
+        options: parseOptionsJson(v.options_json),
       }),
     ),
-    attributes: (attributeMap[p.id] || []).map(
-      (a: {
-        code: any;
-        name: any;
-        type: any;
-        option_value: any;
-        value_text: any;
-        value_number: any;
-        value_bool: any;
-        value_date: any;
-      }) => ({
-        code: a.code,
-        name: a.name,
-        type: a.type,
-        value:
-          a.option_value ??
-          a.value_text ??
-          a.value_number ??
-          a.value_bool ??
-          a.value_date ??
-          null,
-      }),
-    ),
+    attributes: [
+      ...(attributeMap[p.id] || []).map(
+        (a: {
+          code: any;
+          name: any;
+          type: any;
+          option_value: any;
+          value_text: any;
+          value_number: any;
+          value_bool: any;
+          value_date: any;
+        }) => ({
+          code: a.code,
+          name: a.name,
+          type: a.type,
+          value:
+            a.option_value ??
+            a.value_text ??
+            a.value_number ??
+            a.value_bool ??
+            a.value_date ??
+            null,
+        }),
+      ),
+      ...(attributeV2Map[p.id] || []).map(
+        (a: {
+          code: any;
+          name: any;
+          type: any;
+          value_text: any;
+          value_number: any;
+          value_bool: any;
+          value_color: any;
+          value_date: any;
+          value_json: any;
+        }) => ({
+          code: a.code,
+          name: a.name,
+          type: a.type,
+          value:
+            a.value_text ??
+            a.value_number ??
+            (a.value_bool == null ? null : Boolean(a.value_bool)) ??
+            a.value_color ??
+            a.value_date ??
+            (a.value_json ? JSON.parse(a.value_json) : null),
+        }),
+      ),
+    ],
   }));
 }
 

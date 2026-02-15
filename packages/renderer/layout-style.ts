@@ -56,6 +56,10 @@ export type LayoutStyle = {
   lineHeight?: number | string;
   letterSpacing?: number | string;
   textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  responsive?: {
+    tablet?: Partial<LayoutStyle>;
+    mobile?: Partial<LayoutStyle>;
+  };
 };
 
 function toCssSize(value?: number | string) {
@@ -171,7 +175,10 @@ export function resolveLayoutStyle(s?: LayoutStyle): React.CSSProperties {
   }
 
   if (s.radius) style.borderRadius = toCssSize(s.radius)!;
-  if (s.shadow) style.boxShadow = shadowValue(s.shadow);
+  if (s.shadow) {
+    const shadow = shadowValue(s.shadow);
+    if (shadow) style.boxShadow = shadow;
+  }
 
   if (s.fontSize) style.fontSize = toCssSize(s.fontSize)!;
   if (s.fontWeight) style.fontWeight = String(s.fontWeight);

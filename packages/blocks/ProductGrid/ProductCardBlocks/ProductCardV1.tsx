@@ -53,9 +53,11 @@ function joinPath(base: string, slug: string) {
 function ProductCardV1({
   product,
   detailPathPrefix = "/products",
+  clickable = true,
 }: {
   product: Product;
   detailPathPrefix?: string;
+  clickable?: boolean;
 }) {
   const primaryImage = product.images?.[0];
   const primaryImageUrl = fixDoubleProtocolUrl(product.images?.[0]?.url);
@@ -68,9 +70,16 @@ function ProductCardV1({
     ? product.description
     : "High-quality product with great features and reliable performance.";
 
+  const CardWrapper: any = clickable ? Link : "div";
+  const wrapperProps: any = clickable
+    ? {
+        href: joinPath(detailPathPrefix || "/products", product.slug),
+      }
+    : {};
+
   return (
-    <Link
-      href={joinPath(detailPathPrefix || "/products", product.slug)}
+    <CardWrapper
+      {...wrapperProps}
       className="group block overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-400/60 focus:ring-offset-2"
     >
       {/* Image */}
@@ -140,7 +149,7 @@ function ProductCardV1({
           </div>
         )}
       </div>
-    </Link>
+    </CardWrapper>
   );
 }
 export default ProductCardV1;

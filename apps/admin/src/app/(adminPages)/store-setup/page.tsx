@@ -6,7 +6,8 @@ export default async function Page({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const resolved = await searchParams;
-  const siteId = resolved.site_id as string | undefined; // or handle array/undefined as needed
+  const raw = resolved.site_id;
+  const siteId = Array.isArray(raw) ? raw[0] : raw;
 
   return <StoreWizard siteId={siteId} />;
 }

@@ -2,6 +2,7 @@ import React from "react";
 import type { HeroProps } from "./../../schemas/blocks/hero";
 
 export default function Hero(props: HeroProps) {
+  const heroPreset = props.heroPreset || "Basic";
   const bgType =
     props.variant === "image"
       ? "image"
@@ -10,7 +11,8 @@ export default function Hero(props: HeroProps) {
         : (props.bg?.type ?? "none");
 
   const overlayColor = props.bg?.overlayColor ?? "#0f172a";
-  const overlayOpacity = props.bg?.overlayOpacity ?? 0.55;
+  const overlayOpacity = props.bg?.overlayOpacity ?? 0.15;
+  const basicBgColor = props.bg?.color || "#0f172a";
 
   // Determine content alignment styles
   const contentAlignStyle =
@@ -42,10 +44,13 @@ export default function Hero(props: HeroProps) {
               ? "1536px"
               : "1280px";
 
-  return (
+  const basicHero = (
     <section
-      className="relative isolate w-full overflow-hidden bg-slate-950"
-      style={{ minHeight: props.minHeight ?? 580 }}
+      className="relative isolate w-full overflow-hidden"
+      style={{
+        minHeight: props.minHeight ?? 580,
+        backgroundColor: bgType === "none" ? basicBgColor : "transparent",
+      }}
     >
       {/* Background layer */}
       <div className="absolute inset-0 -z-10">
@@ -74,8 +79,6 @@ export default function Hero(props: HeroProps) {
         <div
           className="absolute inset-0 -z-10 pointer-events-none"
           style={{
-            background:
-              "linear-gradient(to bottom, rgba(2,6,23,0.2), rgba(2,6,23,0.6), rgba(2,6,23,0.8))",
             backgroundColor: overlayColor,
             opacity: overlayOpacity,
           }}
@@ -92,47 +95,58 @@ export default function Hero(props: HeroProps) {
         }}
       >
         <div className="flex min-h-[inherit] w-full flex-col justify-center py-20 sm:py-24 lg:py-28">
-        <div className="flex max-w-3xl flex-col gap-5">
-          <h1
-            className="m-0 text-balance text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl"
-          >
-            {props.headline || "Headline"}
-          </h1>
+          <div className="flex max-w-3xl flex-col gap-5">
+            <h1 className="m-0 text-balance text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              {props.headline || "Headline"}
+            </h1>
 
-          {props.subhead && (
-            <p
-              className="m-0 max-w-2xl text-lg text-white/80 sm:text-xl"
-            >
-              {props.subhead}
-            </p>
-          )}
-
-          <div
-            className="flex flex-wrap items-center gap-3 pt-6"
-          >
-            {props.ctaText && (
-              <a
-                href={props.ctaHref || "#"}
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:shadow-slate-900/30"
-              >
-                {props.ctaText}
-              </a>
+            {props.subhead && (
+              <p className="m-0 max-w-2xl text-lg text-white sm:text-xl">
+                {props.subhead}
+              </p>
             )}
 
-            {props.secondaryCtaText && (
-              <a
-                href={props.secondaryCtaHref || "#"}
-                className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90 transition hover:border-white/70 hover:text-white"
-              >
-                {props.secondaryCtaText}
-              </a>
-            )}
+            <div className="flex flex-wrap items-center gap-3 pt-6">
+              {props.ctaText && (
+                <a
+                  href={props.ctaHref || "#"}
+                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-900/20 transition hover:-translate-y-0.5 hover:shadow-slate-900/30"
+                >
+                  {props.ctaText}
+                </a>
+              )}
+
+              {props.secondaryCtaText && (
+                <a
+                  href={props.secondaryCtaHref || "#"}
+                  className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90 transition hover:border-white/70 hover:text-white"
+                >
+                  {props.secondaryCtaText}
+                </a>
+              )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </section>
   );
+
+  switch (heroPreset) {
+    case "Advanced":
+      return renderAdvancedHero(props, basicHero);
+    case "Basic":
+    default:
+      return basicHero;
+  }
+}
+
+function renderAdvancedHero(
+  _props: HeroProps,
+  basicHeroFallback: React.ReactElement,
+) {
+  // TODO: Replace with full Advanced preset UI.
+  // Keeping fallback ensures backward-compatible rendering until implementation lands.
+  return basicHeroFallback;
 }
 
 function HeroBgImage({ url, alt }: { url: string; alt: string }) {

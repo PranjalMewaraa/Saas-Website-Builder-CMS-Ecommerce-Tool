@@ -690,9 +690,21 @@ function defaultPropsFor(type: string) {
       ctaSecondaryHref: "/about",
       contentWidth: "xl",
     };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
+    };
   if (type === "Hero/V1")
     return {
+      heroPreset: "Basic",
       variant: "basic",
       headline: "Headline",
       subhead: "Subhead",
@@ -705,6 +717,7 @@ function defaultPropsFor(type: string) {
       minHeight: 520,
       bg: {
         type: "none",
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

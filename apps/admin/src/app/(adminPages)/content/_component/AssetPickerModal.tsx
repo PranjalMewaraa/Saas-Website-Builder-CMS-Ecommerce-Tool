@@ -12,7 +12,12 @@ export default function AssetPickerModal({
   siteId: string;
   open: boolean;
   onClose: () => void;
-  onPick: (asset: { key: string; url: string; alt?: string }) => void;
+  onPick: (asset: {
+    _id?: string;
+    key: string;
+    url: string;
+    alt?: string;
+  }) => void;
 }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,13 +25,28 @@ export default function AssetPickerModal({
 
   async function loadAssets() {
     setLoading(true);
-    const res = await fetch(
-      `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
-      { cache: "no-store" },
-    );
-    const data = await res.json();
-    setAssets(data.assets ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(
+        `/api/admin/assets?site_id=${encodeURIComponent(siteId)}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) {
+        setAssets([]);
+        return;
+      }
+      const text = await res.text();
+      if (!text) {
+        setAssets([]);
+        return;
+      }
+      const data = JSON.parse(text);
+      setAssets(data.assets ?? []);
+    } catch (e) {
+      console.error("Failed to load assets", e);
+      setAssets([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -35,8 +55,18 @@ export default function AssetPickerModal({
   }, [open, siteId]);
 
   async function uploadFile(file: File) {
+    const reqId = `asset_upload_${Date.now()}_${Math.random()
+      .toString(16)
+      .slice(2, 8)}`;
     try {
       setUploading(true);
+      console.info("[asset-upload] start", {
+        reqId,
+        siteId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
 
       const signRes = await fetch(
         `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
@@ -47,8 +77,21 @@ export default function AssetPickerModal({
         },
       );
 
-      const signData = await signRes.json();
-      if (!signRes.ok) throw new Error(signData?.error || "Sign failed");
+      const signText = await signRes.text();
+      const signData = signText ? JSON.parse(signText) : {};
+      if (!signRes.ok) {
+        console.error("[asset-upload] sign failed", {
+          reqId,
+          status: signRes.status,
+          body: signData,
+        });
+        throw new Error(signData?.error || "Sign failed");
+      }
+      console.info("[asset-upload] sign success", {
+        reqId,
+        key: signData?.key,
+        uploadUrl: signData?.upload?.url,
+      });
 
       const formData = new FormData();
       Object.entries(signData.upload.fields).forEach(([k, v]) =>
@@ -61,7 +104,16 @@ export default function AssetPickerModal({
         body: formData,
       });
 
-      if (!postRes.ok) throw new Error("Upload failed");
+      if (!postRes.ok) {
+        const uploadBody = await postRes.text().catch(() => "");
+        console.error("[asset-upload] s3 post failed", {
+          reqId,
+          status: postRes.status,
+          body: uploadBody,
+        });
+        throw new Error("Upload failed");
+      }
+      console.info("[asset-upload] s3 post success", { reqId });
 
       const finRes = await fetch(
         `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
@@ -77,21 +129,41 @@ export default function AssetPickerModal({
         },
       );
 
-      const finData = await finRes.json();
-      if (!finRes.ok) throw new Error("Finalize failed");
+      const finText = await finRes.text();
+      const finData = finText ? JSON.parse(finText) : {};
+      if (!finRes.ok) {
+        console.error("[asset-upload] finalize failed", {
+          reqId,
+          status: finRes.status,
+          body: finData,
+        });
+        throw new Error(finData?.error || "Finalize failed");
+      }
+      console.info("[asset-upload] finalize success", {
+        reqId,
+        assetId: finData?.asset?._id,
+      });
 
       // Refresh list
       await loadAssets();
 
-      // Auto-pick newly uploaded asset
-      onPick({
-        key: signData.key,
-        url: signData.finalUrl,
-      });
+      // Auto-pick newly uploaded asset (prefer finalized DB asset with _id)
+      const picked = finData?.asset
+        ? {
+            _id: finData.asset._id,
+            key: finData.asset.key || signData.key,
+            url: finData.asset.url || signData.finalUrl,
+            alt: finData.asset.alt || "",
+          }
+        : {
+            key: signData.key,
+            url: signData.finalUrl,
+          };
+      onPick(picked);
 
       onClose();
     } catch (e) {
-      console.error("Upload error:", e);
+      console.error("[asset-upload] failed", { reqId, error: e });
       alert("Upload failed");
     } finally {
       setUploading(false);

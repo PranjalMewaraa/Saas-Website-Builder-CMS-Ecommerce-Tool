@@ -37,21 +37,23 @@ export async function listProductsForStore(args: {
   tenant_id: string;
   store_id: string;
 }): Promise<(ProductRow & { is_published: number })[]> {
-  console.log("storeid", args.store_id);
   const [rows] = await pool.query(
     `
     SELECT p.*, COALESCE(sp.is_published, 0) as is_published
     FROM products p
-    LEFT JOIN store_products sp
+    JOIN store_products sp
       ON sp.tenant_id = p.tenant_id
      AND sp.product_id = p.id
      AND sp.store_id = ?
+    LEFT JOIN store_categories sc
+      ON sc.tenant_id = p.tenant_id
+     AND sc.id = p.store_category_id
     WHERE p.tenant_id = ?
+      AND (p.store_category_id IS NULL OR sc.store_id = ?)
     ORDER BY p.created_at DESC
     `,
-    [args.store_id, args.tenant_id],
+    [args.store_id, args.tenant_id, args.store_id],
   );
-  console.log("storeidprod", rows);
   return rows as any;
 }
 
@@ -62,18 +64,22 @@ export async function listProductsForStoreFiltered(args: {
 }): Promise<(ProductRow & { is_published: number })[]> {
   const whereStatus = args.status ? "AND p.status = ?" : "";
   const params = args.status
-    ? [args.store_id, args.tenant_id, args.status]
-    : [args.store_id, args.tenant_id];
+    ? [args.store_id, args.tenant_id, args.store_id, args.status]
+    : [args.store_id, args.tenant_id, args.store_id];
 
   const [rows] = await pool.query(
     `
     SELECT p.*, COALESCE(sp.is_published, 0) as is_published
     FROM products p
-    LEFT JOIN store_products sp
+    JOIN store_products sp
       ON sp.tenant_id = p.tenant_id
      AND sp.product_id = p.id
      AND sp.store_id = ?
+    LEFT JOIN store_categories sc
+      ON sc.tenant_id = p.tenant_id
+     AND sc.id = p.store_category_id
     WHERE p.tenant_id = ?
+      AND (p.store_category_id IS NULL OR sc.store_id = ?)
     ${whereStatus}
     ORDER BY p.created_at DESC
     `,

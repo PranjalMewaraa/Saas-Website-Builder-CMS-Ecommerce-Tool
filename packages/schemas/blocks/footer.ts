@@ -1,7 +1,17 @@
 import { z } from "zod";
 
 export const FooterV1Schema = z.object({
-  menuId: z.string().min(1),
+  menuId: z.string().min(1).optional(),
+  menuGroups: z
+    .array(
+      z.object({
+        menuId: z.string().min(1),
+        title: z.string().max(80).optional(),
+        textSize: z.enum(["xs", "sm", "base"]).optional(),
+        textStyle: z.enum(["normal", "medium", "semibold"]).optional(),
+      }),
+    )
+    .optional(),
   contentWidth: z.string().optional(),
   // NEW
   logoAssetId: z.string().min(1).optional(),

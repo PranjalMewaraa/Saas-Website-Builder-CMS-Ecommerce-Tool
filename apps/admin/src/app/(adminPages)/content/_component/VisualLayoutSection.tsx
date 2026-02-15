@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import * as Icons from "lucide-react";
+import FormV1 from "../../../../../../../packages/blocks/Form/FormV1";
 import {
   Plus,
   ArrowUp,
@@ -25,6 +27,7 @@ import {
   toCssSizeValue,
   getBackgroundVideo,
 } from "../../../../../../../packages/renderer/layout-style";
+import { buildResponsiveCss } from "../../../../../../../packages/renderer/responsive-css";
 
 const ROW_PRESETS: Record<string, { template: string; gap?: number | string }> =
   {
@@ -61,6 +64,7 @@ function renderAtomicPreview(
   block: LayoutAtomicBlock,
   assetsMap: any,
   menus?: any[],
+  forms?: Record<string, any>,
 ) {
   const style = resolveLayoutStyle(block.style);
   const props = block.props || {};
@@ -75,7 +79,7 @@ function renderAtomicPreview(
   }
 
   if (block.type === "Atomic/Image") {
-    const src = props.src || resolveAssetUrl(props.assetId, assetsMap);
+    const src = resolveAssetUrl(props.assetId, assetsMap) || props.src;
     const imgStyle: React.CSSProperties = {
       ...style,
       width: toCssSizeValue(props.width) || style.width,
@@ -145,6 +149,7 @@ function renderAtomicPreview(
 
   if (block.type === "Atomic/Icon") {
     const size = props.size ?? 24;
+    const Icon = props.icon ? (Icons as any)[props.icon] : null;
     return (
       <span
         style={{
@@ -157,7 +162,7 @@ function renderAtomicPreview(
           lineHeight: 1,
         }}
       >
-        {props.icon || "★"}
+        {Icon ? <Icon size={size} /> : props.icon || "★"}
       </span>
     );
   }
@@ -401,6 +406,64 @@ function renderAtomicPreview(
     );
   }
 
+  if (block.type === "Atomic/Form") {
+    const formId = props.formId || "";
+    const form = (forms || {})[formId];
+    const dummySchema = {
+      fields: [
+        {
+          id: "fld_name",
+          name: "name",
+          label: "Full Name",
+          type: "text",
+          required: true,
+          placeholder: "Jane Doe",
+        },
+        {
+          id: "fld_email",
+          name: "email",
+          label: "Email",
+          type: "email",
+          required: true,
+          placeholder: "you@example.com",
+        },
+        {
+          id: "fld_message",
+          name: "message",
+          label: "Message",
+          type: "textarea",
+          required: true,
+          placeholder: "How can we help?",
+        },
+      ],
+      successMessage: "Thanks! We will get back to you soon.",
+    };
+    if (form?.schema) {
+      return (
+        <FormV1
+          formId={formId}
+          schema={form.schema}
+          handle=""
+          mode="builder"
+          title={props.title}
+          submitText={props.submitText}
+          contentWidth="full"
+        />
+      );
+    }
+    return (
+      <FormV1
+        formId={formId || "demo_form"}
+        schema={dummySchema}
+        handle=""
+        mode="builder"
+        title={props.title || "Contact Us"}
+        submitText={props.submitText || "Send Message"}
+        contentWidth="full"
+      />
+    );
+  }
+
   return (
     <div className="text-xs text-red-500">Unknown: {block.type}</div>
   );
@@ -446,6 +509,7 @@ export default function VisualLayoutSection({
   selection,
   assetsMap,
   menus,
+  forms,
   onSelect,
   onChangeBlock,
   showOutlines = true,
@@ -456,6 +520,7 @@ export default function VisualLayoutSection({
   selection: LayoutSelection | null;
   assetsMap: any;
   menus?: any[];
+  forms?: Record<string, any>;
   onSelect: (sel: LayoutSelection) => void;
   onChangeBlock: (nextBlock: any) => void;
   showOutlines?: boolean;
@@ -534,6 +599,11 @@ export default function VisualLayoutSection({
       description: "Iframe or HTML embed",
     },
     {
+      type: "Atomic/Form",
+      title: "Form",
+      description: "Embed a saved form",
+    },
+    {
       type: "Atomic/Group",
       title: "Group",
       description: "Nested layout inside a column",
@@ -542,6 +612,9 @@ export default function VisualLayoutSection({
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : { style: {}, rows: [] };
   const rows = props.rows || [];
+  const responsiveCss = buildResponsiveCss({
+    sections: [{ blocks: [block] }],
+  });
 
   const [addAtomicDialog, setAddAtomicDialog] = useState<{
     rowId: string;
@@ -1071,7 +1144,7 @@ export default function VisualLayoutSection({
                         >
                           {ga.type === "Atomic/Group"
                             ? renderGroupLayout(ga)
-                            : renderAtomicPreview(ga, assetsMap, menus)}
+                            : renderAtomicPreview(ga, assetsMap, menus, forms)}
                         </div>
                       ))}
                       <button
@@ -1126,6 +1199,7 @@ export default function VisualLayoutSection({
 
   return (
     <div
+      data-block-id={block.id}
       className={`group relative rounded-xl border ${
         selection?.kind === "layout-section" && selection.blockId === block.id
           ? "ring-2 ring-blue-500 border-blue-300"
@@ -1165,12 +1239,16 @@ export default function VisualLayoutSection({
       </div>
 
       <div
+        data-layout-section-id={block.id}
         className="p-4 group"
         style={{
           ...resolveLayoutStyle(props.style),
           position: getBackgroundVideo(props.style) ? "relative" : undefined,
         }}
       >
+        {responsiveCss ? (
+          <style dangerouslySetInnerHTML={{ __html: responsiveCss }} />
+        ) : null}
         {renderVideoLayer(getBackgroundVideo(props.style))}
         <div style={{ position: "relative", zIndex: 2 }}>
         {rows.length === 0 ? (
@@ -1208,6 +1286,7 @@ export default function VisualLayoutSection({
               return (
                 <div
                   key={row.id}
+                  data-row-id={row.id}
                   draggable
                   className={`group relative rounded-lg ${
                     showOutlines
@@ -1296,6 +1375,7 @@ export default function VisualLayoutSection({
                   >
                     {renderVideoLayer(rowVideo)}
                     <div
+                      data-row-layout-id={row.id}
                       style={{
                         ...rowLayoutStyle,
                         position: "relative",
@@ -1313,6 +1393,7 @@ export default function VisualLayoutSection({
                       return (
                         <div
                           key={col.id}
+                          data-col-id={col.id}
                           draggable
                           className={`group/col relative rounded-lg ${
                             showOutlines
@@ -1506,7 +1587,7 @@ export default function VisualLayoutSection({
                                   </div>
                                   {atomic.type === "Atomic/Group"
                                     ? renderGroupLayout(atomic)
-                                    : renderAtomicPreview(atomic, assetsMap, menus)}
+                                    : renderAtomicPreview(atomic, assetsMap, menus, forms)}
                                 </div>
                               );
                             })}

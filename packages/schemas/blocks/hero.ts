@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const HeroSchema = z
   .object({
+    heroPreset: z.enum(["Basic", "Advanced"]).default("Basic"),
     variant: z.enum(["basic", "image", "video"]).default("basic"),
 
     headline: z.string().min(1).default("Headline"),
@@ -15,10 +16,10 @@ export const HeroSchema = z
     align: z.enum(["left", "center", "right"]).default("left"),
     contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),
     minHeight: z.number().int().min(240).max(980).default(520),
-
     bg: z
       .object({
         type: z.enum(["none", "image", "video"]).optional(),
+        color: z.string().optional(),
 
         imageAssetId: z.string().optional(),
         imageUrl: z.string().optional(),
@@ -45,6 +46,7 @@ export const HeroSchema = z
 export type HeroProps = z.infer<typeof HeroSchema>;
 
 export const HeroDefaults: HeroProps = {
+  heroPreset: "Basic",
   variant: "basic", // can stay basic or change to "centered"/"split" etc if your system supports
 
   headline: "Headline",
@@ -65,6 +67,7 @@ export const HeroDefaults: HeroProps = {
 
   bg: {
     type: "image", // "none" → "image" or "video" feels more premium as default
+    color: "#0f172a",
     imageAssetId: "",
     imageUrl:
       "https://imgs.search.brave.com/wmNdZ-UZ8Tnxddp-fHKp-S1xfFV-wl9OA6Iagyi2EKQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWd2/My5mb3Rvci5jb20v/aW1hZ2VzL2Jsb2ct/Y292ZXItaW1hZ2Uv/YS1naXJsLWNyZWF0/aW5nLWEtZGVzaWdu/LXdpdGgtY29tcHV0/ZXIuanBn", // in real use → often a subtle gradient or high-quality hero image

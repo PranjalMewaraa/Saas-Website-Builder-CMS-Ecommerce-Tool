@@ -948,9 +948,21 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
 function defaultProps(type: string) {
   if (type === "Header/V1")
     return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
-  if (type === "Footer/V1") return { menuId: "menu_footer" };
+  if (type === "Footer/V1")
+    return {
+      menuId: "menu_footer",
+      menuGroups: [
+        {
+          menuId: "menu_footer",
+          title: "Links",
+          textSize: "sm",
+          textStyle: "normal",
+        },
+      ],
+    };
   if (type === "Hero")
     return {
+      heroPreset: "Basic",
       headline: "Headline",
       subhead: "Subhead",
       ctaText: "Browse",
@@ -958,6 +970,7 @@ function defaultProps(type: string) {
     };
   if (type === "Hero")
     return {
+      heroPreset: "Basic",
       variant: "basic", // basic | image | video
       headline: "Headline",
       subhead: "Subhead",
@@ -970,6 +983,7 @@ function defaultProps(type: string) {
       minHeight: 520,
       bg: {
         type: "none", // none | image | video
+        color: "#0f172a",
         overlayColor: "#000000",
         overlayOpacity: 0.45,
         imageAssetId: "",

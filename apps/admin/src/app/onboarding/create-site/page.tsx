@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUI } from "../../_components/ui/UiProvider";
 
 export default function CreateSitePage() {
+  const { toast } = useUI();
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function submit() {
+    setLoading(true);
     const res = await fetch("/api/onboarding/create-site", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -16,9 +20,17 @@ export default function CreateSitePage() {
     });
 
     const data = await res.json();
-    if (!data.ok) return alert(data.error);
+    if (!data.ok) {
+      toast({
+        variant: "error",
+        title: "Could not create site",
+        description: data.error || "Please try again.",
+      });
+      setLoading(false);
+      return;
+    }
 
-    router.push(`/content/pages?site_id=${data.site_id}`);
+    router.push(`/content/pages?site_id=${data.site_id}&onboarding=1`);
   }
 
   return (
@@ -38,10 +50,11 @@ export default function CreateSitePage() {
       />
 
       <button
+        disabled={loading || !name.trim() || !handle.trim()}
         onClick={submit}
-        className="bg-black text-white px-4 py-2 rounded"
+        className="bg-black text-white px-4 py-2 rounded disabled:opacity-60"
       >
-        Create site
+        {loading ? "Creating..." : "Create site"}
       </button>
     </div>
   );

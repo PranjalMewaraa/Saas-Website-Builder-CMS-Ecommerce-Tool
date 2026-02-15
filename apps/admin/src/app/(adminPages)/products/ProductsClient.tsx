@@ -9,9 +9,11 @@ type Tab = "active" | "archived";
 export default function ProductsClient({
   siteId,
   storeId,
+  catalogId,
 }: {
   siteId: string;
   storeId: string;
+  catalogId?: string;
 }) {
   const [tab, setTab] = useState<Tab>("active");
   const [products, setProducts] = useState<any[]>([]);
@@ -198,6 +200,7 @@ export default function ProductsClient({
                 <ProductActionsClient
                   siteId={siteId}
                   storeId={storeId}
+                  catalogId={catalogId}
                   productId={p.id}
                   status={p.status}
                 />
