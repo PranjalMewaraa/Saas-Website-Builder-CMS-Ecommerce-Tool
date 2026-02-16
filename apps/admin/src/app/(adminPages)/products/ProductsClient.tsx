@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ProductPublishToggleClient from "./ProductPublishToggleClient";
 import ProductActionsClient from "./ProductActionsClient";
+import ProductStatusToggleClient from "./ProductStatusToggleClient";
 
 type Tab = "active" | "archived";
 
@@ -159,6 +160,15 @@ export default function ProductsClient({
     await fetchArchivedCount();
   }
 
+  function updateProductRow(
+    productId: string,
+    patch: Partial<{ status: "draft" | "active" | "archived"; is_published: boolean }>,
+  ) {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, ...patch } : p)),
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -304,20 +314,31 @@ export default function ProductsClient({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <StatusPill
-                      label={String(p.status || "draft")}
-                      tone={
-                        p.status === "active"
-                          ? "green"
-                          : p.status === "archived"
-                            ? "slate"
-                            : "amber"
-                      }
-                    />
-                    <StatusPill
-                      label={p.is_published ? "Published" : "Unpublished"}
-                      tone={p.is_published ? "blue" : "slate"}
-                    />
+                    {tab === "active" ? (
+                      <>
+                        <ProductStatusToggleClient
+                          siteId={siteId}
+                          productId={p.id}
+                          status={String(p.status || "draft") as "draft" | "active" | "archived"}
+                          onChanged={(nextStatus) => {
+                            updateProductRow(p.id, { status: nextStatus });
+                          }}
+                        />
+                        <ProductPublishToggleClient
+                          siteId={siteId}
+                          storeId={storeId}
+                          productId={p.id}
+                          isPublished={!!p.is_published}
+                          onChanged={(nextPublished) => {
+                            updateProductRow(p.id, { is_published: nextPublished });
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <span className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
+                        Archived
+                      </span>
+                    )}
                     <button
                       type="button"
                       className="px-2.5 py-1.5 rounded-lg border text-xs hover:bg-gray-50"
@@ -339,14 +360,6 @@ export default function ProductsClient({
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {tab === "active" && (
-                      <ProductPublishToggleClient
-                        siteId={siteId}
-                        storeId={storeId}
-                        productId={p.id}
-                        isPublished={!!p.is_published}
-                      />
-                    )}
                     <ProductActionsClient
                       siteId={siteId}
                       storeId={storeId}
@@ -484,28 +497,6 @@ function MetricCard({ label, value }: { label: string; value: string | number })
       <div className="text-xs text-gray-500">{label}</div>
       <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
     </div>
-  );
-}
-
-function StatusPill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "green" | "amber" | "blue" | "slate";
-}) {
-  const cls =
-    tone === "green"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-      : tone === "amber"
-        ? "bg-amber-50 text-amber-700 border-amber-200"
-        : tone === "blue"
-          ? "bg-sky-50 text-sky-700 border-sky-200"
-          : "bg-slate-50 text-slate-700 border-slate-200";
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs border ${cls}`}>
-      {label}
-    </span>
   );
 }
 

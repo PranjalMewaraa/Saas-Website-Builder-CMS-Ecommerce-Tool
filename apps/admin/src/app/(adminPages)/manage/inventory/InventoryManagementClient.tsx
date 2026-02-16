@@ -8,6 +8,9 @@ type InventoryItem = {
   variant_id?: string;
   title: string;
   sku?: string;
+  product_sku?: string;
+  variant_sku?: string;
+  variant_options_json?: unknown;
   inventory_qty: number | string;
 };
 
@@ -239,12 +242,15 @@ export default function InventoryManagementClient({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  SKU
-                </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Product
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Variant
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    SKU
+                  </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Current Stock
                 </th>
@@ -258,7 +264,7 @@ export default function InventoryManagementClient({
               {loading ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-gray-500"
                   >
                     Loading inventory...
@@ -267,7 +273,7 @@ export default function InventoryManagementClient({
               ) : error ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-8 text-center text-red-600"
                   >
                     {error}
@@ -276,7 +282,7 @@ export default function InventoryManagementClient({
               ) : items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-12 text-center text-gray-500"
                   >
                     No products found {query ? `for "${query}"` : ""}
@@ -299,8 +305,11 @@ export default function InventoryManagementClient({
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
                         {item.title}
                       </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <VariantInfo item={item} />
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {item.sku || "—"}
+                        {item.variant_sku || item.sku || item.product_sku || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                         {Number(item.inventory_qty) || 0}
@@ -370,4 +379,65 @@ export default function InventoryManagementClient({
       )}
     </div>
   );
+}
+
+function VariantInfo({ item }: { item: InventoryItem }) {
+  const raw = item.variant_options_json;
+  if (raw == null || raw === "") {
+    return (
+      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
+        Default
+      </span>
+    );
+  }
+
+  try {
+    const parsed =
+      typeof raw === "string"
+        ? JSON.parse(raw)
+        : typeof raw === "object"
+          ? raw
+          : null;
+    const pairs =
+      parsed && typeof parsed === "object"
+        ? Object.entries(parsed as Record<string, unknown>)
+            .map(([k, v]) => ({ k: humanize(k), v: String(v ?? "").trim() }))
+            .filter(({ k, v }) => !!k && !!v && v.toLowerCase() !== "default")
+            .map(({ k, v }) => `${k}: ${v}`)
+            .filter(Boolean)
+        : [];
+
+    if (!pairs.length) {
+      return (
+        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
+          {item.variant_id ? `Variant ${String(item.variant_id).slice(-6)}` : "Default"}
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {pairs.map((label) => (
+          <span
+            key={label}
+            className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs text-indigo-700"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    );
+  } catch {
+    return (
+      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
+        {item.variant_id ? `Variant ${String(item.variant_id).slice(-6)}` : "Default"}
+      </span>
+    );
+  }
+}
+
+function humanize(input: string) {
+  return String(input || "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase());
 }

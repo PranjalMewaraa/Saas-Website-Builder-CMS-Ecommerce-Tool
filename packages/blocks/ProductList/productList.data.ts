@@ -38,6 +38,43 @@ export type ProductFilterMeta = {
   priceMax: number;
 };
 
+async function expandStoreCategoryIds(args: {
+  tenant_id: string;
+  store_id: string;
+  category_ids: string[];
+}) {
+  if (!args.category_ids.length) return [];
+  const { pool } = await import("../../db-mysql");
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, parent_id
+     FROM store_categories
+     WHERE tenant_id = ? AND store_id = ?`,
+    [args.tenant_id, args.store_id],
+  );
+  const childrenByParent = new Map<string, string[]>();
+  for (const row of rows) {
+    const id = String(row.id || "");
+    const parentId = row.parent_id ? String(row.parent_id) : "";
+    if (!id || !parentId) continue;
+    const list = childrenByParent.get(parentId) || [];
+    list.push(id);
+    childrenByParent.set(parentId, list);
+  }
+
+  const out = new Set<string>();
+  const queue = [...args.category_ids];
+  while (queue.length) {
+    const cur = String(queue.shift() || "");
+    if (!cur || out.has(cur)) continue;
+    out.add(cur);
+    const children = childrenByParent.get(cur) || [];
+    for (const child of children) {
+      if (!out.has(child)) queue.push(child);
+    }
+  }
+  return Array.from(out);
+}
+
 function tokenizeSearch(input?: string) {
   return String(input || "")
     .trim()
@@ -192,14 +229,10 @@ export async function getStoreFilterMeta(args: {
 
   const [storeCategoryRows] = await pool.query<any[]>(
     `
-    SELECT DISTINCT sc.id, sc.name, sc.parent_id
-    FROM store_products sp
-    JOIN products p ON p.id = sp.product_id AND p.tenant_id = sp.tenant_id
-    JOIN store_categories sc ON sc.id = p.store_category_id AND sc.tenant_id = p.tenant_id
-    WHERE sp.tenant_id = ?
-      AND sp.store_id = ?
-      AND sp.is_published = 1
-      AND p.status = 'active'
+    SELECT sc.id, sc.name, sc.parent_id
+    FROM store_categories sc
+    WHERE sc.tenant_id = ?
+      AND sc.store_id = ?
     ORDER BY sc.name ASC
     `,
     [args.tenant_id, args.store_id],
@@ -287,14 +320,25 @@ export async function getStoreFilterMeta(args: {
     attrMap.get(code)!.values.add(value);
   }
 
+  const combinedCategoriesRaw =
+    storeCategoryRows.length > 0 ? storeCategoryRows : categoryRows;
+  const categoryById = new Map<string, { id: string; name: string; parent_id?: string | null }>();
+  for (const c of combinedCategoriesRaw) {
+    const id = String(c.id || "");
+    if (!id) continue;
+    if (!categoryById.has(id)) {
+      categoryById.set(id, {
+        id,
+        name: String(c.name || ""),
+        parent_id: c.parent_id ? String(c.parent_id) : null,
+      });
+    }
+  }
+
   return {
     store_type: store?.store_type ?? null,
     brands: brandRows.map((b) => ({ id: String(b.id), name: String(b.name) })),
-    categories: [...categoryRows, ...storeCategoryRows].map((c) => ({
-      id: String(c.id),
-      name: String(c.name),
-      parent_id: c.parent_id ? String(c.parent_id) : null,
-    })),
+    categories: Array.from(categoryById.values()),
     attributes: Array.from(attrMap.values()).map((a) => ({
       code: a.code,
       name: a.name,
@@ -336,35 +380,74 @@ export async function listPublishedProductsForStoreWithFilters(args: {
   }
 
   if (args.category_ids?.length) {
+    const expandedStoreCategoryIds = await expandStoreCategoryIds({
+      tenant_id: args.tenant_id,
+      store_id: args.store_id,
+      category_ids: args.category_ids,
+    });
     where.push(
-      `p.id IN (
-        SELECT pc.product_id
-        FROM product_categories pc
-        WHERE pc.tenant_id = ? AND pc.category_id IN (${args.category_ids
-          .map(() => "?")
-          .join(",")})
+      `(
+        p.store_category_id IN (${expandedStoreCategoryIds.map(() => "?").join(",")})
+        OR p.id IN (
+          SELECT pc.product_id
+          FROM product_categories pc
+          WHERE pc.tenant_id = ? AND pc.category_id IN (${args.category_ids
+            .map(() => "?")
+            .join(",")})
+        )
       )`,
     );
-    params.push(args.tenant_id, ...args.category_ids);
+    params.push(...expandedStoreCategoryIds, args.tenant_id, ...args.category_ids);
   }
 
   if (args.attr_filters?.length) {
     for (const filter of args.attr_filters) {
       if (!filter.values.length) continue;
+      const placeholders = filter.values.map(() => "?").join(",");
+      const jsonLike = filter.values.map(() => "v.value_json LIKE ?").join(" OR ");
       where.push(
-        `p.id IN (
-          SELECT pav.product_id
-          FROM product_attribute_values pav
-          JOIN product_attributes pa ON pa.id = pav.attribute_id
-          LEFT JOIN product_attribute_options o ON o.id = pav.option_id
-          WHERE pav.tenant_id = ?
-            AND pa.code = ?
-            AND COALESCE(o.value, pav.value_text, pav.value_number, pav.value_bool, pav.value_date) IN (${filter.values
-              .map(() => "?")
-              .join(",")})
+        `(
+          p.id IN (
+            SELECT pav.product_id
+            FROM product_attribute_values pav
+            JOIN product_attributes pa ON pa.id = pav.attribute_id
+            LEFT JOIN product_attribute_options o ON o.id = pav.option_id
+            WHERE pav.tenant_id = ?
+              AND pa.code = ?
+              AND COALESCE(o.value, pav.value_text, pav.value_number, pav.value_bool, pav.value_date) IN (${placeholders})
+          )
+          OR p.id IN (
+            SELECT v.product_id
+            FROM store_product_attribute_values v
+            JOIN store_category_attributes a ON a.id = v.attribute_id
+            WHERE v.tenant_id = ?
+              AND v.store_id = ?
+              AND a.code = ?
+              AND (
+                v.value_text IN (${placeholders})
+                OR CAST(v.value_number AS CHAR) IN (${placeholders})
+                OR CAST(v.value_bool AS CHAR) IN (${placeholders})
+                OR v.value_color IN (${placeholders})
+                OR v.value_date IN (${placeholders})
+                ${jsonLike ? `OR ${jsonLike}` : ""}
+              )
+          )
         )`,
       );
-      params.push(args.tenant_id, filter.code, ...filter.values);
+      params.push(
+        args.tenant_id,
+        filter.code,
+        ...filter.values,
+        args.tenant_id,
+        args.store_id,
+        filter.code,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values.map((v) => `%\"${String(v)}\"%`),
+      );
     }
   }
 
@@ -412,6 +495,7 @@ export async function countPublishedProductsForStoreWithFilters(args: {
   brand_ids?: string[];
   category_ids?: string[];
   attr_filters?: Array<{ code: string; values: string[] }>;
+  sort?: "newest" | "price_asc" | "price_desc" | "title_asc";
   min_price_cents?: number;
   max_price_cents?: number;
 }): Promise<number> {
@@ -433,35 +517,74 @@ export async function countPublishedProductsForStoreWithFilters(args: {
   }
 
   if (args.category_ids?.length) {
+    const expandedStoreCategoryIds = await expandStoreCategoryIds({
+      tenant_id: args.tenant_id,
+      store_id: args.store_id,
+      category_ids: args.category_ids,
+    });
     where.push(
-      `p.id IN (
-        SELECT pc.product_id
-        FROM product_categories pc
-        WHERE pc.tenant_id = ? AND pc.category_id IN (${args.category_ids
-          .map(() => "?")
-          .join(",")})
+      `(
+        p.store_category_id IN (${expandedStoreCategoryIds.map(() => "?").join(",")})
+        OR p.id IN (
+          SELECT pc.product_id
+          FROM product_categories pc
+          WHERE pc.tenant_id = ? AND pc.category_id IN (${args.category_ids
+            .map(() => "?")
+            .join(",")})
+        )
       )`,
     );
-    params.push(args.tenant_id, ...args.category_ids);
+    params.push(...expandedStoreCategoryIds, args.tenant_id, ...args.category_ids);
   }
 
   if (args.attr_filters?.length) {
     for (const filter of args.attr_filters) {
       if (!filter.values.length) continue;
+      const placeholders = filter.values.map(() => "?").join(",");
+      const jsonLike = filter.values.map(() => "v.value_json LIKE ?").join(" OR ");
       where.push(
-        `p.id IN (
-          SELECT pav.product_id
-          FROM product_attribute_values pav
-          JOIN product_attributes pa ON pa.id = pav.attribute_id
-          LEFT JOIN product_attribute_options o ON o.id = pav.option_id
-          WHERE pav.tenant_id = ?
-            AND pa.code = ?
-            AND COALESCE(o.value, pav.value_text, pav.value_number, pav.value_bool, pav.value_date) IN (${filter.values
-              .map(() => "?")
-              .join(",")})
+        `(
+          p.id IN (
+            SELECT pav.product_id
+            FROM product_attribute_values pav
+            JOIN product_attributes pa ON pa.id = pav.attribute_id
+            LEFT JOIN product_attribute_options o ON o.id = pav.option_id
+            WHERE pav.tenant_id = ?
+              AND pa.code = ?
+              AND COALESCE(o.value, pav.value_text, pav.value_number, pav.value_bool, pav.value_date) IN (${placeholders})
+          )
+          OR p.id IN (
+            SELECT v.product_id
+            FROM store_product_attribute_values v
+            JOIN store_category_attributes a ON a.id = v.attribute_id
+            WHERE v.tenant_id = ?
+              AND v.store_id = ?
+              AND a.code = ?
+              AND (
+                v.value_text IN (${placeholders})
+                OR CAST(v.value_number AS CHAR) IN (${placeholders})
+                OR CAST(v.value_bool AS CHAR) IN (${placeholders})
+                OR v.value_color IN (${placeholders})
+                OR v.value_date IN (${placeholders})
+                ${jsonLike ? `OR ${jsonLike}` : ""}
+              )
+          )
         )`,
       );
-      params.push(args.tenant_id, filter.code, ...filter.values);
+      params.push(
+        args.tenant_id,
+        filter.code,
+        ...filter.values,
+        args.tenant_id,
+        args.store_id,
+        filter.code,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values,
+        ...filter.values.map((v) => `%\"${String(v)}\"%`),
+      );
     }
   }
 

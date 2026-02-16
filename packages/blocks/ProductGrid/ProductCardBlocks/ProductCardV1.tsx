@@ -46,10 +46,22 @@ function ProductCardV1({
 }) {
   const primaryImage = product.images?.[0];
   const primaryImageUrl = normalizeImageUrl(product.images?.[0]?.url);
-  const price = product.base_price_cents / 100;
-  const comparePrice = product.compare_at_price_cents
-    ? product.compare_at_price_cents / 100
-    : null;
+  const variantPriceCandidates = (product.variants || [])
+    .map((v: any) => Number(v?.price_cents || 0))
+    .filter((n: number) => Number.isFinite(n) && n > 0);
+  const variantCompareCandidates = (product.variants || [])
+    .map((v: any) => Number(v?.compare_at_price_cents || 0))
+    .filter((n: number) => Number.isFinite(n) && n > 0);
+
+  const displayPriceCents = variantPriceCandidates.length
+    ? Math.min(...variantPriceCandidates)
+    : Number(product.base_price_cents || 0);
+  const displayCompareCents = variantCompareCandidates.length
+    ? Math.min(...variantCompareCandidates)
+    : Number(product.compare_at_price_cents || 0);
+
+  const price = displayPriceCents / 100;
+  const comparePrice = displayCompareCents > 0 ? displayCompareCents / 100 : null;
 
   const description = product.description?.trim()
     ? product.description

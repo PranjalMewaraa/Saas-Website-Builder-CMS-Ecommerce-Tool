@@ -34,6 +34,32 @@ function emptyVariant(): VariantDraft {
   };
 }
 
+function buildCategoryOptions(
+  categories: Array<{ id: string; name: string; parent_id?: string | null }>,
+) {
+  const byParent: Record<string, Array<{ id: string; name: string }>> = {};
+  const roots: Array<{ id: string; name: string; parent_id?: string | null }> = [];
+  for (const c of categories || []) {
+    const parent = c.parent_id || "";
+    if (!parent) roots.push(c);
+    if (!byParent[parent]) byParent[parent] = [];
+    byParent[parent].push(c);
+  }
+  for (const k of Object.keys(byParent)) {
+    byParent[k].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  }
+  const out: Array<{ id: string; label: string }> = [];
+  function walk(nodes: Array<{ id: string; name: string }>, depth: number) {
+    for (const n of nodes) {
+      out.push({ id: n.id, label: `${"— ".repeat(depth)}${n.name}` });
+      const children = byParent[n.id] || [];
+      if (children.length) walk(children, depth + 1);
+    }
+  }
+  walk(roots, 0);
+  return out;
+}
+
 export default function ProductCreateClient({
   siteId,
   storeId,
@@ -102,7 +128,7 @@ export default function ProductCreateClient({
 
     (async () => {
       const res = await fetch(
-        `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(categoryId)}`,
+        `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(categoryId)}&include_inherited=1`,
       );
       if (!res.ok) {
         setAttrs([]);
@@ -125,6 +151,11 @@ export default function ProductCreateClient({
     }
     return null;
   }, [attrs, attrValues]);
+
+  const categoryOptions = useMemo(
+    () => buildCategoryOptions(categories || []),
+    [categories],
+  );
 
   // ─── Form Submit ────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -445,9 +476,9 @@ export default function ProductCreateClient({
                 required
               >
                 <option value="">Select Category</option>
-                {categories.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.label}
                   </option>
                 ))}
               </select>

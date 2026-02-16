@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ProductCardV1 from "../ProductGrid/ProductCardBlocks/ProductCardV1";
+import CategoryFilterTreeClient from "./CategoryFilterTreeClient";
 import {
   getStoreFilterMeta,
   listPublishedProductsForStoreWithFilters,
@@ -35,6 +36,7 @@ function pickMulti(sp: URLSearchParams, key: string) {
   const flat = all
     .flatMap((v) => v.split(","))
     .map((v) => v.trim())
+    .map((v) => v.replace(/\\+$/g, ""))
     .filter(Boolean);
   return Array.from(new Set(flat));
 }
@@ -64,28 +66,69 @@ function buildCategoryTree(
 ) {
   const byParent: Record<string, typeof categories> = {};
   const roots: typeof categories = [];
+  const byId: Record<string, { id: string; name: string; parent_id?: string | null }> = {};
   for (const c of categories) {
+    byId[c.id] = c;
     const parent = c.parent_id || "";
     if (!parent) roots.push(c);
     if (!byParent[parent]) byParent[parent] = [];
     byParent[parent].push(c);
   }
+  // If filtered results only contain subcategories, parent may be missing.
+  // Treat those orphan children as roots so category filter doesn't render empty.
+  for (const c of categories) {
+    const parent = c.parent_id || "";
+    if (!parent) continue;
+    if (!byId[parent]) roots.push(c);
+  }
   for (const key of Object.keys(byParent)) {
     byParent[key].sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  const out: Array<{ id: string; label: string }> = [];
+  const out: Array<{ id: string; label: string; parent_id?: string | null }> = [];
   function walk(nodes: typeof categories, depth: number) {
     for (const node of nodes) {
       out.push({
         id: node.id,
         label: `${"— ".repeat(depth)}${node.name}`,
+        parent_id: node.parent_id || null,
       });
       const children = byParent[node.id] || [];
       if (children.length) walk(children, depth + 1);
     }
   }
   walk(roots, 0);
+  return out;
+}
+
+function buildChildrenMap(
+  categories: Array<{ id: string; name: string; parent_id?: string | null }>,
+) {
+  const map = new Map<string, string[]>();
+  for (const c of categories) {
+    const parent = c.parent_id || "";
+    if (!parent) continue;
+    const list = map.get(parent) || [];
+    list.push(c.id);
+    map.set(parent, list);
+  }
+  return map;
+}
+
+function collectDescendants(childrenMap: Map<string, string[]>, startId: string) {
+  const out: string[] = [];
+  const queue = [...(childrenMap.get(startId) || [])];
+  const seen = new Set<string>();
+  while (queue.length) {
+    const id = String(queue.shift() || "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    const kids = childrenMap.get(id) || [];
+    for (const k of kids) {
+      if (!seen.has(k)) queue.push(k);
+    }
+  }
   return out;
 }
 
@@ -98,6 +141,42 @@ function clampBasePath(base?: string) {
 function withParams(base: string, params: URLSearchParams) {
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;
+}
+
+function ProductSearchBar({
+  defaultValue,
+  basePath,
+  params,
+}: {
+  defaultValue: string;
+  basePath: string;
+  params: URLSearchParams;
+}) {
+  const keep = Array.from(params.entries()).filter(
+    ([k]) => k !== "q" && k !== "page",
+  );
+  return (
+    <form
+      method="get"
+      action={basePath}
+      className="w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
+    >
+      {keep.map(([k, v], idx) => (
+        <input key={`${k}-${v}-${idx}`} type="hidden" name={k} value={v} />
+      ))}
+      <div className="flex items-center gap-2">
+        <input
+          name="q"
+          defaultValue={defaultValue}
+          placeholder="Search products by title, SKU, category, brand, or attributes..."
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+        />
+        <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white">
+          Search
+        </button>
+      </div>
+    </form>
+  );
 }
 
 export default async function ProductListV1({
@@ -196,6 +275,12 @@ export default async function ProductListV1({
 
   const basePath = clampBasePath(detailPathPrefix);
   const categoryOptions = buildCategoryTree(filterMeta.categories);
+  const childrenMap = buildChildrenMap(filterMeta.categories);
+  const checkedCategoryIds = new Set<string>(categoryIds);
+  for (const selectedId of categoryIds) {
+    const descendants = collectDescendants(childrenMap, selectedId);
+    for (const childId of descendants) checkedCategoryIds.add(childId);
+  }
   const baseListPath = basePath || "/products";
   const showAttributeFilters =
     showFilters && (filterMeta.attributes || []).length > 0;
@@ -219,6 +304,12 @@ export default async function ProductListV1({
             </p>
           </div>
         </div>
+
+        {showSearch ? (
+          <div className="mb-6">
+            <ProductSearchBar defaultValue={q} basePath={baseListPath} params={sp} />
+          </div>
+        ) : null}
 
         <div
           className={
@@ -253,20 +344,6 @@ export default async function ProductListV1({
                   </select>
                 </label>
 
-                {showSearch && (
-                  <label className="block">
-                    <span className="text-xs font-medium text-slate-600">
-                      Search
-                    </span>
-                    <input
-                      name="q"
-                      defaultValue={q}
-                      placeholder="Search by name, SKU, category, brand, attributes..."
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                    />
-                  </label>
-                )}
-
                 {showBrandFilter && (
                   <div className="block">
                     <div className="text-xs font-medium text-slate-600 mb-1">
@@ -296,22 +373,10 @@ export default async function ProductListV1({
                     <div className="text-xs font-medium text-slate-600 mb-1">
                       Categories
                     </div>
-                    <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 p-2 space-y-1">
-                      {categoryOptions.map((c) => (
-                        <label
-                          key={c.id}
-                          className="flex items-start gap-2 text-sm min-w-0"
-                        >
-                          <input
-                            type="checkbox"
-                            name="category"
-                            value={c.id}
-                            defaultChecked={categoryIds.includes(c.id)}
-                          />
-                          <span className="break-words">{c.label}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <CategoryFilterTreeClient
+                      options={categoryOptions}
+                      initialSelectedIds={Array.from(checkedCategoryIds)}
+                    />
                   </div>
                 )}
 

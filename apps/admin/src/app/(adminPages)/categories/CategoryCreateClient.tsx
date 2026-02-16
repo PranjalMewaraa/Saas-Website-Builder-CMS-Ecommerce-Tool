@@ -96,6 +96,8 @@ export default function CategoryCreateClient({
     initialCategories || [],
   );
   const [name, setName] = useState("");
+  const [isSubCategory, setIsSubCategory] = useState(false);
+  const [parentCategoryId, setParentCategoryId] = useState("");
   const [attributes, setAttributes] = useState<DraftAttr[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -244,6 +246,35 @@ export default function CategoryCreateClient({
               className="w-full text-lg font-medium bg-gray-50/50 border border-gray-200 rounded-2xl px-5 py-4 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={isSubCategory}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setIsSubCategory(next);
+                  if (!next) setParentCategoryId("");
+                }}
+              />
+              Create as subcategory
+            </label>
+            {isSubCategory ? (
+              <select
+                className="w-full bg-white border border-gray-200 px-3 py-2 rounded-xl text-sm outline-none"
+                value={parentCategoryId}
+                onChange={(e) => setParentCategoryId(e.target.value)}
+              >
+                <option value="">Select parent category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </div>
 
           <div className="space-y-4">
@@ -413,13 +444,19 @@ export default function CategoryCreateClient({
 
               <button
                 className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#1D1D1F] text-white px-8 py-2.5 rounded-full font-semibold text-[14px] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black transition-all shadow-md active:scale-[0.98]"
-                disabled={loading || !name.trim() || !storeId}
+                disabled={
+                  loading ||
+                  !name.trim() ||
+                  !storeId ||
+                  (isSubCategory && !parentCategoryId)
+                }
                 onClick={async () => {
                   setLoading(true);
                   const payload = {
                     site_id: siteId,
                     store_id: storeId,
                     name: name.trim(),
+                    parent_id: isSubCategory ? parentCategoryId || null : null,
                     attributes: buildPayloadAttributes(attributes),
                   };
                   const res = await fetch("/api/admin/store-setup/create-category", {
@@ -438,6 +475,8 @@ export default function CategoryCreateClient({
                     return;
                   }
                   setName("");
+                  setIsSubCategory(false);
+                  setParentCategoryId("");
                   setAttributes([]);
                   await refresh();
                   toast({ variant: "success", title: "Category created" });
@@ -728,6 +767,8 @@ function CategoryCreateClient2({
     initialCategories || [],
   );
   const [name, setName] = useState("");
+  const [isSubCategory, setIsSubCategory] = useState(false);
+  const [parentCategoryId, setParentCategoryId] = useState("");
   const [attributes, setAttributes] = useState<DraftAttr[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -817,6 +858,35 @@ function CategoryCreateClient2({
           className="border p-2 rounded w-full"
           required
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <label className="text-xs flex items-center gap-2 border rounded px-2 py-2 bg-gray-50">
+            <input
+              type="checkbox"
+              checked={isSubCategory}
+              onChange={(e) => {
+                const next = e.target.checked;
+                setIsSubCategory(next);
+                if (!next) setParentCategoryId("");
+              }}
+            />
+            Create as subcategory
+          </label>
+          {isSubCategory ? (
+            <select
+              className="border p-2 rounded w-full"
+              value={parentCategoryId}
+              onChange={(e) => setParentCategoryId(e.target.value)}
+            >
+              <option value="">Select parent category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+        </div>
 
         <div className="space-y-2">
           <div className="text-xs text-gray-600">Preset suggestions</div>
@@ -950,13 +1020,19 @@ function CategoryCreateClient2({
           </button>
           <button
             className="bg-black text-white px-3 py-2 rounded disabled:opacity-50"
-            disabled={loading || !name.trim() || !storeId}
+            disabled={
+              loading ||
+              !name.trim() ||
+              !storeId ||
+              (isSubCategory && !parentCategoryId)
+            }
             onClick={async () => {
               setLoading(true);
               const payload = {
                 site_id: siteId,
                 store_id: storeId,
                 name: name.trim(),
+                parent_id: isSubCategory ? parentCategoryId || null : null,
                 attributes: attributes
                   .filter((a) => a.name.trim())
                   .map((a, idx) => ({
@@ -994,6 +1070,8 @@ function CategoryCreateClient2({
                 return;
               }
               setName("");
+              setIsSubCategory(false);
+              setParentCategoryId("");
               setAttributes([]);
               await refresh();
               toast({ variant: "success", title: "Category created" });

@@ -276,6 +276,82 @@ export async function listCategoryAttributes(args: {
   return attrs.map((a) => ({ ...a, options: map.get(a.id) || [] }));
 }
 
+export async function listCategoryAttributesResolved(args: {
+  tenant_id: string;
+  store_id: string;
+  category_id: string;
+}) {
+  const [cats] = await pool.query<any[]>(
+    `SELECT id, parent_id
+     FROM store_categories
+     WHERE tenant_id = ? AND store_id = ?`,
+    [args.tenant_id, args.store_id],
+  );
+  const parentById = new Map<string, string | null>();
+  for (const c of cats) parentById.set(String(c.id), c.parent_id ? String(c.parent_id) : null);
+
+  const chainLeafToRoot: string[] = [];
+  let cur: string | null = args.category_id;
+  let guard = 0;
+  while (cur && guard < 20) {
+    chainLeafToRoot.push(cur);
+    cur = parentById.get(cur) ?? null;
+    guard += 1;
+  }
+  const chainRootToLeaf = [...chainLeafToRoot].reverse();
+  if (!chainRootToLeaf.length) return [];
+
+  const [attrs] = await pool.query<any[]>(
+    `SELECT *
+     FROM store_category_attributes
+     WHERE tenant_id = ? AND store_id = ? AND category_id IN (?)
+     ORDER BY sort_order ASC, created_at ASC`,
+    [args.tenant_id, args.store_id, chainRootToLeaf],
+  );
+  if (!attrs.length) return [];
+
+  const attrIds = attrs.map((a) => a.id);
+  const [opts] = await pool.query<any[]>(
+    `SELECT *
+     FROM store_category_attribute_options
+     WHERE tenant_id = ? AND attribute_id IN (?)
+     ORDER BY sort_order ASC, value ASC`,
+    [args.tenant_id, attrIds],
+  );
+  const optionsByAttr = new Map<string, any[]>();
+  for (const o of opts) {
+    const key = String(o.attribute_id);
+    const list = optionsByAttr.get(key) || [];
+    list.push(o);
+    optionsByAttr.set(key, list);
+  }
+
+  const attrsByCategory = new Map<string, any[]>();
+  for (const a of attrs) {
+    const key = String(a.category_id);
+    const list = attrsByCategory.get(key) || [];
+    list.push(a);
+    attrsByCategory.set(key, list);
+  }
+
+  const mergedByCode = new Map<string, any>();
+  for (const categoryId of chainRootToLeaf) {
+    const rows = attrsByCategory.get(categoryId) || [];
+    for (const a of rows) {
+      const code = String(a.code || "").trim();
+      if (!code) continue;
+      mergedByCode.set(code, {
+        ...a,
+        options: optionsByAttr.get(String(a.id)) || [],
+        source_category_id: categoryId,
+        inherited: categoryId !== args.category_id,
+      });
+    }
+  }
+
+  return Array.from(mergedByCode.values());
+}
+
 export async function createCategoryAttribute(args: {
   tenant_id: string;
   store_id: string;
@@ -1010,12 +1086,22 @@ export async function getInventorySnapshot(args: {
   const where = ["p.tenant_id = ?", "sp.store_id = ?"];
   const params: any[] = [args.tenant_id, args.store_id];
   if (args.q) {
-    where.push("(p.title LIKE ? OR p.sku LIKE ?)");
+    where.push(
+      "(p.title LIKE ? OR p.sku LIKE ? OR v.sku LIKE ? OR JSON_EXTRACT(v.options_json, '$') LIKE ?)",
+    );
     const like = `%${args.q}%`;
-    params.push(like, like);
+    params.push(like, like, like, like);
   }
   const [rows] = await pool.query<any[]>(
-    `SELECT p.id as product_id, p.title, p.sku, v.id as variant_id, v.inventory_qty
+    `SELECT
+       p.id as product_id,
+       p.title,
+       p.sku as product_sku,
+       COALESCE(v.sku, p.sku) as sku,
+       v.sku as variant_sku,
+       v.options_json as variant_options_json,
+       v.id as variant_id,
+       v.inventory_qty
      FROM products p
      JOIN store_products sp ON sp.product_id = p.id AND sp.tenant_id = p.tenant_id
      JOIN product_variants v ON v.product_id = p.id AND v.tenant_id = p.tenant_id

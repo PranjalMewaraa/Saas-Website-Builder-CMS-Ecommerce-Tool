@@ -19,6 +19,13 @@ type VariantDraft = {
   options: Array<{ name: string; value: string }>;
 };
 
+type ProductImage = {
+  id: string;
+  url: string;
+  alt?: string | null;
+  variant_id?: string | null;
+};
+
 function newVariantId() {
   return `var_${Math.random().toString(36).slice(2, 18)}`.slice(0, 26);
 }
@@ -31,6 +38,32 @@ function emptyVariant(): VariantDraft {
     inventory: "",
     options: [{ name: "", value: "" }],
   };
+}
+
+function buildCategoryOptions(
+  categories: Array<{ id: string; name: string; parent_id?: string | null }>,
+) {
+  const byParent: Record<string, Array<{ id: string; name: string }>> = {};
+  const roots: Array<{ id: string; name: string; parent_id?: string | null }> = [];
+  for (const c of categories || []) {
+    const parent = c.parent_id || "";
+    if (!parent) roots.push(c);
+    if (!byParent[parent]) byParent[parent] = [];
+    byParent[parent].push(c);
+  }
+  for (const k of Object.keys(byParent)) {
+    byParent[k].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  }
+  const out: Array<{ id: string; label: string }> = [];
+  function walk(nodes: Array<{ id: string; name: string }>, depth: number) {
+    for (const n of nodes) {
+      out.push({ id: n.id, label: `${"— ".repeat(depth)}${n.name}` });
+      const children = byParent[n.id] || [];
+      if (children.length) walk(children, depth + 1);
+    }
+  }
+  walk(roots, 0);
+  return out;
 }
 
 function toVariantDraft(v: any): VariantDraft {
@@ -72,9 +105,13 @@ export default function ProductEditClient({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [useVariants, setUseVariants] = useState(false);
   const [variants, setVariants] = useState<VariantDraft[]>([emptyVariant()]);
   const [variantImageFiles, setVariantImageFiles] = useState<Record<string, File[]>>({});
+  const [imagesLoading, setImagesLoading] = useState(false);
+  const [mainImages, setMainImages] = useState<ProductImage[]>([]);
+  const [variantImages, setVariantImages] = useState<Record<string, ProductImage[]>>({});
 
   useEffect(() => {
     (async () => {
@@ -140,7 +177,7 @@ export default function ProductEditClient({
     }
     (async () => {
       const res = await fetch(
-        `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(categoryId)}`,
+        `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(categoryId)}&include_inherited=1`,
       );
       if (!res.ok) {
         setAttrs([]);
@@ -151,6 +188,43 @@ export default function ProductEditClient({
     })();
   }, [siteId, storeId, categoryId]);
 
+  useEffect(() => {
+    if (!product?.id) return;
+    (async () => {
+      setImagesLoading(true);
+      try {
+        const res = await fetch(
+          `/api/admin/products/images/list?site_id=${encodeURIComponent(siteId)}&product_id=${encodeURIComponent(product.id)}`,
+          { cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        const rows = Array.isArray(data?.images) ? data.images : [];
+        const nextMain: ProductImage[] = [];
+        const nextVariant: Record<string, ProductImage[]> = {};
+        for (const r of rows) {
+          const img: ProductImage = {
+            id: String(r.id || ""),
+            url: String(r.url || ""),
+            alt: r.alt ? String(r.alt) : null,
+            variant_id: r.variant_id ? String(r.variant_id) : null,
+          };
+          if (!img.url) continue;
+          if (img.variant_id) {
+            if (!nextVariant[img.variant_id]) nextVariant[img.variant_id] = [];
+            nextVariant[img.variant_id].push(img);
+          } else {
+            nextMain.push(img);
+          }
+        }
+        setMainImages(nextMain);
+        setVariantImages(nextVariant);
+      } finally {
+        setImagesLoading(false);
+      }
+    })();
+  }, [product?.id, siteId]);
+
   const requiredMissing = useMemo(() => {
     for (const a of attrs) {
       const required = Number(a.is_required || 0) === 1 || a.is_required === true;
@@ -160,6 +234,11 @@ export default function ProductEditClient({
     }
     return null;
   }, [attrs, attrValues]);
+
+  const categoryOptions = useMemo(
+    () => buildCategoryOptions(categories || []),
+    [categories],
+  );
 
   if (!product) {
     return (
@@ -179,7 +258,7 @@ export default function ProductEditClient({
 
   return (
     <form
-      className="border rounded p-4 space-y-3 max-w-xl"
+      className="max-w-5xl mx-auto p-4 space-y-6 pb-32"
       onSubmit={async (e) => {
         e.preventDefault();
         setError(null);
@@ -193,8 +272,13 @@ export default function ProductEditClient({
           title: String(fd.get("title") || ""),
           description: String(fd.get("description") || "") || null,
           sku: String(fd.get("sku") || "") || null,
-          base_price_cents: Math.round(Number(fd.get("price") || 0) * 100),
-          inventory_quantity: Math.max(0, Number(fd.get("inventory_quantity") || 0)),
+          base_price_cents: Math.round(
+            Number(fd.get("price") ?? Number(product.base_price_cents || 0) / 100) * 100,
+          ),
+          inventory_quantity: Math.max(
+            0,
+            Number(fd.get("inventory_quantity") ?? Number(product.inventory_qty || 0)),
+          ),
           status: String(fd.get("status") || "draft"),
           brand_id: String(fd.get("brand_id") || "") || null,
           store_category_id: categoryId || null,
@@ -291,6 +375,26 @@ export default function ProductEditClient({
           }
         }
 
+        if (imageFiles.length) {
+          for (const file of imageFiles) {
+            const formData = new FormData();
+            formData.append("product_id", product.id);
+            formData.append("file", file);
+            const up = await fetch(
+              `/api/admin/products/images/upload?site_id=${encodeURIComponent(siteId)}`,
+              {
+                method: "POST",
+                body: formData,
+              },
+            );
+            if (!up.ok) {
+              const upData = await up.json().catch(() => ({}));
+              setError(upData?.error || "Product image upload failed");
+              return;
+            }
+          }
+        }
+
         if (variantPayload.length) {
           for (const variant of variantPayload) {
             const files = variantImageFiles[variant.id] || [];
@@ -320,100 +424,240 @@ export default function ProductEditClient({
           : `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
       }}
     >
-      {error ? <div className="text-sm text-red-600">{error}</div> : null}
-      <input
-        name="title"
-        className="border p-2 rounded w-full"
-        placeholder="Title"
-        defaultValue={product.title || ""}
-        required
-      />
-      <textarea
-        name="description"
-        className="border p-2 rounded w-full"
-        placeholder="Description"
-        defaultValue={product.description || ""}
-      />
-      <select
-        name="brand_id"
-        className="border p-2 rounded w-full"
-        defaultValue={product.brand_id || ""}
-      >
-        <option value="">(Legacy Brand Auto)</option>
-        {brands.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.name}
-          </option>
-        ))}
-      </select>
-      <select
-        name="store_category_id"
-        className="border p-2 rounded w-full"
-        value={categoryId}
-        onChange={(e) => setCategoryId(e.target.value)}
-      >
-        <option value="">Select category</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-      {attrs.map((a) => {
-        const value = attrValues[a.code] ?? "";
-        if (a.type === "select") {
-          return (
-            <select
-              key={a.id}
-              className="border p-2 rounded w-full"
-              value={value}
-              onChange={(e) =>
-                setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
-              }
-            >
-              <option value="">{a.name}</option>
-              {(a.options || []).map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          );
-        }
-        if (a.type === "boolean") {
-          return (
-            <label key={a.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={Boolean(attrValues[a.code])}
-                onChange={(e) =>
-                  setAttrValues((prev) => ({ ...prev, [a.code]: e.target.checked }))
-                }
-              />
-              {a.name}
-            </label>
-          );
-        }
-        return (
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Edit Product
+          </h1>
+          <p className="text-slate-500 font-medium italic">
+            Update product details, media, variants, and availability
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            name="status"
+            className="bg-white border border-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none shadow-sm"
+            defaultValue={product.status || "draft"}
+          >
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-2 block">
+            General Information
+          </label>
+          <div className="space-y-4">
+            <input
+              name="title"
+              className="w-full text-xl font-bold border-none p-0 focus:ring-0 placeholder-slate-300"
+              placeholder="Product Title..."
+              defaultValue={product.title || ""}
+              required
+            />
+            <textarea
+              name="description"
+              rows={4}
+              className="w-full border-slate-100 rounded-xl text-sm focus:border-slate-300 transition-all outline-none bg-slate-50/50 p-4"
+              placeholder="Detailed description..."
+              defaultValue={product.description || ""}
+            />
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-center text-center group">
+          <label className="text-xs font-black uppercase text-slate-500 mb-4 block">
+            Product Gallery
+          </label>
           <input
-            key={a.id}
-            type={a.type === "number" ? "number" : a.type === "date" ? "date" : "text"}
-            className="border p-2 rounded w-full"
-            placeholder={a.name}
-            value={value}
-            onChange={(e) =>
-              setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
-            }
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            id="edit-image-upload"
+            onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
           />
-        );
-      })}
-      <input
-        name="sku"
-        className="border p-2 rounded w-full"
-        placeholder="SKU (optional)"
-        defaultValue={product.sku || ""}
-      />
-      <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+          <label htmlFor="edit-image-upload" className="cursor-pointer">
+            <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">
+              🖼️
+            </div>
+            <p className="text-white text-sm font-bold">Upload Media</p>
+            <p className="text-slate-500 text-[10px] mt-1">
+              {imageFiles.length} file{imageFiles.length !== 1 ? "s" : ""} selected
+            </p>
+          </label>
+          <div className="mt-4 text-left">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-2">
+              Existing Images
+            </div>
+            {imagesLoading ? (
+              <div className="text-xs text-slate-400">Loading images...</div>
+            ) : mainImages.length ? (
+              <div className="grid grid-cols-3 gap-2">
+                {mainImages.slice(0, 6).map((img) => (
+                  <img
+                    key={img.id}
+                    src={img.url}
+                    alt={img.alt || ""}
+                    className="h-16 w-full rounded-md object-cover border border-slate-700"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400">No main images</div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-4 block">
+            Logistics
+          </label>
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 mb-1">BRAND</p>
+              <select
+                name="brand_id"
+                className="w-full text-sm border-slate-100 rounded-lg outline-none"
+                defaultValue={product.brand_id || ""}
+              >
+                <option value="">Auto Brand</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 mb-1">IDENTIFIER (SKU)</p>
+              <input
+                name="sku"
+                className="w-full text-sm border-slate-100 rounded-lg outline-none"
+                placeholder="SKU-XXXX"
+                defaultValue={product.sku || ""}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-4 block">
+            Organization & Attributes
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <p className="text-[10px] font-bold text-slate-500 mb-1">CATEGORY *</p>
+              <select
+                name="store_category_id"
+                className="w-full border-slate-100 rounded-lg text-sm bg-slate-50/50 p-2"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">Select category</option>
+                {categoryOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {attrs.map((a) => {
+              const value = attrValues[a.code] ?? "";
+              return (
+                <div
+                  key={a.id}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-100"
+                >
+                  <p className="text-[10px] font-bold text-slate-500 mb-1">
+                    {a.name.toUpperCase()} {(Number(a.is_required) === 1 || a.is_required) && "*"}
+                  </p>
+                  {a.type === "select" ? (
+                    <select
+                      className="w-full text-xs border-none bg-transparent outline-none p-0"
+                      value={value}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
+                      }
+                    >
+                      <option value="">Choose...</option>
+                      {(a.options || []).map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : a.type === "boolean" ? (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(attrValues[a.code])}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.checked }))
+                      }
+                    />
+                  ) : (
+                    <input
+                      type={a.type === "number" ? "number" : a.type === "date" ? "date" : "text"}
+                      className="w-full text-xs border-none bg-transparent outline-none p-0 placeholder-slate-400"
+                      placeholder={`Enter ${a.name}...`}
+                      value={value}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {!useVariants && (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <label className="text-xs font-black uppercase text-emerald-600 block">
+              Single Item Pricing
+            </label>
+            <div className="mt-4 space-y-4">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-emerald-700">
+                  ₹
+                </span>
+                <input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  className="w-full pl-8 border-emerald-200 bg-white rounded-xl text-lg font-bold outline-none"
+                  placeholder="0.00"
+                  defaultValue={Number(product.base_price_cents || 0) / 100}
+                  required
+                />
+              </div>
+              <input
+                name="inventory_quantity"
+                type="number"
+                min={0}
+                className="w-full border-emerald-200 bg-white rounded-xl text-sm p-2 outline-none"
+                placeholder="Stock Level"
+                defaultValue={Number(product.inventory_qty || 0)}
+                required
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={`bg-white border rounded-3xl p-6 transition-all ${useVariants ? "border-blue-200 bg-blue-50/10 shadow-lg" : "border-slate-100"}`}>
         <label className="flex items-center gap-2 text-sm font-medium">
           <input
             type="checkbox"
@@ -565,6 +809,18 @@ export default function ProductEditClient({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium block">Variant Images</label>
+                  {(variantImages[variant.id] || []).length ? (
+                    <div className="mb-2 grid grid-cols-4 gap-2">
+                      {(variantImages[variant.id] || []).slice(0, 8).map((img) => (
+                        <img
+                          key={img.id}
+                          src={img.url}
+                          alt={img.alt || ""}
+                          className="h-14 w-full rounded-md object-cover border border-slate-200"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                   <input
                     type="file"
                     accept="image/*"
@@ -599,33 +855,10 @@ export default function ProductEditClient({
           </p>
         )}
       </div>
-      <input
-        name="price"
-        type="number"
-        step="0.01"
-        className="border p-2 rounded w-full"
-        placeholder="Price"
-        defaultValue={Number(product.base_price_cents || 0) / 100}
-        required
-      />
-      <input
-        name="inventory_quantity"
-        type="number"
-        min={0}
-        className="border p-2 rounded w-full"
-        placeholder="Inventory"
-        defaultValue={Number(product.inventory_qty || 0)}
-      />
-      <select
-        name="status"
-        className="border p-2 rounded w-full"
-        defaultValue={product.status || "draft"}
-      >
-        <option value="draft">Draft</option>
-        <option value="active">Active</option>
-        <option value="archived">Archived</option>
-      </select>
-      <button className="bg-black text-white px-3 py-2 rounded">Save</button>
+
+      <button className="bg-black text-white px-4 py-2 rounded-xl font-semibold">
+        Save Product
+      </button>
     </form>
   );
 }

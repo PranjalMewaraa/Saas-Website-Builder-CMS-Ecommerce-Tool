@@ -27,6 +27,12 @@ type DraftAttr = {
   optionsText: string;
 };
 
+type StoreCategory = {
+  id: string;
+  name: string;
+  parent_id?: string | null;
+};
+
 const ATTR_TYPES = [
   "text",
   "textarea",
@@ -59,6 +65,10 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
 
   const [categoryName, setCategoryName] = useState("");
   const [attributes, setAttributes] = useState<DraftAttr[]>([]);
+  const [isSubCategory, setIsSubCategory] = useState(false);
+  const [parentCategoryId, setParentCategoryId] = useState("");
+  const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [effectiveSiteId, setEffectiveSiteId] = useState(siteId || "");
 
@@ -85,6 +95,25 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
       }
     })();
   }, [effectiveSiteId]);
+
+  useEffect(() => {
+    (async () => {
+      if (step !== 3) return;
+      if (!effectiveSiteId || !storeId) return;
+      setLoadingCategories(true);
+      try {
+        const res = await fetch(
+          `/api/admin/v2/categories?site_id=${encodeURIComponent(effectiveSiteId)}&store_id=${encodeURIComponent(storeId)}`,
+          { cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        setStoreCategories(Array.isArray(data?.categories) ? data.categories : []);
+      } finally {
+        setLoadingCategories(false);
+      }
+    })();
+  }, [effectiveSiteId, step, storeId]);
 
   const presetSuggestions = useMemo(() => {
     const match = presets.find((p) => p.key === preset);
@@ -235,11 +264,16 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
           site_id: effectiveSiteId,
           store_id: storeId,
           name: categoryName.trim(),
+          parent_id: isSubCategory ? parentCategoryId || null : null,
           attributes: payloadAttrs,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Category creation failed");
+      setCategoryName("");
+      setAttributes([]);
+      setIsSubCategory(false);
+      setParentCategoryId("");
       setStep(4);
       toast({ variant: "success", title: "Category created" });
     } catch (e: any) {
@@ -351,6 +385,33 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
             onChange={(e) => setCategoryName(e.target.value)}
             className="border px-3 py-2 rounded w-full"
           />
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={isSubCategory}
+              onChange={(e) => {
+                setIsSubCategory(e.target.checked);
+                if (!e.target.checked) setParentCategoryId("");
+              }}
+            />
+            Create as subcategory
+          </label>
+          {isSubCategory ? (
+            <select
+              className="border px-3 py-2 rounded w-full"
+              value={parentCategoryId}
+              onChange={(e) => setParentCategoryId(e.target.value)}
+            >
+              <option value="">
+                {loadingCategories ? "Loading parent categories..." : "Select parent category"}
+              </option>
+              {storeCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
 
           <div className="space-y-2">
             <div className="text-sm font-medium">Suggested attributes from preset</div>
@@ -471,7 +532,9 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
 
           <div>
             <button
-              disabled={!categoryName.trim() || submitting}
+              disabled={
+                !categoryName.trim() || submitting || (isSubCategory && !parentCategoryId)
+              }
               onClick={createCategory}
               className="px-4 py-2 bg-black text-white rounded disabled:opacity-50"
             >

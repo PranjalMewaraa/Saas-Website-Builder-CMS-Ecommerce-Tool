@@ -81,7 +81,7 @@ export default function CommerceV2Client({
     const cid = nextCategoryId || categoryId;
     if (!validStore || !cid) return;
     const res = await fetch(
-      `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(cid)}`,
+      `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(cid)}&include_inherited=1`,
     );
     const data = await res.json();
     setAttributes(data.attributes || []);

@@ -3,6 +3,7 @@ import { requireModule, requireSession } from "@acme/auth";
 import {
   createCategoryAttribute,
   listCategoryAttributes,
+  listCategoryAttributesResolved,
 } from "@acme/db-mysql";
 
 export async function GET(req: Request) {
@@ -12,6 +13,7 @@ export async function GET(req: Request) {
   const site_id = searchParams.get("site_id") || "";
   const store_id = searchParams.get("store_id") || "";
   const category_id = searchParams.get("category_id") || "";
+  const includeInherited = searchParams.get("include_inherited") === "1";
   await requireModule({ tenant_id, site_id, module: "catalog" });
   if (!store_id || !category_id) {
     return NextResponse.json(
@@ -19,11 +21,17 @@ export async function GET(req: Request) {
       { status: 400 },
     );
   }
-  const attributes = await listCategoryAttributes({
-    tenant_id,
-    store_id,
-    category_id,
-  });
+  const attributes = includeInherited
+    ? await listCategoryAttributesResolved({
+        tenant_id,
+        store_id,
+        category_id,
+      })
+    : await listCategoryAttributes({
+        tenant_id,
+        store_id,
+        category_id,
+      });
   return NextResponse.json({ ok: true, attributes });
 }
 
