@@ -137,16 +137,19 @@ export default async function StorefrontPage({
   searchParams,
 }: {
   params: Promise<{ slug?: string[] }>;
-  searchParams?: Promise<{ handle?: string; token?: string; sid?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   // Await params (safe even if already resolved)
   const resolvedParams = await params;
-  const resolvedSearch = await searchParams;
+  const resolvedSearch = (await searchParams) || {};
+  const pick = (key: string) => {
+    const v = resolvedSearch?.[key];
+    return Array.isArray(v) ? String(v[0] || "") : String(v || "");
+  };
   const cookieStore = await cookies();
-  const persistedSid =
-    resolvedSearch?.sid || cookieStore.get("storefront_sid")?.value || "";
+  const persistedSid = pick("sid") || cookieStore.get("storefront_sid")?.value || "";
   const persistedHandle =
-    resolvedSearch?.handle || cookieStore.get("storefront_handle")?.value || "";
+    pick("handle") || cookieStore.get("storefront_handle")?.value || "";
   let path = normalizePath(resolvedParams.slug);
   const site = await resolveSiteWithId(
     persistedSid || null,
@@ -161,7 +164,7 @@ export default async function StorefrontPage({
   // IMPORTANT:
   // Only explicit query param token should activate preview mode.
   // Do not infer token from request headers to avoid accidental draft redirects.
-  const token = resolvedSearch?.token || "";
+  const token = pick("token") || "";
 
   let snapshot: any = null;
   const isPreview = token && site.preview_token && token === site.preview_token;
@@ -212,13 +215,24 @@ export default async function StorefrontPage({
   }
 
   const hasCartPage = Boolean(snapshot.pages?.["/cart"]);
-  const persistParams = new URLSearchParams();
+  const fullParams = new URLSearchParams();
+  for (const [k, raw] of Object.entries(resolvedSearch || {})) {
+    if (Array.isArray(raw)) {
+      for (const v of raw) {
+        const val = String(v || "").trim();
+        if (val) fullParams.append(k, val);
+      }
+      continue;
+    }
+    const val = String(raw || "").trim();
+    if (val) fullParams.set(k, val);
+  }
   const effectiveHandle = persistedHandle || String(site.handle || "");
   const effectiveSid = persistedSid || String(site._id || "");
-  if (effectiveHandle) persistParams.set("handle", effectiveHandle);
-  if (effectiveSid) persistParams.set("sid", effectiveSid);
-  if (isPreview && token) persistParams.set("token", token);
-  const persistQuery = persistParams.toString();
+  if (effectiveHandle) fullParams.set("handle", effectiveHandle);
+  if (effectiveSid) fullParams.set("sid", effectiveSid);
+  if (isPreview && token) fullParams.set("token", token);
+  const fullQuery = fullParams.toString();
 
   return (
     <>
@@ -238,7 +252,7 @@ export default async function StorefrontPage({
             storeId: site.store_id,
             snapshot,
             path,
-            search: persistQuery ? `?${persistQuery}` : "",
+            search: fullQuery ? `?${fullQuery}` : "",
             mode: isPreview ? "preview" : "published",
           }}
         />
@@ -249,7 +263,7 @@ export default async function StorefrontPage({
         ) : null}
         {hasCartPage ? (
           <a
-            href={persistQuery ? `/cart?${persistQuery}` : "/cart"}
+            href={fullQuery ? `/cart?${fullQuery}` : "/cart"}
             aria-label="Open cart"
             title="Cart"
             className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
