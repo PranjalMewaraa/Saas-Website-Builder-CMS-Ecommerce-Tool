@@ -2,34 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useUI } from "@/app/_components/ui/UiProvider";
-import {
-  GripVertical,
-  Plus,
-  Save,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  Code,
-  ChevronDown,
-  ChevronUp,
-  Layout,
-  Paintbrush,
-} from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 
-import EditorModeToggleVisual from "../../_component/EditorModeToggleVisual";
-import { useEditorMode } from "../../_component/useEditorMode";
-import ImageField from "../../_component/ImageField";
-import { useAssetsMap } from "../../_component/useAssetsMap";
-import StylePreviewCard from "../../_component/StylePreviewCard";
-import { VisualInspector } from "../../_component/VisualInspector";
-import { VisualCanvas } from "../../_component/VisualCanvas";
-import LayoutInspector from "../../_component/LayoutInspector";
-import type { LayoutSelection } from "../../_component/layout-utils";
+import { useEditorMode } from "../../../(adminPages)/content/_component/useEditorMode";
+import ImageField from "../../../(adminPages)/content/_component/ImageField";
+import { useAssetsMap } from "../../../(adminPages)/content/_component/useAssetsMap";
+import StylePreviewCard from "../../../(adminPages)/content/_component/StylePreviewCard";
+import { VisualInspector } from "../../../(adminPages)/content/_component/VisualInspector";
+import { VisualCanvas } from "../../../(adminPages)/content/_component/VisualCanvas";
+import LayoutInspector from "../../../(adminPages)/content/_component/LayoutInspector";
+import type { LayoutSelection } from "../../../(adminPages)/content/_component/layout-utils";
 import PageSeoEditor from "@/app/_components/PageSeoEditor";
 
 import { BLOCK_TYPES as ALL_BLOCK_TYPES } from "@acme/blocks/registry/block-types";
-import { title } from "process";
-import BlockCard from "./components/BlockCard";
+import BlockCard from "../../../(adminPages)/content/pages/edit/components/BlockCard";
 
 /* ---------------- helpers ---------------- */
 
@@ -45,7 +31,7 @@ const BLOCK_TYPES = ALL_BLOCK_TYPES.filter((t) => !t.startsWith("Atomic/"));
 
 /* ---------------- main ---------------- */
 
-export default function PageEditorClient({
+export default function PageEditorStudioClient({
   siteId,
   pageId,
   urlMode,
@@ -55,13 +41,16 @@ export default function PageEditorClient({
   urlMode?: string;
 }) {
   const { toast, confirm, prompt } = useUI();
-  const { mode, setMode } = useEditorMode("form", urlMode, ["form", "json"]);
+  const { mode } = useEditorMode("visual", "visual", ["visual"]);
   const { assetsMap } = useAssetsMap(siteId);
   const [tab, setTab] = useState<"layout" | "seo">("layout");
   const [selection, setSelection] = useState<LayoutSelection | null>(null);
   const [zoom, setZoom] = useState(100);
-  const [showGrid, setShowGrid] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
   const [showOutlines, setShowOutlines] = useState(true);
+  const [leftPanelTab, setLeftPanelTab] = useState<"layers" | "inspector">(
+    "layers",
+  );
   const [forms, setForms] = useState<any[]>([]);
   const [menus, setMenus] = useState<any[]>([]);
   const [page, setPage] = useState<any>(null);
@@ -146,6 +135,10 @@ export default function PageEditorClient({
       setMenus(data.menus ?? []);
     })();
   }, [siteId]);
+
+  useEffect(() => {
+    if (selection) setLeftPanelTab("inspector");
+  }, [selection]);
 
   async function saveLayout(nextLayout: any) {
     setSaveStatus("saving");
@@ -329,91 +322,12 @@ export default function PageEditorClient({
   }
 
   return (
-    <div className="space-y-6 w-full mx-auto p-8 md:p-8">
-      {/* header */}
-      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b pb-4 pt-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold">
-              {page.name || page.title || page.slug}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Site: {siteId} · Page: {page.slug}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={openAddBlockDialog}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50"
-            >
-              <Plus className="h-4 w-4" />
-              Add New Block
-            </button>
-            <button
-              onClick={() =>
-                window.open(
-                  `/content/pages/editor?site_id=${encodeURIComponent(siteId)}&page_id=${encodeURIComponent(pageId)}`,
-                  "_blank",
-                  "noopener,noreferrer",
-                )
-              }
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-black text-white hover:bg-gray-800"
-            >
-              Switch To Visual Builder
-            </button>
-            <div className="min-w-max">
-              <EditorModeToggleVisual
-                mode={mode}
-                setMode={setMode}
-                showVisual={false}
-              />
-            </div>
-            {mode && (
-              <button
-                onClick={() => saveLayout(layout)}
-                disabled={saveStatus === "saving"}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
-                  saveStatus === "success"
-                    ? "bg-green-600 text-white"
-                    : "bg-black text-white"
-                }`}
-              >
-                <Save className="h-4 w-4" />
-                Save Draft
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full h-screen mx-auto p-4 md:p-4">
       <div>
-        <div className="mb-4 inline-flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
-          <button
-            onClick={() => setTab("layout")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === "layout"
-                ? "bg-black text-white"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            Layout
-          </button>
-          <button
-            onClick={() => setTab("seo")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              tab === "seo"
-                ? "bg-black text-white"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            SEO
-          </button>
-        </div>
         {tab === "layout" && (
           <>
             {mode === "json" ? (
-              <div className="border rounded-xl p-5 bg-white space-y-4">
+              <div className="shadow-2xl rounded-xl p-5 bg-white space-y-4">
                 <textarea
                   className="w-full h-[60vh] font-mono border p-3"
                   value={layoutJson}
@@ -436,7 +350,171 @@ export default function PageEditorClient({
                 </button>
               </div>
             ) : mode === "visual" ? (
-              <div className="grid h-[calc(100vh-220px)] grid-cols-[1fr_320px] gap-6 min-h-0">
+              <div className="grid h-[calc(100vh-20px)] gap-4 min-h-0 grid-cols-[320px_minmax(0,1fr)]">
+                <div className="shadow-2xl rounded-xl bg-white p-3 min-h-0 flex flex-col">
+                  <div className="space-y-3 shrink-0 border-b border-gray-100 pb-3">
+                    <div className="text-base font-semibold text-gray-900 leading-tight">
+                      {page.name || page.title || page.slug}
+                    </div>
+                    <div className="text-xs font-mono text-gray-500 truncate">
+                      {page.slug || "/"}
+                    </div>
+                    <button
+                      onClick={openAddBlockDialog}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add New Block
+                    </button>
+                    <div className="inline-flex w-full rounded-lg border border-gray-200 bg-gray-50 p-1">
+                      <button
+                        onClick={() => setLeftPanelTab("layers")}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                          leftPanelTab === "layers"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Layers
+                      </button>
+                      <button
+                        onClick={() => setLeftPanelTab("inspector")}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                          leftPanelTab === "inspector"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:text-gray-900"
+                        }`}
+                      >
+                        Inspector
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-4 overflow-y-auto min-h-0 pr-1">
+                    {leftPanelTab === "layers" ? (
+                      <>
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Layers
+                        </div>
+                        <div className="space-y-2">
+                          {blocks.map((b: any) => (
+                            <div
+                              key={b.id}
+                              draggable
+                              onDragStart={(e) => {
+                                setDragBlockId(b.id);
+                                e.dataTransfer.effectAllowed = "move";
+                                e.dataTransfer.setData("text/plain", b.id);
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = "move";
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                const fromId =
+                                  dragBlockId ||
+                                  e.dataTransfer.getData("text/plain");
+                                moveBlockTo(fromId, b.id);
+                                setDragBlockId(null);
+                              }}
+                              onDragEnd={() => setDragBlockId(null)}
+                              onClick={() =>
+                                setSelection({ kind: "block", blockId: b.id })
+                              }
+                              className={`cursor-grab active:cursor-grabbing rounded-lg border flex items-center justify-between gap-4 px-3 py-2 text-sm ${
+                                selection?.blockId === b.id
+                                  ? "border-blue-400 bg-blue-50"
+                                  : "border-gray-200 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="font-medium text-gray-900 truncate">
+                                {b.type}
+                              </div>
+
+                              <button
+                                type="button"
+                                className="text-[10px] px-2 py-0.5 rounded border border-gray-300 bg-white hover:bg-gray-50 shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  saveBlockAsTemplate(b);
+                                }}
+                              >
+                                Save Template
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : selection ? (
+                      <div className="rounded-xl border border-gray-200 bg-white p-3">
+                        {selection.kind !== "block" ? (
+                          <LayoutInspector
+                            block={blocks.find(
+                              (b: any) => b.id === selection.blockId,
+                            )}
+                            selection={selection}
+                            siteId={siteId}
+                            assetsMap={assetsMap}
+                            menus={menus}
+                            forms={forms}
+                            themePalette={themePalette}
+                            onDeleteBlock={(id: string) => {
+                              const idx = blocks.findIndex(
+                                (b: any) => b.id === id,
+                              );
+                              if (idx >= 0) deleteBlock(idx);
+                            }}
+                            onChangeBlock={(nextBlock: any) =>
+                              updateBlockById(nextBlock.id, nextBlock)
+                            }
+                          />
+                        ) : (
+                          <VisualInspector
+                            block={blocks.find(
+                              (b: any) => b.id === selection?.blockId,
+                            )}
+                            siteId={siteId}
+                            assetsMap={assetsMap}
+                            forms={forms}
+                            menus={menus}
+                            themePalette={themePalette}
+                            onDeleteBlock={(id: string) => {
+                              const idx = blocks.findIndex(
+                                (b: any) => b.id === id,
+                              );
+                              if (idx >= 0) deleteBlock(idx);
+                            }}
+                            onChange={(nextBlock: any) => {
+                              const idx = blocks.findIndex(
+                                (b: any) => b.id === nextBlock.id,
+                              );
+                              updateBlock(idx, nextBlock);
+                            }}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                        Select a block from canvas or layers to edit it.
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 pt-3 border-t bg-white sticky bottom-0 shrink-0">
+                    <button
+                      onClick={() => saveLayout(layout)}
+                      disabled={saveStatus === "saving"}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${
+                        saveStatus === "success"
+                          ? "bg-green-600 text-white"
+                          : "bg-black text-white"
+                      }`}
+                    >
+                      <Save className="h-4 w-4" />
+                      Save Draft
+                    </button>
+                  </div>
+                </div>
+
                 <div className="visual-canvas-scroll space-y-4 overflow-y-auto pr-1 min-h-0">
                   <div className="flex flex-wrap items-center gap-3 bg-white border rounded-xl px-3 py-2">
                     <div className="text-xs text-gray-500">Zoom</div>
@@ -471,15 +549,15 @@ export default function PageEditorClient({
                   <VisualCanvas
                     layout={layout}
                     selection={selection}
-                    onSelect={setSelection}
+                    onSelect={(sel) => {
+                      setSelection(sel);
+                      setLeftPanelTab("inspector");
+                    }}
                     onChangeBlock={(nextBlock: any) =>
                       updateBlockById(nextBlock.id, nextBlock)
                     }
                     assetsMap={assetsMap}
                     menus={menus}
-                    forms={Object.fromEntries(
-                      (forms || []).map((f: any) => [f._id, f]),
-                    )}
                     showGrid={showGrid}
                     showOutlines={showOutlines}
                     zoom={zoom}
@@ -493,50 +571,6 @@ export default function PageEditorClient({
                       moveBlockTo(fromId, toId)
                     }
                   />
-                </div>
-
-                <div className="border rounded-xl p-4 bg-white sticky top-24 h-[calc(100vh-220px)] overflow-y-auto">
-                  {selection && selection.kind !== "block" ? (
-                    <LayoutInspector
-                      block={blocks.find(
-                        (b: any) => b.id === selection.blockId,
-                      )}
-                      selection={selection}
-                      siteId={siteId}
-                      assetsMap={assetsMap}
-                      menus={menus}
-                      forms={forms}
-                      themePalette={themePalette}
-                      onDeleteBlock={(id: string) => {
-                        const idx = blocks.findIndex((b: any) => b.id === id);
-                        if (idx >= 0) deleteBlock(idx);
-                      }}
-                      onChangeBlock={(nextBlock: any) =>
-                        updateBlockById(nextBlock.id, nextBlock)
-                      }
-                    />
-                  ) : (
-                    <VisualInspector
-                      block={blocks.find(
-                        (b: any) => b.id === selection?.blockId,
-                      )}
-                      siteId={siteId}
-                      assetsMap={assetsMap}
-                      forms={forms}
-                      menus={menus}
-                      themePalette={themePalette}
-                      onDeleteBlock={(id: string) => {
-                        const idx = blocks.findIndex((b: any) => b.id === id);
-                        if (idx >= 0) deleteBlock(idx);
-                      }}
-                      onChange={(nextBlock: any) => {
-                        const idx = blocks.findIndex(
-                          (b: any) => b.id === nextBlock.id,
-                        );
-                        updateBlock(idx, nextBlock);
-                      }}
-                    />
-                  )}
                 </div>
               </div>
             ) : (
@@ -589,12 +623,40 @@ export default function PageEditorClient({
         )}
 
         {tab === "seo" && (
-          <PageSeoEditor
-            siteId={siteId}
-            slug={page.slug}
-            seo={page?.seo}
-            assetsMap={assetsMap}
-          />
+          <div className="grid h-full min-h-[calc(100vh-20px)] grid-cols-[280px_1fr] gap-4 ">
+            <div className="border rounded-xl bg-white p-3 min-h-0 flex flex-col">
+              <div className="space-y-3 shrink-0">
+                <div className="text-sm font-semibold text-gray-900 truncate">
+                  {page.name || page.title || page.slug}
+                </div>
+                <div className="text-xs font-mono text-gray-500 truncate">
+                  {page.slug || "/"}
+                </div>
+                <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+                  <button
+                    onClick={() => setTab("layout")}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition text-gray-700 hover:bg-gray-50"
+                  >
+                    Layout
+                  </button>
+                  <button
+                    onClick={() => setTab("seo")}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-black text-white"
+                  >
+                    SEO
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-y-auto min-h-0">
+              <PageSeoEditor
+                siteId={siteId}
+                slug={page.slug}
+                seo={page?.seo}
+                assetsMap={assetsMap}
+              />
+            </div>
+          </div>
         )}
       </div>
 

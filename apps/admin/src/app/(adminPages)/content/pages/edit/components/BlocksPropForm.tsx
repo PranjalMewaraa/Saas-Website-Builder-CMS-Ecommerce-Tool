@@ -11,7 +11,7 @@ import Typography from "@tiptap/extension-typography";
 import { useUI } from "@/app/_components/ui/UiProvider";
 import ImageField from "../../../_component/ImageField";
 import ColorPickerInput from "../../../_component/ColorPickerInput";
-
+import { ChevronDown } from "lucide-react";
 const DEFAULT_IMAGE =
   "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 export function BlockPropsForm({
@@ -46,13 +46,7 @@ export function BlockPropsForm({
     if (type === "Footer/V1" && !props.menuId && assignedFooter?._id) {
       setProp("menuId", assignedFooter._id);
     }
-  }, [
-    type,
-    props.menuId,
-    assignedHeader?._id,
-    assignedFooter?._id,
-    setProp,
-  ]);
+  }, [type, props.menuId, assignedHeader?._id, assignedFooter?._id, setProp]);
 
   useEffect(() => {
     if (type === "Hero" || type === "Hero/V1") {
@@ -508,9 +502,9 @@ export function BlockPropsForm({
               type="button"
               className="text-xs border rounded px-2 py-1 hover:bg-gray-50"
               onClick={() => {
-                const fallbackMenuId = props.menuId || assignedFooter?._id || "";
-                const defaultMenuId =
-                  fallbackMenuId || menus?.[0]?._id || "";
+                const fallbackMenuId =
+                  props.menuId || assignedFooter?._id || "";
+                const defaultMenuId = fallbackMenuId || menus?.[0]?._id || "";
                 applyFooterMenuGroups([
                   ...footerMenuGroups,
                   {
@@ -528,7 +522,10 @@ export function BlockPropsForm({
           {footerMenuGroups.length ? (
             <div className="space-y-3">
               {footerMenuGroups.map((group: any, idx: number) => (
-                <div key={`footer-menu-group-${idx}`} className="border rounded p-3 space-y-2">
+                <div
+                  key={`footer-menu-group-${idx}`}
+                  className="border rounded p-3 space-y-2"
+                >
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Section {idx + 1}
@@ -540,7 +537,10 @@ export function BlockPropsForm({
                         disabled={idx === 0}
                         onClick={() => {
                           const next = [...footerMenuGroups];
-                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                          [next[idx - 1], next[idx]] = [
+                            next[idx],
+                            next[idx - 1],
+                          ];
                           applyFooterMenuGroups(next);
                         }}
                       >
@@ -552,7 +552,10 @@ export function BlockPropsForm({
                         disabled={idx === footerMenuGroups.length - 1}
                         onClick={() => {
                           const next = [...footerMenuGroups];
-                          [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                          [next[idx + 1], next[idx]] = [
+                            next[idx],
+                            next[idx + 1],
+                          ];
                           applyFooterMenuGroups(next);
                         }}
                       >
@@ -563,7 +566,9 @@ export function BlockPropsForm({
                         className="text-xs border rounded px-2 py-1 text-red-600 border-red-200 hover:bg-red-50"
                         onClick={() => {
                           applyFooterMenuGroups(
-                            footerMenuGroups.filter((_: any, i: number) => i !== idx),
+                            footerMenuGroups.filter(
+                              (_: any, i: number) => i !== idx,
+                            ),
                           );
                         }}
                       >
@@ -603,7 +608,9 @@ export function BlockPropsForm({
                   <Field
                     label="Section Title"
                     value={group.title || ""}
-                    onChange={(v: any) => updateFooterMenuGroup(idx, { title: v })}
+                    onChange={(v: any) =>
+                      updateFooterMenuGroup(idx, { title: v })
+                    }
                     placeholder={`Links ${idx + 1}`}
                   />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -629,7 +636,8 @@ export function BlockPropsForm({
             </div>
           ) : (
             <div className="text-xs text-muted-foreground">
-              Add one or more menu sections. Each section can use a different menu and title.
+              Add one or more menu sections. Each section can use a different
+              menu and title.
             </div>
           )}
         </div>
@@ -716,9 +724,14 @@ export function BlockPropsForm({
             {
               title: "Dark",
               items: footerPresets.filter((p) =>
-                ["midnight", "royal", "slate", "mono", "ocean", "forest"].includes(
-                  p.id
-                ),
+                [
+                  "midnight",
+                  "royal",
+                  "slate",
+                  "mono",
+                  "ocean",
+                  "forest",
+                ].includes(p.id),
               ),
             },
             {
@@ -800,9 +813,7 @@ export function BlockPropsForm({
                 <ColorPickerInput
                   label="From"
                   value={panelBg.gradient?.from || ""}
-                  onChange={(v: any) =>
-                    setPropPath("panelBg.gradient.from", v)
-                  }
+                  onChange={(v: any) => setPropPath("panelBg.gradient.from", v)}
                   placeholder="rgba(255,255,255,0.05)"
                 />
                 <ColorPickerInput
@@ -1862,13 +1873,9 @@ function IconPicker({
       >
         <div className="flex items-center gap-2">
           {Current ? <Current className="h-4 w-4" /> : null}
-          <span className="text-sm text-gray-700">
-            {value || "None"}
-          </span>
+          <span className="text-sm text-gray-700">{value || "None"}</span>
         </div>
-        <span className="text-xs text-gray-500">
-          {open ? "Close" : "Pick"}
-        </span>
+        <span className="text-xs text-gray-500">{open ? "Close" : "Pick"}</span>
       </button>
 
       {open ? (
@@ -1927,19 +1934,6 @@ function IconPicker({
     </div>
   );
 }
-function Field({ label, value, onChange, placeholder }: any) {
-  return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <input
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </label>
-  );
-}
 
 function SocialLinksEditor({
   value,
@@ -1986,36 +1980,101 @@ function SocialLinksEditor({
   );
 }
 
-function NumberField({ label, value, onChange }: any) {
+export function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <input
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        type="number"
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200 placeholder:text-slate-400
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
       />
-    </label>
+    </div>
   );
 }
 
-function Select({ label, value, onChange, options }: any) {
+export function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+}) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <select
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map((o: string) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <input
+        type="number"
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
+                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        value={Number.isNaN(value) ? 0 : value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<string | { label: string; value: string }>;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-sm font-semibold text-slate-700 ml-0.5">
+        {label}
+      </label>
+      <div className="relative group">
+        <select
+          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+                     transition-all duration-200 outline-none
+                     hover:border-slate-400
+                     focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((o) => {
+            const optLabel = typeof o === "string" ? o : o.label;
+            const optValue = typeof o === "string" ? o : o.value;
+            return (
+              <option key={optValue} value={optValue}>
+                {optLabel}
+              </option>
+            );
+          })}
+        </select>
+        {/* Custom Chevron for a more premium feel */}
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500">
+          <ChevronDown size={16} strokeWidth={2.5} />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2182,7 +2241,9 @@ function RichTextEditor({
             <button
               type="button"
               className="text-xs border rounded px-2 py-1"
-              onClick={() => editor?.chain().focus().setTextAlign("right").run()}
+              onClick={() =>
+                editor?.chain().focus().setTextAlign("right").run()
+              }
             >
               Right
             </button>
@@ -2319,7 +2380,11 @@ function defaultPropsFor(type: string) {
       checkoutHref: "/checkout",
     };
   if (type === "CartSummary/V1")
-    return { title: "Summary", checkoutText: "Checkout", checkoutHref: "/checkout" };
+    return {
+      title: "Summary",
+      checkoutText: "Checkout",
+      checkoutHref: "/checkout",
+    };
   if (type === "AddToCart/V1")
     return {
       productId: "",

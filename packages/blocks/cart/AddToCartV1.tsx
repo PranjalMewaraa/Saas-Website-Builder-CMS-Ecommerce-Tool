@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useCartOptional } from "./cart-context";
+import { normalizeImageUrl } from "../commerce/image-utils";
 
 type VariantOption = {
   id: string;
@@ -23,6 +24,10 @@ type Props = {
   selectedVariantId?: string;
   onSelectedVariantIdChange?: (variantId: string) => void;
   hideVariantPicker?: boolean;
+  containerClassName?: string;
+  buttonClassName?: string;
+  buttonLabel?: React.ReactNode;
+  onAdded?: () => void;
   __editor?: boolean;
 };
 
@@ -38,6 +43,10 @@ export default function AddToCartV1({
   selectedVariantId: selectedVariantIdProp,
   onSelectedVariantIdChange,
   hideVariantPicker = false,
+  containerClassName,
+  buttonClassName,
+  buttonLabel,
+  onAdded,
   __editor,
 }: Props) {
   const cart = useCartOptional();
@@ -83,16 +92,19 @@ export default function AddToCartV1({
   if (!cart || __editor || !productId) {
     return (
       <button
-        className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white"
+        className={cn(
+          "inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white",
+          buttonClassName,
+        )}
         type="button"
       >
-        {buttonText}
+        {buttonLabel ?? buttonText}
       </button>
     );
   }
 
   return (
-      <div className="space-y-2">
+      <div className={cn("space-y-2", containerClassName)}>
         {showVariantPicker && !hideVariantPicker ? (
           <select
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
@@ -107,7 +119,10 @@ export default function AddToCartV1({
           </select>
         ) : null}
         <button
-          className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white disabled:opacity-60"
+          className={cn(
+            "inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white disabled:opacity-60",
+            buttonClassName,
+          )}
           type="button"
           disabled={outOfStock}
           onClick={() => {
@@ -117,17 +132,26 @@ export default function AddToCartV1({
               variant_label: showVariantPicker ? selectedLabel || undefined : undefined,
               title: title || "Product",
               price_cents: selectedPrice,
-              image,
+              image: normalizeImageUrl(image),
               qty: quantity,
             });
+            onAdded?.();
             setAdded(true);
             setTimeout(() => setAdded(false), 1200);
           }}
         >
-          {outOfStock ? "Out of stock" : added ? "Added" : buttonText}
+          {outOfStock
+            ? "Out of stock"
+            : added
+              ? "Added"
+              : buttonLabel ?? buttonText}
         </button>
       </div>
   );
+}
+
+function cn(...parts: Array<string | undefined | null | false>) {
+  return parts.filter(Boolean).join(" ");
 }
 
 function formatVariantLabel(variant: VariantOption) {

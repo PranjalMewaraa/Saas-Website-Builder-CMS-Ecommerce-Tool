@@ -1,5 +1,6 @@
 import { ImageOff } from "lucide-react";
 import Link from "next/link";
+import { normalizeImageUrl } from "../../commerce/image-utils";
 
 interface Product {
   id: string;
@@ -27,22 +28,6 @@ interface Product {
 // ────────────────────────────────────────────────
 // Product Card Component
 // ────────────────────────────────────────────────
-function fixDoubleProtocolUrl(url: any) {
-  if (typeof url !== "string" || !url) {
-    return url; // return as-is if not a string or empty
-  }
-
-  // Remove duplicate protocol patterns (most common cases)
-  let corrected = url
-    .replace(/^https?:\/\/https?:\/\//i, "https://") // https://https://  or http://https://
-    .replace(/^http:\/\/http:\/\//i, "http://") // http://http://
-    .replace(/^(https?:\/\/)+/, "https://"); // any number of repeated https:// or http:// → keep one https
-
-  // Also fix cases like https:/https:// or https:////
-  corrected = corrected.replace(/^(https?:\/)\/+(?!\/)/, "https://");
-
-  return corrected;
-}
 function joinPath(base: string, slug: string) {
   const b = base.endsWith("/") ? base.slice(0, -1) : base;
   const s = slug.startsWith("/") ? slug.slice(1) : slug;
@@ -60,7 +45,7 @@ function ProductCardV1({
   clickable?: boolean;
 }) {
   const primaryImage = product.images?.[0];
-  const primaryImageUrl = fixDoubleProtocolUrl(product.images?.[0]?.url);
+  const primaryImageUrl = normalizeImageUrl(product.images?.[0]?.url);
   const price = product.base_price_cents / 100;
   const comparePrice = product.compare_at_price_cents
     ? product.compare_at_price_cents / 100

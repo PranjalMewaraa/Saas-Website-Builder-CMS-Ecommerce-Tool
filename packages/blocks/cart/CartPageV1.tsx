@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useCartOptional } from "./cart-context";
 import type { CartItem } from "./cart-context";
+import { normalizeImageUrl } from "../commerce/image-utils";
 
 type Props = {
   title?: string;
@@ -105,7 +106,7 @@ export default function CartPageV1({
             >
               {item.image ? (
                 <img
-                  src={item.image}
+                  src={normalizeImageUrl(item.image)}
                   alt={item.title}
                   className="h-20 w-20 rounded-lg object-cover"
                 />

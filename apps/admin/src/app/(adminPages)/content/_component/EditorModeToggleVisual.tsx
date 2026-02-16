@@ -3,9 +3,11 @@
 export default function EditorModeToggleVisual({
   mode,
   setMode,
+  showVisual = true,
 }: {
   mode: "form" | "json" | "visual";
   setMode: (m: "form" | "json" | "visual") => void;
+  showVisual?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -24,14 +26,15 @@ export default function EditorModeToggleVisual({
       >
         JSON
       </button>
-      <button
-        className={`px-3 py-1 rounded border text-sm ${mode === "visual" ? "bg-black text-white" : ""}`}
-        onClick={() => setMode("visual")}
-        type="button"
-      >
-        Visual
-      </button>
+      {showVisual ? (
+        <button
+          className={`px-3 py-1 rounded border text-sm ${mode === "visual" ? "bg-black text-white" : ""}`}
+          onClick={() => setMode("visual")}
+          type="button"
+        >
+          Visual
+        </button>
+      ) : null}
     </div>
   );
 }
-

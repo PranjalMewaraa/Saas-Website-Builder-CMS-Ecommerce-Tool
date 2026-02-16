@@ -15,6 +15,7 @@ type Menu = {
 
 type Props = {
   menu: Menu | null;
+  siteName?: string;
   layout?: "three-col" | "two-col" | "two-col-nav-cta";
   ctaText?: string;
   ctaHref?: string;
@@ -34,6 +35,7 @@ type Props = {
 
 export default function HeaderV1({
   menu,
+  siteName,
   layout = "three-col",
   ctaText,
   ctaHref,
@@ -72,7 +74,10 @@ export default function HeaderV1({
               : "1280px";
 
   const logoNode = logoUrl ? (
-    <Link href={appendPreviewQuery("/", previewQuery)} className="flex items-center gap-2">
+    <Link
+      href={appendPreviewQuery("/", previewQuery)}
+      className="flex items-center gap-2"
+    >
       <Image
         src={logoUrl}
         alt={logoAlt || "Logo"}
@@ -83,8 +88,11 @@ export default function HeaderV1({
       />
     </Link>
   ) : (
-    <Link href={appendPreviewQuery("/", previewQuery)} className="font-semibold">
-      Store
+    <Link
+      href={appendPreviewQuery("/", previewQuery)}
+      className="font-semibold"
+    >
+      {siteName || logoAlt || "Site"}
     </Link>
   );
 
@@ -93,7 +101,10 @@ export default function HeaderV1({
       {navItems.map((n) => (
         <Link
           key={n.id}
-          href={appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery)}
+          href={appendPreviewQuery(
+            n.ref?.slug || n.ref?.href || "#",
+            previewQuery,
+          )}
           className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
         >
           {n.label}
@@ -121,9 +132,13 @@ export default function HeaderV1({
           href={appendPreviewQuery(ctaTertiaryHref, previewQuery)}
           className="px-3 py-2 rounded-full text-sm font-medium text-black/70 hover:text-black transition"
         >
-          {tertiaryIcon ? <tertiaryIcon className="h-4 w-4 inline-block" /> : null}
+          {tertiaryIcon ? (
+            <tertiaryIcon className="h-4 w-4 inline-block" />
+          ) : null}
           {ctaTertiaryText ? (
-            <span className={tertiaryIcon ? "ml-2" : ""}>{ctaTertiaryText}</span>
+            <span className={tertiaryIcon ? "ml-2" : ""}>
+              {ctaTertiaryText}
+            </span>
           ) : null}
         </Link>
       ) : null}
@@ -147,7 +162,9 @@ export default function HeaderV1({
           href={appendPreviewQuery(ctaHref, previewQuery)}
           className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
         >
-          {primaryIcon ? <primaryIcon className="h-4 w-4 inline-block" /> : null}
+          {primaryIcon ? (
+            <primaryIcon className="h-4 w-4 inline-block" />
+          ) : null}
           {ctaText ? (
             <span className={primaryIcon ? "ml-2" : ""}>{ctaText}</span>
           ) : null}
@@ -198,7 +215,12 @@ export default function HeaderV1({
 
 function appendPreviewQuery(href: string, previewQuery?: string) {
   if (!previewQuery) return href;
-  if (!href || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("#")) {
+  if (
+    !href ||
+    href.startsWith("http") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("#")
+  ) {
     return href;
   }
   const [base, hash] = href.split("#");

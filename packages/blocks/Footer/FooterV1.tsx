@@ -288,7 +288,7 @@ export default function FooterV1({
               </div>
 
               {columns.length ? (
-                <div className="grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-4">
                   {columns.map((group, idx) => (
                     <div key={`col-${idx}`}>
                       <h3

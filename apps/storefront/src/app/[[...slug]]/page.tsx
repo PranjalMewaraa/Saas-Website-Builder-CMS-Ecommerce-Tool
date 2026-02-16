@@ -146,9 +146,7 @@ export default async function StorefrontPage({
   const persistedSid =
     resolvedSearch?.sid || cookieStore.get("storefront_sid")?.value || "";
   const persistedHandle =
-    resolvedSearch?.handle ||
-    cookieStore.get("storefront_handle")?.value ||
-    "";
+    resolvedSearch?.handle || cookieStore.get("storefront_handle")?.value || "";
   let path = normalizePath(resolvedParams.slug);
   const site = await resolveSiteWithId(
     persistedSid || null,
@@ -232,7 +230,7 @@ export default async function StorefrontPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(web) }}
       />
-      <div className="theme-root" style={themeTokens as React.CSSProperties}>
+      <div className="theme-root">
         <RenderPage
           layout={page.layout}
           ctx={{
@@ -254,12 +252,12 @@ export default async function StorefrontPage({
             href={persistQuery ? `/cart?${persistQuery}` : "/cart"}
             aria-label="Open cart"
             title="Cart"
-            className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
+            className="fixed bottom-6 right-6 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-[var(--color-on-primary)] shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
           >
             <ShoppingCart
               size={18}
               strokeWidth={2}
-              className="pointer-events-none"
+              className="pointer-events-none text-white"
             />
           </a>
         ) : null}

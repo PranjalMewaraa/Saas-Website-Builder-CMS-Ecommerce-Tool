@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useCartOptional } from "./cart-context";
+import { normalizeImageUrl } from "../commerce/image-utils";
 
 type Props = {
   title?: string;
@@ -55,7 +56,7 @@ export default function MiniCartV1({
               >
                 {item.image ? (
                   <img
-                    src={item.image}
+                    src={normalizeImageUrl(item.image)}
                     alt={item.title}
                     className="h-14 w-14 rounded-lg object-cover"
                   />

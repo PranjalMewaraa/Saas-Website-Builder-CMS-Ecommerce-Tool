@@ -38,6 +38,94 @@ export type ProductFilterMeta = {
   priceMax: number;
 };
 
+function tokenizeSearch(input?: string) {
+  return String(input || "")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2)
+    .slice(0, 4);
+}
+
+function pushDeepSearchWhere(
+  where: string[],
+  params: any[],
+  q: string | undefined,
+  tenantId: string,
+) {
+  const terms = tokenizeSearch(q);
+  if (!terms.length) return;
+
+  for (const term of terms) {
+    const like = `%${term}%`;
+    where.push(
+      `(
+        p.title LIKE ?
+        OR p.description LIKE ?
+        OR p.sku LIKE ?
+        OR EXISTS (
+          SELECT 1
+          FROM brands b
+          WHERE b.tenant_id = p.tenant_id
+            AND b.id = p.brand_id
+            AND b.name LIKE ?
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM store_categories sc
+          WHERE sc.tenant_id = p.tenant_id
+            AND sc.id = p.store_category_id
+            AND sc.name LIKE ?
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM product_categories pc
+          JOIN categories c ON c.id = pc.category_id AND c.tenant_id = pc.tenant_id
+          WHERE pc.tenant_id = ?
+            AND pc.product_id = p.id
+            AND c.name LIKE ?
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM store_product_attribute_values v
+          JOIN store_category_attributes a ON a.id = v.attribute_id
+          WHERE v.tenant_id = ?
+            AND v.product_id = p.id
+            AND (
+              a.name LIKE ?
+              OR a.code LIKE ?
+              OR v.value_text LIKE ?
+              OR CONCAT('', v.value_number) LIKE ?
+              OR CONCAT('', v.value_bool) LIKE ?
+              OR v.value_color LIKE ?
+              OR v.value_date LIKE ?
+              OR v.value_json LIKE ?
+            )
+        )
+      )`,
+    );
+    params.push(
+      like, // p.title
+      like, // p.description
+      like, // p.sku
+      like, // brand name
+      like, // store category name
+      tenantId, // legacy categories tenant
+      like, // legacy category name
+      tenantId, // attributes tenant
+      like, // attribute name
+      like, // attribute code
+      like, // value_text
+      like, // value_number as string
+      like, // value_bool as string
+      like, // value_color
+      like, // value_date
+      like, // value_json
+    );
+  }
+}
+
 function parseOptionsJson(raw: any): Record<string, string> {
   if (!raw) return {};
   let parsed = raw;
@@ -240,11 +328,7 @@ export async function listPublishedProductsForStoreWithFilters(args: {
   ];
   const params: any[] = [args.tenant_id, args.store_id];
 
-  if (args.q) {
-    where.push("(p.title LIKE ? OR p.description LIKE ?)");
-    const like = `%${args.q}%`;
-    params.push(like, like);
-  }
+  pushDeepSearchWhere(where, params, args.q, args.tenant_id);
 
   if (args.brand_ids?.length) {
     where.push(`p.brand_id IN (${args.brand_ids.map(() => "?").join(",")})`);
@@ -341,11 +425,7 @@ export async function countPublishedProductsForStoreWithFilters(args: {
   ];
   const params: any[] = [args.tenant_id, args.store_id];
 
-  if (args.q) {
-    where.push("(p.title LIKE ? OR p.description LIKE ?)");
-    const like = `%${args.q}%`;
-    params.push(like, like);
-  }
+  pushDeepSearchWhere(where, params, args.q, args.tenant_id);
 
   if (args.brand_ids?.length) {
     where.push(`p.brand_id IN (${args.brand_ids.map(() => "?").join(",")})`);

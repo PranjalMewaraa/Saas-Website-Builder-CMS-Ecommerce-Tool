@@ -39,10 +39,7 @@ function pickMulti(sp: URLSearchParams, key: string) {
   return Array.from(new Set(flat));
 }
 
-function stripParams(
-  sp: URLSearchParams,
-  keys: string[],
-): URLSearchParams {
+function stripParams(sp: URLSearchParams, keys: string[]): URLSearchParams {
   const next = new URLSearchParams(sp.toString());
   for (const k of keys) next.delete(k);
   return next;
@@ -192,8 +189,7 @@ export default async function ProductListV1({
     filterMeta.brands.length > 1 &&
     filterMeta.store_type !== "brand";
 
-  const showCategoryFilter =
-    showFilters && filterMeta.categories.length > 0;
+  const showCategoryFilter = showFilters && filterMeta.categories.length > 0;
 
   const showPriceFilter =
     showFilters && filterMeta.priceMax > filterMeta.priceMin;
@@ -203,6 +199,12 @@ export default async function ProductListV1({
   const baseListPath = basePath || "/products";
   const showAttributeFilters =
     showFilters && (filterMeta.attributes || []).length > 0;
+  const hasFilterSidebar =
+    showBrandFilter ||
+    showCategoryFilter ||
+    showPriceFilter ||
+    showSearch ||
+    showAttributeFilters;
 
   return (
     <section className="py-12 md:py-16 lg:py-20">
@@ -216,285 +218,319 @@ export default async function ProductListV1({
               Browse products with clean filters and fast results.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Sort</span>
-            <select
-              name="sort"
-              defaultValue={sort}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-            >
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="title_asc">Title A-Z</option>
-            </select>
-          </div>
         </div>
 
-        {(showBrandFilter ||
-          showCategoryFilter ||
-          showPriceFilter ||
-          showSearch ||
-          showAttributeFilters) && (
-          <form className="mb-8 grid gap-4 lg:grid-cols-4" method="get">
-            {showSearch && (
-              <label className="block">
-                <span className="text-xs font-medium text-slate-600">Search</span>
-                <input
-                  name="q"
-                  defaultValue={q}
-                  placeholder="Search products..."
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                />
-              </label>
-            )}
+        <div
+          className={
+            hasFilterSidebar
+              ? "flex flex-col md:flex-row gap-6 md:gap-8 items-start overflow-x-hidden"
+              : "block"
+          }
+        >
+          {hasFilterSidebar ? (
+            <aside className="min-w-0 w-full md:w-64 md:flex-none md:sticky md:top-6 md:self-start">
+              <form
+                className="rounded-xl border border-slate-200 bg-white p-4 space-y-4 overflow-hidden"
+                method="get"
+              >
+                <div className="text-sm font-semibold text-slate-900">
+                  Filters
+                </div>
 
-            {showBrandFilter && (
-              <div className="block">
-                <div className="text-xs font-medium text-slate-600 mb-1">
-                  Brands
-                </div>
-                <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 p-2 space-y-1">
-                  {filterMeta.brands.map((b) => (
-                    <label key={b.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="brand"
-                        value={b.id}
-                        defaultChecked={brandIds.includes(b.id)}
-                      />
-                      <span>{b.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                <label className="block">
+                  <span className="text-xs font-medium text-slate-600">
+                    Sort
+                  </span>
+                  <select
+                    name="sort"
+                    defaultValue={sort}
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="title_asc">Title A-Z</option>
+                  </select>
+                </label>
 
-            {showCategoryFilter && (
-              <div className="block">
-                <div className="text-xs font-medium text-slate-600 mb-1">
-                  Categories
-                </div>
-                <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 p-2 space-y-1">
-                  {categoryOptions.map((c) => (
-                    <label key={c.id} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        name="category"
-                        value={c.id}
-                        defaultChecked={categoryIds.includes(c.id)}
-                      />
-                      <span>{c.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                {showSearch && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-600">
+                      Search
+                    </span>
+                    <input
+                      name="q"
+                      defaultValue={q}
+                      placeholder="Search by name, SKU, category, brand, attributes..."
+                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    />
+                  </label>
+                )}
 
-            {showPriceFilter && (
-              <label className="block">
-                <span className="text-xs font-medium text-slate-600">Price Range</span>
-                <div className="mt-1 flex items-center gap-2">
-                  <input
-                    name="min"
-                    type="number"
-                    step="0.01"
-                    defaultValue={minPrice ?? ""}
-                    placeholder={`${(filterMeta.priceMin / 100).toFixed(2)}`}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                  />
-                  <span className="text-xs text-slate-500">to</span>
-                  <input
-                    name="max"
-                    type="number"
-                    step="0.01"
-                    defaultValue={maxPrice ?? ""}
-                    placeholder={`${(filterMeta.priceMax / 100).toFixed(2)}`}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-                  />
-                </div>
-              </label>
-            )}
-
-            {showAttributeFilters && (
-              <div className="block">
-                <div className="text-xs font-medium text-slate-600 mb-1">
-                  Attributes
-                </div>
-                <div className="space-y-3 max-h-40 overflow-y-auto rounded-lg border border-slate-200 p-2">
-                  {filterMeta.attributes.map((attr) => (
-                    <div key={attr.code} className="space-y-1">
-                      <div className="text-xs font-semibold text-slate-700">
-                        {attr.name}
-                      </div>
-                      <div className="space-y-1">
-                        {attr.values.map((v) => (
-                          <label
-                            key={`${attr.code}-${v}`}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <input
-                              type="checkbox"
-                              name="attr"
-                              value={`${attr.code}::${v}`}
-                              defaultChecked={attrValues.includes(
-                                `${attr.code}::${v}`,
-                              )}
-                            />
-                            <span>{v}</span>
-                          </label>
-                        ))}
-                      </div>
+                {showBrandFilter && (
+                  <div className="block">
+                    <div className="text-xs font-medium text-slate-600 mb-1">
+                      Brands
                     </div>
-                  ))}
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-2 space-y-1">
+                      {filterMeta.brands.map((b) => (
+                        <label
+                          key={b.id}
+                          className="flex items-center gap-2 text-sm min-w-0"
+                        >
+                          <input
+                            type="checkbox"
+                            name="brand"
+                            value={b.id}
+                            defaultChecked={brandIds.includes(b.id)}
+                          />
+                          <span className="truncate">{b.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {showCategoryFilter && (
+                  <div className="block">
+                    <div className="text-xs font-medium text-slate-600 mb-1">
+                      Categories
+                    </div>
+                    <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-200 p-2 space-y-1">
+                      {categoryOptions.map((c) => (
+                        <label
+                          key={c.id}
+                          className="flex items-start gap-2 text-sm min-w-0"
+                        >
+                          <input
+                            type="checkbox"
+                            name="category"
+                            value={c.id}
+                            defaultChecked={categoryIds.includes(c.id)}
+                          />
+                          <span className="break-words">{c.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {showPriceFilter && (
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-600">
+                      Price Range
+                    </span>
+                    <div className="mt-1 flex flex-col justify-center gap-2">
+                      <input
+                        name="min"
+                        type="number"
+                        step="0.01"
+                        defaultValue={minPrice ?? ""}
+                        placeholder={`${(filterMeta.priceMin / 100).toFixed(2)}`}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                      <span className="text-xs text-slate-500">to</span>
+                      <input
+                        name="max"
+                        type="number"
+                        step="0.01"
+                        defaultValue={maxPrice ?? ""}
+                        placeholder={`${(filterMeta.priceMax / 100).toFixed(2)}`}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </label>
+                )}
+
+                {showAttributeFilters && (
+                  <div className="block">
+                    <div className="text-xs font-medium text-slate-600 mb-1">
+                      Attributes
+                    </div>
+                    <div className="space-y-3 max-h-64 overflow-y-auto rounded-lg border border-slate-200 p-2">
+                      {filterMeta.attributes.map((attr) => (
+                        <div key={attr.code} className="space-y-1">
+                          <div className="text-xs font-semibold text-slate-700">
+                            {attr.name}
+                          </div>
+                          <div className="space-y-1">
+                            {attr.values.map((v) => (
+                              <label
+                                key={`${attr.code}-${v}`}
+                                className="flex items-start gap-2 text-sm min-w-0"
+                              >
+                                <input
+                                  type="checkbox"
+                                  name="attr"
+                                  value={`${attr.code}::${v}`}
+                                  defaultChecked={attrValues.includes(
+                                    `${attr.code}::${v}`,
+                                  )}
+                                />
+                                <span className="break-words">{v}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-end gap-2 pt-1">
+                  <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm">
+                    Apply
+                  </button>
+                  <Link
+                    href={baseListPath}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
+                  >
+                    Reset
+                  </Link>
                 </div>
+              </form>
+            </aside>
+          ) : null}
+
+          <div
+            className={
+              hasFilterSidebar
+                ? "min-w-0 w-full md:flex-1 overflow-hidden"
+                : "min-w-0 overflow-hidden"
+            }
+          >
+            {(q ||
+              brandIds.length ||
+              categoryIds.length ||
+              attrValues.length ||
+              minPrice ||
+              maxPrice) && (
+              <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-600 overflow-hidden">
+                <span className="text-slate-500">Filters:</span>
+                {q ? (
+                  <Link
+                    href={withParams(
+                      baseListPath,
+                      stripParams(sp, ["q", "page"]),
+                    )}
+                    className="px-2 py-1 rounded-full border max-w-full truncate"
+                  >
+                    Search: {q} ×
+                  </Link>
+                ) : null}
+                {brandIds.length ? (
+                  <Link
+                    href={withParams(
+                      baseListPath,
+                      stripParams(sp, ["brand", "page"]),
+                    )}
+                    className="px-2 py-1 rounded-full border max-w-full truncate"
+                  >
+                    Brand ×
+                  </Link>
+                ) : null}
+                {categoryIds.length ? (
+                  <Link
+                    href={withParams(
+                      baseListPath,
+                      stripParams(sp, ["category", "page"]),
+                    )}
+                    className="px-2 py-1 rounded-full border max-w-full truncate"
+                  >
+                    Category ×
+                  </Link>
+                ) : null}
+                {attrValues.length ? (
+                  <Link
+                    href={withParams(
+                      baseListPath,
+                      stripParams(sp, ["attr", "page"]),
+                    )}
+                    className="px-2 py-1 rounded-full border max-w-full truncate"
+                  >
+                    Attributes ×
+                  </Link>
+                ) : null}
+                {minPrice || maxPrice ? (
+                  <Link
+                    href={withParams(
+                      baseListPath,
+                      stripParams(sp, ["min", "max", "page"]),
+                    )}
+                    className="px-2 py-1 rounded-full border max-w-full truncate"
+                  >
+                    Price ×
+                  </Link>
+                ) : null}
+                <Link
+                  href={baseListPath}
+                  className="px-2 py-1 rounded-full border bg-slate-50"
+                >
+                  Clear all
+                </Link>
               </div>
             )}
 
-            <div className="flex items-end gap-2 lg:col-span-4">
-              <button className="rounded-lg bg-slate-900 text-white px-4 py-2 text-sm">
-                Apply
-              </button>
-              <Link
-                href={baseListPath}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm"
-              >
-                Reset
-              </Link>
-            </div>
-          </form>
-        )}
+            {products.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                <div className="text-base font-medium text-slate-700">
+                  No products match your filters
+                </div>
+                <div className="mt-1 text-sm text-slate-500">
+                  Try clearing filters or adjust your search.
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 xl:gap-8">
+                {products.map((product) => (
+                  <ProductCardV1
+                    key={product.id}
+                    product={product}
+                    detailPathPrefix={basePath || "/products"}
+                  />
+                ))}
+              </div>
+            )}
 
-        {(q ||
-          brandIds.length ||
-          categoryIds.length ||
-          attrValues.length ||
-          minPrice ||
-          maxPrice) && (
-          <div className="mb-6 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-            <span className="text-slate-500">Filters:</span>
-            {q ? (
-              <Link
-                href={withParams(
-                  baseListPath,
-                  stripParams(sp, ["q", "page"]),
-                )}
-                className="px-2 py-1 rounded-full border"
-              >
-                Search: {q} ×
-              </Link>
-            ) : null}
-            {brandIds.length ? (
-              <Link
-                href={withParams(
-                  baseListPath,
-                  stripParams(sp, ["brand", "page"]),
-                )}
-                className="px-2 py-1 rounded-full border"
-              >
-                Brand ×
-              </Link>
-            ) : null}
-            {categoryIds.length ? (
-              <Link
-                href={withParams(
-                  baseListPath,
-                  stripParams(sp, ["category", "page"]),
-                )}
-                className="px-2 py-1 rounded-full border"
-              >
-                Category ×
-              </Link>
-            ) : null}
-            {attrValues.length ? (
-              <Link
-                href={withParams(
-                  baseListPath,
-                  stripParams(sp, ["attr", "page"]),
-                )}
-                className="px-2 py-1 rounded-full border"
-              >
-                Attributes ×
-              </Link>
-            ) : null}
-            {minPrice || maxPrice ? (
-              <Link
-                href={withParams(
-                  baseListPath,
-                  stripParams(sp, ["min", "max", "page"]),
-                )}
-                className="px-2 py-1 rounded-full border"
-              >
-                Price ×
-              </Link>
-            ) : null}
-            <Link
-              href={baseListPath}
-              className="px-2 py-1 rounded-full border bg-slate-50"
-            >
-              Clear all
-            </Link>
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-3 text-sm">
+                <Link
+                  href={withParams(
+                    baseListPath,
+                    new URLSearchParams({
+                      ...Object.fromEntries(sp.entries()),
+                      page: String(Math.max(1, page - 1)),
+                      limit: String(perPage),
+                    }),
+                  )}
+                  className={`px-3 py-1.5 rounded border ${
+                    page <= 1 ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Prev
+                </Link>
+                <span className="text-slate-600">
+                  Page {page} of {totalPages}
+                </span>
+                <Link
+                  href={withParams(
+                    baseListPath,
+                    new URLSearchParams({
+                      ...Object.fromEntries(sp.entries()),
+                      page: String(Math.min(totalPages, page + 1)),
+                      limit: String(perPage),
+                    }),
+                  )}
+                  className={`px-3 py-1.5 rounded border ${
+                    page >= totalPages ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-
-        {products.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
-            <div className="text-base font-medium text-slate-700">
-              No products match your filters
-            </div>
-            <div className="mt-1 text-sm text-slate-500">
-              Try clearing filters or adjust your search.
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:gap-8">
-            {products.map((product) => (
-              <ProductCardV1
-                key={product.id}
-                product={product}
-                detailPathPrefix={basePath || "/products"}
-              />
-            ))}
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-3 text-sm">
-            <Link
-              href={withParams(
-                baseListPath,
-                new URLSearchParams({
-                  ...Object.fromEntries(sp.entries()),
-                  page: String(Math.max(1, page - 1)),
-                  limit: String(perPage),
-                }),
-              )}
-              className={`px-3 py-1.5 rounded border ${
-                page <= 1 ? "pointer-events-none opacity-50" : ""
-              }`}
-            >
-              Prev
-            </Link>
-            <span className="text-slate-600">
-              Page {page} of {totalPages}
-            </span>
-            <Link
-              href={withParams(
-                baseListPath,
-                new URLSearchParams({
-                  ...Object.fromEntries(sp.entries()),
-                  page: String(Math.min(totalPages, page + 1)),
-                  limit: String(perPage),
-                }),
-              )}
-              className={`px-3 py-1.5 rounded border ${
-                page >= totalPages ? "pointer-events-none opacity-50" : ""
-              }`}
-            >
-              Next
-            </Link>
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

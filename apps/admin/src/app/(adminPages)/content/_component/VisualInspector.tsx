@@ -9,62 +9,268 @@ import ImageField from "./ImageField";
 
 /* small local UI helpers */
 
-function Field({ label, value, onChange, placeholder }: any) {
+export function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <input
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200 placeholder:text-slate-400
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
-    </label>
+    </div>
   );
 }
 
-function NumberField({ label, value, onChange }: any) {
+export function UnitField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: string | number) => void;
+  placeholder?: string;
+}) {
+  const [text, setText] = useState(value ?? "");
+  const [unit, setUnit] = useState("px");
+
+  useEffect(() => {
+    const v = value ?? "";
+    setText(v);
+    const m = String(v)
+      .trim()
+      .match(/(px|%|em|rem|vh|vw)$/);
+    if (m) setUnit(m[1]);
+  }, [value]);
+
+  function parseAndEmit(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      onChange("");
+      return;
+    }
+    if (trimmed === "auto") {
+      onChange("auto");
+      return;
+    }
+    const match = trimmed.match(/^(-?\d+(?:\.\d+)?)(px|%|em|rem|vh|vw)$/);
+    if (match) {
+      onChange(`${match[1]}${match[2]}`);
+      return;
+    }
+    const num = Number(trimmed);
+    if (!Number.isNaN(num)) {
+      onChange(num);
+      return;
+    }
+    onChange(trimmed);
+  }
+
+  function onUnitChange(nextUnit: string) {
+    setUnit(nextUnit);
+    const current = String(text || "").trim();
+    if (!current || current === "auto") {
+      onChange(current);
+      return;
+    }
+    const numMatch = current.match(/^(-?\d+(?:\.\d+)?)(?:px|%|em|rem|vh|vw)?$/);
+    if (numMatch) {
+      const next = `${numMatch[1]}${nextUnit}`;
+      setText(next);
+      onChange(next);
+    }
+  }
+
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <div className="group flex items-stretch bg-white border border-slate-200 rounded-lg overflow-hidden transition-all duration-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
+        <input
+          className="w-full px-3 py-2 text-sm font-mono focus:outline-none placeholder:text-slate-400"
+          value={text}
+          onChange={(e) => {
+            const next = e.target.value;
+            setText(next);
+            const m = next.trim().match(/(px|%|em|rem|vh|vw)$/);
+            if (m) setUnit(m[1]);
+            parseAndEmit(next);
+          }}
+          placeholder={placeholder}
+        />
+        <div className="relative flex items-center border-l border-slate-100 bg-slate-50/50 px-1 hover:bg-slate-100 transition-colors">
+          <select
+            className="appearance-none bg-transparent pl-2 pr-6 py-1 text-[10px] font-bold text-slate-500 cursor-pointer focus:outline-none"
+            value={unit}
+            onChange={(e) => onUnitChange(e.target.value)}
+          >
+            {["px", "%", "em", "rem", "vh", "vw"].map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={10}
+            className="absolute right-2 pointer-events-none text-slate-400"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 3. Text Area
+export function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <textarea
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[100px]
+                   transition-all duration-200 resize-y
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+// 4. Number Field
+export function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <input
-        className="w-full border rounded-lg px-3 py-2 text-sm"
         type="number"
-        value={value}
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
+                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        value={Number.isNaN(value) ? 0 : value}
         onChange={(e) => onChange(Number(e.target.value))}
       />
-    </label>
+    </div>
   );
 }
-
-function Select({ label, value, onChange, options }: any) {
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<string | { label: string; value: string }>;
+  onChange: (val: string) => void;
+}) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <select
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map((o: string) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-sm font-semibold text-slate-700 ml-0.5">
+        {label}
+      </label>
+      <div className="relative group">
+        <select
+          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+                     transition-all duration-200 outline-none
+                     hover:border-slate-400
+                     focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((o) => {
+            const optLabel = typeof o === "string" ? o : o.label;
+            const optValue = typeof o === "string" ? o : o.value;
+            return (
+              <option key={optValue} value={optValue}>
+                {optLabel}
+              </option>
+            );
+          })}
+        </select>
+        {/* Custom Chevron for a more premium feel */}
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500">
+          <ChevronDown size={16} strokeWidth={2.5} />
+        </div>
+      </div>
+    </div>
   );
 }
-
-function Checkbox({ label, value, onChange }: any) {
+function Checkbox({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (val: boolean) => void;
+}) {
   return (
-    <label className="inline-flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        checked={!!value}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
+    <label className="group flex items-center gap-3 cursor-pointer select-none">
+      <div className="relative flex items-center">
+        <input
+          type="checkbox"
+          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 
+                     bg-white transition-all checked:bg-blue-600 checked:border-blue-600
+                     focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        {/* The checkmark icon that appears when checked */}
+        <svg
+          className="absolute h-3.5 w-3.5 inset-x-0.5 pointer-events-none hidden peer-checked:block text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+        {label}
+      </span>
     </label>
   );
 }
@@ -81,7 +287,7 @@ export function VisualInspector({
   onDeleteBlock,
   onChange,
 }: any) {
-  const [openGroup, setOpenGroup] = useState<string>("size");
+  const [openGroup, setOpenGroup] = useState<string>("layout");
 
   /* -------- props helpers -------- */
 
@@ -173,11 +379,11 @@ export function VisualInspector({
   }) => {
     const isOpen = openGroup === id;
     return (
-      <div className="border rounded-lg bg-white shadow-sm">
+      <div className="border-gray-100 rounded-lg bg-white ">
         <button
           type="button"
           onClick={() => setOpenGroup(isOpen ? "" : id)}
-          className="w-full px-3 py-2 text-left text-sm font-medium flex items-center justify-between"
+          className="w-full px-3 py-2 text-left text-sm font-bold flex items-center justify-between"
         >
           <span>{title}</span>
           <ChevronDown

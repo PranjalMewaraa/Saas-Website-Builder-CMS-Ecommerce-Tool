@@ -318,6 +318,12 @@ async function BlockRenderer({
   // =====================
   if (block.type.startsWith("Header/") || block.type.startsWith("Footer/")) {
     const Comp = def.render;
+    const resolvedSiteName =
+      ctx.snapshot?.siteName ||
+      ctx.snapshot?.site?.name ||
+      ctx.snapshot?.site_seo?.siteName ||
+      ctx.snapshot?.handle ||
+      "Site";
 
     // Determine slot
     const slot =
@@ -354,6 +360,7 @@ async function BlockRenderer({
               menu={menu}
               menus={block.type.startsWith("Footer/") ? menusById : undefined}
               logoUrl={ctx.snapshot.theme.brands?.logoUrl}
+              siteName={block.type.startsWith("Header/") ? resolvedSiteName : undefined}
             />
           </StyleWrapper>
         </div>

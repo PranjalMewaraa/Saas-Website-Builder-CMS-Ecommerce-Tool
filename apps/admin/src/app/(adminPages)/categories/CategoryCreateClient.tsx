@@ -281,7 +281,7 @@ export default function CategoryCreateClient({
             <div className="space-y-3">
               {attributes.map((a, idx) => (
                 <div
-                  key={`${a.code}-${idx}`}
+                  key={`attr-${idx}`}
                   className="group grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-gray-50/50 rounded-2xl border border-transparent hover:border-gray-200 hover:bg-white transition-all"
                 >
                   <div className="md:col-span-3">
@@ -841,7 +841,7 @@ function CategoryCreateClient2({
 
         {attributes.map((a, idx) => (
           <div
-            key={`${a.code}-${idx}`}
+            key={`attr-legacy-${idx}`}
             className="grid grid-cols-1 md:grid-cols-12 gap-2"
           >
             <input

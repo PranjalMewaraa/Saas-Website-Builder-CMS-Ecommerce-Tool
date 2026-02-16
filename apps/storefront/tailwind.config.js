@@ -1,4 +1,6 @@
 const path = require("path");
+const pdpSafelist = require("../../tailwind-pdp-safelist.js");
+const productListSafelist = require("../../tailwind-productlist-safelist.js");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -9,9 +11,19 @@ module.exports = {
 
   // TEMP DEBUG: force-generate rules used in blocks
   safelist: [
+    ...pdpSafelist,
+    ...productListSafelist,
     ...[
       "mx-auto",
       "max-w-6xl",
+      "grid",
+      "grid-cols-12",
+      "gap-2",
+      "col-span-10",
+      "space-y-3",
+      "py-4",
+      "col-span-2",
+      "pt-1",
       "max-w-2xl",
       "px-4",
       "py-10",

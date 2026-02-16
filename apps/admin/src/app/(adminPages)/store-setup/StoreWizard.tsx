@@ -375,7 +375,7 @@ export default function StoreWizard({ siteId }: { siteId?: string }) {
 
           <div className="space-y-2">
             {attributes.map((a, idx) => (
-              <div key={`${a.code}-${idx}`} className="grid grid-cols-1 md:grid-cols-12 gap-2">
+              <div key={`attr-${idx}`} className="grid grid-cols-1 md:grid-cols-12 gap-2">
                 <input
                   className="border p-2 rounded md:col-span-3"
                   placeholder="Attribute name"

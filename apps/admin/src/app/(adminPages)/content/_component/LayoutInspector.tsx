@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import * as LucideIcons from "lucide-react";
 import ImageField from "./ImageField";
 import ColorPickerInput from "./ColorPickerInput";
-
+import { ChevronDown } from "lucide-react";
 const DEFAULT_IMAGE =
   "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 import {
@@ -129,7 +129,6 @@ const ICON_OPTIONS = [
   "Check",
   "X",
 ];
-
 
 const CARD_PRESETS = {
   clean: {
@@ -452,7 +451,7 @@ export default function LayoutInspector({
 
   if (selection.kind === "layout-section") {
     return (
-      <div className="space-y-5">
+      <div className="space-y-5 ">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium">Section Settings</div>
           {onDeleteBlock && (
@@ -1500,8 +1499,9 @@ export default function LayoutInspector({
   if (selection.kind === "layout-group-row") {
     const groupBlock = getGroup(selection.atomicId);
     const row =
-      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
-      null;
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
     if (!groupBlock || !row) return null;
     return (
       <div className="space-y-5">
@@ -1538,8 +1538,9 @@ export default function LayoutInspector({
   if (selection.kind === "layout-group-col") {
     const groupBlock = getGroup(selection.atomicId);
     const row =
-      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
-      null;
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
     const col =
       row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
     if (!groupBlock || !row || !col) return null;
@@ -1566,8 +1567,9 @@ export default function LayoutInspector({
   if (selection.kind === "layout-group-atomic") {
     const groupBlock = getGroup(selection.atomicId);
     const row =
-      groupBlock?.props?.rows?.find((r: any) => r.id === selection.groupRowId) ||
-      null;
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
     const col =
       row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
     const atom =
@@ -1683,31 +1685,37 @@ function IconPicker({
   );
 }
 
-function Field({
+// 1. Standard Input Field
+export function Field({
   label,
   value,
   onChange,
   placeholder,
 }: {
   label: string;
-  value: any;
+  value: string;
   onChange: (val: string) => void;
   placeholder?: string;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <input
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200 placeholder:text-slate-400
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
-    </label>
+    </div>
   );
 }
 
-function UnitField({
+// 2. Unit Field (Merged Input & Select)
+export function UnitField({
   label,
   value,
   onChange,
@@ -1724,7 +1732,9 @@ function UnitField({
   useEffect(() => {
     const v = value ?? "";
     setText(v);
-    const m = String(v).trim().match(/(px|%|em|rem|vh|vw)$/);
+    const m = String(v)
+      .trim()
+      .match(/(px|%|em|rem|vh|vw)$/);
     if (m) setUnit(m[1]);
   }, [value]);
 
@@ -1738,7 +1748,7 @@ function UnitField({
       onChange("auto");
       return;
     }
-    const match = trimmed.match(/^(-?\\d+(?:\\.\\d+)?)(px|%|em|rem|vh|vw)$/);
+    const match = trimmed.match(/^(-?\d+(?:\.\d+)?)(px|%|em|rem|vh|vw)$/);
     if (match) {
       onChange(`${match[1]}${match[2]}`);
       return;
@@ -1758,9 +1768,7 @@ function UnitField({
       onChange(current);
       return;
     }
-    const numMatch = current.match(
-      /^(-?\\d+(?:\\.\\d+)?)(?:px|%|em|rem|vh|vw)?$/,
-    );
+    const numMatch = current.match(/^(-?\d+(?:\.\d+)?)(?:px|%|em|rem|vh|vw)?$/);
     if (numMatch) {
       const next = `${numMatch[1]}${nextUnit}`;
       setText(next);
@@ -1769,11 +1777,13 @@ function UnitField({
   }
 
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <div className="flex gap-2 items-center">
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <div className="group flex items-stretch bg-white border border-slate-200 rounded-lg overflow-hidden transition-all duration-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
         <input
-          className="w-full border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 font-mono"
+          className="w-full px-3 py-2 text-sm font-mono focus:outline-none placeholder:text-slate-400"
           value={text}
           onChange={(e) => {
             const next = e.target.value;
@@ -1784,23 +1794,30 @@ function UnitField({
           }}
           placeholder={placeholder}
         />
-        <select
-          className="border rounded-lg px-2 py-2 text-xs bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-          value={unit}
-          onChange={(e) => onUnitChange(e.target.value)}
-        >
-          {["px", "%", "em", "rem", "vh", "vw"].map((u) => (
-            <option key={u} value={u}>
-              {u}
-            </option>
-          ))}
-        </select>
+        <div className="relative flex items-center border-l border-slate-100 bg-slate-50/50 px-1 hover:bg-slate-100 transition-colors">
+          <select
+            className="appearance-none bg-transparent pl-2 pr-6 py-1 text-[10px] font-bold text-slate-500 cursor-pointer focus:outline-none"
+            value={unit}
+            onChange={(e) => onUnitChange(e.target.value)}
+          >
+            {["px", "%", "em", "rem", "vh", "vw"].map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={10}
+            className="absolute right-2 pointer-events-none text-slate-400"
+          />
+        </div>
       </div>
-    </label>
+    </div>
   );
 }
 
-function TextArea({
+// 3. Text Area
+export function TextArea({
   label,
   value,
   onChange,
@@ -1810,18 +1827,23 @@ function TextArea({
   onChange: (val: string) => void;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <textarea
-        className="w-full border rounded-lg px-3 py-2 text-sm min-h-[120px]"
-        value={value}
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[100px]
+                   transition-all duration-200 resize-y
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       />
-    </label>
+    </div>
   );
 }
 
-function NumberField({
+// 4. Number Field
+export function NumberField({
   label,
   value,
   onChange,
@@ -1831,18 +1853,22 @@ function NumberField({
   onChange: (val: number) => void;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
       <input
         type="number"
-        className="w-full border rounded-lg px-3 py-2 text-sm"
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
+                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         value={Number.isNaN(value) ? 0 : value}
         onChange={(e) => onChange(Number(e.target.value))}
       />
-    </label>
+    </div>
   );
 }
-
 function Select({
   label,
   value,
@@ -1855,32 +1881,37 @@ function Select({
   onChange: (val: string) => void;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <div className="text-sm font-medium">{label}</div>
-      <select
-        className="w-full border rounded-lg px-3 py-2 text-sm"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map((o) => {
-          if (typeof o === "string") {
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-sm font-semibold text-slate-700 ml-0.5">
+        {label}
+      </label>
+      <div className="relative group">
+        <select
+          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+                     transition-all duration-200 outline-none
+                     hover:border-slate-400
+                     focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((o) => {
+            const optLabel = typeof o === "string" ? o : o.label;
+            const optValue = typeof o === "string" ? o : o.value;
             return (
-              <option key={o} value={o}>
-                {o}
+              <option key={optValue} value={optValue}>
+                {optLabel}
               </option>
             );
-          }
-          return (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          );
-        })}
-      </select>
-    </label>
+          })}
+        </select>
+        {/* Custom Chevron for a more premium feel */}
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500">
+          <ChevronDown size={16} strokeWidth={2.5} />
+        </div>
+      </div>
+    </div>
   );
 }
-
 function Checkbox({
   label,
   value,
@@ -1891,17 +1922,36 @@ function Checkbox({
   onChange: (val: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm">
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
+    <label className="group flex items-center gap-3 cursor-pointer select-none">
+      <div className="relative flex items-center">
+        <input
+          type="checkbox"
+          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 
+                     bg-white transition-all checked:bg-blue-600 checked:border-blue-600
+                     focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        {/* The checkmark icon that appears when checked */}
+        <svg
+          className="absolute h-3.5 w-3.5 inset-x-0.5 pointer-events-none hidden peer-checked:block text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+        {label}
+      </span>
     </label>
   );
 }
-
 function ResponsiveRowLayoutFields({
   row,
   onChange,
@@ -2013,12 +2063,10 @@ function StyleFields({
 }) {
   const [bp, setBp] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const root = style || {};
-  const s =
-    bp === "desktop"
-      ? root
-      : root?.responsive?.[bp] || {};
+  const s = bp === "desktop" ? root : root?.responsive?.[bp] || {};
   const resolvedBg =
-    s.bg ?? (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
+    s.bg ??
+    (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
   const bgType = resolvedBg.type || "none";
 
   function set(path: string, val: any) {
@@ -2054,7 +2102,7 @@ function StyleFields({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ">
       <div className="space-y-2">
         <div className="text-sm font-medium">Style</div>
         <div className="flex items-center gap-2">
@@ -2080,6 +2128,93 @@ function StyleFields({
           </div>
         ) : null}
       </div>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Layout & Alignment
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Display"
+              value={s.display || "block"}
+              options={["block", "flex", "grid"]}
+              onChange={(v) => set("display", v)}
+            />
+            <Select
+              label="Direction"
+              value={s.flexDirection || "row"}
+              options={["row", "column"]}
+              onChange={(v) => set("flexDirection", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Wrap"
+              value={s.flexWrap || "nowrap"}
+              options={["nowrap", "wrap"]}
+              onChange={(v) => set("flexWrap", v)}
+            />
+            <UnitField
+              label="Gap"
+              value={s.gap || ""}
+              onChange={(v) => set("gap", v)}
+              placeholder="12"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Items"
+              value={s.align || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("align", v)}
+            />
+            <Select
+              label="Justify Content"
+              value={s.justify || "start"}
+              options={[
+                "start",
+                "center",
+                "end",
+                "between",
+                "around",
+                "evenly",
+              ]}
+              onChange={(v) => set("justify", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Self"
+              value={s.alignSelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("alignSelf", v)}
+            />
+            <Select
+              label="Justify Self"
+              value={s.justifySelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("justifySelf", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <NumberField
+              label="Grid Columns"
+              value={Number(s.gridColumns || 0)}
+              onChange={(v) => set("gridColumns", v || undefined)}
+            />
+            <NumberField
+              label="Grid Rows"
+              value={Number(s.gridRows || 0)}
+              onChange={(v) => set("gridRows", v || undefined)}
+            />
+          </div>
+        </div>
+      </details>
 
       <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">
@@ -2202,7 +2337,10 @@ function StyleFields({
                   label="From"
                   value={resolvedBg.gradient?.from || ""}
                   onChange={(v) =>
-                    setBg({ type: "gradient", gradient: { ...resolvedBg.gradient, from: v } })
+                    setBg({
+                      type: "gradient",
+                      gradient: { ...resolvedBg.gradient, from: v },
+                    })
                   }
                   placeholder="#0f172a"
                   palette={palette}
@@ -2211,7 +2349,10 @@ function StyleFields({
                   label="To"
                   value={resolvedBg.gradient?.to || ""}
                   onChange={(v) =>
-                    setBg({ type: "gradient", gradient: { ...resolvedBg.gradient, to: v } })
+                    setBg({
+                      type: "gradient",
+                      gradient: { ...resolvedBg.gradient, to: v },
+                    })
                   }
                   placeholder="#38bdf8"
                   palette={palette}
@@ -2275,9 +2416,7 @@ function StyleFields({
                 <NumberField
                   label="Overlay Opacity"
                   value={Number(resolvedBg.overlayOpacity ?? 0.35)}
-                  onChange={(v) =>
-                    setBg({ type: "image", overlayOpacity: v })
-                  }
+                  onChange={(v) => setBg({ type: "image", overlayOpacity: v })}
                 />
               </div>
             </div>
@@ -2330,9 +2469,7 @@ function StyleFields({
                 <NumberField
                   label="Overlay Opacity"
                   value={Number(resolvedBg.overlayOpacity ?? 0.35)}
-                  onChange={(v) =>
-                    setBg({ type: "video", overlayOpacity: v })
-                  }
+                  onChange={(v) => setBg({ type: "video", overlayOpacity: v })}
                 />
               </div>
             </div>
@@ -2388,86 +2525,8 @@ function StyleFields({
 
       <details open className="border rounded-lg p-3 bg-white shadow-sm">
         <summary className="cursor-pointer text-sm font-medium">
-          Layout & Alignment
+          Typography
         </summary>
-        <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="Display"
-              value={s.display || "block"}
-              options={["block", "flex", "grid"]}
-              onChange={(v) => set("display", v)}
-            />
-            <Select
-              label="Direction"
-              value={s.flexDirection || "row"}
-              options={["row", "column"]}
-              onChange={(v) => set("flexDirection", v)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="Wrap"
-              value={s.flexWrap || "nowrap"}
-              options={["nowrap", "wrap"]}
-              onChange={(v) => set("flexWrap", v)}
-            />
-            <UnitField
-              label="Gap"
-              value={s.gap || ""}
-              onChange={(v) => set("gap", v)}
-              placeholder="12"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="Align Items"
-              value={s.align || "stretch"}
-              options={["start", "center", "end", "stretch"]}
-              onChange={(v) => set("align", v)}
-            />
-            <Select
-              label="Justify Content"
-              value={s.justify || "start"}
-              options={["start", "center", "end", "between", "around", "evenly"]}
-              onChange={(v) => set("justify", v)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="Align Self"
-              value={s.alignSelf || "stretch"}
-              options={["start", "center", "end", "stretch"]}
-              onChange={(v) => set("alignSelf", v)}
-            />
-            <Select
-              label="Justify Self"
-              value={s.justifySelf || "stretch"}
-              options={["start", "center", "end", "stretch"]}
-              onChange={(v) => set("justifySelf", v)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <NumberField
-              label="Grid Columns"
-              value={Number(s.gridColumns || 0)}
-              onChange={(v) => set("gridColumns", v || undefined)}
-            />
-            <NumberField
-              label="Grid Rows"
-              value={Number(s.gridRows || 0)}
-              onChange={(v) => set("gridRows", v || undefined)}
-            />
-          </div>
-        </div>
-      </details>
-
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
-        <summary className="cursor-pointer text-sm font-medium">Typography</summary>
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Select
