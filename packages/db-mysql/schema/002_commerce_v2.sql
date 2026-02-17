@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS commerce_orders (
   subtotal_cents    INT NOT NULL DEFAULT 0,
   discount_cents    INT NOT NULL DEFAULT 0,
   total_cents       INT NOT NULL DEFAULT 0,
-  currency          CHAR(3) NOT NULL DEFAULT 'USD',
+  currency          CHAR(3) NOT NULL DEFAULT 'INR',
   customer_json     JSON NULL,
   shipping_json     JSON NULL,
   created_at        DATETIME NOT NULL,

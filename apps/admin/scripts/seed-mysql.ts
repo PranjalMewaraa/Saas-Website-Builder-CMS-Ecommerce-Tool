@@ -47,7 +47,7 @@ async function run() {
   // Store (distributor for demo)
   await pool.query(
     `INSERT INTO stores (id, tenant_id, name, store_type, currency, timezone, status, created_at, updated_at)
-     VALUES (?, ?, ?, 'distributor', 'USD', 'UTC', 'active', ?, ?)
+     VALUES (?, ?, ?, 'distributor', 'INR', 'UTC', 'active', ?, ?)
      ON DUPLICATE KEY UPDATE name=VALUES(name), updated_at=VALUES(updated_at)`,
     [store_id, tenant_id, "Demo Store", ts, ts]
   );

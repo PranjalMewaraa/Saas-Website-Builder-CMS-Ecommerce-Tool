@@ -44,9 +44,10 @@ export async function POST(req: Request) {
       tenant_id: site.tenant_id,
       site_id: String(site._id),
       store_id: String(site.store_id),
-      currency: body.currency || "USD",
+      currency: body.currency || "INR",
       customer: body.customer || {},
       shipping: body.shipping_address || {},
+      coupon_code: body.coupon_code ? String(body.coupon_code) : undefined,
       items: body.items.map((i: any) => ({
         product_id: String(i.product_id),
         variant_id: i.variant_id ? String(i.variant_id) : undefined,

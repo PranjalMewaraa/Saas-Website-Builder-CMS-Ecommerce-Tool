@@ -27,7 +27,7 @@ export default function CartSummaryV1({
         <div className="flex items-center justify-between">
           <span>Subtotal</span>
           <span className="font-medium text-slate-900">
-            ${(subtotal / 100).toFixed(2)}
+            ₹{(subtotal / 100).toFixed(2)}
           </span>
         </div>
         <div className="flex items-center justify-between">
@@ -42,7 +42,7 @@ export default function CartSummaryV1({
       <div className="mt-4 border-t border-slate-200 pt-4 flex items-center justify-between">
         <span className="text-base font-medium text-slate-900">Total</span>
         <span className="text-base font-semibold text-slate-900">
-          ${(total / 100).toFixed(2)}
+          ₹{(total / 100).toFixed(2)}
         </span>
       </div>
       <a

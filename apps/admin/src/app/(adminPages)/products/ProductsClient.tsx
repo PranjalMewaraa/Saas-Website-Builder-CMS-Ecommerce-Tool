@@ -178,7 +178,7 @@ export default function ProductsClient({
         <MetricCard label="Published" value={stats.published} />
         <MetricCard
           label="Avg Price"
-          value={`$${(stats.avgPrice / 100).toFixed(2)}`}
+          value={`₹${(stats.avgPrice / 100).toFixed(2)}`}
         />
       </div>
 
@@ -356,7 +356,7 @@ export default function ProductsClient({
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <div className="text-sm text-gray-700">
                     <span className="font-medium">
-                      ${Number(p.base_price_cents / 100).toFixed(2)}
+                      ₹{Number(p.base_price_cents / 100).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -577,7 +577,7 @@ function VariantsSection({
                 {optsText || `Variant ${idx + 1}`}
               </div>
               <div>
-                Qty {Number(v.inventory_qty || 0)} · $
+                Qty {Number(v.inventory_qty || 0)} · ₹
                 {(Number(v.price_cents || 0) / 100).toFixed(2)}
               </div>
             </div>

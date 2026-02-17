@@ -92,7 +92,7 @@ export default async function OrderDetailV1({
               </div>
             </div>
             <div className="text-sm text-slate-600">
-              ${(order.total_cents / 100).toFixed(2)}
+              ₹{(order.total_cents / 100).toFixed(2)}
             </div>
           </div>
 
@@ -107,7 +107,7 @@ export default async function OrderDetailV1({
                   <div className="text-xs text-slate-500">Qty {item.qty}</div>
                 </div>
                 <div className="font-medium text-slate-900">
-                  ${((item.price_cents || 0) / 100).toFixed(2)}
+                  ₹{((item.price_cents || 0) / 100).toFixed(2)}
                 </div>
               </div>
             ))}

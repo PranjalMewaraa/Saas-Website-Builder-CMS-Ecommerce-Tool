@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     items,
     subtotal_cents,
     total_cents,
-    currency: "USD",
+    currency: "INR",
     customer: body.customer || {},
     shipping_address: body.shipping_address || {},
     created_at: new Date(),

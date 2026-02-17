@@ -212,7 +212,7 @@ export async function PATCH(
       siteLogo: site?.logoUrl || site?.brand?.logoUrl || "",
       items: order.items || [],
       totalCents: order.total_cents || 0,
-      currency: order.currency || "USD",
+      currency: order.currency || "INR",
       customerName: order.customer?.name || "",
       shipping: order.shipping_address || {},
       fromEmail: session.user.email || "",
@@ -279,7 +279,7 @@ function renderOrderStatusHtml(args: {
   const orderUrl = args.siteHandle
     ? `${base}/orders/${args.orderNumber}?handle=${args.siteHandle}`
     : "";
-  const total = formatMoney(args.totalCents || 0, args.currency || "USD");
+  const total = formatMoney(args.totalCents || 0, args.currency || "INR");
   const itemRows = (args.items || [])
     .map(
       (item: any) => `
@@ -292,7 +292,7 @@ function renderOrderStatusHtml(args: {
         }</td>
         <td style="padding:8px 0;color:#0f172a;font-size:13px;text-align:right;">${formatMoney(
           item.price_cents || 0,
-          args.currency || "USD",
+          args.currency || "INR",
         )}</td>
       </tr>
     `,
@@ -392,12 +392,12 @@ function renderOrderStatusHtml(args: {
 function formatMoney(cents: number, currency: string) {
   const value = (cents || 0) / 100;
   try {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency,
     }).format(value);
   } catch {
-    return `$${value.toFixed(2)}`;
+    return `₹${value.toFixed(2)}`;
   }
 }
 

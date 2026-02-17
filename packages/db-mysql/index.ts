@@ -32,3 +32,4 @@ export * from "./attributeValue.repo";
 export * from "./projectWizard.repo";
 export * from "./commerceV2.repo";
 export * from "./storeTypePresets";
+export * from "./promotions.repo";

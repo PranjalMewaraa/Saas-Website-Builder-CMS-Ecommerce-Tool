@@ -50,6 +50,11 @@ export default function CartPageV1({
   const cart = useCartOptional();
   const [creating, setCreating] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [appliedPromotion, setAppliedPromotion] = useState<any | null>(null);
+  const [suggestedPromos, setSuggestedPromos] = useState<any[]>([]);
+  const [promoLoading, setPromoLoading] = useState(false);
   const siteHint = useMemo(() => getSiteHint(), []);
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState({
@@ -79,6 +84,81 @@ export default function CartPageV1({
     () => items.reduce((acc, i) => acc + i.price_cents * i.qty, 0),
     [items]
   );
+  const itemsKey = useMemo(
+    () =>
+      JSON.stringify(
+        items.map((i) => ({
+          p: i.product_id,
+          v: i.variant_id || "",
+          q: i.qty,
+        })),
+      ),
+    [items],
+  );
+  const discount = Number(appliedPromotion?.discount_cents || 0);
+  const total = Math.max(0, subtotal - discount);
+
+  useEffect(() => {
+    if (!items.length || __editor) return;
+    let cancelled = false;
+    (async () => {
+      setPromoLoading(true);
+      try {
+        const res = await fetch("/api/v2/promotions/suggested", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            site_id: siteHint.site_id,
+            handle: siteHint.handle,
+            items,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        const next = Array.isArray(data?.promotions) ? data.promotions : [];
+        setSuggestedPromos((prev) => {
+          const prevKey = JSON.stringify((prev || []).map((p: any) => p?.id));
+          const nextKey = JSON.stringify((next || []).map((p: any) => p?.id));
+          return prevKey === nextKey ? prev : next;
+        });
+      } finally {
+        if (!cancelled) setPromoLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [itemsKey, siteHint.handle, siteHint.site_id, __editor]);
+
+  async function applyCoupon(code: string) {
+    if (!code.trim()) {
+      setAppliedPromotion(null);
+      setCouponError("");
+      return;
+    }
+    const res = await fetch("/api/v2/promotions/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        site_id: siteHint.site_id,
+        handle: siteHint.handle,
+        coupon_code: code.trim(),
+        items,
+        customer: {
+          email: form.email,
+          phone: form.phone,
+        },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.applied) {
+      setAppliedPromotion(null);
+      setCouponError(data?.error || "Invalid coupon");
+      return;
+    }
+    setCouponError("");
+    setAppliedPromotion(data.applied);
+  }
 
   if (!items.length) {
     return (
@@ -121,7 +201,7 @@ export default function CartPageV1({
                   <div className="mt-0.5 text-xs text-slate-500">{item.variant_label}</div>
                 ) : null}
                 <div className="mt-1 text-xs text-slate-500">
-                  ${(item.price_cents / 100).toFixed(2)}
+                  ₹{(item.price_cents / 100).toFixed(2)}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -177,13 +257,61 @@ export default function CartPageV1({
         <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
           <span>Subtotal</span>
           <span className="font-medium text-slate-900">
-            ${(subtotal / 100).toFixed(2)}
+            ₹{(subtotal / 100).toFixed(2)}
           </span>
+        </div>
+        {appliedPromotion ? (
+          <div className="mt-3 flex items-center justify-between text-sm text-emerald-700">
+            <span>
+              Discount ({appliedPromotion.code || appliedPromotion.name || "Promo"})
+            </span>
+            <span className="font-medium">-₹{(discount / 100).toFixed(2)}</span>
+          </div>
+        ) : null}
+        <div className="mt-4 rounded-lg border border-slate-200 p-3">
+          <div className="text-xs font-medium text-slate-600">Coupon code</div>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              placeholder="Enter coupon"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            />
+            <button
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              onClick={() => applyCoupon(couponCode)}
+              type="button"
+            >
+              Apply
+            </button>
+          </div>
+          {couponError ? (
+            <div className="mt-2 text-xs text-red-600">{couponError}</div>
+          ) : null}
+          {promoLoading ? (
+            <div className="mt-2 text-xs text-slate-500">Loading offers…</div>
+          ) : suggestedPromos.length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {suggestedPromos.slice(0, 4).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                  onClick={() => {
+                    setCouponCode(String(p.code || ""));
+                    if (p.code) applyCoupon(String(p.code));
+                  }}
+                >
+                  {p.code || p.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="mt-4 border-t border-slate-200 pt-4 flex items-center justify-between">
           <span className="text-base font-medium text-slate-900">Total</span>
           <span className="text-base font-semibold text-slate-900">
-            ${(subtotal / 100).toFixed(2)}
+            ₹{(total / 100).toFixed(2)}
           </span>
         </div>
 
@@ -320,9 +448,10 @@ export default function CartPageV1({
                       body: JSON.stringify({
                         items: cart.items,
                         subtotal_cents: cart.subtotal_cents,
-                        total_cents: cart.total_cents,
+                        total_cents: total,
                         site_id: siteHint.site_id,
                         handle: siteHint.handle,
+                        coupon_code: appliedPromotion?.code || couponCode || undefined,
                         customer: {
                           name: form.name,
                           email: form.email,
@@ -346,7 +475,7 @@ export default function CartPageV1({
                         body: JSON.stringify({
                           items: cart.items,
                           subtotal_cents: cart.subtotal_cents,
-                          total_cents: cart.total_cents,
+                          total_cents: total,
                           site_id: siteHint.site_id,
                           handle: siteHint.handle,
                           customer: {

@@ -134,7 +134,7 @@ export default function CheckoutPageV1({
                   <div className="text-xs text-slate-500">Qty {item.qty}</div>
                 </div>
                 <div className="font-medium text-slate-900">
-                  ${(item.price_cents / 100).toFixed(2)}
+                  ₹{(item.price_cents / 100).toFixed(2)}
                 </div>
               </div>
             ))}
@@ -144,7 +144,7 @@ export default function CheckoutPageV1({
         <div className="mt-4 border-t border-slate-200 pt-4 flex items-center justify-between">
           <span className="text-sm text-slate-600">Total</span>
           <span className="text-base font-semibold text-slate-900">
-            ${(subtotal / 100).toFixed(2)}
+            ₹{(subtotal / 100).toFixed(2)}
           </span>
         </div>
 

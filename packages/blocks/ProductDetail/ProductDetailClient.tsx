@@ -25,6 +25,7 @@ export default function ProductDetailClient({
   const [showBuyDialog, setShowBuyDialog] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
+  const [suggestedPromos, setSuggestedPromos] = useState<any[]>([]);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -98,6 +99,41 @@ export default function ProductDetailClient({
       setForm((prev) => ({ ...prev, ...parsed }));
     } catch {}
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const siteHint = getSiteHint();
+        const res = await fetch("/api/v2/promotions/suggested", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            site_id: siteHint.site_id,
+            handle: siteHint.handle,
+            items: [
+              {
+                product_id: product.id,
+                variant_id: selectedVariant?.id,
+                qty: 1,
+              },
+            ],
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        const next = Array.isArray(data?.promotions) ? data.promotions : [];
+        setSuggestedPromos((prev) => {
+          const prevKey = JSON.stringify((prev || []).map((p: any) => p?.id));
+          const nextKey = JSON.stringify((next || []).map((p: any) => p?.id));
+          return prevKey === nextKey ? prev : next;
+        });
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id, selectedVariant?.id]);
 
   const rating = 4.8;
   const reviewCount = "1.2k";
@@ -235,7 +271,7 @@ export default function ProductDetailClient({
               {product.title}
             </h1>
             <div className="text-2xl font-medium text-slate-900 whitespace-nowrap">
-              ${(selectedPrice / 100).toFixed(2)}
+              ₹{(selectedPrice / 100).toFixed(2)}
             </div>
           </div>
 
@@ -254,6 +290,24 @@ export default function ProductDetailClient({
               {stockLabel}
             </span>
           </div>
+
+          {suggestedPromos.length ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Available Coupons
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {suggestedPromos.slice(0, 4).map((p) => (
+                  <span
+                    key={p.id}
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-700"
+                  >
+                    {p.code || p.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {colorOptions.length ? (
             <div className="space-y-2">

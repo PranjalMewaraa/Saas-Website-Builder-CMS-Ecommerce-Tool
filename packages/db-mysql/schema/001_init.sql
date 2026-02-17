@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS stores (
   tenant_id   VARCHAR(26) NOT NULL,
   name        VARCHAR(255) NOT NULL,
   store_type  ENUM('brand','distributor') NOT NULL,
-  currency    CHAR(3) NOT NULL DEFAULT 'USD',
+  currency    CHAR(3) NOT NULL DEFAULT 'INR',
   timezone    VARCHAR(64) NOT NULL DEFAULT 'UTC',
   status      ENUM('active','suspended','archived') NOT NULL DEFAULT 'active',
   industry    VARCHAR(64) NULL,

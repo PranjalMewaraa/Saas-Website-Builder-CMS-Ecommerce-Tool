@@ -159,7 +159,7 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
               <div className="text-gray-600">
                 {order.customer?.name || order.customer?.email || "-"}
               </div>
-              <div>${((order.total_cents || 0) / 100).toFixed(2)}</div>
+              <div>₹{((order.total_cents || 0) / 100).toFixed(2)}</div>
               <div className="capitalize">{order.status}</div>
               <div className="text-gray-500">
                 {order.created_at
@@ -333,9 +333,9 @@ export default function OrdersClient({ siteId }: { siteId: string }) {
                     </div>
                   </div>
                   <div className="text-sm font-semibold text-right shrink-0">
-                    <div>${(lineTotal / 100).toFixed(2)}</div>
+                    <div>₹{(lineTotal / 100).toFixed(2)}</div>
                     <div className="text-xs text-gray-500 font-normal">
-                      ${((item.price_cents || 0) / 100).toFixed(2)} each
+                      ₹{((item.price_cents || 0) / 100).toFixed(2)} each
                     </div>
                   </div>
                 </div>

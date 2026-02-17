@@ -68,7 +68,7 @@ export default function MiniCartV1({
                     {item.title}
                   </div>
                   <div className="text-xs text-slate-500">
-                    Qty {item.qty} · ${(item.price_cents / 100).toFixed(2)}
+                    Qty {item.qty} · ₹{(item.price_cents / 100).toFixed(2)}
                   </div>
                 </div>
                 {cart ? (
@@ -90,7 +90,7 @@ export default function MiniCartV1({
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600">Subtotal</span>
             <span className="font-medium text-slate-900">
-              ${(subtotal / 100).toFixed(2)}
+              ₹{(subtotal / 100).toFixed(2)}
             </span>
           </div>
           <div className="flex gap-3">

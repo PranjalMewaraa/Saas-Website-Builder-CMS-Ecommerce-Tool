@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
   await pool.query(
     `INSERT INTO stores (id, tenant_id, name, store_type, currency, timezone, status, created_at, updated_at, industry)
-     VALUES (?, ?, ?, 'brand', 'USD', 'UTC', 'active', ?, ?, ?)`,
+     VALUES (?, ?, ?, 'brand', 'INR', 'UTC', 'active', ?, ?, ?)`,
     [store_id, tenant_id, name, ts, ts, null],
   );
 

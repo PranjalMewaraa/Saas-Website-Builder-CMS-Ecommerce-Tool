@@ -113,12 +113,12 @@ function ProductCardV1({
         {/* Price */}
         <div className="mt-4 flex items-baseline gap-2.5">
           <span className="text-xl font-semibold text-slate-900">
-            ${price.toFixed(2)}
+            ₹{price.toFixed(2)}
           </span>
 
           {comparePrice && comparePrice > price && (
             <span className="text-sm text-slate-500 line-through">
-              ${comparePrice.toFixed(2)}
+              ₹{comparePrice.toFixed(2)}
             </span>
           )}
         </div>

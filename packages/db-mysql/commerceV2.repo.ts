@@ -1,6 +1,7 @@
 import { pool } from "./index";
 import { newId, nowSql, slugify } from "./id";
 import { getStorePreset, STORE_TYPE_PRESETS, type StorePresetKey } from "./storeTypePresets";
+import { evaluatePromotions, recordPromotionUsage } from "./promotions.repo";
 
 type AttrType =
   | "text"
@@ -1181,6 +1182,7 @@ export async function placeOrderV2(args: {
   currency?: string;
   customer?: any;
   shipping?: any;
+  coupon_code?: string;
   items: Array<{ product_id: string; variant_id?: string; qty: number }>;
 }) {
   const conn = await pool.getConnection();
@@ -1238,14 +1240,48 @@ export async function placeOrderV2(args: {
     }
 
     const subtotal = resolved.reduce((sum, i) => sum + i.price_cents * i.qty, 0);
-    const total = subtotal;
+    let discount_cents = 0;
+    let appliedPromotion: {
+      id: string;
+      code?: string;
+      name?: string;
+    } | null = null;
+
+    if (args.coupon_code || subtotal > 0) {
+      const evaluated = await evaluatePromotions({
+        tenant_id: args.tenant_id,
+        site_id: args.site_id,
+        store_id: args.store_id,
+        items: args.items,
+        coupon_code: args.coupon_code,
+        customer: args.customer,
+        include_secret: true,
+        conn,
+      });
+      if (args.coupon_code && !evaluated.applied) {
+        throw new Error("INVALID_COUPON");
+      }
+      if (evaluated.applied) {
+        discount_cents = Math.max(
+          0,
+          Math.min(subtotal, Number(evaluated.applied.discount_cents || 0)),
+        );
+        appliedPromotion = {
+          id: String(evaluated.applied.id),
+          code: String(evaluated.applied.code || ""),
+          name: String(evaluated.applied.name || ""),
+        };
+      }
+    }
+
+    const total = Math.max(0, subtotal - discount_cents);
     const order_id = newId("corder").slice(0, 26);
     const order_number = `ORD-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`.toUpperCase();
 
     await conn.query(
       `INSERT INTO commerce_orders
-       (id, tenant_id, site_id, store_id, order_number, status, subtotal_cents, discount_cents, total_cents, currency, customer_json, shipping_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'new', ?, 0, ?, ?, ?, ?, ?, ?)`,
+       (id, tenant_id, site_id, store_id, order_number, status, subtotal_cents, discount_cents, total_cents, currency, customer_json, shipping_json, promotion_id, promotion_code, promotion_name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         order_id,
         args.tenant_id,
@@ -1253,10 +1289,14 @@ export async function placeOrderV2(args: {
         args.store_id,
         order_number,
         subtotal,
+        discount_cents,
         total,
-        args.currency || "USD",
+        args.currency || "INR",
         JSON.stringify(args.customer || {}),
         JSON.stringify(args.shipping || {}),
+        appliedPromotion?.id || null,
+        appliedPromotion?.code || null,
+        appliedPromotion?.name || null,
         ts,
         ts,
       ],
@@ -1301,8 +1341,35 @@ export async function placeOrderV2(args: {
       );
     }
 
+    if (appliedPromotion && discount_cents > 0) {
+      await recordPromotionUsage({
+        tenant_id: args.tenant_id,
+        site_id: args.site_id,
+        store_id: args.store_id,
+        promotion_id: appliedPromotion.id,
+        promotion_code: appliedPromotion.code || null,
+        order_id,
+        customer: args.customer,
+        discount_cents,
+        conn,
+      });
+    }
+
     await conn.commit();
-    return { order_id, order_number, subtotal_cents: subtotal, total_cents: total };
+    return {
+      order_id,
+      order_number,
+      subtotal_cents: subtotal,
+      discount_cents,
+      total_cents: total,
+      promotion: appliedPromotion
+        ? {
+            id: appliedPromotion.id,
+            code: appliedPromotion.code || "",
+            name: appliedPromotion.name || "",
+          }
+        : null,
+    };
   } catch (e) {
     await conn.rollback();
     throw e;

@@ -108,6 +108,12 @@ export default function AdminShell({
       group: "Commerce",
     },
     {
+      label: "Promotions",
+      href: "/manage/promotions",
+      icon: Tags,
+      group: "Commerce",
+    },
+    {
       label: "Domains",
       href: "/settings/domains",
       icon: Globe,
