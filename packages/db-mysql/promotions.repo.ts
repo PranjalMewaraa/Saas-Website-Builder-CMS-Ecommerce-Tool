@@ -1,9 +1,18 @@
 import { newId } from "./id";
 import { pool } from "./index";
 
-type PromotionTargetType = "store" | "brand" | "category" | "product";
+type PromotionTargetType =
+  | "store"
+  | "brand"
+  | "category"
+  | "product"
+  | "exclude_brand"
+  | "exclude_category"
+  | "exclude_product";
 type DiscountType = "percent" | "fixed";
 type DiscountScope = "order" | "items";
+type TargetMatchMode = "any" | "all";
+type TargetApplyMode = "eligible" | "order";
 
 export type PromotionInput = {
   tenant_id: string;
@@ -25,6 +34,8 @@ export type PromotionInput = {
   first_n_customers?: number | null;
   stackable?: boolean;
   priority?: number;
+  target_match_mode?: TargetMatchMode;
+  target_apply_mode?: TargetApplyMode;
   targets?: Array<{ type: PromotionTargetType; id?: string | null }>;
 };
 
@@ -70,31 +81,50 @@ function parseBool(v: any) {
 function parseTargets(rows: any[]) {
   const out = {
     store: false,
-    brandIds: new Set<string>(),
-    categoryIds: new Set<string>(),
-    productIds: new Set<string>(),
+    includeBrandIds: new Set<string>(),
+    includeCategoryIds: new Set<string>(),
+    includeProductIds: new Set<string>(),
+    excludeBrandIds: new Set<string>(),
+    excludeCategoryIds: new Set<string>(),
+    excludeProductIds: new Set<string>(),
   };
   for (const r of rows || []) {
     const t = String(r.target_type || "");
     const id = r.target_id ? String(r.target_id) : "";
     if (t === "store") out.store = true;
-    else if (t === "brand" && id) out.brandIds.add(id);
-    else if (t === "category" && id) out.categoryIds.add(id);
-    else if (t === "product" && id) out.productIds.add(id);
+    else if (t === "brand" && id) out.includeBrandIds.add(id);
+    else if (t === "category" && id) out.includeCategoryIds.add(id);
+    else if (t === "product" && id) out.includeProductIds.add(id);
+    else if (t === "exclude_brand" && id) out.excludeBrandIds.add(id);
+    else if (t === "exclude_category" && id) out.excludeCategoryIds.add(id);
+    else if (t === "exclude_product" && id) out.excludeProductIds.add(id);
   }
   return out;
 }
 
-function promotionMatchesLine(targets: ReturnType<typeof parseTargets>, line: ResolvedLine) {
+function promotionMatchesLine(
+  targets: ReturnType<typeof parseTargets>,
+  line: ResolvedLine,
+  matchMode: TargetMatchMode,
+) {
+  if (targets.excludeProductIds.has(line.product_id)) return false;
+  if (line.brand_id && targets.excludeBrandIds.has(line.brand_id)) return false;
+  if (line.category_id && targets.excludeCategoryIds.has(line.category_id)) return false;
+
   if (targets.store) return true;
+
   const checks: boolean[] = [];
-  if (targets.brandIds.size) checks.push(!!line.brand_id && targets.brandIds.has(line.brand_id));
-  if (targets.categoryIds.size) {
-    checks.push(!!line.category_id && targets.categoryIds.has(line.category_id));
+  if (targets.includeBrandIds.size) {
+    checks.push(!!line.brand_id && targets.includeBrandIds.has(line.brand_id));
   }
-  if (targets.productIds.size) checks.push(targets.productIds.has(line.product_id));
+  if (targets.includeCategoryIds.size) {
+    checks.push(!!line.category_id && targets.includeCategoryIds.has(line.category_id));
+  }
+  if (targets.includeProductIds.size) {
+    checks.push(targets.includeProductIds.has(line.product_id));
+  }
   if (!checks.length) return true;
-  return checks.some(Boolean);
+  return matchMode === "all" ? checks.every(Boolean) : checks.some(Boolean);
 }
 
 export async function createPromotion(input: PromotionInput) {
@@ -106,8 +136,8 @@ export async function createPromotion(input: PromotionInput) {
     const code = normalizeCode(input.code);
     await conn.query(
       `INSERT INTO store_promotions
-       (id, tenant_id, site_id, store_id, name, code, is_active, is_secret, starts_at, ends_at, discount_type, discount_scope, discount_value, min_order_cents, max_discount_cents, usage_limit_total, usage_limit_per_customer, first_n_customers, stackable, priority, created_at, updated_at, archived_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+       (id, tenant_id, site_id, store_id, name, code, is_active, is_secret, starts_at, ends_at, discount_type, discount_scope, discount_value, min_order_cents, max_discount_cents, usage_limit_total, usage_limit_per_customer, first_n_customers, stackable, priority, target_match_mode, target_apply_mode, created_at, updated_at, archived_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
       [
         id,
         input.tenant_id,
@@ -131,6 +161,8 @@ export async function createPromotion(input: PromotionInput) {
         input.first_n_customers == null ? null : Math.max(0, Number(input.first_n_customers || 0)),
         input.stackable ? 1 : 0,
         Number(input.priority || 0),
+        input.target_match_mode === "all" ? "all" : "any",
+        input.target_apply_mode === "order" ? "order" : "eligible",
         ts,
         ts,
       ],
@@ -186,7 +218,7 @@ export async function updatePromotion(args: {
        SET name = ?, code = ?, is_active = ?, is_secret = ?, starts_at = ?, ends_at = ?,
            discount_type = ?, discount_scope = ?, discount_value = ?, min_order_cents = ?,
            max_discount_cents = ?, usage_limit_total = ?, usage_limit_per_customer = ?, first_n_customers = ?,
-           stackable = ?, priority = ?, updated_at = ?
+           stackable = ?, priority = ?, target_match_mode = ?, target_apply_mode = ?, updated_at = ?
        WHERE tenant_id = ? AND store_id = ? AND id = ?`,
       [
         p.name?.trim() || existing.name,
@@ -221,6 +253,16 @@ export async function updatePromotion(args: {
             : Math.max(0, Number(p.first_n_customers || 0)),
         p.stackable === undefined ? existing.stackable : p.stackable ? 1 : 0,
         p.priority == null ? existing.priority : Number(p.priority || 0),
+        p.target_match_mode == null
+          ? String(existing.target_match_mode || "any")
+          : p.target_match_mode === "all"
+            ? "all"
+            : "any",
+        p.target_apply_mode == null
+          ? String(existing.target_apply_mode || "eligible")
+          : p.target_apply_mode === "order"
+            ? "order"
+            : "eligible",
         ts,
         args.tenant_id,
         args.store_id,
@@ -447,7 +489,15 @@ export async function evaluatePromotions(args: {
       }
 
       const targets = parseTargets(targetsByPromo[String(p.id)] || []);
-      const eligibleLines = lines.filter((l) => promotionMatchesLine(targets, l));
+      const matchMode =
+        String(p.target_match_mode || "any") === "all" ? "all" : "any";
+      const applyMode =
+        String(p.target_apply_mode || "eligible") === "order"
+          ? "order"
+          : "eligible";
+      const eligibleLines = lines.filter((l) =>
+        promotionMatchesLine(targets, l, matchMode),
+      );
       if (!eligibleLines.length) continue;
 
       if (Number(p.min_order_cents || 0) > subtotal) continue;
@@ -455,7 +505,9 @@ export async function evaluatePromotions(args: {
       const baseForDiscount =
         String(p.discount_scope) === "items"
           ? eligibleLines.reduce((s, l) => s + l.line_total_cents, 0)
-          : subtotal;
+          : applyMode === "order"
+            ? subtotal
+            : eligibleLines.reduce((s, l) => s + l.line_total_cents, 0);
       if (baseForDiscount <= 0) continue;
 
       let discount = 0;
@@ -481,6 +533,8 @@ export async function evaluatePromotions(args: {
         is_secret: parseBool(p.is_secret),
         discount_cents: discount,
         discount_scope: String(p.discount_scope || "order"),
+        target_match_mode: matchMode,
+        target_apply_mode: applyMode,
         discount_type: String(p.discount_type || "percent"),
         discount_value: Number(p.discount_value || 0),
         priority: Number(p.priority || 0),

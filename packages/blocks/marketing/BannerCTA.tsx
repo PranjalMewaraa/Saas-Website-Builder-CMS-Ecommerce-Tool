@@ -10,7 +10,11 @@ export default function BannerCTAV1(props: any) {
     contentWidth,
   } = props;
   const alignClass =
-    align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center";
+    align === "left"
+      ? "text-left"
+      : align === "right"
+        ? "text-right"
+        : "text-center";
 
   const maxWidth =
     contentWidth === "sm"
@@ -25,7 +29,7 @@ export default function BannerCTAV1(props: any) {
               ? "1536px"
               : "1280px";
   return (
-    <section className="w-full bg-slate-950 py-20 text-white">
+    <section className="w-full  py-20 text-white">
       <div
         className={`mx-auto max-w-5xl px-6 ${alignClass}`}
         style={{ maxWidth: maxWidth }}
@@ -33,9 +37,7 @@ export default function BannerCTAV1(props: any) {
         <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           {title}
         </h2>
-        {subtitle && (
-          <p className="mt-4 text-lg text-slate-300">{subtitle}</p>
-        )}
+        {subtitle && <p className="mt-4 text-lg text-slate-300">{subtitle}</p>}
 
         {buttonText && (
           <a

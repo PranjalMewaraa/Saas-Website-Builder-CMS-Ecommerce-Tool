@@ -83,6 +83,9 @@ export async function POST(req: Request) {
           : Math.max(0, Number(body.first_n_customers || 0)),
       stackable: !!body.stackable,
       priority: Number(body.priority || 0),
+      target_match_mode: body.target_match_mode === "all" ? "all" : "any",
+      target_apply_mode:
+        body.target_apply_mode === "order" ? "order" : "eligible",
       targets: Array.isArray(body.targets) ? body.targets : [],
     });
     return NextResponse.json({ ok: true, promotion_id: created.id });
@@ -150,6 +153,18 @@ export async function PUT(req: Request) {
             : Number(body.first_n_customers),
         stackable: body.stackable,
         priority: body.priority == null ? undefined : Number(body.priority),
+        target_match_mode:
+          body.target_match_mode == null
+            ? undefined
+            : body.target_match_mode === "all"
+              ? "all"
+              : "any",
+        target_apply_mode:
+          body.target_apply_mode == null
+            ? undefined
+            : body.target_apply_mode === "order"
+              ? "order"
+              : "eligible",
         targets: Array.isArray(body.targets) ? body.targets : undefined,
       },
     });
@@ -183,4 +198,3 @@ export async function DELETE(req: Request) {
   await archivePromotion({ tenant_id, store_id, promotion_id });
   return NextResponse.json({ ok: true });
 }
-

@@ -291,24 +291,6 @@ export default function ProductDetailClient({
             </span>
           </div>
 
-          {suggestedPromos.length ? (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                Available Coupons
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {suggestedPromos.slice(0, 4).map((p) => (
-                  <span
-                    key={p.id}
-                    className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-700"
-                  >
-                    {p.code || p.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
           {colorOptions.length ? (
             <div className="space-y-2">
               <div className="text-xs uppercase tracking-wide text-slate-500">
@@ -366,29 +348,24 @@ export default function ProductDetailClient({
           </div>
 
           <div className="space-y-3 py-4 border-t border-slate-200 pt-3">
-            <AccordionRow
-              title="Specification"
-              open={openSpec}
-              onToggle={() => setOpenSpec((v) => !v)}
-            >
-              <div className="space-y-2">
-                {(specRows.length
-                  ? specRows
-                  : [{ label: "Material", value: "Premium quality" }]
-                ).map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-start gap-2 p-2 text-sm text-slate-700"
-                  >
-                    <Check className="h-4 w-4 text-slate-900 mt-0.5" />
-                    <div>
-                      <span className="font-medium">{row.label}:</span>{" "}
-                      <span className="text-slate-600">{row.value}</span>
-                    </div>
+            <h2>Specifications</h2>
+            <div className="space-y-2">
+              {(specRows.length
+                ? specRows
+                : [{ label: "Material", value: "Premium quality" }]
+              ).map((row) => (
+                <div
+                  key={row.label}
+                  className="flex items-start gap-2 p-2 text-sm text-slate-700"
+                >
+                  <Check className="h-4 w-4 text-slate-900 mt-0.5" />
+                  <div>
+                    <span className="font-medium">{row.label}:</span>{" "}
+                    <span className="text-slate-600">{row.value}</span>
                   </div>
-                ))}
-              </div>
-            </AccordionRow>
+                </div>
+              ))}
+            </div>
 
             {/* <AccordionRow
               title="Feature"
@@ -437,6 +414,23 @@ export default function ProductDetailClient({
               />
             </div>
           </div>
+          {suggestedPromos.length ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Available Coupons
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {suggestedPromos.slice(0, 4).map((p) => (
+                  <span
+                    key={p.id}
+                    className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-700"
+                  >
+                    {p.code || p.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {orderNumber ? (
             <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">

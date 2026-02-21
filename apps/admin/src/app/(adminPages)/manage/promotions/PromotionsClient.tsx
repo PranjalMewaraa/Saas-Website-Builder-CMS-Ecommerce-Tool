@@ -15,6 +15,14 @@ import {
 } from "lucide-react"; // Optional: assumes lucide-react is installed
 
 type TargetType = "store" | "brand" | "category" | "product";
+type PromotionRuleType =
+  | "store"
+  | "brand"
+  | "category"
+  | "product"
+  | "exclude_brand"
+  | "exclude_category"
+  | "exclude_product";
 
 export default function PromotionsClient({
   siteId,
@@ -25,6 +33,8 @@ export default function PromotionsClient({
 }) {
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
@@ -48,15 +58,64 @@ export default function PromotionsClient({
     ends_at: "",
   });
 
-  const [targetType, setTargetType] = useState<TargetType>("store");
+  const [targetType, setTargetType] = useState<PromotionRuleType>("store");
+  const [targetMatchMode, setTargetMatchMode] = useState<"any" | "all">("any");
+  const [targetApplyMode, setTargetApplyMode] = useState<"eligible" | "order">(
+    "eligible",
+  );
   const [targetIds, setTargetIds] = useState<string[]>([]);
+  const [targetRules, setTargetRules] = useState<
+    Array<{ type: PromotionRuleType; id?: string | null }>
+  >([]);
+  const [targetSearch, setTargetSearch] = useState("");
+
+  const baseTargetType =
+    targetType.startsWith("exclude_")
+      ? (targetType.replace("exclude_", "") as TargetType)
+      : (targetType as TargetType);
 
   const targetOptions = useMemo(() => {
-    if (targetType === "brand") return brands;
-    if (targetType === "category") return categories;
-    if (targetType === "product") return products;
+    if (baseTargetType === "brand") return brands;
+    if (baseTargetType === "category") return categories;
+    if (baseTargetType === "product") return products;
     return [];
-  }, [targetType, brands, categories, products]);
+  }, [baseTargetType, brands, categories, products]);
+
+  const filteredTargetOptions = useMemo(() => {
+    const q = targetSearch.trim().toLowerCase();
+    if (!q) return targetOptions;
+    return targetOptions.filter((t: any) =>
+      String(t.name || t.title || t.id || "")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [targetOptions, targetSearch]);
+
+  function getTargetLabel(id?: string | null) {
+    if (!id) return "Whole Store";
+    const all = [...brands, ...categories, ...products];
+    const found = all.find((x: any) => String(x.id) === String(id));
+    return String(found?.name || found?.title || id);
+  }
+
+  function getTargetTypeLabel(type: string) {
+    const map: Record<string, string> = {
+      store: "Store",
+      brand: "Brand",
+      category: "Category",
+      product: "Product",
+      exclude_brand: "Exclude Brand",
+      exclude_category: "Exclude Category",
+      exclude_product: "Exclude Product",
+    };
+    return map[type] || type;
+  }
+
+  const includeRules = targetRules.filter((r) => !String(r.type).startsWith("exclude_"));
+  const excludeRules = targetRules.filter((r) => String(r.type).startsWith("exclude_"));
+  const hasMinInputs =
+    String(form.name || "").trim().length > 1 &&
+    Number(form.discount_value || 0) > 0;
 
   async function refresh() {
     if (!siteId || !storeId) return;
@@ -157,6 +216,9 @@ export default function PromotionsClient({
                     setForm((p) => ({ ...p, name: e.target.value }))
                   }
                 />
+                <p className="text-xs text-slate-500">
+                  Internal name to identify this promotion in admin.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">
@@ -173,6 +235,9 @@ export default function PromotionsClient({
                     }))
                   }
                 />
+                <p className="text-xs text-slate-500">
+                  Leave empty for automatic promo (no coupon entry needed).
+                </p>
               </div>
             </div>
 
@@ -229,6 +294,11 @@ export default function PromotionsClient({
                     setForm((p) => ({ ...p, discount_value: e.target.value }))
                   }
                 />
+                <p className="text-xs text-slate-500">
+                  {form.discount_type === "percent"
+                    ? "Enter 1-100 (e.g. 20 for 20% off)."
+                    : "Flat discount in rupees (e.g. 500)."}
+                </p>
               </div>
             </div>
 
@@ -291,8 +361,9 @@ export default function PromotionsClient({
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   value={targetType}
                   onChange={(e) => {
-                    setTargetType(e.target.value as TargetType);
+                    setTargetType(e.target.value as PromotionRuleType);
                     setTargetIds([]);
+                    setTargetSearch("");
                   }}
                 >
                   <option value="">Select Offer Target</option>
@@ -300,10 +371,19 @@ export default function PromotionsClient({
                   <option value="brand">Specific Brands</option>
                   <option value="category">Specific Categories</option>
                   <option value="product">Selected Products</option>
+                  <option value="exclude_brand">Exclude Brands</option>
+                  <option value="exclude_category">Exclude Categories</option>
+                  <option value="exclude_product">Exclude Products</option>
                 </select>
                 {targetType !== "store" && (
                   <div className="max-h-32 overflow-auto rounded-lg border border-slate-200 bg-white p-2 text-sm">
-                    {targetOptions.map((t: any) => (
+                    <input
+                      className="mb-2 w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs"
+                      placeholder="Search target..."
+                      value={targetSearch}
+                      onChange={(e) => setTargetSearch(e.target.value)}
+                    />
+                    {filteredTargetOptions.map((t: any) => (
                       <label
                         key={t.id}
                         className="flex cursor-pointer items-center gap-2 p-1 hover:bg-slate-50"
@@ -324,8 +404,116 @@ export default function PromotionsClient({
                         <span>{t.name || t.title || t.id}</span>
                       </label>
                     ))}
+                    {!filteredTargetOptions.length ? (
+                      <div className="px-2 py-1 text-xs text-slate-500">
+                        No matches found.
+                      </div>
+                    ) : null}
                   </div>
                 )}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    disabled={targetType !== "store" && !targetIds.length}
+                    onClick={() => {
+                      if (targetType === "store") {
+                        setTargetRules([{ type: "store", id: null }]);
+                        return;
+                      }
+                      setTargetRules((prev) => {
+                        const next = [...prev];
+                        for (const id of targetIds) {
+                          if (
+                            !next.some(
+                              (r) =>
+                                r.type === targetType &&
+                                String(r.id) === String(id),
+                            )
+                          ) {
+                            next.push({ type: targetType, id });
+                          }
+                        }
+                        return next;
+                      });
+                      setTargetIds([]);
+                    }}
+                  >
+                    Add Rule
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-500 hover:bg-slate-50"
+                    onClick={() => setTargetRules([])}
+                  >
+                    Clear Rules
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <select
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs"
+                    value={targetMatchMode}
+                    onChange={(e) =>
+                      setTargetMatchMode(e.target.value === "all" ? "all" : "any")
+                    }
+                  >
+                    <option value="any">Match: Any include rule</option>
+                    <option value="all">Match: All include rules</option>
+                  </select>
+                  <select
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs"
+                    value={targetApplyMode}
+                    onChange={(e) =>
+                      setTargetApplyMode(
+                        e.target.value === "order" ? "order" : "eligible",
+                      )
+                    }
+                  >
+                    <option value="eligible">Discount base: Eligible items only</option>
+                    <option value="order">Discount base: Entire order</option>
+                  </select>
+                </div>
+                {targetRules.length ? (
+                  <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                    {targetRules.map((r, idx) => (
+                      <button
+                        key={`${r.type}-${r.id || "store"}-${idx}`}
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-700"
+                        onClick={() =>
+                          setTargetRules((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        title="Click to remove rule"
+                      >
+                        {getTargetTypeLabel(r.type)}
+                        {r.id ? `: ${getTargetLabel(r.id)}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500">
+                    No explicit rules added. Promotion will apply store-wide.
+                  </div>
+                )}
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-xs text-slate-600">
+                  <div className="font-semibold text-slate-700">Targeting Preview</div>
+                  <div className="mt-1">
+                    Includes:{" "}
+                    {includeRules.length
+                      ? includeRules
+                          .map((r) => `${getTargetTypeLabel(r.type)}${r.id ? ` (${getTargetLabel(r.id)})` : ""}`)
+                          .join(", ")
+                      : "Store-wide"}
+                  </div>
+                  <div className="mt-1">
+                    Excludes:{" "}
+                    {excludeRules.length
+                      ? excludeRules
+                          .map((r) => `${getTargetTypeLabel(r.type)} (${getTargetLabel(r.id)})`)
+                          .join(", ")
+                      : "None"}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-3 rounded-xl border border-slate-200 p-4">
@@ -388,12 +576,14 @@ export default function PromotionsClient({
             </div>
 
             <button
-              disabled={isSubmitting}
+              disabled={isSubmitting || !hasMinInputs}
               className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:opacity-50"
               onClick={async () => {
                 setIsSubmitting(true);
+                setSubmitError("");
+                setSubmitSuccess("");
                 try {
-                  await fetch("/api/admin/v2/promotions", {
+                  const res = await fetch("/api/admin/v2/promotions", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -431,13 +621,37 @@ export default function PromotionsClient({
                             .slice(0, 19)
                             .replace("T", " ")
                         : null,
-                      targets:
-                        targetType === "store"
-                          ? [{ type: "store", id: null }]
-                          : targetIds.map((id) => ({ type: targetType, id })),
+                      target_match_mode: targetMatchMode,
+                      target_apply_mode: targetApplyMode,
+                      targets: targetRules.length
+                        ? targetRules
+                        : [{ type: "store", id: null }],
                     }),
                   });
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok || !data?.ok) {
+                    throw new Error(data?.error || "Failed to create promotion");
+                  }
                   await refresh();
+                  setSubmitSuccess("Promotion created successfully.");
+                  setForm((p) => ({
+                    ...p,
+                    name: "",
+                    code: "",
+                    discount_value: "10",
+                    min_order_cents: "0",
+                    max_discount_cents: "",
+                    usage_limit_total: "",
+                    usage_limit_per_customer: "",
+                    first_n_customers: "",
+                    starts_at: "",
+                    ends_at: "",
+                  }));
+                  setTargetIds([]);
+                  setTargetRules([]);
+                  setTargetType("store");
+                } catch (e: any) {
+                  setSubmitError(e?.message || "Failed to create promotion");
                 } finally {
                   setIsSubmitting(false);
                 }
@@ -445,6 +659,17 @@ export default function PromotionsClient({
             >
               {isSubmitting ? "Creating Promotion..." : "Create Promotion Now"}
             </button>
+            {!hasMinInputs ? (
+              <p className="text-xs text-slate-500">
+                Fill at least a promotion name and discount value to continue.
+              </p>
+            ) : null}
+            {submitError ? (
+              <p className="text-xs text-red-600">{submitError}</p>
+            ) : null}
+            {submitSuccess ? (
+              <p className="text-xs text-emerald-600">{submitSuccess}</p>
+            ) : null}
           </div>
         ) : (
           <div className="px-6 py-4 text-sm text-slate-600">
@@ -513,7 +738,25 @@ export default function PromotionsClient({
                         <span className="capitalize">
                           {p.discount_scope.replace("_", " ")}
                         </span>
+                        <span>•</span>
+                        <span className="capitalize">
+                          {String(p.target_match_mode || "any")} /{" "}
+                          {String(p.target_apply_mode || "eligible")}
+                        </span>
                       </div>
+                      {Array.isArray(p.targets) && p.targets.length ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {p.targets.map((t: any, idx: number) => (
+                            <span
+                              key={`${String(t.type)}-${String(t.id || "store")}-${idx}`}
+                              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
+                            >
+                              {getTargetTypeLabel(String(t.type))}
+                              {t.id ? `: ${getTargetLabel(String(t.id))}` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
