@@ -336,7 +336,7 @@ export default function BlockCard({
                         label="Max Width"
                         value={overrides.maxWidth ?? "xl"}
                         onChange={(v: string) => setStyle("maxWidth", v)}
-                        options={["sm", "md", "lg", "xl", "2xl"]}
+                        options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
                       />
                     </div>
 

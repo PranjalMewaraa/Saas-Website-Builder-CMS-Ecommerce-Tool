@@ -22,7 +22,9 @@ export default function StatsCounterV1({
   contentWidth,
 }: StatsCounterV1Props) {
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

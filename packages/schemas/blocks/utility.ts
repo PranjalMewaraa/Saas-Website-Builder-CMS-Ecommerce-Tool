@@ -13,5 +13,7 @@ export const DividerSchema = z.object({
 export const RichTextSchema = z.object({
   html: z
     .string()
-    .default("<h2>Your heading</h2><p>Your paragraph text here.</p>"),
+    .default(
+      "<h2>Tell your story with clarity</h2><p>Use this rich text block to explain value, build trust, and guide customers to action.</p><ul><li>Clear headline and supporting copy</li><li>Use bullets to improve scan-ability</li><li>Add links for key next steps</li></ul><blockquote>Tip: keep paragraphs short and specific for better conversion.</blockquote>",
+    ),
 });

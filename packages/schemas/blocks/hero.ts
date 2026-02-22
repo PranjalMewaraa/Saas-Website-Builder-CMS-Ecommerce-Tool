@@ -34,7 +34,9 @@ export const HeroSchema = z
     promoBullets: z.array(z.string()).optional(),
 
     align: z.enum(["left", "center", "right"]).default("left"),
-    contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),
+    contentWidth: z
+      .enum(["auto", "sm", "md", "lg", "xl", "2xl", "full"])
+      .default("xl"),
     minHeight: z.number().int().min(240).max(980).default(520),
     bg: z
       .object({

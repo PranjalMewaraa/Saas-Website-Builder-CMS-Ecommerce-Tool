@@ -55,7 +55,9 @@ export default function PricingTableV1({
   contentWidth,
 }: PricingTableV1Props) {
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

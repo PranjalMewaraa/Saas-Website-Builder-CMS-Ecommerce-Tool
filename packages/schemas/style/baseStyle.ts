@@ -58,7 +58,13 @@ export const BaseStyleSchema = z.object({
   id: z.string().optional(),
   display: z.enum(["block", "flex", "grid"]).optional(),
   container: z.enum(["full", "boxed"]).optional(),
-  maxWidth: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+  maxWidth: z
+    .union([
+      z.enum(["sm", "md", "lg", "xl", "2xl"]),
+      z.string(),
+      z.coerce.number(),
+    ])
+    .optional(),
   gap: z.coerce.number().int().min(0).max(120).optional(),
   padding: PaddingSchema.optional(),
   margin: MarginSchema.optional(),

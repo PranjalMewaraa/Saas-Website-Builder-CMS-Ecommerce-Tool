@@ -1025,10 +1025,19 @@ function defaultPropsFor(type: string) {
   if (type === "ProductList/V1")
     return {
       title: "All Products",
+      subtitle: "Browse products with clean filters and fast results.",
       limit: 12,
       showFilters: true,
       showSearch: true,
       detailPathPrefix: "/products",
+      titleAlign: "left",
+      sectionPadding: "normal",
+      sectionBg: "",
+      gridCols: "3",
+      gridGap: "normal",
+      sidebarPosition: "left",
+      filterStyle: "card",
+      filterSticky: true,
       cardVariant: "default",
     };
   if (type === "ProductDetail/V1")
@@ -1082,7 +1091,9 @@ function defaultPropsFor(type: string) {
   if (type === "Utility/Divider")
     return { thickness: 1, color: "#e5e7eb", marginY: 20 };
   if (type === "Utility/RichText")
-    return { html: `<h2>Your heading</h2><p>Your paragraph text here.</p>` };
+    return {
+      html: `<h2>Tell your story with clarity</h2><p>Use this rich text block to explain value, build trust, and guide customers to action.</p><ul><li>Clear headline and supporting copy</li><li>Use bullets to improve scan-ability</li><li>Add links for key next steps</li></ul><blockquote>Tip: keep paragraphs short and specific for better conversion.</blockquote>`,
+    };
   if (type === "BannerCTA/V1")
     return {
       title: "Title",

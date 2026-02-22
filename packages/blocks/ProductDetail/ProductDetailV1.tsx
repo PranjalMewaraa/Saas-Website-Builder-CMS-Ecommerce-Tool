@@ -5,7 +5,7 @@ import ProductDetailClient from "./ProductDetailClient";
 type Props = {
   tenantId: string;
   storeId: string;
-  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full" | "auto";
   showRelated?: boolean;
   relatedLimit?: number;
   detailPathPrefix?: string;
@@ -98,6 +98,7 @@ export default async function ProductDetailV1({
       xl: "max-w-7xl",
       "2xl": "max-w-screen-2xl",
       full: "max-w-full",
+      auto: "",
     }[contentWidth] || "max-w-7xl";
 
   const related = showRelated

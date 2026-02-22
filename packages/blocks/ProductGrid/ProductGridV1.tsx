@@ -9,7 +9,7 @@ type Props = {
   storeId: string;
   title?: string;
   limit?: number;
-  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full" | "auto";
   detailPathPrefix?: string;
   cardVariant?:
     | "default"
@@ -54,6 +54,7 @@ export default async function ProductGridV1({
       xl: "max-w-7xl",
       "2xl": "max-w-screen-2xl",
       full: "max-w-full",
+      auto: "",
     }[contentWidth] || "max-w-7xl";
 
   return (

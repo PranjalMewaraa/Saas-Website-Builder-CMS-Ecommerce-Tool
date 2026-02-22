@@ -311,7 +311,7 @@ export default function PresetsEditorClient({
                         onChange={(v: any) =>
                           setStyle({ ...style, maxWidth: v })
                         }
-                        options={["sm", "md", "lg", "xl", "2xl", "full"]}
+                        options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
                       />
                       <Select
                         label="Text Align"

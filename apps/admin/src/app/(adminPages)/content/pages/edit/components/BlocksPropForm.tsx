@@ -116,7 +116,7 @@ export function BlockPropsForm({
               label="Width"
               value={props.contentWidth || "xl"}
               onChange={(v: any) => setProp("contentWidth", v)}
-              options={["sm", "md", "lg", "xl", "2xl"]}
+              options={["auto", "sm", "md", "lg", "xl", "2xl"]}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -277,7 +277,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -673,7 +673,7 @@ export function BlockPropsForm({
               label="Width"
               value={props.contentWidth || "xl"}
               onChange={(v: any) => setProp("contentWidth", v)}
-              options={["sm", "md", "lg", "xl", "2xl"]}
+              options={["auto", "sm", "md", "lg", "xl", "2xl"]}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1074,6 +1074,12 @@ export function BlockPropsForm({
           onChange={(v: any) => setProp("title", v)}
           placeholder="All Products"
         />
+        <Field
+          label="subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+          placeholder="Browse products with clean filters and fast results."
+        />
         <NumberField
           label="limit"
           value={props.limit ?? 12}
@@ -1083,13 +1089,57 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl", "full"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
         />
         <Field
           label="detailPathPrefix"
           value={props.detailPathPrefix || "/products"}
           onChange={(v: any) => setProp("detailPathPrefix", v)}
           placeholder="/products"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Select
+            label="titleAlign"
+            value={props.titleAlign || "left"}
+            onChange={(v: any) => setProp("titleAlign", v)}
+            options={["left", "center"]}
+          />
+          <Select
+            label="sectionPadding"
+            value={props.sectionPadding || "normal"}
+            onChange={(v: any) => setProp("sectionPadding", v)}
+            options={["compact", "normal", "spacious"]}
+          />
+          <Select
+            label="gridCols"
+            value={String(props.gridCols || "3")}
+            onChange={(v: any) => setProp("gridCols", String(v))}
+            options={["2", "3", "4", "5"]}
+          />
+          <Select
+            label="gridGap"
+            value={props.gridGap || "normal"}
+            onChange={(v: any) => setProp("gridGap", v)}
+            options={["tight", "normal", "relaxed"]}
+          />
+          <Select
+            label="sidebarPosition"
+            value={props.sidebarPosition || "left"}
+            onChange={(v: any) => setProp("sidebarPosition", v)}
+            options={["left", "right"]}
+          />
+          <Select
+            label="filterStyle"
+            value={props.filterStyle || "card"}
+            onChange={(v: any) => setProp("filterStyle", v)}
+            options={["card", "soft"]}
+          />
+        </div>
+        <Field
+          label="sectionBg"
+          value={props.sectionBg || ""}
+          onChange={(v: any) => setProp("sectionBg", v)}
+          placeholder="#ffffff or linear-gradient(...)"
         />
         <Select
           label="Card Variant"
@@ -1123,6 +1173,14 @@ export function BlockPropsForm({
           />
           Show search
         </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={props.filterSticky ?? true}
+            onChange={(e) => setProp("filterSticky", e.target.checked)}
+          />
+          Sticky filters
+        </label>
       </div>
     );
   }
@@ -1134,7 +1192,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl", "full"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
         />
         <Field
           label="detailPathPrefix"
@@ -2040,7 +2098,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <NumberField
           label="limit"
@@ -2125,7 +2183,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -2179,7 +2237,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -2268,7 +2326,7 @@ export function BlockPropsForm({
               label="Width"
               value={props.contentWidth || "xl"}
               onChange={(v: any) => setProp("contentWidth", v)}
-              options={["sm", "md", "lg", "xl", "2xl"]}
+              options={["auto", "sm", "md", "lg", "xl", "2xl"]}
             />
             <Field
               label="name"
@@ -2303,7 +2361,7 @@ export function BlockPropsForm({
             label="Width"
             value={props.contentWidth || "xl"}
             onChange={(v: any) => setProp("contentWidth", v)}
-            options={["sm", "md", "lg", "xl", "2xl"]}
+            options={["auto", "sm", "md", "lg", "xl", "2xl"]}
           />
           <Field
             label="Title"
@@ -3045,7 +3103,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3109,7 +3167,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3207,7 +3265,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3304,7 +3362,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3569,7 +3627,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3692,7 +3750,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -3892,7 +3950,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "2xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <NumberField
           label="Speed (seconds)"
@@ -4084,7 +4142,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -4232,7 +4290,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -4370,7 +4428,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -4533,7 +4591,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -4690,7 +4748,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         {items.map((item: any, i: number) => (
           <div key={i} className="border rounded p-2 space-y-2">
@@ -4840,7 +4898,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -5120,7 +5178,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="Title"
@@ -5293,7 +5351,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "2xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <NumberField
           label="Speed (seconds)"
@@ -5371,7 +5429,7 @@ export function BlockPropsForm({
               label="Width"
               value={props.contentWidth || "xl"}
               onChange={(v: any) => setProp("contentWidth", v)}
-              options={["sm", "md", "lg", "xl", "2xl"]}
+              options={["auto", "sm", "md", "lg", "xl", "2xl"]}
             />
 
             <Field
@@ -5409,7 +5467,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <div className="text-xs opacity-60">
           Logos are managed via asset picker in renderer
@@ -5424,7 +5482,7 @@ export function BlockPropsForm({
           label="Width"
           value={props.contentWidth || "xl"}
           onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
+          options={["auto", "sm", "md", "lg", "xl", "2xl"]}
         />
         <Field
           label="title"
@@ -6020,10 +6078,19 @@ function defaultPropsFor(type: string) {
   if (type === "ProductList/V1")
     return {
       title: "All Products",
+      subtitle: "Browse products with clean filters and fast results.",
       limit: 12,
       showFilters: true,
       showSearch: true,
       detailPathPrefix: "/products",
+      titleAlign: "left",
+      sectionPadding: "normal",
+      sectionBg: "",
+      gridCols: "3",
+      gridGap: "normal",
+      sidebarPosition: "left",
+      filterStyle: "card",
+      filterSticky: true,
       cardVariant: "default",
     };
   if (type === "ProductDetail/V1")
@@ -6077,7 +6144,9 @@ function defaultPropsFor(type: string) {
   if (type === "Utility/Divider")
     return { thickness: 1, color: "#e5e7eb", marginY: 20 };
   if (type === "Utility/RichText")
-    return { html: `<h2>Your heading</h2><p>Your paragraph text here.</p>` };
+    return {
+      html: `<h2>Tell your story with clarity</h2><p>Use this rich text block to explain value, build trust, and guide customers to action.</p><ul><li>Clear headline and supporting copy</li><li>Use bullets to improve scan-ability</li><li>Add links for key next steps</li></ul><blockquote>Tip: keep paragraphs short and specific for better conversion.</blockquote>`,
+    };
   if (type === "BannerCTA/V1")
     return {
       title: "Title",

@@ -13,7 +13,9 @@ export default function Hero(props: HeroProps) {
         : (props.bg?.type as HeroMode) || "basic";
 
   const maxWidth =
-    props.contentWidth === "sm"
+    props.contentWidth === "auto"
+      ? ""
+      : props.contentWidth === "sm"
       ? "640px"
       : props.contentWidth === "md"
         ? "768px"

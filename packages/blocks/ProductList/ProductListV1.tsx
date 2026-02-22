@@ -11,11 +11,20 @@ type Props = {
   tenantId: string;
   storeId: string;
   title?: string;
+  subtitle?: string;
   limit?: number;
-  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full" | "auto";
   showFilters?: boolean;
   showSearch?: boolean;
   detailPathPrefix?: string;
+  titleAlign?: "left" | "center";
+  sectionPadding?: "compact" | "normal" | "spacious";
+  sectionBg?: string;
+  gridCols?: "2" | "3" | "4" | "5";
+  gridGap?: "tight" | "normal" | "relaxed";
+  sidebarPosition?: "left" | "right";
+  filterStyle?: "card" | "soft";
+  filterSticky?: boolean;
   cardVariant?:
     | "default"
     | "minimal"
@@ -193,11 +202,20 @@ export default async function ProductListV1({
   tenantId,
   storeId,
   title = "Products",
+  subtitle = "Browse products with clean filters and fast results.",
   limit = 12,
   contentWidth = "xl",
   showFilters = true,
   showSearch = true,
   detailPathPrefix = "/products",
+  titleAlign = "left",
+  sectionPadding = "normal",
+  sectionBg = "",
+  gridCols = "3",
+  gridGap = "normal",
+  sidebarPosition = "left",
+  filterStyle = "card",
+  filterSticky = true,
   cardVariant = "default",
   search,
 }: Props) {
@@ -272,6 +290,7 @@ export default async function ProductListV1({
       xl: "max-w-7xl",
       "2xl": "max-w-screen-2xl",
       full: "max-w-full",
+      auto: "",
     }[contentWidth] || "max-w-7xl";
 
   const showBrandFilter =
@@ -302,17 +321,50 @@ export default async function ProductListV1({
     showSearch ||
     showAttributeFilters;
 
+  const sectionPaddingClass =
+    sectionPadding === "compact"
+      ? "py-8 md:py-10 lg:py-12"
+      : sectionPadding === "spacious"
+        ? "py-14 md:py-20 lg:py-24"
+        : "py-12 md:py-16 lg:py-20";
+
+  const titleAlignClass = titleAlign === "center" ? "text-center" : "text-left";
+  const headerWrapClass =
+    titleAlign === "center"
+      ? "flex flex-wrap items-center justify-center gap-4 mb-6"
+      : "flex flex-wrap items-center justify-between gap-4 mb-6";
+
+  const gridClass =
+    gridCols === "2"
+      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
+      : gridCols === "4"
+        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        : gridCols === "5"
+          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+          : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
+  const gridGapClass =
+    gridGap === "tight" ? "gap-3 sm:gap-4 xl:gap-5" : gridGap === "relaxed" ? "gap-6 sm:gap-7 xl:gap-10" : "gap-4 sm:gap-6 xl:gap-8";
+
+  const filterPanelClass =
+    filterStyle === "soft"
+      ? "rounded-2xl border border-slate-100 bg-slate-50/80 p-4 space-y-4 overflow-hidden"
+      : "rounded-xl border border-slate-200 bg-white p-4 space-y-4 overflow-hidden";
+
+  const asidePositionClass =
+    sidebarPosition === "right"
+      ? "flex flex-col md:flex-row-reverse gap-6 md:gap-8 items-start overflow-x-hidden"
+      : "flex flex-col md:flex-row gap-6 md:gap-8 items-start overflow-x-hidden";
+
   return (
-    <section className="py-12 md:py-16 lg:py-20">
+    <section className={sectionPaddingClass} style={sectionBg ? { background: sectionBg } : undefined}>
       <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthClass}`}>
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
+        <div className={headerWrapClass}>
+          <div className={titleAlignClass}>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               {title}
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Browse products with clean filters and fast results.
-            </p>
+            {subtitle ? <p className="mt-2 text-sm text-slate-500">{subtitle}</p> : null}
           </div>
         </div>
 
@@ -325,14 +377,16 @@ export default async function ProductListV1({
         <div
           className={
             hasFilterSidebar
-              ? "flex flex-col md:flex-row gap-6 md:gap-8 items-start overflow-x-hidden"
+              ? asidePositionClass
               : "block"
           }
         >
           {hasFilterSidebar ? (
-            <aside className="min-w-0 w-full md:w-64 md:flex-none md:sticky md:top-6 md:self-start">
+            <aside
+              className={`min-w-0 w-full md:w-64 md:flex-none ${filterSticky ? "md:sticky md:top-6 md:self-start" : ""}`}
+            >
               <form
-                className="rounded-xl border border-slate-200 bg-white p-4 space-y-4 overflow-hidden"
+                className={filterPanelClass}
                 method="get"
               >
                 <div className="text-sm font-semibold text-slate-900">
@@ -557,7 +611,7 @@ export default async function ProductListV1({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6 xl:gap-8">
+              <div className={`${gridClass} ${gridGapClass}`}>
                 {products.map((product) => (
                   <ProductCardV1
                     key={product.id}

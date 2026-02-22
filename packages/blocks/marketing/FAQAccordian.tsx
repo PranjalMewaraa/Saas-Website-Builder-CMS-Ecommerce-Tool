@@ -22,7 +22,9 @@ export default function FAQAccordionV1(props: any) {
   const { title, subtitle, contentWidth, items = defaultItems } = props || {};
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

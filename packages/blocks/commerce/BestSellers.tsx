@@ -11,7 +11,9 @@ export default function BestSellersV1(props: any) {
   const { title, subtitle, contentWidth, products = defaults } = props || {};
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

@@ -19,7 +19,9 @@ export default function InteractiveTabsV1(props: any) {
   const current = list[Math.max(0, Math.min(active, list.length - 1))];
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

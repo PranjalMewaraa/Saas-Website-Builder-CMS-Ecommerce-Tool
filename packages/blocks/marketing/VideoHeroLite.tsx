@@ -14,7 +14,9 @@ export default function VideoHeroLiteV1(props: any) {
   } = props || {};
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

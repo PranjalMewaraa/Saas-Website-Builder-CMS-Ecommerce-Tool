@@ -20,7 +20,9 @@ export default function BeforeAfterSliderV1(props: any) {
   const [split, setSplit] = useState(50);
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

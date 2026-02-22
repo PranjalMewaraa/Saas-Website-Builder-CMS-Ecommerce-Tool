@@ -26,11 +26,20 @@ export const PricingTableV1Schema = z.object({
 
 export const ProductListV1Schema = z.object({
   title: z.string().optional(),
+  subtitle: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(48).default(12),
   contentWidth: z.string().optional(),
   showFilters: z.coerce.boolean().optional(),
   showSearch: z.coerce.boolean().optional(),
   detailPathPrefix: z.string().optional(),
+  titleAlign: z.enum(["left", "center"]).optional(),
+  sectionPadding: z.enum(["compact", "normal", "spacious"]).optional(),
+  sectionBg: z.string().optional(),
+  gridCols: z.enum(["2", "3", "4", "5"]).optional(),
+  gridGap: z.enum(["tight", "normal", "relaxed"]).optional(),
+  sidebarPosition: z.enum(["left", "right"]).optional(),
+  filterStyle: z.enum(["card", "soft"]).optional(),
+  filterSticky: z.coerce.boolean().optional(),
   cardVariant: z
     .enum([
       "default",

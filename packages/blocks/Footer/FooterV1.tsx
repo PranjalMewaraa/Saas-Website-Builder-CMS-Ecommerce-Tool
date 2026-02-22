@@ -167,7 +167,9 @@ export default function FooterV1({
     description || "Building better digital experiences since 2023.";
   const brandBadge = badgeText || "Designed for modern storefronts";
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

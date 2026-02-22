@@ -138,9 +138,9 @@ export default function ProductDetailClient({
   const rating = 4.8;
   const reviewCount = "1.2k";
   const stockLabel =
-    totalInventory <= 0
+    selectedInventory <= 0
       ? "Out of Stock"
-      : totalInventory <= 5
+      : selectedInventory <= 5
         ? "Low Stock"
         : "In Stock";
 
@@ -286,15 +286,15 @@ export default function ProductDetailClient({
               className="m-1 rounded-full px-2 py-0.5"
               style={{
                 backgroundColor:
-                  totalInventory <= 0
+                  selectedInventory <= 0
                     ? "#fee2e2"
-                    : totalInventory <= 5
+                    : selectedInventory <= 5
                       ? "#ffedd5"
                       : "#dcfce7",
                 color:
-                  totalInventory <= 0
+                  selectedInventory <= 0
                     ? "#b91c1c"
-                    : totalInventory <= 5
+                    : selectedInventory <= 5
                       ? "#c2410c"
                       : "#15803d",
               }}
@@ -400,10 +400,11 @@ export default function ProductDetailClient({
             <div className="col-span-10">
               <button
                 type="button"
-                className="w-full inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-black/90"
+                className="w-full inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+                disabled={selectedInventory <= 0}
                 onClick={() => setShowBuyDialog(true)}
               >
-                Buy Now
+                {selectedInventory <= 0 ? "Out of stock" : "Buy Now"}
               </button>
             </div>
 

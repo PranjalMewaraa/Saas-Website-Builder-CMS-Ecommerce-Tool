@@ -37,7 +37,9 @@ export default function TestimonialsV1({
   testimonials = defaultTestimonials,
 }: TestimonialsV1Props) {
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

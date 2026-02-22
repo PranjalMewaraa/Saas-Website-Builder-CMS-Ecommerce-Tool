@@ -6,7 +6,9 @@ export default function NewsletterSignupV1({
   contentWidth,
 }: any) {
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

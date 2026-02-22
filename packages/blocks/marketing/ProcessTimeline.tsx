@@ -13,7 +13,9 @@ export default function ProcessTimelineV1(props: any) {
   } = props || {};
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

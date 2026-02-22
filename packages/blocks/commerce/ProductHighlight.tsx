@@ -4,7 +4,9 @@ export default function ProductHighlightV1(props: any) {
   const { title, description, image, ctaText, ctaHref, price, contentWidth } =
     props;
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

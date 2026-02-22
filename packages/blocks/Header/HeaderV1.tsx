@@ -92,7 +92,9 @@ export default function HeaderV1({
   const navItems = items.length ? items : __editor ? placeholderItems : [];
 
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"

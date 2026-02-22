@@ -3,7 +3,7 @@ import { getOrderByNumber } from "@acme/db-mongo";
 type Props = {
   tenantId: string;
   siteId: string;
-  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+  contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full" | "auto";
   orderPathPrefix?: string;
   path?: string;
 };
@@ -76,6 +76,7 @@ export default async function OrderDetailV1({
       xl: "max-w-7xl",
       "2xl": "max-w-screen-2xl",
       full: "max-w-full",
+      auto: "",
     }[contentWidth] || "max-w-6xl";
 
   return (

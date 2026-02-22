@@ -50,7 +50,9 @@ export default function FeaturesGridV1({
   contentWidth,
 }: FeaturesGridV1Props) {
   const maxWidth =
-    contentWidth === "sm"
+    contentWidth === "auto"
+      ? ""
+      : contentWidth === "sm"
       ? "640px"
       : contentWidth === "md"
         ? "768px"
