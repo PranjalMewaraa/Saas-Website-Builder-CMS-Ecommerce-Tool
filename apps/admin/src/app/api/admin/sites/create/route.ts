@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       forms: true,
       assets: true,
       custom_entities: true,
+      ai_site_builder: true,
     },
     published_snapshot_id: null,
     created_at: new Date(),

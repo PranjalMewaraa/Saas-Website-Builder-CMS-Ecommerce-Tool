@@ -17,6 +17,36 @@ export type RenderContext = {
   mode?: "builder" | "preview" | "published";
 };
 
+type ThemeDefaults = {
+  surface: string;
+  surfaceAlt: string;
+  text: string;
+  textMuted: string;
+  primary: string;
+  onPrimary: string;
+  accent: string;
+  border: string;
+  cardBg: string;
+};
+
+function resolveThemeDefaults(snapshot: any): ThemeDefaults {
+  const t = (snapshot?.theme?.tokens || {}) as Record<string, string>;
+  const p = (snapshot?.theme?.palette || {}) as Record<string, string>;
+  const primary = t["--color-primary"] || p.primary || "#111827";
+  const onPrimary = t["--color-on-primary"] || "#ffffff";
+  return {
+    surface: t["--color-bg"] || p.surface || "#ffffff",
+    surfaceAlt: t["--color-surface"] || p.surface_alt || "#f8fafc",
+    text: t["--color-text"] || p.text || "#0f172a",
+    textMuted: t["--color-muted"] || "#64748b",
+    primary,
+    onPrimary,
+    accent: t["--color-accent"] || p.accent || "#2563eb",
+    border: t["--color-border"] || p.border || "#e5e7eb",
+    cardBg: t["--color-card-bg"] || p.card_bg || "#ffffff",
+  };
+}
+
 function safeProps(schema: any, props: any) {
   // IMPORTANT: do NOT apply defaults during render
   const parsed = schema.partial().safeParse(props ?? {});
@@ -168,6 +198,7 @@ async function BlockRenderer({
   ctx: RenderContext;
   previewQuery?: string;
 }) {
+  const themeDefaults = resolveThemeDefaults(ctx.snapshot);
   const DEFAULT_IMAGE =
     "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
   if (block.type === "Layout/Section") {
@@ -183,6 +214,7 @@ async function BlockRenderer({
           handle={ctx.snapshot.handle}
           previewToken={ctx.snapshot.previewToken}
           mode={ctx.mode || "published"}
+          themeDefaults={themeDefaults}
         />
       </div>
     );
@@ -191,6 +223,15 @@ async function BlockRenderer({
   const def = getBlock(block.type);
 
   let styleSource = block.style;
+  if (!styleSource?.presetId) {
+    styleSource = {
+      ...(styleSource || {}),
+      overrides: {
+        ...(styleSource?.overrides || {}),
+        textColor: styleSource?.overrides?.textColor || themeDefaults.text,
+      },
+    };
+  }
   if (
     block.type === "Footer/V1" &&
     (!styleSource?.presetId &&

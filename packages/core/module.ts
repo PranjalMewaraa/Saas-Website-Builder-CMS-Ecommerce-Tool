@@ -7,7 +7,8 @@ export type ModuleKey =
   | "assets"
   | "custom_entities"
   | "checkout"
-  | "promotions";
+  | "promotions"
+  | "ai_site_builder";
 
 export type ModuleDef = {
   key: ModuleKey;
@@ -80,5 +81,12 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleDef> = {
     dependencies: ["checkout", "catalog"],
     conflicts: [],
     defaultEnabled: false,
+  },
+  ai_site_builder: {
+    key: "ai_site_builder",
+    label: "AI Site Builder",
+    dependencies: ["builder"],
+    conflicts: [],
+    defaultEnabled: true,
   },
 };

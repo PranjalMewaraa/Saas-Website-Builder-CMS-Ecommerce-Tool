@@ -103,6 +103,7 @@ export async function createSite(args: {
       forms: true,
       assets: true,
       custom_entities: true,
+      ai_site_builder: true,
     },
     site_seo: null,
     published_snapshot_id: null,

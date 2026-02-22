@@ -36,6 +36,7 @@ export async function PUT(req: Request) {
 
   function canDisable(k: ModuleKey) {
     const def = MODULE_REGISTRY[k];
+    if (k === "ai_site_builder") return true;
     return !def.defaultEnabled;
   }
 

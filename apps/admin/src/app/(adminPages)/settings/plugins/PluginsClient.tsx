@@ -11,7 +11,8 @@ type ModuleKey =
   | "assets"
   | "custom_entities"
   | "checkout"
-  | "promotions";
+  | "promotions"
+  | "ai_site_builder";
 import {
   ShoppingBag,
   LayoutDashboard,
@@ -22,6 +23,7 @@ import {
   Code2,
   CreditCard,
   BadgePercent,
+  Sparkles,
 } from "lucide-react";
 import { useUI } from "@/app/_components/ui/UiProvider";
 
@@ -102,6 +104,13 @@ export default function PluginsClient() {
           label: "Promotions",
           defaultEnabled: false,
           dependencies: ["checkout", "catalog"],
+          conflicts: [],
+        },
+        {
+          key: "ai_site_builder",
+          label: "AI Site Builder",
+          defaultEnabled: true,
+          dependencies: ["builder"],
           conflicts: [],
         },
       ] as const,
@@ -194,6 +203,10 @@ export default function PluginsClient() {
       icon: BadgePercent,
       desc: "Discounts, coupons, and promotions.",
     },
+    ai_site_builder: {
+      icon: Sparkles,
+      desc: "AI-assisted site generation and blueprint workflows.",
+    },
   };
 
   return (
@@ -208,8 +221,11 @@ export default function PluginsClient() {
 
       <div className="grid md:grid-cols-2 gap-4">
         {modules.map((m) => {
-          const isEnabled = enabledMap[m.key] === true;
-          const isCore = m.defaultEnabled === true;
+          const isEnabled =
+            enabledMap[m.key] === undefined
+              ? m.defaultEnabled
+              : enabledMap[m.key] === true;
+          const isCore = m.defaultEnabled === true && m.key !== "ai_site_builder";
           const isLocked = isCore;
           return (
             <div

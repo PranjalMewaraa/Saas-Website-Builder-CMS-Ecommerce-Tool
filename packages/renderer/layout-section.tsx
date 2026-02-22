@@ -62,6 +62,18 @@ type LayoutSectionProps = {
   rows?: LayoutRow[];
 };
 
+type ThemeDefaults = {
+  surface: string;
+  surfaceAlt: string;
+  text: string;
+  textMuted: string;
+  primary: string;
+  onPrimary: string;
+  accent: string;
+  border: string;
+  cardBg: string;
+};
+
 const DEFAULT_IMAGE =
   "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
 
@@ -165,8 +177,12 @@ function renderAtomicBlock(
   handle?: string,
   previewToken?: string,
   mode?: "published" | "preview" | "builder",
+  themeDefaults?: ThemeDefaults,
 ) {
-  const style = resolveLayoutStyle(block.style);
+  const style = {
+    color: themeDefaults?.text,
+    ...resolveLayoutStyle(block.style),
+  } as React.CSSProperties;
   const type = block.type;
   const props = block.props || {};
 
@@ -265,7 +281,15 @@ function renderAtomicBlock(
   if (type === "Atomic/Button") {
     const href = props.href || "#";
     return (
-      <a href={href} target={props.target || "_self"} style={style}>
+      <a
+        href={href}
+        target={props.target || "_self"}
+        style={{
+          ...style,
+          background: style.background || themeDefaults?.primary,
+          color: style.color || themeDefaults?.onPrimary || "#fff",
+        }}
+      >
         {props.label || "Button"}
       </a>
     );
@@ -302,7 +326,7 @@ function renderAtomicBlock(
           ...style,
           width: orientation === "horizontal" ? length : thickness,
           height: orientation === "horizontal" ? thickness : length,
-          backgroundColor: props.color || "#e5e7eb",
+          backgroundColor: props.color || themeDefaults?.border || "#e5e7eb",
           borderRadius: 999,
         }}
       />
@@ -335,8 +359,9 @@ function renderAtomicBlock(
           borderRadius: 999,
           fontSize: "12px",
           fontWeight: 600,
-          backgroundColor: "rgba(15,23,42,0.08)",
-          color: "rgba(15,23,42,0.9)",
+          backgroundColor:
+            (style.background as string) || themeDefaults?.accent || "rgba(15,23,42,0.08)",
+          color: (style.color as string) || themeDefaults?.text || "rgba(15,23,42,0.9)",
         }}
       >
         {props.text || "Badge"}
@@ -378,10 +403,10 @@ function renderAtomicBlock(
       <div
         style={{
           ...style,
-          border: "1px solid rgba(15,23,42,0.12)",
+          border: `1px solid ${themeDefaults?.border || "rgba(15,23,42,0.12)"}`,
           borderRadius: 16,
           padding: 16,
-          background: "#fff",
+          background: themeDefaults?.cardBg || "#fff",
         }}
       >
         {props.imageUrl ? (
@@ -394,7 +419,7 @@ function renderAtomicBlock(
         <div style={{ fontWeight: 600, marginBottom: 6 }}>
           {props.title || "Card title"}
         </div>
-        <div style={{ fontSize: 14, color: "rgba(15,23,42,0.7)" }}>
+        <div style={{ fontSize: 14, color: themeDefaults?.textMuted || "rgba(15,23,42,0.7)" }}>
           {props.body || "Card description goes here."}
         </div>
         {props.buttonText ? (
@@ -405,8 +430,8 @@ function renderAtomicBlock(
               marginTop: 12,
               padding: "6px 12px",
               borderRadius: 999,
-              background: "#0f172a",
-              color: "#fff",
+              background: themeDefaults?.primary || "#0f172a",
+              color: themeDefaults?.onPrimary || "#fff",
               fontSize: 12,
             }}
           >
@@ -425,11 +450,11 @@ function renderAtomicBlock(
           <details
             key={idx}
             style={{
-              border: "1px solid rgba(15,23,42,0.12)",
+              border: `1px solid ${themeDefaults?.border || "rgba(15,23,42,0.12)"}`,
               borderRadius: 12,
               padding: "10px 12px",
               marginBottom: 8,
-              background: "#fff",
+              background: themeDefaults?.cardBg || "#fff",
             }}
           >
             <summary style={{ cursor: "pointer", fontWeight: 600 }}>
@@ -439,7 +464,7 @@ function renderAtomicBlock(
               style={{
                 marginTop: 8,
                 fontSize: 14,
-                color: "rgba(15,23,42,0.7)",
+                color: themeDefaults?.textMuted || "rgba(15,23,42,0.7)",
               }}
             >
               {item.content}
@@ -524,7 +549,7 @@ function renderAtomicBlock(
     return (
       <div style={{ ...style }}>
         {props.label ? (
-          <div style={{ fontSize: 12, color: "rgba(15,23,42,0.6)" }}>
+          <div style={{ fontSize: 12, color: themeDefaults?.textMuted || "rgba(15,23,42,0.6)" }}>
             {props.label}
           </div>
         ) : null}
@@ -613,7 +638,17 @@ function renderAtomicBlock(
         >
           {renderVideoLayer(innerVideo)}
           <div style={{ position: "relative", zIndex: 2 }}>
-            {renderRows(props.rows || [], assets)}
+            {renderRows(
+              props.rows || [],
+              assets,
+              menus,
+              previewQuery,
+              forms,
+              handle,
+              previewToken,
+              mode,
+              themeDefaults,
+            )}
           </div>
         </div>
       </div>
@@ -643,6 +678,7 @@ function renderRows(
   handle?: string,
   previewToken?: string,
   mode?: "published" | "preview" | "builder",
+  themeDefaults?: ThemeDefaults,
 ) {
   return rows.map((row) => {
     const rowPreset =
@@ -651,7 +687,10 @@ function renderRows(
         : undefined;
 
     const rowLayoutStyle = resolveRowLayoutStyle(row.layout, rowPreset);
-    const rowStyle = resolveLayoutStyle(row.style);
+    const rowStyle = {
+      color: themeDefaults?.text,
+      ...resolveLayoutStyle(row.style),
+    } as React.CSSProperties;
     const rowVideo = getBackgroundVideo(row.style);
 
     return (
@@ -673,7 +712,10 @@ function renderRows(
           }}
         >
         {(row.cols || []).map((col) => {
-          const colStyle = resolveLayoutStyle(col.style);
+          const colStyle = {
+            color: themeDefaults?.text,
+            ...resolveLayoutStyle(col.style),
+          } as React.CSSProperties;
           const colFlex = resolveColFlexStyle(col.style);
           const colVideo = getBackgroundVideo(col.style);
           return (
@@ -698,6 +740,7 @@ function renderRows(
                     handle,
                     previewToken,
                     mode,
+                    themeDefaults,
                   )}
                 </div>
               ))}
@@ -720,6 +763,7 @@ export function LayoutSectionRenderer({
   handle,
   previewToken,
   mode,
+  themeDefaults,
 }: {
   blockId?: string;
   props: LayoutSectionProps;
@@ -730,8 +774,13 @@ export function LayoutSectionRenderer({
   handle?: string;
   previewToken?: string;
   mode?: "published" | "preview" | "builder";
+  themeDefaults?: ThemeDefaults;
 }) {
-  const sectionStyle = resolveLayoutStyle(props.style);
+  const sectionStyle = {
+    background: themeDefaults?.surface,
+    color: themeDefaults?.text,
+    ...resolveLayoutStyle(props.style),
+  } as React.CSSProperties;
   const video = getBackgroundVideo(props.style);
 
   return (
@@ -780,6 +829,7 @@ export function LayoutSectionRenderer({
           handle,
           previewToken,
           mode,
+          themeDefaults,
         )}
       </div>
     </section>
