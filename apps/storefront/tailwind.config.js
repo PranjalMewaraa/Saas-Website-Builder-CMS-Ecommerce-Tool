@@ -123,6 +123,12 @@ module.exports = {
       "col-span-2",
       "md:col-span-4",
       "opacity-70",
+      "bg-orange-100",
+      "text-orange-700",
+      "bg-red-100",
+      "text-red-700",
+      "bg-emerald-100",
+      "text-emerald-700",
     ],
     {
       pattern:

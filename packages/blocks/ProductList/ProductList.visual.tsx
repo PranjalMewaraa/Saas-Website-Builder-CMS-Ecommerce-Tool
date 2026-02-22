@@ -16,7 +16,10 @@ const mockProducts = Array.from({ length: 8 }).map((_, i) => ({
   attributes: [],
 }));
 
-export default function ProductListVisualStub({ title = "Products" }: any) {
+export default function ProductListVisualStub({
+  title = "Products",
+  cardVariant = "default",
+}: any) {
   return (
     <section className="py-8">
       <div className="mx-auto px-4 max-w-7xl">
@@ -28,7 +31,12 @@ export default function ProductListVisualStub({ title = "Products" }: any) {
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {mockProducts.map((p) => (
-            <ProductCardV1 key={p.id} product={p} detailPathPrefix="/products" />
+            <ProductCardV1
+              key={p.id}
+              product={p}
+              detailPathPrefix="/products"
+              variant={cardVariant}
+            />
           ))}
         </div>
       </div>

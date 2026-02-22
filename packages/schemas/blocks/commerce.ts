@@ -31,6 +31,19 @@ export const ProductListV1Schema = z.object({
   showFilters: z.coerce.boolean().optional(),
   showSearch: z.coerce.boolean().optional(),
   detailPathPrefix: z.string().optional(),
+  cardVariant: z
+    .enum([
+      "default",
+      "minimal",
+      "compact",
+      "bordered",
+      "horizontal",
+      "editorial",
+      "elevated",
+      "glass",
+      "dark",
+    ])
+    .optional(),
 });
 
 export const ProductDetailV1Schema = z.object({
@@ -38,6 +51,19 @@ export const ProductDetailV1Schema = z.object({
   showRelated: z.coerce.boolean().optional(),
   relatedLimit: z.coerce.number().int().min(0).max(12).default(4),
   detailPathPrefix: z.string().optional(),
+  relatedCardVariant: z
+    .enum([
+      "default",
+      "minimal",
+      "compact",
+      "bordered",
+      "horizontal",
+      "editorial",
+      "elevated",
+      "glass",
+      "dark",
+    ])
+    .optional(),
 });
 
 export const CartPageV1Schema = z.object({
@@ -62,6 +88,20 @@ export const AddToCartV1Schema = z.object({
   priceCents: z.coerce.number().int().optional(),
   image: z.string().optional(),
   buttonText: z.string().optional(),
+  variant: z
+    .enum(["default", "outline", "minimal", "split", "card", "sticky"])
+    .optional(),
+  size: z.enum(["sm", "md", "lg"]).optional(),
+  badgeText: z.string().optional(),
+  noteText: z.string().optional(),
+  showTitle: z.coerce.boolean().optional(),
+  showPrice: z.coerce.boolean().optional(),
+  showImage: z.coerce.boolean().optional(),
+  accentColor: z.string().optional(),
+  textColor: z.string().optional(),
+  surfaceColor: z.string().optional(),
+  radius: z.coerce.number().int().min(0).max(32).optional(),
+  fullWidth: z.coerce.boolean().optional(),
   quantity: z.coerce.number().int().min(1).optional(),
 });
 

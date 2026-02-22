@@ -9,6 +9,16 @@ type Props = {
   showRelated?: boolean;
   relatedLimit?: number;
   detailPathPrefix?: string;
+  relatedCardVariant?:
+    | "default"
+    | "minimal"
+    | "compact"
+    | "bordered"
+    | "horizontal"
+    | "editorial"
+    | "elevated"
+    | "glass"
+    | "dark";
   path?: string;
   search?: string;
 };
@@ -33,6 +43,7 @@ export default async function ProductDetailV1({
   showRelated = true,
   relatedLimit = 4,
   detailPathPrefix = "/products",
+  relatedCardVariant = "default",
   path: propPath,
 }: Props) {
   const basePath = clampBasePath(detailPathPrefix);
@@ -114,6 +125,7 @@ export default async function ProductDetailV1({
                   key={p.id}
                   product={p as any}
                   detailPathPrefix={basePath || "/products"}
+                  variant={relatedCardVariant}
                 />
               ))}
             </div>

@@ -88,6 +88,7 @@ const DUMMY_PRODUCTS = [
 export default function ProductGridVisualStub(props: any) {
   const count = props.limit || 6;
   const detailPathPrefix = props.detailPathPrefix || "/products";
+  const cardVariant = props.cardVariant || "default";
   const products = DUMMY_PRODUCTS.slice(0, count);
 
   return (
@@ -98,6 +99,7 @@ export default function ProductGridVisualStub(props: any) {
           product={product}
           detailPathPrefix={detailPathPrefix}
           clickable={false}
+          variant={cardVariant}
         />
       ))}
     </div>

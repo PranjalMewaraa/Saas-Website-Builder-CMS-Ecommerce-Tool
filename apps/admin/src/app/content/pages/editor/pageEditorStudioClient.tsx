@@ -1020,6 +1020,7 @@ function defaultPropsFor(type: string) {
       title: "Featured Products",
       limit: 8,
       detailPathPrefix: "/products",
+      cardVariant: "default",
     };
   if (type === "ProductList/V1")
     return {
@@ -1028,12 +1029,14 @@ function defaultPropsFor(type: string) {
       showFilters: true,
       showSearch: true,
       detailPathPrefix: "/products",
+      cardVariant: "default",
     };
   if (type === "ProductDetail/V1")
     return {
       showRelated: true,
       relatedLimit: 4,
       detailPathPrefix: "/products",
+      relatedCardVariant: "default",
     };
   if (type === "CartPage/V1")
     return {
@@ -1058,6 +1061,18 @@ function defaultPropsFor(type: string) {
       priceCents: 12900,
       image: "",
       buttonText: "Add to cart",
+      variant: "default",
+      size: "md",
+      showTitle: false,
+      showPrice: false,
+      showImage: false,
+      fullWidth: true,
+      badgeText: "",
+      noteText: "",
+      accentColor: "",
+      textColor: "",
+      surfaceColor: "",
+      radius: 10,
       quantity: 1,
     };
   if (type === "Form/V1")

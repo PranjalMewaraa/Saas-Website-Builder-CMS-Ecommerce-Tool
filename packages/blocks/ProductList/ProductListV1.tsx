@@ -16,6 +16,16 @@ type Props = {
   showFilters?: boolean;
   showSearch?: boolean;
   detailPathPrefix?: string;
+  cardVariant?:
+    | "default"
+    | "minimal"
+    | "compact"
+    | "bordered"
+    | "horizontal"
+    | "editorial"
+    | "elevated"
+    | "glass"
+    | "dark";
   path?: string;
   search?: string;
 };
@@ -188,6 +198,7 @@ export default async function ProductListV1({
   showFilters = true,
   showSearch = true,
   detailPathPrefix = "/products",
+  cardVariant = "default",
   search,
 }: Props) {
   const sp = readSearchParams(search);
@@ -552,6 +563,7 @@ export default async function ProductListV1({
                     key={product.id}
                     product={product}
                     detailPathPrefix={basePath || "/products"}
+                    variant={cardVariant}
                   />
                 ))}
               </div>

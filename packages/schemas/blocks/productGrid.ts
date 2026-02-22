@@ -5,4 +5,17 @@ export const ProductGridV1Schema = z.object({
   limit: z.coerce.number().int().min(1).max(24).default(8),
   contentWidth: z.string().optional(),
   detailPathPrefix: z.string().optional(),
+  cardVariant: z
+    .enum([
+      "default",
+      "minimal",
+      "compact",
+      "bordered",
+      "horizontal",
+      "editorial",
+      "elevated",
+      "glass",
+      "dark",
+    ])
+    .optional(),
 });

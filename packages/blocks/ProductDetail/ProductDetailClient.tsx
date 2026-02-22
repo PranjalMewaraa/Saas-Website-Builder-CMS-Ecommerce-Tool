@@ -138,9 +138,9 @@ export default function ProductDetailClient({
   const rating = 4.8;
   const reviewCount = "1.2k";
   const stockLabel =
-    selectedInventory <= 0
+    totalInventory <= 0
       ? "Out of Stock"
-      : selectedInventory <= 5
+      : totalInventory <= 5
         ? "Low Stock"
         : "In Stock";
 
@@ -283,9 +283,21 @@ export default function ProductDetailClient({
             <span>({reviewCount} Reviews)</span>
             <span className="mx-1 text-slate-300">|</span>
             <span
-              className={
-                selectedInventory <= 0 ? "text-red-600" : "text-slate-600"
-              }
+              className="m-1 rounded-full px-2 py-0.5"
+              style={{
+                backgroundColor:
+                  totalInventory <= 0
+                    ? "#fee2e2"
+                    : totalInventory <= 5
+                      ? "#ffedd5"
+                      : "#dcfce7",
+                color:
+                  totalInventory <= 0
+                    ? "#b91c1c"
+                    : totalInventory <= 5
+                      ? "#c2410c"
+                      : "#15803d",
+              }}
             >
               {stockLabel}
             </span>

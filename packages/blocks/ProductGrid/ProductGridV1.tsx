@@ -11,6 +11,16 @@ type Props = {
   limit?: number;
   contentWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
   detailPathPrefix?: string;
+  cardVariant?:
+    | "default"
+    | "minimal"
+    | "compact"
+    | "bordered"
+    | "horizontal"
+    | "editorial"
+    | "elevated"
+    | "glass"
+    | "dark";
 };
 
 export default async function ProductGridV1({
@@ -20,6 +30,7 @@ export default async function ProductGridV1({
   limit = 8,
   contentWidth = "xl",
   detailPathPrefix = "/products",
+  cardVariant = "default",
 }: Props) {
   const products = await listPublishedProductsForStore({
     tenant_id: tenantId,
@@ -80,6 +91,7 @@ export default async function ProductGridV1({
                 product={product}
                 key={product.id}
                 detailPathPrefix={detailPathPrefix}
+                variant={cardVariant}
               />
             ))}
           </div>

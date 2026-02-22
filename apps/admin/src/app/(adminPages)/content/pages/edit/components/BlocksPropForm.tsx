@@ -1091,6 +1091,22 @@ export function BlockPropsForm({
           onChange={(v: any) => setProp("detailPathPrefix", v)}
           placeholder="/products"
         />
+        <Select
+          label="Card Variant"
+          value={props.cardVariant || "default"}
+          onChange={(v: any) => setProp("cardVariant", v)}
+          options={[
+            "default",
+            "minimal",
+            "compact",
+            "bordered",
+            "horizontal",
+            "editorial",
+            "elevated",
+            "glass",
+            "dark",
+          ]}
+        />
         <label className="inline-flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -1125,6 +1141,22 @@ export function BlockPropsForm({
           value={props.detailPathPrefix || "/products"}
           onChange={(v: any) => setProp("detailPathPrefix", v)}
           placeholder="/products"
+        />
+        <Select
+          label="Related Card Variant"
+          value={props.relatedCardVariant || "default"}
+          onChange={(v: any) => setProp("relatedCardVariant", v)}
+          options={[
+            "default",
+            "minimal",
+            "compact",
+            "bordered",
+            "horizontal",
+            "editorial",
+            "elevated",
+            "glass",
+            "dark",
+          ]}
         />
         <label className="inline-flex items-center gap-2 text-sm">
           <input
@@ -1224,8 +1256,132 @@ export function BlockPropsForm({
   }
 
   if (type === "AddToCart/V1") {
+    const presets = [
+      {
+        id: "default",
+        label: "Default",
+        data: {
+          variant: "default",
+          size: "md",
+          showTitle: false,
+          showPrice: false,
+          showImage: false,
+          fullWidth: true,
+          buttonText: "Add to cart",
+          badgeText: "",
+          noteText: "",
+        },
+      },
+      {
+        id: "outline",
+        label: "Outline",
+        data: {
+          variant: "outline",
+          size: "md",
+          showTitle: false,
+          showPrice: false,
+          showImage: false,
+          fullWidth: true,
+          buttonText: "Add to bag",
+          badgeText: "Secure checkout",
+          noteText: "",
+        },
+      },
+      {
+        id: "minimal",
+        label: "Minimal",
+        data: {
+          variant: "minimal",
+          size: "sm",
+          showTitle: false,
+          showPrice: false,
+          showImage: false,
+          fullWidth: false,
+          buttonText: "Quick add",
+          badgeText: "",
+          noteText: "Fast one-click add",
+        },
+      },
+      {
+        id: "split",
+        label: "Split",
+        data: {
+          variant: "split",
+          size: "md",
+          showTitle: true,
+          showPrice: true,
+          showImage: false,
+          fullWidth: true,
+          buttonText: "Add",
+          badgeText: "",
+          noteText: "",
+        },
+      },
+      {
+        id: "card",
+        label: "Card",
+        data: {
+          variant: "card",
+          size: "md",
+          showTitle: true,
+          showPrice: true,
+          showImage: true,
+          fullWidth: true,
+          buttonText: "Buy now",
+          badgeText: "Best choice",
+          noteText: "Free shipping on eligible orders",
+        },
+      },
+      {
+        id: "sticky",
+        label: "Sticky Bar",
+        data: {
+          variant: "sticky",
+          size: "md",
+          showTitle: true,
+          showPrice: true,
+          showImage: false,
+          fullWidth: true,
+          buttonText: "Add to cart",
+          badgeText: "",
+          noteText: "",
+        },
+      },
+    ];
     return (
       <div className="space-y-3">
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Variant Presets</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left text-xs hover:bg-muted"
+                onClick={() => {
+                  Object.entries(p.data).forEach(([k, v]) => setProp(k, v as any));
+                }}
+              >
+                <div className="h-8 rounded bg-slate-100 mb-1" />
+                <div className="font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            label="variant"
+            value={props.variant || "default"}
+            onChange={(v: any) => setProp("variant", v)}
+            options={["default", "outline", "minimal", "split", "card", "sticky"]}
+          />
+          <Select
+            label="size"
+            value={props.size || "md"}
+            onChange={(v: any) => setProp("size", v)}
+            options={["sm", "md", "lg"]}
+          />
+        </div>
         <Field
           label="productId"
           value={props.productId || ""}
@@ -1260,6 +1416,63 @@ export function BlockPropsForm({
             label="quantity"
             value={Number(props.quantity || 1)}
             onChange={(v: any) => setProp("quantity", Number(v))}
+          />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <Select
+            label="showTitle"
+            value={props.showTitle === false ? "no" : "yes"}
+            onChange={(v: any) => setProp("showTitle", v === "yes")}
+            options={["yes", "no"]}
+          />
+          <Select
+            label="showPrice"
+            value={props.showPrice === false ? "no" : "yes"}
+            onChange={(v: any) => setProp("showPrice", v === "yes")}
+            options={["yes", "no"]}
+          />
+          <Select
+            label="showImage"
+            value={props.showImage ? "yes" : "no"}
+            onChange={(v: any) => setProp("showImage", v === "yes")}
+            options={["yes", "no"]}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="badgeText"
+            value={props.badgeText || ""}
+            onChange={(v: any) => setProp("badgeText", v)}
+          />
+          <Field
+            label="noteText"
+            value={props.noteText || ""}
+            onChange={(v: any) => setProp("noteText", v)}
+          />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <Field
+            label="accentColor"
+            value={props.accentColor || ""}
+            onChange={(v: any) => setProp("accentColor", v)}
+            placeholder="#111827"
+          />
+          <Field
+            label="textColor"
+            value={props.textColor || ""}
+            onChange={(v: any) => setProp("textColor", v)}
+            placeholder="#ffffff"
+          />
+          <Field
+            label="surfaceColor"
+            value={props.surfaceColor || ""}
+            onChange={(v: any) => setProp("surfaceColor", v)}
+            placeholder="#ffffff"
+          />
+          <NumberField
+            label="radius"
+            value={Number(props.radius ?? 10)}
+            onChange={(v: any) => setProp("radius", Math.max(0, Number(v || 0)))}
           />
         </div>
       </div>
@@ -1839,6 +2052,22 @@ export function BlockPropsForm({
           value={props.detailPathPrefix || "/products"}
           onChange={(v: any) => setProp("detailPathPrefix", v)}
           placeholder="/products"
+        />
+        <Select
+          label="Card Variant"
+          value={props.cardVariant || "default"}
+          onChange={(v: any) => setProp("cardVariant", v)}
+          options={[
+            "default",
+            "minimal",
+            "compact",
+            "bordered",
+            "horizontal",
+            "editorial",
+            "elevated",
+            "glass",
+            "dark",
+          ]}
         />
       </div>
     );
@@ -5786,6 +6015,7 @@ function defaultPropsFor(type: string) {
       title: "Featured Products",
       limit: 8,
       detailPathPrefix: "/products",
+      cardVariant: "default",
     };
   if (type === "ProductList/V1")
     return {
@@ -5794,12 +6024,14 @@ function defaultPropsFor(type: string) {
       showFilters: true,
       showSearch: true,
       detailPathPrefix: "/products",
+      cardVariant: "default",
     };
   if (type === "ProductDetail/V1")
     return {
       showRelated: true,
       relatedLimit: 4,
       detailPathPrefix: "/products",
+      relatedCardVariant: "default",
     };
   if (type === "CartPage/V1")
     return {
@@ -5824,6 +6056,18 @@ function defaultPropsFor(type: string) {
       priceCents: 12900,
       image: "",
       buttonText: "Add to cart",
+      variant: "default",
+      size: "md",
+      showTitle: false,
+      showPrice: false,
+      showImage: false,
+      fullWidth: true,
+      badgeText: "",
+      noteText: "",
+      accentColor: "",
+      textColor: "",
+      surfaceColor: "",
+      radius: 10,
       quantity: 1,
     };
   if (type === "Form/V1")
