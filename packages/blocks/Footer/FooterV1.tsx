@@ -52,7 +52,7 @@ type Props = {
   menuGroups?: FooterMenuGroup[];
   __editor?: boolean;
   previewQuery?: string;
-  footerTemplate?: 1 | 2 | 3;
+  footerTemplate?: 1 | 2 | 3 | 4;
 };
 
 export default function FooterV1({
@@ -209,13 +209,167 @@ export default function FooterV1({
   panelStyle.borderRadius = `${panelRadius ?? 24}px`;
   if (panelTextColor) panelStyle.color = panelTextColor;
 
+  const template = Number(footerTemplate || 1) as 1 | 2 | 3 | 4;
+
   return (
     <footer className="w-full">
       <div
         className="mx-auto w-full p-6"
         style={maxWidth ? { maxWidth } : undefined}
       >
-        {layout === "simple" ? (
+        {template === 2 ? (
+          <div className="px-6 py-12 md:px-10" style={panelStyle}>
+            <div className="text-center max-w-3xl mx-auto">
+              {logoUrl ? (
+                <Link
+                  href={appendPreviewQuery("/", previewQuery)}
+                  className="inline-flex items-center justify-center mb-4"
+                >
+                  <Image
+                    src={logoUrl}
+                    alt={logoAlt || "Logo"}
+                    width={180}
+                    height={56}
+                    className="h-9 w-auto"
+                  />
+                </Link>
+              ) : (
+                <div className="text-xl font-semibold mb-3">YourBrand</div>
+              )}
+              <p className="text-sm leading-6 opacity-80">{brandDescription}</p>
+              {brandBadge ? <div className="mt-5">{renderBadge(brandBadge, badgeStyle)}</div> : null}
+            </div>
+            {columns.length ? (
+              <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4">
+                {columns.map((group, idx) => (
+                  <div key={`col-t2-${idx}`} className="text-center">
+                    <h3
+                      className="mb-4 text-xs uppercase tracking-[0.2em] opacity-80"
+                      style={resolveTextStyle(group.textStyle)}
+                    >
+                      {group.title || "Links"}
+                    </h3>
+                    <ul
+                      className="space-y-3"
+                      style={resolveTextListStyle(group.textSize, group.textStyle)}
+                    >
+                      {group.items.map((n) => (
+                        <li key={n.id}>
+                          <Link
+                            href={appendPreviewQuery(
+                              n.ref?.slug || n.ref?.href || "#",
+                              previewQuery,
+                            )}
+                            className="transition-opacity hover:opacity-100 opacity-80"
+                          >
+                            {n.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : template === 3 ? (
+          <div className="px-6 py-12 md:px-10" style={panelStyle}>
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-12">
+              <div>
+                {logoUrl ? (
+                  <Link
+                    href={appendPreviewQuery("/", previewQuery)}
+                    className="inline-flex items-center mb-4"
+                  >
+                    <Image
+                      src={logoUrl}
+                      alt={logoAlt || "Logo"}
+                      width={180}
+                      height={56}
+                      className="h-9 w-auto"
+                    />
+                  </Link>
+                ) : (
+                  <div className="text-2xl font-semibold mb-3">YourBrand</div>
+                )}
+                <p className="text-sm leading-7 opacity-85 max-w-xl">
+                  {brandDescription}
+                </p>
+                {brandBadge ? <div className="mt-6">{renderBadge(brandBadge, badgeStyle)}</div> : null}
+              </div>
+              <div className="grid grid-cols-2 gap-8">
+                {columns.slice(0, 4).map((group, idx) => (
+                  <div key={`col-t3-${idx}`}>
+                    <h3
+                      className="mb-4 text-xs uppercase tracking-[0.2em] opacity-80"
+                      style={resolveTextStyle(group.textStyle)}
+                    >
+                      {group.title || "Links"}
+                    </h3>
+                    <ul
+                      className="space-y-3"
+                      style={resolveTextListStyle(group.textSize, group.textStyle)}
+                    >
+                      {group.items.map((n) => (
+                        <li key={n.id}>
+                          <Link
+                            href={appendPreviewQuery(
+                              n.ref?.slug || n.ref?.href || "#",
+                              previewQuery,
+                            )}
+                            className="transition-opacity hover:opacity-100 opacity-80"
+                          >
+                            {n.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : template === 4 ? (
+          <div className="px-6 py-10 md:px-10" style={panelStyle}>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:items-center">
+              <div className="md:col-span-1">
+                {logoUrl ? (
+                  <Link
+                    href={appendPreviewQuery("/", previewQuery)}
+                    className="inline-flex items-center mb-3"
+                  >
+                    <Image
+                      src={logoUrl}
+                      alt={logoAlt || "Logo"}
+                      width={170}
+                      height={52}
+                      className="h-8 w-auto"
+                    />
+                  </Link>
+                ) : (
+                  <div className="text-lg font-semibold mb-2">YourBrand</div>
+                )}
+                <p className="text-sm opacity-80">{brandDescription}</p>
+              </div>
+              <div className="md:col-span-2">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                  {columns.flatMap((g) => g.items).slice(0, 12).map((n) => (
+                    <Link
+                      key={`flat-${n.id}`}
+                      href={appendPreviewQuery(
+                        n.ref?.slug || n.ref?.href || "#",
+                        previewQuery,
+                      )}
+                      className="transition-opacity hover:opacity-100 opacity-80"
+                    >
+                      {n.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : layout === "simple" ? (
           <div className="px-6 py-10 md:px-10" style={panelStyle}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="space-y-3">

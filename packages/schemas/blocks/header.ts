@@ -3,7 +3,14 @@ import { z } from "zod";
 export const HeaderV1Schema = z.object({
   menuId: z.string().min(1),
   layout: z
-    .enum(["three-col", "two-col", "two-col-nav-cta"])
+    .enum([
+      "three-col",
+      "two-col",
+      "two-col-nav-cta",
+      "centered-nav",
+      "split-nav",
+      "logo-cta",
+    ])
     .optional()
     .default("three-col"),
   ctaText: z.string().min(1).max(50).optional(),

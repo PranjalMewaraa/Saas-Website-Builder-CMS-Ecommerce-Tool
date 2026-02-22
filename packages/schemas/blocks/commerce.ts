@@ -64,3 +64,49 @@ export const AddToCartV1Schema = z.object({
   buttonText: z.string().optional(),
   quantity: z.coerce.number().int().min(1).optional(),
 });
+
+export const CategoryGridV1Schema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  contentWidth: z.string().optional(),
+  categories: z
+    .array(
+      z.object({
+        title: z.string(),
+        href: z.string().optional(),
+        image: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const BrandGridV1Schema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  contentWidth: z.string().optional(),
+  brands: z
+    .array(
+      z.object({
+        name: z.string(),
+        href: z.string().optional(),
+        logo: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const BestSellersV1Schema = z.object({
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  contentWidth: z.string().optional(),
+  products: z
+    .array(
+      z.object({
+        title: z.string(),
+        price: z.string(),
+        href: z.string().optional(),
+        image: z.string().optional(),
+      }),
+    )
+    .optional(),
+});

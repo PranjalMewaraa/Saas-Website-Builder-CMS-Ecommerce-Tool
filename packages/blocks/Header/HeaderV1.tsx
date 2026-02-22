@@ -16,7 +16,13 @@ type Menu = {
 type Props = {
   menu: Menu | null;
   siteName?: string;
-  layout?: "three-col" | "two-col" | "two-col-nav-cta";
+  layout?:
+    | "three-col"
+    | "two-col"
+    | "two-col-nav-cta"
+    | "centered-nav"
+    | "split-nav"
+    | "logo-cta";
   ctaText?: string;
   ctaHref?: string;
   ctaIcon?: string;
@@ -179,11 +185,7 @@ export default function HeaderV1({
     <header className="w-full border-b border-black/10 bg-white/70 backdrop-blur">
       <div
         style={{ maxHeight: "4rem", maxWidth: maxWidth }}
-        className={`mx-auto px-4 py-3 ${
-          layout === "stacked"
-            ? "flex flex-col gap-3"
-            : "flex items-center justify-between gap-6"
-        }`}
+        className="mx-auto px-4 py-3 flex items-center justify-between gap-6"
       >
         {layout === "two-col" ? (
           <>
@@ -200,6 +202,54 @@ export default function HeaderV1({
               {navNode}
               {ctaNode}
             </div>
+          </>
+        ) : layout === "centered-nav" ? (
+          <>
+            <div className="w-40 flex items-center">{logoNode}</div>
+            <div className="flex-1 flex justify-center">{navNode}</div>
+            <div className="w-40 flex justify-end">{ctaNode}</div>
+          </>
+        ) : layout === "split-nav" ? (
+          <>
+            <div className="flex items-center gap-5">
+              {logoNode}
+              <nav className="hidden lg:flex items-center gap-6 overflow-x-auto">
+                {navItems.slice(0, Math.ceil(navItems.length / 2)).map((n) => (
+                  <Link
+                    key={n.id}
+                    href={appendPreviewQuery(
+                      n.ref?.slug || n.ref?.href || "#",
+                      previewQuery,
+                    )}
+                    className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
+                  >
+                    {n.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-6">
+              <nav className="hidden lg:flex items-center gap-6 overflow-x-auto">
+                {navItems.slice(Math.ceil(navItems.length / 2)).map((n) => (
+                  <Link
+                    key={n.id}
+                    href={appendPreviewQuery(
+                      n.ref?.slug || n.ref?.href || "#",
+                      previewQuery,
+                    )}
+                    className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
+                  >
+                    {n.label}
+                  </Link>
+                ))}
+              </nav>
+              {ctaNode}
+            </div>
+          </>
+        ) : layout === "logo-cta" ? (
+          <>
+            {logoNode}
+            {ctaNode}
           </>
         ) : (
           <>

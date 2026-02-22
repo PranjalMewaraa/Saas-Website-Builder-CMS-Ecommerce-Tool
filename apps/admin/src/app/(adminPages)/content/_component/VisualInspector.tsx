@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import StylePreviewCard from "./StylePreviewCard";
 import { BlockPropsForm } from "../pages/edit/components/BlocksPropForm";
@@ -399,7 +399,7 @@ export function VisualInspector({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">Block Properties</h3>
+        <h3 className="font-medium">Content & Structure</h3>
         {onDeleteBlock && (
           <button
             className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
@@ -428,7 +428,7 @@ export function VisualInspector({
       {/* -------- appearance -------- */}
 
       <div className="border-t pt-4 space-y-4">
-        <h3 className="font-medium">Appearance & Style</h3>
+        <h3 className="font-medium">Design & Styling</h3>
 
         <>
           <Section id="layout" title="Layout & Alignment">
@@ -565,6 +565,85 @@ export function VisualInspector({
             </div>
           </Section>
 
+          <Section id="typography" title="Typography">
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NumberField
+                  label="Font Size"
+                  value={overrides.fontSize ?? 16}
+                  onChange={(n: number) => setStyle("fontSize", n)}
+                />
+                <NumberField
+                  label="Font Weight"
+                  value={overrides.fontWeight ?? 400}
+                  onChange={(n: number) => setStyle("fontWeight", n)}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NumberField
+                  label="Line Height"
+                  value={overrides.lineHeight ?? 24}
+                  onChange={(n: number) => setStyle("lineHeight", n)}
+                />
+                <NumberField
+                  label="Letter Spacing"
+                  value={overrides.letterSpacing ?? 0}
+                  onChange={(n: number) => setStyle("letterSpacing", n)}
+                />
+              </div>
+              <Select
+                label="Text Transform"
+                value={overrides.textTransform ?? "none"}
+                onChange={(v: string) => setStyle("textTransform", v)}
+                options={["none", "uppercase", "lowercase", "capitalize"]}
+              />
+            </div>
+          </Section>
+
+          <Section id="color" title="Color & Border">
+            <div className="mt-3 space-y-3">
+              <ColorPickerInput
+                label="Text Color"
+                value={overrides.textColor ?? ""}
+                onChange={(v: string) => setStyle("textColor", v)}
+                placeholder="#111111"
+                palette={themePalette}
+              />
+              <Checkbox
+                label="Enable Border"
+                value={!!overrides.border?.enabled}
+                onChange={(v: boolean) => setStyle("border.enabled", v)}
+              />
+              <div className="grid grid-cols-1 gap-3">
+                <ColorPickerInput
+                  label="Border Color"
+                  value={overrides.border?.color ?? ""}
+                  onChange={(v: string) => setStyle("border.color", v)}
+                  placeholder="#e5e7eb"
+                  palette={themePalette}
+                />
+                <NumberField
+                  label="Border Width"
+                  value={overrides.border?.width ?? 1}
+                  onChange={(n: number) => setStyle("border.width", n)}
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <NumberField
+                  label="Border Radius"
+                  value={overrides.radius ?? 0}
+                  onChange={(n: number) => setStyle("radius", n)}
+                />
+                <Select
+                  label="Shadow"
+                  value={overrides.shadow ?? "none"}
+                  onChange={(v: string) => setStyle("shadow", v)}
+                  options={["none", "sm", "md", "lg"]}
+                />
+              </div>
+            </div>
+          </Section>
+
           <Section id="background" title="Background">
             <div className="mt-3 space-y-3">
               <Select
@@ -649,85 +728,6 @@ export function VisualInspector({
                   </div>
                 </div>
               )}
-            </div>
-          </Section>
-
-          <Section id="color" title="Color & Border">
-            <div className="mt-3 space-y-3">
-              <ColorPickerInput
-                label="Text Color"
-                value={overrides.textColor ?? ""}
-                onChange={(v: string) => setStyle("textColor", v)}
-                placeholder="#111111"
-                palette={themePalette}
-              />
-              <Checkbox
-                label="Enable Border"
-                value={!!overrides.border?.enabled}
-                onChange={(v: boolean) => setStyle("border.enabled", v)}
-              />
-              <div className="grid grid-cols-1 gap-3">
-                <ColorPickerInput
-                  label="Border Color"
-                  value={overrides.border?.color ?? ""}
-                  onChange={(v: string) => setStyle("border.color", v)}
-                  placeholder="#e5e7eb"
-                  palette={themePalette}
-                />
-                <NumberField
-                  label="Border Width"
-                  value={overrides.border?.width ?? 1}
-                  onChange={(n: number) => setStyle("border.width", n)}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                <NumberField
-                  label="Border Radius"
-                  value={overrides.radius ?? 0}
-                  onChange={(n: number) => setStyle("radius", n)}
-                />
-                <Select
-                  label="Shadow"
-                  value={overrides.shadow ?? "none"}
-                  onChange={(v: string) => setStyle("shadow", v)}
-                  options={["none", "sm", "md", "lg"]}
-                />
-              </div>
-            </div>
-          </Section>
-
-          <Section id="typography" title="Typography">
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <NumberField
-                  label="Font Size"
-                  value={overrides.fontSize ?? 16}
-                  onChange={(n: number) => setStyle("fontSize", n)}
-                />
-                <NumberField
-                  label="Font Weight"
-                  value={overrides.fontWeight ?? 400}
-                  onChange={(n: number) => setStyle("fontWeight", n)}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <NumberField
-                  label="Line Height"
-                  value={overrides.lineHeight ?? 24}
-                  onChange={(n: number) => setStyle("lineHeight", n)}
-                />
-                <NumberField
-                  label="Letter Spacing"
-                  value={overrides.letterSpacing ?? 0}
-                  onChange={(n: number) => setStyle("letterSpacing", n)}
-                />
-              </div>
-              <Select
-                label="Text Transform"
-                value={overrides.textTransform ?? "none"}
-                onChange={(v: string) => setStyle("textTransform", v)}
-                options={["none", "uppercase", "lowercase", "capitalize"]}
-              />
             </div>
           </Section>
         </>

@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const HeroSchema = z
   .object({
-    heroPreset: z.enum(["Basic", "Advanced"]).default("Basic"),
+    heroPreset: z
+      .enum(["Basic", "Advanced", "Split", "Centered", "Promo"])
+      .default("Basic"),
     variant: z.enum(["basic", "image", "video"]).default("basic"),
 
     headline: z.string().min(1).default("Headline"),
@@ -12,6 +14,24 @@ export const HeroSchema = z
     ctaHref: z.string().optional().default("/products"),
     secondaryCtaText: z.string().optional().default(""),
     secondaryCtaHref: z.string().optional().default(""),
+    splitPanelTitle: z.string().optional(),
+    splitHighlights: z.array(z.string()).optional(),
+    splitPanelCtaText: z.string().optional(),
+    splitPanelCtaHref: z.string().optional(),
+    centeredBadgeText: z.string().optional(),
+    centeredTrustLine: z.string().optional(),
+    centeredStats: z
+      .array(
+        z.object({
+          value: z.string().optional(),
+          label: z.string().optional(),
+        }),
+      )
+      .optional(),
+    promoBadgeText: z.string().optional(),
+    promoCode: z.string().optional(),
+    promoNote: z.string().optional(),
+    promoBullets: z.array(z.string()).optional(),
 
     align: z.enum(["left", "center", "right"]).default("left"),
     contentWidth: z.enum(["sm", "md", "lg", "xl"]).default("xl"),

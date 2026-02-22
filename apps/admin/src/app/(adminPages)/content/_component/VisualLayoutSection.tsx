@@ -532,83 +532,108 @@ export default function VisualLayoutSection({
       type: "Atomic/Text",
       title: "Text",
       description: "Headings, paragraphs, rich text",
+      group: "Content",
     },
     {
       type: "Atomic/Image",
       title: "Image",
       description: "Responsive image block",
+      group: "Media",
     },
     {
       type: "Atomic/Video",
       title: "Video",
       description: "Embed or upload video",
+      group: "Media",
     },
     {
       type: "Atomic/Button",
       title: "Button",
       description: "Primary and secondary CTAs",
+      group: "Actions",
     },
     {
       type: "Atomic/Icon",
       title: "Icon",
       description: "Emoji or symbol icon",
+      group: "Content",
     },
     {
       type: "Atomic/Divider",
       title: "Divider",
       description: "Line separator",
+      group: "Layout Helpers",
     },
     {
       type: "Atomic/Spacer",
       title: "Spacer",
       description: "Adjustable empty space",
+      group: "Layout Helpers",
     },
     {
       type: "Atomic/Badge",
       title: "Badge",
       description: "Small label pill",
+      group: "Content",
     },
     {
       type: "Atomic/List",
       title: "List",
       description: "Bulleted or numbered list",
+      group: "Content",
     },
     {
       type: "Atomic/Card",
       title: "Card",
       description: "Container with image and text",
+      group: "Commerce & Marketing",
     },
     {
       type: "Atomic/Accordion",
       title: "Accordion",
       description: "FAQ style items",
+      group: "Commerce & Marketing",
     },
     {
       type: "Atomic/Menu",
       title: "Menu",
       description: "Links from a menu",
+      group: "Navigation & Data",
     },
     {
       type: "Atomic/Countdown",
       title: "Countdown",
       description: "Promo/event timer",
+      group: "Commerce & Marketing",
     },
     {
       type: "Atomic/Embed",
       title: "Embed",
       description: "Iframe or HTML embed",
+      group: "Advanced",
     },
     {
       type: "Atomic/Form",
       title: "Form",
       description: "Embed a saved form",
+      group: "Navigation & Data",
     },
     {
       type: "Atomic/Group",
       title: "Group",
       description: "Nested layout inside a column",
+      group: "Layout Helpers",
     },
   ];
+  const atomicGroups = atomicOptions.reduce(
+    (acc: Record<string, typeof atomicOptions>, item) => {
+      const key = item.group || "Other";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    },
+    {},
+  );
   const props: LayoutSectionProps =
     block.props && block.props.rows ? block.props : { style: {}, rows: [] };
   const rows = props.rows || [];
@@ -1679,42 +1704,51 @@ export default function VisualLayoutSection({
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {atomicOptions.map((opt) => (
-                <button
-                  key={opt.type}
-                  type="button"
-                  className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-left hover:border-gray-300 hover:bg-gray-50"
-                  onClick={() => {
-                    if (addAtomicDialog.groupId) {
-                      groupAddAtomic(
-                        addAtomicDialog.groupId,
-                        addAtomicDialog.rowId,
-                        addAtomicDialog.colId,
-                        opt.type,
-                      );
-                    } else {
-                      addAtomic(
-                        addAtomicDialog.rowId,
-                        addAtomicDialog.colId,
-                        opt.type,
-                      );
-                    }
-                    setAddAtomicDialog(null);
-                  }}
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600">
-                    {opt.title.slice(0, 1)}
+            <div className="mt-4 space-y-4">
+              {Object.entries(atomicGroups).map(([groupTitle, items]) => (
+                <div key={groupTitle} className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {groupTitle}
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {opt.title}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {opt.description}
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {items.map((opt) => (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        className="flex items-start gap-3 rounded-xl border border-gray-200 p-3 text-left hover:border-gray-300 hover:bg-gray-50"
+                        onClick={() => {
+                          if (addAtomicDialog.groupId) {
+                            groupAddAtomic(
+                              addAtomicDialog.groupId,
+                              addAtomicDialog.rowId,
+                              addAtomicDialog.colId,
+                              opt.type,
+                            );
+                          } else {
+                            addAtomic(
+                              addAtomicDialog.rowId,
+                              addAtomicDialog.colId,
+                              opt.type,
+                            );
+                          }
+                          setAddAtomicDialog(null);
+                        }}
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xs font-semibold text-gray-600">
+                          {opt.title.slice(0, 1)}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {opt.title}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {opt.description}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>

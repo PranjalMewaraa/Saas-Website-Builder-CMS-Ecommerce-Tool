@@ -20,6 +20,22 @@ import {
   StatsCounterV1Schema,
   LogosCloudV1Schema,
   NewsletterSignupV1Schema,
+  FAQAccordionV1Schema,
+  BentoGridV1Schema,
+  BeforeAfterSliderV1Schema,
+  StickyPromoBarV1Schema,
+  TestimonialCarouselV1Schema,
+  ComparisonTableV1Schema,
+  MarqueeStripV1Schema,
+  SpotlightCardsV1Schema,
+  ProcessTimelineV1Schema,
+  MediaGalleryMasonryV1Schema,
+  VideoHeroLiteV1Schema,
+  KPIRibbonV1Schema,
+  InteractiveTabsV1Schema,
+  FloatingCTAV1Schema,
+  ContentSplitShowcaseV1Schema,
+  SocialProofTickerV1Schema,
 } from "../../schemas/blocks/marketing";
 import {
   HeaderV1Schema,
@@ -37,6 +53,9 @@ import {
   CartPageV1Schema,
   CartSummaryV1Schema,
   AddToCartV1Schema,
+  CategoryGridV1Schema,
+  BrandGridV1Schema,
+  BestSellersV1Schema,
 } from "../../schemas/blocks/commerce";
 import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
@@ -89,6 +108,25 @@ import PricingTableV1 from "../commerce/PricingTable";
 import LogosCloudV1 from "../marketing/LogosCloud";
 import NewsletterSignupV1 from "../marketing/Newsletter";
 import StatsCounterV1 from "../marketing/StatsCounter";
+import FAQAccordionV1 from "../marketing/FAQAccordian";
+import BentoGridV1 from "../marketing/BentoGrid";
+import BeforeAfterSliderV1 from "../marketing/BeforeAfterSlider";
+import StickyPromoBarV1 from "../marketing/StickyPromoBar";
+import TestimonialCarouselV1 from "../marketing/TestimonialCarousel";
+import ComparisonTableV1 from "../marketing/ComparisonTable";
+import MarqueeStripV1 from "../marketing/MarqueeStrip";
+import SpotlightCardsV1 from "../marketing/SpotlightCards";
+import ProcessTimelineV1 from "../marketing/ProcessTimeline";
+import MediaGalleryMasonryV1 from "../marketing/MediaGalleryMasonry";
+import VideoHeroLiteV1 from "../marketing/VideoHeroLite";
+import KPIRibbonV1 from "../marketing/KPIRibbon";
+import InteractiveTabsV1 from "../marketing/InteractiveTabs";
+import FloatingCTAV1 from "../marketing/FloatingCTA";
+import ContentSplitShowcaseV1 from "../marketing/ContentSplitShowcase";
+import SocialProofTickerV1 from "../marketing/SocialProofTicker";
+import CategoryGridV1 from "../commerce/CategoryGrid";
+import BrandGridV1 from "../commerce/BrandGrid";
+import BestSellersV1 from "../commerce/BestSellers";
 
 export const BLOCKS: Record<
   string,
@@ -248,6 +286,101 @@ export const BLOCKS: Record<
     type: "NewsletterSignup/V1",
     schema: NewsletterSignupV1Schema,
     render: NewsletterSignupV1,
+  },
+  "FAQAccordion/V1": {
+    type: "FAQAccordion/V1",
+    schema: FAQAccordionV1Schema,
+    render: FAQAccordionV1,
+  },
+  "CategoryGrid/V1": {
+    type: "CategoryGrid/V1",
+    schema: CategoryGridV1Schema,
+    render: CategoryGridV1,
+  },
+  "BrandGrid/V1": {
+    type: "BrandGrid/V1",
+    schema: BrandGridV1Schema,
+    render: BrandGridV1,
+  },
+  "BestSellers/V1": {
+    type: "BestSellers/V1",
+    schema: BestSellersV1Schema,
+    render: BestSellersV1,
+  },
+  "BentoGrid/V1": {
+    type: "BentoGrid/V1",
+    schema: BentoGridV1Schema,
+    render: BentoGridV1,
+  },
+  "BeforeAfterSlider/V1": {
+    type: "BeforeAfterSlider/V1",
+    schema: BeforeAfterSliderV1Schema,
+    render: BeforeAfterSliderV1,
+  },
+  "StickyPromoBar/V1": {
+    type: "StickyPromoBar/V1",
+    schema: StickyPromoBarV1Schema,
+    render: StickyPromoBarV1,
+  },
+  "TestimonialCarousel/V1": {
+    type: "TestimonialCarousel/V1",
+    schema: TestimonialCarouselV1Schema,
+    render: TestimonialCarouselV1,
+  },
+  "ComparisonTable/V1": {
+    type: "ComparisonTable/V1",
+    schema: ComparisonTableV1Schema,
+    render: ComparisonTableV1,
+  },
+  "MarqueeStrip/V1": {
+    type: "MarqueeStrip/V1",
+    schema: MarqueeStripV1Schema,
+    render: MarqueeStripV1,
+  },
+  "SpotlightCards/V1": {
+    type: "SpotlightCards/V1",
+    schema: SpotlightCardsV1Schema,
+    render: SpotlightCardsV1,
+  },
+  "ProcessTimeline/V1": {
+    type: "ProcessTimeline/V1",
+    schema: ProcessTimelineV1Schema,
+    render: ProcessTimelineV1,
+  },
+  "MediaGalleryMasonry/V1": {
+    type: "MediaGalleryMasonry/V1",
+    schema: MediaGalleryMasonryV1Schema,
+    render: MediaGalleryMasonryV1,
+  },
+  "VideoHeroLite/V1": {
+    type: "VideoHeroLite/V1",
+    schema: VideoHeroLiteV1Schema,
+    render: VideoHeroLiteV1,
+  },
+  "KPIRibbon/V1": {
+    type: "KPIRibbon/V1",
+    schema: KPIRibbonV1Schema,
+    render: KPIRibbonV1,
+  },
+  "InteractiveTabs/V1": {
+    type: "InteractiveTabs/V1",
+    schema: InteractiveTabsV1Schema,
+    render: InteractiveTabsV1,
+  },
+  "FloatingCTA/V1": {
+    type: "FloatingCTA/V1",
+    schema: FloatingCTAV1Schema,
+    render: FloatingCTAV1,
+  },
+  "ContentSplitShowcase/V1": {
+    type: "ContentSplitShowcase/V1",
+    schema: ContentSplitShowcaseV1Schema,
+    render: ContentSplitShowcaseV1,
+  },
+  "SocialProofTicker/V1": {
+    type: "SocialProofTicker/V1",
+    schema: SocialProofTickerV1Schema,
+    render: SocialProofTickerV1,
   },
 
   // ------------------------

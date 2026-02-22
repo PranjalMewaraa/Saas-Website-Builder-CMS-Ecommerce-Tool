@@ -42,4 +42,5 @@ export const FooterV1Schema = z.object({
   panelBorderWidth: z.number().optional(),
   panelRadius: z.number().optional(),
   panelTextColor: z.string().optional(),
+  footerTemplate: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });

@@ -744,49 +744,64 @@ function getBlockGroups(types: string[], searchText: string) {
     ? types.filter((t) => t.toLowerCase().includes(term))
     : types;
 
+  const inSet = (prefixes: string[]) =>
+    filtered.filter((t) => prefixes.some((p) => t.startsWith(p)));
+
   const groups = [
     {
-      title: "Layout",
-      items: filtered.filter((t) => t.startsWith("Layout/")),
+      title: "Layout & Structure",
+      items: inSet(["Layout/"]),
     },
     {
-      title: "Core",
-      items: filtered.filter(
-        (t) =>
-          t.startsWith("Header") ||
-          t.startsWith("Hero") ||
-          t.startsWith("Footer"),
-      ),
+      title: "Site Essentials",
+      items: inSet(["Header", "Hero", "Footer"]),
     },
     {
-      title: "Commerce",
-      items: filtered.filter(
-        (t) =>
-          t.startsWith("Product") ||
-          t.startsWith("Pricing") ||
-          t.startsWith("Cart") ||
-          t.startsWith("AddToCart"),
-      ),
+      title: "Catalog & Product Discovery",
+      items: inSet(["ProductGrid", "ProductList", "CategoryGrid", "BrandGrid", "BestSellers"]),
+    },
+    {
+      title: "Product Details & Checkout",
+      items: inSet(["ProductDetail", "AddToCart", "CartPage", "CartSummary"]),
     },
     {
       title: "Marketing",
-      items: filtered.filter(
-        (t) =>
-          t.startsWith("Banner") ||
-          t.startsWith("Features") ||
-          t.startsWith("Testimonials") ||
-          t.startsWith("Stats") ||
-          t.startsWith("Logos") ||
-          t.startsWith("Newsletter"),
-      ),
+      items: inSet([
+        "Banner",
+        "Features",
+        "Testimonials",
+        "TestimonialCarousel",
+        "Stats",
+        "Logos",
+        "Newsletter",
+        "FAQAccordion",
+        "BentoGrid",
+        "BeforeAfterSlider",
+        "StickyPromoBar",
+        "ComparisonTable",
+        "MarqueeStrip",
+        "SpotlightCards",
+        "ProcessTimeline",
+        "MediaGalleryMasonry",
+        "VideoHeroLite",
+        "KPIRibbon",
+        "InteractiveTabs",
+        "FloatingCTA",
+        "ContentSplitShowcase",
+        "SocialProofTicker",
+      ]),
     },
     {
-      title: "Utility",
-      items: filtered.filter((t) => t.startsWith("Utility/")),
+      title: "Pricing & Offers",
+      items: inSet(["PricingTable", "ProductHighlight"]),
     },
     {
       title: "Forms",
-      items: filtered.filter((t) => t.startsWith("Form/")),
+      items: inSet(["Form/"]),
+    },
+    {
+      title: "Utility",
+      items: inSet(["Utility/"]),
     },
   ];
 
@@ -823,6 +838,24 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("ProductGrid")) return "Products";
   if (type.startsWith("ProductList")) return "Product List";
   if (type.startsWith("ProductDetail")) return "Product Detail";
+  if (type.startsWith("CategoryGrid")) return "Categories";
+  if (type.startsWith("BrandGrid")) return "Brands";
+  if (type.startsWith("BestSellers")) return "Best Sellers";
+  if (type.startsWith("BentoGrid")) return "Bento";
+  if (type.startsWith("BeforeAfterSlider")) return "Before/After";
+  if (type.startsWith("StickyPromoBar")) return "Promo Bar";
+  if (type.startsWith("TestimonialCarousel")) return "Reviews";
+  if (type.startsWith("ComparisonTable")) return "Compare";
+  if (type.startsWith("MarqueeStrip")) return "Marquee";
+  if (type.startsWith("SpotlightCards")) return "Spotlight";
+  if (type.startsWith("ProcessTimeline")) return "Timeline";
+  if (type.startsWith("MediaGalleryMasonry")) return "Gallery";
+  if (type.startsWith("VideoHeroLite")) return "Video Hero";
+  if (type.startsWith("KPIRibbon")) return "KPI";
+  if (type.startsWith("InteractiveTabs")) return "Tabs";
+  if (type.startsWith("FloatingCTA")) return "Floating CTA";
+  if (type.startsWith("ContentSplitShowcase")) return "Split";
+  if (type.startsWith("SocialProofTicker")) return "Ticker";
   if (type.startsWith("CartPage")) return "Cart";
   if (type.startsWith("CartSummary")) return "Cart Summary";
   if (type.startsWith("AddToCart")) return "Add to Cart";
@@ -833,7 +866,9 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("Stats")) return "Stats";
   if (type.startsWith("Logos")) return "Logos";
   if (type.startsWith("Newsletter")) return "Newsletter";
+  if (type.startsWith("FAQAccordion")) return "FAQ";
   if (type.startsWith("Pricing")) return "Pricing";
+  if (type.startsWith("ProductHighlight")) return "Spotlight";
   if (type.startsWith("Layout/Section")) return "Section";
   if (type.startsWith("Utility/Spacer")) return "Spacer";
   if (type.startsWith("Utility/Divider")) return "Divider";
@@ -1073,6 +1108,216 @@ function defaultPropsFor(type: string) {
     return {
       title: "Your Title here",
       subtitle: "Subtitle Here",
+    };
+  if (type === "FAQAccordion/V1")
+    return {
+      title: "Frequently Asked Questions",
+      subtitle: "Everything customers ask before buying.",
+      items: [
+        {
+          question: "How long does shipping take?",
+          answer: "Delivery usually takes 3-7 business days.",
+        },
+        {
+          question: "Can I return an item?",
+          answer: "Yes, returns are supported within 7 days.",
+        },
+      ],
+    };
+  if (type === "CategoryGrid/V1")
+    return {
+      title: "Shop by Category",
+      subtitle: "Pick a category to explore products.",
+      categories: [
+        { title: "T-Shirts", href: "/products?category=t-shirts" },
+        { title: "Jeans", href: "/products?category=jeans" },
+        { title: "Footwear", href: "/products?category=footwear" },
+        { title: "Accessories", href: "/products?category=accessories" },
+      ],
+    };
+  if (type === "BrandGrid/V1")
+    return {
+      title: "Shop by Brand",
+      subtitle: "Browse your trusted brands.",
+      brands: [
+        { name: "Urban Co", href: "#" },
+        { name: "Nova Fit", href: "#" },
+        { name: "Northline", href: "#" },
+      ],
+    };
+  if (type === "BestSellers/V1")
+    return {
+      title: "Best Sellers",
+      subtitle: "Top products customers are buying right now.",
+      products: [
+        { title: "Premium Hoodie", price: "₹1,999", href: "#" },
+        { title: "Everyday Sneakers", price: "₹2,499", href: "#" },
+        { title: "Classic Denim", price: "₹1,799", href: "#" },
+      ],
+    };
+  if (type === "BentoGrid/V1")
+    return {
+      title: "Why customers choose us",
+      subtitle: "Designed for clarity, speed, and conversion.",
+      items: [
+        {
+          title: "Built for conversion",
+          description: "High-impact layout patterns optimized for ecommerce.",
+          badge: "Growth",
+          size: "lg",
+          href: "#",
+        },
+        {
+          title: "Fast checkout flow",
+          description: "Reduced friction from product page to order completion.",
+          badge: "Speed",
+          size: "sm",
+          href: "#",
+        },
+        {
+          title: "Content + commerce",
+          description: "Blend storytelling and catalog blocks in one page.",
+          badge: "Flexible",
+          size: "sm",
+          href: "#",
+        },
+      ],
+    };
+  if (type === "BeforeAfterSlider/V1")
+    return {
+      title: "See the transformation",
+      subtitle: "Drag the slider to compare before and after.",
+      beforeLabel: "Before",
+      afterLabel: "After",
+      height: 420,
+    };
+  if (type === "StickyPromoBar/V1")
+    return {
+      text: "Free shipping on orders above ₹999",
+      ctaText: "Shop Now",
+      ctaHref: "/products",
+      position: "top",
+    };
+  if (type === "TestimonialCarousel/V1")
+    return {
+      title: "Loved by growing brands",
+      subtitle: "Real stories from teams using this builder.",
+      autoplayMs: 5000,
+      testimonials: [
+        {
+          quote: "The builder helped us launch our store in days, not weeks.",
+          name: "Aarav Shah",
+          role: "Founder, Northline",
+          rating: 5,
+        },
+        {
+          quote: "Visual editing is clean and fast. We ship pages much quicker now.",
+          name: "Riya Mehta",
+          role: "Marketing Lead, Nova Fit",
+          rating: 5,
+        },
+      ],
+    };
+  if (type === "ComparisonTable/V1")
+    return {
+      title: "Compare plans",
+      subtitle: "Find the right plan for your stage of growth.",
+      columns: ["Starter", "Growth", "Scale"],
+      rows: [
+        { feature: "Monthly Projects", values: ["5", "25", "Unlimited"] },
+        { feature: "Team Members", values: ["1", "5", "Unlimited"] },
+        { feature: "Custom Domain", values: ["No", "Yes", "Yes"] },
+      ],
+    };
+  if (type === "MarqueeStrip/V1")
+    return {
+      items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
+      speedSec: 30,
+      pauseOnHover: true,
+    };
+  if (type === "SpotlightCards/V1")
+    return {
+      title: "Why Choose Us",
+      subtitle: "Everything built to improve conversion.",
+      cards: [
+        { title: "Fast Setup", description: "Go live quickly with visual blocks.", icon: "⚡", href: "#" },
+        { title: "Design Flexibility", description: "Customize every section deeply.", icon: "🎨", href: "#" },
+        { title: "Commerce Ready", description: "Catalog, cart, and checkout included.", icon: "🛒", href: "#" },
+      ],
+    };
+  if (type === "ProcessTimeline/V1")
+    return {
+      title: "How It Works",
+      subtitle: "A simple three-step process.",
+      steps: [
+        { title: "Create Site", description: "Setup your store and theme." },
+        { title: "Build Pages", description: "Compose sections and blocks." },
+        { title: "Launch", description: "Publish and track growth." },
+      ],
+    };
+  if (type === "MediaGalleryMasonry/V1")
+    return {
+      title: "Gallery",
+      subtitle: "Showcase your brand visuals.",
+      columns: 3,
+      items: [{}, {}, {}, {}, {}],
+    };
+  if (type === "VideoHeroLite/V1")
+    return {
+      title: "Build and launch faster",
+      subtitle: "Modern pages with visual control.",
+      ctaText: "Get Started",
+      ctaHref: "/",
+      minHeight: 520,
+      overlayOpacity: 0.45,
+      videoUrl: "",
+      posterUrl: "",
+    };
+  if (type === "KPIRibbon/V1")
+    return {
+      items: [
+        { value: "120K+", label: "Orders Processed", icon: "📦" },
+        { value: "99.9%", label: "Platform Uptime", icon: "⚡" },
+        { value: "4.8/5", label: "Customer Rating", icon: "⭐" },
+        { value: "24/7", label: "Support", icon: "💬" },
+      ],
+    };
+  if (type === "InteractiveTabs/V1")
+    return {
+      title: "Explore",
+      subtitle: "Keep content organized in tabs.",
+      tabs: [
+        { label: "Overview", title: "Overview", content: "Explain your core value." },
+        { label: "Features", title: "Features", content: "List key capabilities." },
+        { label: "Use Cases", title: "Use Cases", content: "Show who it is for." },
+      ],
+    };
+  if (type === "FloatingCTA/V1")
+    return {
+      text: "Need help choosing?",
+      buttonText: "Talk to us",
+      buttonHref: "/contact",
+      position: "bottom-right",
+    };
+  if (type === "ContentSplitShowcase/V1")
+    return {
+      title: "Build beautiful pages with confidence",
+      subtitle: "Combine storytelling and commerce in one clean layout.",
+      bullets: ["Visual editor", "Reusable blocks", "Store-ready flow"],
+      ctaText: "Get Started",
+      ctaHref: "/",
+      reverse: false,
+      mediaUrl: "",
+      mediaAlt: "",
+    };
+  if (type === "SocialProofTicker/V1")
+    return {
+      items: [
+        "A customer from Mumbai just purchased Premium Hoodie",
+        "45 people bought in the last 24 hours",
+        "Rated 4.8/5 by 1200+ customers",
+      ],
+      speedSec: 35,
     };
   if (type === "Layout/Section")
     return {

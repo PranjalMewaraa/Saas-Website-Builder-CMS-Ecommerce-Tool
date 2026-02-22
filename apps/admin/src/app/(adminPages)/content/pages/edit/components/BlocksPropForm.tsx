@@ -38,6 +38,39 @@ export function BlockPropsForm({
     value: f._id,
     label: f.name ? `${f.name} — ${f._id}` : f._id,
   }));
+  const applyPresetStylePack = (overrides: any) => {
+    if (replaceStyleOverrides) {
+      replaceStyleOverrides(overrides || {});
+      return;
+    }
+    if (setStyleOverrides) {
+      setStyleOverrides(overrides || {});
+    }
+  };
+  const canResetStyle =
+    typeof replaceStyleOverrides === "function" ||
+    typeof setStyleOverrides === "function";
+  const resetStyleOverrides = () => {
+    if (replaceStyleOverrides) {
+      replaceStyleOverrides({});
+      return;
+    }
+    if (setStyleOverrides) {
+      setStyleOverrides({});
+    }
+  };
+  const ResetStyleButton = () =>
+    canResetStyle ? (
+      <div className="flex justify-end">
+        <button
+          type="button"
+          className="text-xs border rounded px-2 py-1 hover:bg-muted"
+          onClick={resetStyleOverrides}
+        >
+          Reset to Block Default Style
+        </button>
+      </div>
+    ) : null;
 
   useEffect(() => {
     if (type === "Header/V1" && !props.menuId && assignedHeader?._id) {
@@ -63,113 +96,138 @@ export function BlockPropsForm({
   if (type === "Header/V1") {
     return (
       <div className="space-y-3">
-        {menus.length ? (
-          <label className="block space-y-1.5">
-            <div className="text-sm font-medium">Menu</div>
-            <select
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Structure</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Select
+              label="Layout"
+              value={props.layout || "three-col"}
+              onChange={(v: any) => setProp("layout", v)}
+              options={[
+                "three-col",
+                "two-col",
+                "two-col-nav-cta",
+                "centered-nav",
+                "split-nav",
+                "logo-cta",
+              ]}
+            />
+            <Select
+              label="Width"
+              value={props.contentWidth || "xl"}
+              onChange={(v: any) => setProp("contentWidth", v)}
+              options={["sm", "md", "lg", "xl", "2xl"]}
+            />
+          </div>
+          {menus.length ? (
+            <label className="block space-y-1.5">
+              <div className="text-sm font-medium">Menu</div>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={props.menuId || ""}
+                onChange={(e) => setProp("menuId", e.target.value)}
+              >
+                <option value="">(select a menu)</option>
+                {menus.map((m: any) => (
+                  <option key={m._id} value={m._id}>
+                    {m.name} — {m._id}
+                    {m.slot ? ` (slot: ${m.slot})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <Field
+              label="menuId"
               value={props.menuId || ""}
-              onChange={(e) => setProp("menuId", e.target.value)}
-            >
-              <option value="">(select a menu)</option>
-              {menus.map((m: any) => (
-                <option key={m._id} value={m._id}>
-                  {m.name} — {m._id}
-                  {m.slot ? ` (slot: ${m.slot})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
+              onChange={(v: any) => setProp("menuId", v)}
+              placeholder="menu_main"
+            />
+          )}
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Branding</div>
           <Field
-            label="menuId"
-            value={props.menuId || ""}
-            onChange={(v: any) => setProp("menuId", v)}
-            placeholder="menu_main"
-          />
-        )}
-        <Field
-          label="ctaText"
-          value={props.ctaText || ""}
-          onChange={(v: any) => setProp("ctaText", v)}
-          placeholder="Shop"
-        />
-        <Field
-          label="ctaHref"
-          value={props.ctaHref || ""}
-          onChange={(v: any) => setProp("ctaHref", v)}
-          placeholder="/products"
-        />
-        <IconPicker
-          label="ctaIcon"
-          value={props.ctaIcon || ""}
-          onChange={(v: any) => setProp("ctaIcon", v)}
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <Field
-            label="ctaSecondaryText"
-            value={props.ctaSecondaryText || ""}
-            onChange={(v: any) => setProp("ctaSecondaryText", v)}
-            placeholder="Learn more"
+            label="logoAssetId"
+            value={props.logoAssetId || ""}
+            onChange={(v: any) => setProp("logoAssetId", v)}
+            placeholder="logoAssetId"
           />
           <Field
-            label="ctaSecondaryHref"
-            value={props.ctaSecondaryHref || ""}
-            onChange={(v: any) => setProp("ctaSecondaryHref", v)}
-            placeholder="/about"
+            label="logoAlt"
+            value={props.logoAlt || ""}
+            onChange={(v: any) => setProp("logoAlt", v)}
+            placeholder="Logo alt text"
           />
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Primary Button</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Field
+              label="ctaText"
+              value={props.ctaText || ""}
+              onChange={(v: any) => setProp("ctaText", v)}
+              placeholder="Shop"
+            />
+            <Field
+              label="ctaHref"
+              value={props.ctaHref || ""}
+              onChange={(v: any) => setProp("ctaHref", v)}
+              placeholder="/products"
+            />
+          </div>
+          <IconPicker
+            label="ctaIcon"
+            value={props.ctaIcon || ""}
+            onChange={(v: any) => setProp("ctaIcon", v)}
+          />
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Secondary Button</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Field
+              label="ctaSecondaryText"
+              value={props.ctaSecondaryText || ""}
+              onChange={(v: any) => setProp("ctaSecondaryText", v)}
+              placeholder="Learn more"
+            />
+            <Field
+              label="ctaSecondaryHref"
+              value={props.ctaSecondaryHref || ""}
+              onChange={(v: any) => setProp("ctaSecondaryHref", v)}
+              placeholder="/about"
+            />
+          </div>
           <IconPicker
             label="ctaSecondaryIcon"
             value={props.ctaSecondaryIcon || ""}
             onChange={(v: any) => setProp("ctaSecondaryIcon", v)}
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <Field
-            label="ctaTertiaryText"
-            value={props.ctaTertiaryText || ""}
-            onChange={(v: any) => setProp("ctaTertiaryText", v)}
-            placeholder="Contact"
-          />
-          <Field
-            label="ctaTertiaryHref"
-            value={props.ctaTertiaryHref || ""}
-            onChange={(v: any) => setProp("ctaTertiaryHref", v)}
-            placeholder="/contact"
-          />
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Tertiary Button</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Field
+              label="ctaTertiaryText"
+              value={props.ctaTertiaryText || ""}
+              onChange={(v: any) => setProp("ctaTertiaryText", v)}
+              placeholder="Contact"
+            />
+            <Field
+              label="ctaTertiaryHref"
+              value={props.ctaTertiaryHref || ""}
+              onChange={(v: any) => setProp("ctaTertiaryHref", v)}
+              placeholder="/contact"
+            />
+          </div>
           <IconPicker
             label="ctaTertiaryIcon"
             value={props.ctaTertiaryIcon || ""}
             onChange={(v: any) => setProp("ctaTertiaryIcon", v)}
-          />
-        </div>
-        <Select
-          label="Layout"
-          value={props.layout || "three-col"}
-          onChange={(v: any) => setProp("layout", v)}
-          options={["three-col", "two-col", "two-col-nav-cta"]}
-        />
-        <Select
-          label="Width"
-          value={props.contentWidth || "xl"}
-          onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
-        />
-        <div className="border rounded p-3 space-y-3">
-          <div className="text-sm font-medium">Logo</div>
-          <div className="flex gap-2">
-            <input
-              className="border rounded p-2 w-full text-sm"
-              value={props.logoAssetId || ""}
-              onChange={(e) => setProp("logoAssetId", e.target.value)}
-              placeholder="logoAssetId"
-            />
-          </div>
-          <Field
-            label="logoAlt"
-            value={props.logoAlt || ""}
-            onChange={(v: any) => setProp("logoAlt", v)}
-            placeholder="Logo alt text"
           />
         </div>
       </div>
@@ -492,9 +550,121 @@ export function BlockPropsForm({
           textColor: "#cbd5f5",
         },
       },
+      {
+        id: "aurora-light",
+        label: "Aurora Light",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#f8fafc",
+              to: "#e0f2fe",
+              angle: 130,
+            },
+          },
+          panelBorderColor: "rgba(14,116,144,0.16)",
+          panelBorderWidth: 1,
+          panelRadius: 24,
+          panelTextColor: "#0f172a",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+        },
+      },
+      {
+        id: "charcoal-pro",
+        label: "Charcoal Pro",
+        props: {
+          layout: "multi-column",
+          panelBg: {
+            type: "solid",
+            color: "#111827",
+          },
+          panelBorderColor: "rgba(148,163,184,0.22)",
+          panelBorderWidth: 1,
+          panelRadius: 22,
+          panelTextColor: "#e5e7eb",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#020617" },
+          textColor: "#e5e7eb",
+        },
+      },
+      {
+        id: "minimal-paper",
+        label: "Minimal Paper",
+        props: {
+          layout: "simple",
+          panelBg: {
+            type: "solid",
+            color: "#ffffff",
+          },
+          panelBorderColor: "rgba(15,23,42,0.08)",
+          panelBorderWidth: 1,
+          panelRadius: 16,
+          panelTextColor: "#334155",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#334155",
+        },
+      },
+      {
+        id: "emerald-brand",
+        label: "Emerald Brand",
+        props: {
+          layout: "simple",
+          panelBg: {
+            type: "gradient",
+            gradient: {
+              from: "#047857",
+              to: "#022c22",
+              angle: 145,
+            },
+          },
+          panelBorderColor: "rgba(255,255,255,0.18)",
+          panelBorderWidth: 1,
+          panelRadius: 20,
+          panelTextColor: "#dcfce7",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#022c22" },
+          textColor: "#dcfce7",
+        },
+      },
     ];
     return (
       <div className="space-y-3">
+        <div className="border rounded-lg p-3 space-y-3">
+          <div className="text-sm font-medium">Structure</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Select
+              label="Layout"
+              value={props.layout || "multi-column"}
+              onChange={(v: any) => setProp("layout", v)}
+              options={["multi-column", "simple"]}
+            />
+            <Select
+              label="Template"
+              value={String(props.footerTemplate || 1)}
+              onChange={(v: any) => setProp("footerTemplate", Number(v))}
+              options={[
+                { label: "Classic", value: "1" },
+                { label: "Centered Columns", value: "2" },
+                { label: "Split Brand/Links", value: "3" },
+                { label: "Compact Row", value: "4" },
+              ]}
+            />
+            <Select
+              label="Width"
+              value={props.contentWidth || "xl"}
+              onChange={(v: any) => setProp("contentWidth", v)}
+              options={["sm", "md", "lg", "xl", "2xl"]}
+            />
+          </div>
+        </div>
         <div className="space-y-2 border rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="text-sm font-medium">Menu Sections</div>
@@ -666,18 +836,6 @@ export function BlockPropsForm({
             placeholder="menu_footer"
           />
         )}
-        <Select
-          label="Layout"
-          value={props.layout || "multi-column"}
-          onChange={(v: any) => setProp("layout", v)}
-          options={["multi-column", "simple"]}
-        />
-        <Select
-          label="Width"
-          value={props.contentWidth || "xl"}
-          onChange={(v: any) => setProp("contentWidth", v)}
-          options={["sm", "md", "lg", "xl", "2xl"]}
-        />
         <Field
           label="Description"
           value={props.description || ""}
@@ -731,18 +889,27 @@ export function BlockPropsForm({
                   "mono",
                   "ocean",
                   "forest",
+                  "charcoal-pro",
                 ].includes(p.id),
               ),
             },
             {
               title: "Light",
               items: footerPresets.filter((p) =>
-                ["soft-light", "sand", "blush"].includes(p.id),
+                [
+                  "soft-light",
+                  "sand",
+                  "blush",
+                  "aurora-light",
+                  "minimal-paper",
+                ].includes(p.id),
               ),
             },
             {
               title: "Colorful",
-              items: footerPresets.filter((p) => ["sunset"].includes(p.id)),
+              items: footerPresets.filter((p) =>
+                ["sunset", "emerald-brand"].includes(p.id),
+              ),
             },
           ].map((group) =>
             group.items.length ? (
@@ -1073,76 +1240,377 @@ export function BlockPropsForm({
 
   if (type === "Hero" || type === "Hero/V1") {
     const bg = props.bg || { type: "none" };
+    const heroPreset = props.heroPreset || "Basic";
+
+    const applyHeroPreset = (preset: "Basic" | "Split" | "Centered" | "Promo") => {
+      const base = {
+        ...props,
+        heroPreset: preset,
+        splitPanelTitle: "",
+        splitHighlights: [],
+        splitPanelCtaText: "",
+        splitPanelCtaHref: "",
+        centeredBadgeText: "",
+        centeredTrustLine: "",
+        centeredStats: [],
+        promoBadgeText: "",
+        promoCode: "",
+        promoNote: "",
+        promoBullets: [],
+      } as any;
+
+      if (preset === "Basic") {
+        Object.assign(base, {
+          variant: "basic",
+          headline: "Your next bestseller starts here",
+          subhead: "Clear value proposition and strong call to action.",
+          ctaText: "Shop Now",
+          ctaHref: "/products",
+          secondaryCtaText: "Learn More",
+          secondaryCtaHref: "/about",
+          align: "left",
+          minHeight: 560,
+          bg: { ...(bg || {}), type: "none", color: "#0f172a" },
+        });
+      }
+      if (preset === "Split") {
+        Object.assign(base, {
+          variant: "image",
+          headline: "Designed for high-conversion product storytelling",
+          subhead:
+            "Use split composition to explain value on left and highlights on right.",
+          ctaText: "Explore Collection",
+          ctaHref: "/products",
+          secondaryCtaText: "Compare Options",
+          secondaryCtaHref: "/products",
+          align: "left",
+          minHeight: 620,
+          splitPanelTitle: "Why it converts",
+          splitHighlights: [
+            "Feature-focused visual hierarchy",
+            "Fast checkout experience",
+            "Optimized for paid traffic",
+          ],
+          splitPanelCtaText: "See Demo",
+          splitPanelCtaHref: "/",
+          bg: { ...(bg || {}), type: "image", imageUrl: bg.imageUrl || DEFAULT_IMAGE, overlayOpacity: 0.42 },
+        });
+      }
+      if (preset === "Centered") {
+        Object.assign(base, {
+          variant: "basic",
+          headline: "Everything you need to launch and scale",
+          subhead: "A centered hero with trust layer and KPI chips.",
+          ctaText: "Get Started",
+          ctaHref: "/",
+          secondaryCtaText: "View Pricing",
+          secondaryCtaHref: "/pricing",
+          align: "center",
+          minHeight: 600,
+          centeredBadgeText: "No-code visual builder",
+          centeredTrustLine: "Trusted by fast-growing brands",
+          centeredStats: [
+            { value: "4.9/5", label: "Customer rating" },
+            { value: "120K+", label: "Orders processed" },
+            { value: "99.9%", label: "Uptime" },
+            { value: "24/7", label: "Support" },
+          ],
+          bg: { ...(bg || {}), type: "none", color: "#111827" },
+        });
+      }
+      if (preset === "Promo") {
+        Object.assign(base, {
+          variant: "image",
+          headline: "Big festive offer on selected products",
+          subhead: "Drive urgency with promo code, proof points, and CTA.",
+          ctaText: "Buy Now",
+          ctaHref: "/products",
+          secondaryCtaText: "See Deals",
+          secondaryCtaHref: "/offers",
+          align: "left",
+          minHeight: 620,
+          promoBadgeText: "Limited Time Offer",
+          promoCode: "SAVE20",
+          promoNote: "Valid on eligible products. Limited duration.",
+          promoBullets: ["Free shipping over Rs 999", "7-day returns", "COD available"],
+          bg: { ...(bg || {}), type: "image", imageUrl: bg.imageUrl || DEFAULT_IMAGE, overlayOpacity: 0.5 },
+        });
+      }
+
+      setVariant(base.variant || "basic");
+      if (setProps) setProps(base);
+      else Object.entries(base).forEach(([k, v]) => setProp(k, v));
+    };
 
     return (
       <div className="space-y-3">
-        <Select
-          label="Hero Preset"
-          value={props.heroPreset || "Basic"}
-          onChange={(v: any) => setProp("heroPreset", v)}
-          options={["Basic", "Advanced"]}
-        />
-        <Select
-          label="Variant"
-          value={variant}
-          onChange={(v: any) => {
-            setVariant(v);
-            setProp("variant", v);
-            // keep bg.type aligned with variant
-            if (v === "image") setPropPath("bg.type", "image");
-            else if (v === "video") setPropPath("bg.type", "video");
-            else setPropPath("bg.type", "none");
-          }}
-          options={["basic", "image", "video"]}
-        />
-
-        <Field
-          label="headline"
-          value={props.headline || ""}
-          onChange={(v: any) => setProp("headline", v)}
-          placeholder="Headline"
-        />
-        <Field
-          label="subhead"
-          value={props.subhead || ""}
-          onChange={(v: any) => setProp("subhead", v)}
-          placeholder="Subhead"
-        />
-
-        <div className="grid grid-cols-2 gap-2">
-          <Field
-            label="ctaText"
-            value={props.ctaText || ""}
-            onChange={(v: any) => setProp("ctaText", v)}
-            placeholder="Browse"
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Structure</div>
+          <Select
+            label="Hero Preset"
+            value={heroPreset}
+            onChange={(v: any) => setProp("heroPreset", v)}
+            options={["Basic", "Split", "Centered", "Promo", "Advanced"]}
           />
-          <Field
-            label="ctaHref"
-            value={props.ctaHref || ""}
-            onChange={(v: any) => setProp("ctaHref", v)}
-            placeholder="/products"
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(["Basic", "Split", "Centered", "Promo"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`border rounded px-2 py-1 text-xs ${
+                  heroPreset === p ? "bg-black text-white" : "hover:bg-muted"
+                }`}
+                onClick={() => applyHeroPreset(p)}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <Select
+            label="Background Mode"
+            value={variant}
+            onChange={(v: any) => {
+              setVariant(v);
+              setProp("variant", v);
+              if (v === "image") setPropPath("bg.type", "image");
+              else if (v === "video") setPropPath("bg.type", "video");
+              else setPropPath("bg.type", "none");
+            }}
+            options={["basic", "image", "video"]}
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <Select
-            label="Align"
-            value={props.align || "left"}
-            onChange={(v: any) => setProp("align", v)}
-            options={["left", "center", "right"]}
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Content</div>
+          <Field
+            label="headline"
+            value={props.headline || ""}
+            onChange={(v: any) => setProp("headline", v)}
+            placeholder="Headline"
           />
-          <Select
-            label="Width"
-            value={props.contentWidth || "xl"}
-            onChange={(v: any) => setProp("contentWidth", v)}
-            options={["sm", "md", "lg", "xl"]}
-          />
-          <NumberField
-            label="Min Height"
-            value={Number(props.minHeight ?? 520)}
-            onChange={(n: any) => setProp("minHeight", n)}
+          <Field
+            label="subhead"
+            value={props.subhead || ""}
+            onChange={(v: any) => setProp("subhead", v)}
+            placeholder="Subhead"
           />
         </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Actions</div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label="ctaText"
+              value={props.ctaText || ""}
+              onChange={(v: any) => setProp("ctaText", v)}
+              placeholder="Browse"
+            />
+            <Field
+              label="ctaHref"
+              value={props.ctaHref || ""}
+              onChange={(v: any) => setProp("ctaHref", v)}
+              placeholder="/products"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Field
+              label="secondaryCtaText"
+              value={props.secondaryCtaText || ""}
+              onChange={(v: any) => setProp("secondaryCtaText", v)}
+              placeholder="Learn more"
+            />
+            <Field
+              label="secondaryCtaHref"
+              value={props.secondaryCtaHref || ""}
+              onChange={(v: any) => setProp("secondaryCtaHref", v)}
+              placeholder="/about"
+            />
+          </div>
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Layout</div>
+          <div className="grid grid-cols-3 gap-2">
+            <Select
+              label="Align"
+              value={props.align || "left"}
+              onChange={(v: any) => setProp("align", v)}
+              options={["left", "center", "right"]}
+            />
+            <Select
+              label="Width"
+              value={props.contentWidth || "xl"}
+              onChange={(v: any) => setProp("contentWidth", v)}
+              options={["sm", "md", "lg", "xl"]}
+            />
+            <NumberField
+              label="Min Height"
+              value={Number(props.minHeight ?? 520)}
+              onChange={(n: any) => setProp("minHeight", n)}
+            />
+          </div>
+        </div>
+
+        {heroPreset === "Split" || heroPreset === "Advanced" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm font-medium">Split Panel Content</div>
+            <Field
+              label="Panel Title"
+              value={props.splitPanelTitle || ""}
+              onChange={(v: any) => setProp("splitPanelTitle", v)}
+            />
+            {(Array.isArray(props.splitHighlights) ? props.splitHighlights : []).map(
+              (item: string, i: number) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Field
+                    label={`Highlight ${i + 1}`}
+                    value={item || ""}
+                    onChange={(v: any) => setPropPath(`splitHighlights.${i}`, v)}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-red-500 border rounded px-2 py-1 mt-6"
+                    onClick={() =>
+                      setProp(
+                        "splitHighlights",
+                        (props.splitHighlights || []).filter((_: any, idx: number) => idx !== i),
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              ),
+            )}
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() =>
+                setProp("splitHighlights", [...(props.splitHighlights || []), "New highlight"])
+              }
+            >
+              + Add Highlight
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <Field
+                label="Panel CTA Text"
+                value={props.splitPanelCtaText || ""}
+                onChange={(v: any) => setProp("splitPanelCtaText", v)}
+              />
+              <Field
+                label="Panel CTA Link"
+                value={props.splitPanelCtaHref || ""}
+                onChange={(v: any) => setProp("splitPanelCtaHref", v)}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {heroPreset === "Centered" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm font-medium">Centered Trust Layer</div>
+            <Field
+              label="Badge Text"
+              value={props.centeredBadgeText || ""}
+              onChange={(v: any) => setProp("centeredBadgeText", v)}
+            />
+            <Field
+              label="Trust Line"
+              value={props.centeredTrustLine || ""}
+              onChange={(v: any) => setProp("centeredTrustLine", v)}
+            />
+            {(Array.isArray(props.centeredStats) ? props.centeredStats : []).map(
+              (s: any, i: number) => (
+                <div key={i} className="grid grid-cols-2 gap-2 border rounded p-2">
+                  <Field
+                    label="Value"
+                    value={s?.value || ""}
+                    onChange={(v: any) => setPropPath(`centeredStats.${i}.value`, v)}
+                  />
+                  <Field
+                    label="Label"
+                    value={s?.label || ""}
+                    onChange={(v: any) => setPropPath(`centeredStats.${i}.label`, v)}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-red-500 border rounded px-2 py-1 col-span-2"
+                    onClick={() =>
+                      setProp(
+                        "centeredStats",
+                        (props.centeredStats || []).filter((_: any, idx: number) => idx !== i),
+                      )
+                    }
+                  >
+                    Remove Stat
+                  </button>
+                </div>
+              ),
+            )}
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() =>
+                setProp("centeredStats", [...(props.centeredStats || []), { value: "", label: "" }])
+              }
+            >
+              + Add Stat
+            </button>
+          </div>
+        ) : null}
+
+        {heroPreset === "Promo" ? (
+          <div className="border rounded p-2 space-y-2">
+            <div className="text-sm font-medium">Promo Details</div>
+            <Field
+              label="Promo Badge"
+              value={props.promoBadgeText || ""}
+              onChange={(v: any) => setProp("promoBadgeText", v)}
+            />
+            <Field
+              label="Promo Code"
+              value={props.promoCode || ""}
+              onChange={(v: any) => setProp("promoCode", v)}
+            />
+            <Field
+              label="Promo Note"
+              value={props.promoNote || ""}
+              onChange={(v: any) => setProp("promoNote", v)}
+            />
+            {(Array.isArray(props.promoBullets) ? props.promoBullets : []).map(
+              (item: string, i: number) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Field
+                    label={`Bullet ${i + 1}`}
+                    value={item || ""}
+                    onChange={(v: any) => setPropPath(`promoBullets.${i}`, v)}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-red-500 border rounded px-2 py-1 mt-6"
+                    onClick={() =>
+                      setProp(
+                        "promoBullets",
+                        (props.promoBullets || []).filter((_: any, idx: number) => idx !== i),
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              ),
+            )}
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() =>
+                setProp("promoBullets", [...(props.promoBullets || []), "New promo bullet"])
+              }
+            >
+              + Add Bullet
+            </button>
+          </div>
+        ) : null}
 
         {/* Background controls */}
         {variant === "image" ? (
@@ -1697,6 +2165,1992 @@ export function BlockPropsForm({
     );
   }
 
+  if (type === "BentoGrid/V1") {
+    const items = props.items || [];
+
+    function addItem() {
+      setProp("items", [
+        ...items,
+        {
+          title: "New Card",
+          description: "",
+          badge: "",
+          href: "#",
+          size: "sm",
+        },
+      ]);
+    }
+
+    function removeItem(i: number) {
+      setProp(
+        "items",
+        items.filter((_: any, idx: number) => idx !== i),
+      );
+    }
+
+    function applyPreset(preset: string) {
+      const next = items.map((it: any, i: number) => {
+        let size = "sm";
+        if (preset === "feature-first") size = i === 0 ? "lg" : "sm";
+        else if (preset === "balanced") size = i % 3 === 0 ? "lg" : "sm";
+        return { ...it, size };
+      });
+      setProp("cardSizePreset", preset);
+      setProp("items", next);
+    }
+
+    return (
+      <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+
+        <div className="border rounded p-2 space-y-2">
+          <div className="text-xs opacity-60">Card Size Presets</div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() => applyPreset("balanced")}
+            >
+              Balanced
+            </button>
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() => applyPreset("feature-first")}
+            >
+              Feature First
+            </button>
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={() => applyPreset("compact")}
+            >
+              Compact
+            </button>
+          </div>
+        </div>
+
+        {items.map((it: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Card #{i + 1}</div>
+              <button
+                className="text-xs text-red-500"
+                onClick={() => removeItem(i)}
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="title"
+              value={it.title || ""}
+              onChange={(v: any) => setPropPath(`items.${i}.title`, v)}
+            />
+            <Field
+              label="description"
+              value={it.description || ""}
+              onChange={(v: any) => setPropPath(`items.${i}.description`, v)}
+            />
+            <Field
+              label="badge"
+              value={it.badge || ""}
+              onChange={(v: any) => setPropPath(`items.${i}.badge`, v)}
+            />
+            <Field
+              label="href"
+              value={it.href || ""}
+              onChange={(v: any) => setPropPath(`items.${i}.href`, v)}
+            />
+            <Select
+              label="size"
+              value={it.size || "sm"}
+              onChange={(v: any) => setPropPath(`items.${i}.size`, v)}
+              options={["sm", "lg"]}
+            />
+          </div>
+        ))}
+
+        <button
+          onClick={addItem}
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Card
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "BeforeAfterSlider/V1") {
+    return (
+      <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <Field
+          label="beforeImage"
+          value={props.beforeImage || ""}
+          onChange={(v: any) => setProp("beforeImage", v)}
+        />
+        <Field
+          label="afterImage"
+          value={props.afterImage || ""}
+          onChange={(v: any) => setProp("afterImage", v)}
+        />
+        <Field
+          label="beforeLabel"
+          value={props.beforeLabel || ""}
+          onChange={(v: any) => setProp("beforeLabel", v)}
+        />
+        <Field
+          label="afterLabel"
+          value={props.afterLabel || ""}
+          onChange={(v: any) => setProp("afterLabel", v)}
+        />
+        <NumberField
+          label="height"
+          value={Number(props.height ?? 420)}
+          onChange={(n: any) => setProp("height", n)}
+        />
+        <Select
+          label="Handle Style"
+          value={props.handleStyle || "line"}
+          onChange={(v: any) => setProp("handleStyle", v)}
+          options={[
+            { label: "Minimal Line", value: "line" },
+            { label: "Circle Knob", value: "circle" },
+            { label: "Pill Knob", value: "pill" },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (type === "StickyPromoBar/V1") {
+    return (
+      <div className="space-y-3">
+        <Field
+          label="text"
+          value={props.text || ""}
+          onChange={(v: any) => setProp("text", v)}
+        />
+        <Field
+          label="ctaText"
+          value={props.ctaText || ""}
+          onChange={(v: any) => setProp("ctaText", v)}
+        />
+        <Field
+          label="ctaHref"
+          value={props.ctaHref || ""}
+          onChange={(v: any) => setProp("ctaHref", v)}
+        />
+        <Select
+          label="position"
+          value={props.position || "top"}
+          onChange={(v: any) => setProp("position", v)}
+          options={["top", "bottom"]}
+        />
+        <Select
+          label="Theme"
+          value={props.theme || "dark"}
+          onChange={(v: any) => setProp("theme", v)}
+          options={[
+            { label: "Dark", value: "dark" },
+            { label: "Brand", value: "brand" },
+            { label: "Light", value: "light" },
+            { label: "Success", value: "success" },
+            { label: "Danger", value: "danger" },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (type === "TestimonialCarousel/V1") {
+    const testimonials = props.testimonials || [];
+    function addTestimonial() {
+      setProp("testimonials", [
+        ...testimonials,
+        { quote: "", name: "", role: "", rating: 5 },
+      ]);
+    }
+    function removeTestimonial(i: number) {
+      setProp(
+        "testimonials",
+        testimonials.filter((_: any, idx: number) => idx !== i),
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <NumberField
+          label="Autoplay (ms)"
+          value={Number(props.autoplayMs ?? 5000)}
+          onChange={(n: any) => setProp("autoplayMs", n)}
+        />
+        <Select
+          label="Transition"
+          value={props.transition || "fade"}
+          onChange={(v: any) => setProp("transition", v)}
+          options={[
+            { label: "Fade", value: "fade" },
+            { label: "Slide", value: "slide" },
+            { label: "None", value: "none" },
+          ]}
+        />
+
+        {testimonials.map((t: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Slide #{i + 1}</div>
+              <button
+                className="text-xs text-red-500"
+                onClick={() => removeTestimonial(i)}
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="quote"
+              value={t.quote || ""}
+              onChange={(v: any) => setPropPath(`testimonials.${i}.quote`, v)}
+            />
+            <Field
+              label="name"
+              value={t.name || ""}
+              onChange={(v: any) => setPropPath(`testimonials.${i}.name`, v)}
+            />
+            <Field
+              label="role"
+              value={t.role || ""}
+              onChange={(v: any) => setPropPath(`testimonials.${i}.role`, v)}
+            />
+            <NumberField
+              label="rating (1-5)"
+              value={Number(t.rating ?? 5)}
+              onChange={(n: any) =>
+                setPropPath(`testimonials.${i}.rating`, Math.max(1, Math.min(5, n)))
+              }
+            />
+          </div>
+        ))}
+        <button
+          onClick={addTestimonial}
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Slide
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "ComparisonTable/V1") {
+    const columns = Array.isArray(props.columns) ? props.columns : [];
+    const rows = Array.isArray(props.rows) ? props.rows : [];
+
+    function addColumn() {
+      const nextCols = [...columns, `Plan ${columns.length + 1}`];
+      setProp("columns", nextCols);
+      setProp(
+        "rows",
+        rows.map((r: any) => ({
+          ...r,
+          values: [...(Array.isArray(r.values) ? r.values : []), "-"],
+        })),
+      );
+    }
+    function removeColumn(i: number) {
+      const nextCols = columns.filter((_: any, idx: number) => idx !== i);
+      setProp("columns", nextCols);
+      setProp(
+        "rows",
+        rows.map((r: any) => ({
+          ...r,
+          values: (Array.isArray(r.values) ? r.values : []).filter(
+            (_: any, idx: number) => idx !== i,
+          ),
+        })),
+      );
+    }
+    function addRow() {
+      setProp("rows", [
+        ...rows,
+        {
+          feature: `Feature ${rows.length + 1}`,
+          values: columns.map(() => "-"),
+        },
+      ]);
+    }
+    function removeRow(i: number) {
+      setProp(
+        "rows",
+        rows.filter((_: any, idx: number) => idx !== i),
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <Select
+          label="Highlight Column"
+          value={String(props.highlightColumn ?? -1)}
+          onChange={(v: any) => setProp("highlightColumn", Number(v))}
+          options={[
+            { label: "None", value: "-1" },
+            ...columns.map((c: string, idx: number) => ({
+              label: `${idx + 1}. ${c}`,
+              value: String(idx),
+            })),
+          ]}
+        />
+
+        <div className="border rounded p-2 space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="text-xs opacity-60">Columns</div>
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={addColumn}
+            >
+              + Add Column
+            </button>
+          </div>
+          {columns.map((col: string, i: number) => (
+            <div key={i} className="flex items-center gap-2">
+              <Field
+                label={`Column ${i + 1}`}
+                value={col || ""}
+                onChange={(v: any) => setPropPath(`columns.${i}`, v)}
+              />
+              <button
+                type="button"
+                className="text-xs text-red-500 border rounded px-2 py-1"
+                onClick={() => removeColumn(i)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="border rounded p-2 space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="text-xs opacity-60">Rows</div>
+            <button
+              type="button"
+              className="border rounded px-2 py-1 text-xs hover:bg-muted"
+              onClick={addRow}
+            >
+              + Add Row
+            </button>
+          </div>
+          {rows.map((row: any, ri: number) => (
+            <div key={ri} className="border rounded p-2 space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="text-xs opacity-60">Row #{ri + 1}</div>
+                <button
+                  type="button"
+                  className="text-xs text-red-500"
+                  onClick={() => removeRow(ri)}
+                >
+                  Remove
+                </button>
+              </div>
+              <Field
+                label="Feature"
+                value={row.feature || ""}
+                onChange={(v: any) => setPropPath(`rows.${ri}.feature`, v)}
+              />
+              {(Array.isArray(row.values) ? row.values : []).map(
+                (val: string, ci: number) => (
+                  <Field
+                    key={`${ri}-${ci}`}
+                    label={columns[ci] || `Value ${ci + 1}`}
+                    value={val || ""}
+                    onChange={(v: any) => setPropPath(`rows.${ri}.values.${ci}`, v)}
+                  />
+                ),
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "MarqueeStrip/V1") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const presets = [
+      {
+        id: "trust",
+        label: "Trust Signals",
+        data: {
+          items: [
+            "Free Shipping Over Rs 999",
+            "Easy 7-Day Returns",
+            "100% Secure Checkout",
+            "Cash On Delivery Available",
+          ],
+          speedSec: 30,
+          pauseOnHover: true,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#f8fafc",
+          radius: 0,
+        },
+      },
+      {
+        id: "urgency",
+        label: "Urgency Strip",
+        data: {
+          items: [
+            "Flash Sale Ends Tonight",
+            "Only Limited Stock Left",
+            "Extra 10% Off on Prepaid",
+          ],
+          speedSec: 22,
+          pauseOnHover: false,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#7f1d1d", to: "#ea580c", direction: "to-r" },
+          },
+          textColor: "#fff7ed",
+          radius: 0,
+        },
+      },
+      {
+        id: "policy",
+        label: "Policy Strip",
+        data: {
+          items: [
+            "Shipping in 24 hours",
+            "Warranty Support Included",
+            "Trusted by 50,000+ customers",
+          ],
+          speedSec: 34,
+          pauseOnHover: true,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: { type: "solid", color: "#111827" },
+          textColor: "#e5e7eb",
+          radius: 0,
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("items", p.data.items);
+                  setProp("speedSec", p.data.speedSec);
+                  setProp("pauseOnHover", p.data.pauseOnHover);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-10 rounded bg-slate-900 text-white text-[10px] px-2 flex items-center">
+                  {p.data.items[0]}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "2xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <NumberField
+          label="Speed (seconds)"
+          value={Number(props.speedSec ?? 30)}
+          onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
+        />
+        <label className="flex items-center gap-2 border rounded p-2">
+          <input
+            type="checkbox"
+            checked={props.pauseOnHover ?? true}
+            onChange={(e) => setProp("pauseOnHover", e.target.checked)}
+          />
+          <span className="text-sm">Pause animation on hover</span>
+        </label>
+        {items.map((item: string, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Message #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "items",
+                    items.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="Text"
+              value={item || ""}
+              onChange={(v: any) => setPropPath(`items.${i}`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => setProp("items", [...items, "New trust message"])}
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Message
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "SpotlightCards/V1") {
+    const cards = Array.isArray(props.cards) ? props.cards : [];
+    const presets = [
+      {
+        id: "feature",
+        label: "Feature Trio",
+        cards: [
+          {
+            title: "Fast Setup",
+            description: "Go live quickly with visual blocks.",
+            icon: "Sparkles",
+            href: "#",
+          },
+          {
+            title: "Design Flexibility",
+            description: "Customize every section deeply.",
+            icon: "Palette",
+            href: "#",
+          },
+          {
+            title: "Commerce Ready",
+            description: "Catalog, cart, and checkout included.",
+            icon: "ShoppingCart",
+            href: "#",
+          },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 48, right: 12, bottom: 48, left: 12 },
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+          radius: 18,
+          border: { enabled: false, width: 1, color: "#e2e8f0" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "trust",
+        label: "Trust Cards",
+        cards: [
+          {
+            title: "Secure Payments",
+            description: "PCI-compliant checkout and trusted gateways.",
+            icon: "Shield",
+            href: "#",
+          },
+          {
+            title: "Fast Delivery",
+            description: "Quick dispatch and tracked shipping.",
+            icon: "Truck",
+            href: "#",
+          },
+          {
+            title: "Easy Returns",
+            description: "Hassle-free returns and support.",
+            icon: "RotateCcw",
+            href: "#",
+          },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 44, right: 12, bottom: 44, left: 12 },
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+          radius: 18,
+          border: { enabled: true, width: 1, color: "#cbd5e1" },
+          shadow: "sm",
+        },
+      },
+      {
+        id: "service",
+        label: "Service Highlights",
+        cards: [
+          {
+            title: "Personal Assistance",
+            description: "Talk to our experts before purchase.",
+            icon: "MessageCircle",
+            href: "/contact",
+          },
+          {
+            title: "Premium Quality",
+            description: "Curated products with strict QC.",
+            icon: "Award",
+            href: "#",
+          },
+          {
+            title: "Flexible Plans",
+            description: "Buy now or split payment options.",
+            icon: "CreditCard",
+            href: "#",
+          },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 52, right: 12, bottom: 52, left: 12 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#f8fafc", to: "#eef2ff", direction: "to-r" },
+          },
+          textColor: "#111827",
+          radius: 18,
+          border: { enabled: false, width: 1, color: "#cbd5e1" },
+          shadow: "none",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("cards", p.cards);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded bg-slate-50 border border-slate-200 flex items-center px-2 text-xs">
+                  {p.cards[0].title}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        {cards.map((card: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Card #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "cards",
+                    cards.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="Title"
+              value={card.title || ""}
+              onChange={(v: any) => setPropPath(`cards.${i}.title`, v)}
+            />
+            <Field
+              label="Description"
+              value={card.description || ""}
+              onChange={(v: any) => setPropPath(`cards.${i}.description`, v)}
+            />
+            <IconPicker
+              label="Icon"
+              value={card.icon || ""}
+              onChange={(v: any) => setPropPath(`cards.${i}.icon`, v)}
+            />
+            <Field
+              label="Link (href)"
+              value={card.href || ""}
+              onChange={(v: any) => setPropPath(`cards.${i}.href`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setProp("cards", [
+              ...cards,
+              {
+                title: "New Card",
+                description: "Short description",
+                icon: "Sparkles",
+                href: "#",
+              },
+            ])
+          }
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Card
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "ProcessTimeline/V1") {
+    const steps = Array.isArray(props.steps) ? props.steps : [];
+    const presets = [
+      {
+        id: "onboarding",
+        label: "3-Step Onboarding",
+        steps: [
+          { title: "Setup Store", description: "Choose store type and theme preset." },
+          { title: "Add Catalog", description: "Create categories, products, and variants." },
+          { title: "Launch Live", description: "Publish pages and start taking orders." },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 48, right: 12, bottom: 48, left: 12 },
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+          radius: 14,
+          border: { enabled: false, width: 1, color: "#dbeafe" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "funnel",
+        label: "Conversion Funnel",
+        steps: [
+          { title: "Attract", description: "Drive traffic with campaigns and SEO." },
+          { title: "Convert", description: "Use social proof, offers, and CTAs." },
+          { title: "Retain", description: "Follow up with support and promotions." },
+          { title: "Repeat", description: "Build loyalty with repeat-purchase offers." },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 56, right: 12, bottom: 56, left: 12 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#0f172a", to: "#1e293b", direction: "to-r" },
+          },
+          textColor: "#e2e8f0",
+          radius: 14,
+          border: { enabled: false, width: 1, color: "#334155" },
+          shadow: "none",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("steps", p.steps);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded bg-slate-50 border border-slate-200 px-2 py-1 text-[10px]">
+                  {p.steps.map((s: any, idx: number) => (
+                    <div key={idx}>{idx + 1}. {s.title}</div>
+                  ))}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        {steps.map((step: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Step #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "steps",
+                    steps.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="Title"
+              value={step.title || ""}
+              onChange={(v: any) => setPropPath(`steps.${i}.title`, v)}
+            />
+            <Field
+              label="Description"
+              value={step.description || ""}
+              onChange={(v: any) => setPropPath(`steps.${i}.description`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setProp("steps", [
+              ...steps,
+              { title: `Step ${steps.length + 1}`, description: "Describe this step" },
+            ])
+          }
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Step
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "MediaGalleryMasonry/V1") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const presets = [
+      {
+        id: "lookbook",
+        label: "Lookbook",
+        columns: 3,
+        count: 8,
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 52, right: 12, bottom: 52, left: 12 },
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+        },
+      },
+      {
+        id: "portfolio",
+        label: "Portfolio",
+        columns: 4,
+        count: 10,
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 56, right: 12, bottom: 56, left: 12 },
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+        },
+      },
+      {
+        id: "compact",
+        label: "Compact",
+        columns: 2,
+        count: 6,
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "lg",
+          padding: { top: 40, right: 12, bottom: 40, left: 12 },
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#111827",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("columns", p.columns);
+                  setProp(
+                    "items",
+                    Array.from({ length: p.count }).map(() => ({
+                      image: DEFAULT_IMAGE,
+                      alt: "",
+                      caption: "",
+                    })),
+                  );
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded border bg-slate-50 p-1 grid grid-cols-4 gap-1">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="rounded bg-slate-200" />
+                  ))}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <NumberField
+          label="Columns (2-6)"
+          value={Number(props.columns ?? 3)}
+          onChange={(n: any) =>
+            setProp("columns", Math.max(2, Math.min(6, Number(n || 3))))
+          }
+        />
+        {items.map((item: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Media #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "items",
+                    items.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <ImageField
+              siteId={siteId}
+              label="Image"
+              assetIdValue={item.imageAssetId || ""}
+              altValue={item.alt || ""}
+              onChangeAssetId={(v: any) => setPropPath(`items.${i}.imageAssetId`, v)}
+              onChangeAssetUrl={(v: any) => setPropPath(`items.${i}.image`, v)}
+              onChangeAlt={(v: any) => setPropPath(`items.${i}.alt`, v)}
+              assetsMap={assetsMap}
+              assetUrlValue={item.image || DEFAULT_IMAGE}
+            />
+            <Field
+              label="Caption"
+              value={item.caption || ""}
+              onChange={(v: any) => setPropPath(`items.${i}.caption`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setProp("items", [
+              ...items,
+              { image: DEFAULT_IMAGE, imageAssetId: "", alt: "", caption: "" },
+            ])
+          }
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Media
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "VideoHeroLite/V1") {
+    const presets = [
+      {
+        id: "launch",
+        label: "Product Launch",
+        data: {
+          title: "Launch your next bestseller",
+          subtitle: "High-impact visuals, clear offer, and fast checkout.",
+          ctaText: "Shop Now",
+          ctaHref: "/products",
+          minHeight: 580,
+          overlayOpacity: 0.45,
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#f8fafc",
+          radius: 0,
+        },
+      },
+      {
+        id: "brand",
+        label: "Brand Story",
+        data: {
+          title: "Built for quality and crafted with care",
+          subtitle: "Tell your brand story with motion-led visuals.",
+          ctaText: "Explore",
+          ctaHref: "/",
+          minHeight: 620,
+          overlayOpacity: 0.35,
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#e2e8f0",
+          radius: 0,
+        },
+      },
+      {
+        id: "minimal",
+        label: "Minimal Hero",
+        data: {
+          title: "Simple, clear, conversion focused",
+          subtitle: "A lightweight hero for quick pages.",
+          ctaText: "Get Started",
+          ctaHref: "/",
+          videoUrl: "",
+          posterUrl: "",
+          minHeight: 520,
+          overlayOpacity: 0.5,
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#f1f5f9",
+          radius: 0,
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  Object.entries(p.data).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded bg-slate-900/90 text-white px-2 flex items-center text-xs">
+                  {p.data.title}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="CTA Text"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="CTA Link"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+        <NumberField
+          label="Min Height"
+          value={Number(props.minHeight ?? 520)}
+          onChange={(n: any) => setProp("minHeight", Math.max(320, Number(n || 320)))}
+        />
+        <label className="block space-y-1">
+          <div className="text-sm font-medium">Overlay Opacity</div>
+          <input
+            className="w-full"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={props.overlayOpacity ?? 0.45}
+            onChange={(e) => setProp("overlayOpacity", Number(e.target.value))}
+          />
+          <div className="text-xs opacity-60">{props.overlayOpacity ?? 0.45}</div>
+        </label>
+        <Field
+          label="Video URL"
+          value={props.videoUrl || ""}
+          onChange={(v: any) => setProp("videoUrl", v)}
+        />
+        <Field
+          label="Poster URL"
+          value={props.posterUrl || ""}
+          onChange={(v: any) => setProp("posterUrl", v)}
+        />
+      </div>
+    );
+  }
+
+  if (type === "KPIRibbon/V1") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const presets = [
+      {
+        id: "commerce",
+        label: "Commerce KPIs",
+        items: [
+          { value: "120K+", label: "Orders Processed", icon: "📦" },
+          { value: "4.8/5", label: "Customer Rating", icon: "⭐" },
+          { value: "99.9%", label: "Uptime", icon: "⚡" },
+          { value: "24/7", label: "Support", icon: "💬" },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 20, right: 8, bottom: 20, left: 8 },
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#f8fafc",
+          radius: 10,
+          border: { enabled: false, width: 1, color: "#1e293b" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "growth",
+        label: "Growth KPIs",
+        items: [
+          { value: "2.4x", label: "Conversion Uplift", icon: "📈" },
+          { value: "38%", label: "Repeat Customers", icon: "🔁" },
+          { value: "18M+", label: "Annual Views", icon: "👁️" },
+          { value: "95%", label: "Satisfaction", icon: "✅" },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 20, right: 8, bottom: 20, left: 8 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#111827", to: "#1d4ed8", direction: "to-r" },
+          },
+          textColor: "#f8fafc",
+          radius: 10,
+          border: { enabled: false, width: 1, color: "#1e293b" },
+          shadow: "none",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("items", p.items);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded bg-slate-900 text-white px-2 py-1 text-[10px] grid grid-cols-2 gap-1">
+                  {p.items.slice(0, 2).map((item: any, i: number) => (
+                    <div key={i}>{item.value}</div>
+                  ))}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        {items.map((item: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">KPI #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "items",
+                    items.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <Field
+                label="Icon"
+                value={item.icon || ""}
+                onChange={(v: any) => setPropPath(`items.${i}.icon`, v)}
+              />
+              <Field
+                label="Value"
+                value={item.value || ""}
+                onChange={(v: any) => setPropPath(`items.${i}.value`, v)}
+              />
+              <Field
+                label="Label"
+                value={item.label || ""}
+                onChange={(v: any) => setPropPath(`items.${i}.label`, v)}
+              />
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setProp("items", [
+              ...items,
+              { value: "100+", label: "New KPI", icon: "•" },
+            ])
+          }
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add KPI
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "InteractiveTabs/V1") {
+    const tabs = Array.isArray(props.tabs) ? props.tabs : [];
+    const presets = [
+      {
+        id: "product",
+        label: "Product Info Tabs",
+        tabs: [
+          { label: "Overview", title: "Overview", content: "Highlight top product value." },
+          { label: "Specs", title: "Specifications", content: "List important technical details." },
+          { label: "Shipping", title: "Shipping & Returns", content: "Delivery and return policy." },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 48, right: 12, bottom: 48, left: 12 },
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+          radius: 14,
+          border: { enabled: true, width: 1, color: "#e2e8f0" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "saas",
+        label: "SaaS Feature Tabs",
+        tabs: [
+          { label: "Features", title: "Features", content: "Core features and capabilities." },
+          { label: "Integrations", title: "Integrations", content: "Apps and ecosystem support." },
+          { label: "Security", title: "Security", content: "Data and compliance details." },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 48, right: 12, bottom: 48, left: 12 },
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#111827",
+          radius: 14,
+          border: { enabled: true, width: 1, color: "#cbd5e1" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "faq",
+        label: "FAQ Tabs",
+        tabs: [
+          { label: "Ordering", title: "Ordering", content: "How to place and track your order." },
+          { label: "Payments", title: "Payments", content: "Accepted payment methods." },
+          { label: "Support", title: "Support", content: "How to reach support and SLA." },
+        ],
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "lg",
+          padding: { top: 40, right: 12, bottom: 40, left: 12 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#f8fafc", to: "#ecfeff", direction: "to-r" },
+          },
+          textColor: "#0f172a",
+          radius: 14,
+          border: { enabled: true, width: 1, color: "#bae6fd" },
+          shadow: "none",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("tabs", p.tabs);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded border bg-slate-50 px-2 py-1 text-[10px]">
+                  {p.tabs.map((t: any, i: number) => (
+                    <span key={i} className="inline-block mr-1 mb-1 rounded bg-slate-200 px-1.5 py-0.5">
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        {tabs.map((tab: any, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Tab #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "tabs",
+                    tabs.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="Tab Label"
+              value={tab.label || ""}
+              onChange={(v: any) => setPropPath(`tabs.${i}.label`, v)}
+            />
+            <Field
+              label="Panel Title"
+              value={tab.title || ""}
+              onChange={(v: any) => setPropPath(`tabs.${i}.title`, v)}
+            />
+            <Field
+              label="Panel Content"
+              value={tab.content || ""}
+              onChange={(v: any) => setPropPath(`tabs.${i}.content`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() =>
+            setProp("tabs", [
+              ...tabs,
+              { label: `Tab ${tabs.length + 1}`, title: "Title", content: "Content" },
+            ])
+          }
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Tab
+        </button>
+      </div>
+    );
+  }
+
+  if (type === "FloatingCTA/V1") {
+    const presets = [
+      {
+        id: "support",
+        label: "Support Bubble",
+        data: {
+          text: "Need help choosing?",
+          buttonText: "Talk to us",
+          buttonHref: "/contact",
+          position: "bottom-right",
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#111827",
+          radius: 999,
+          border: { enabled: false, width: 1, color: "#e2e8f0" },
+          shadow: "md",
+        },
+      },
+      {
+        id: "coupon",
+        label: "Coupon Bubble",
+        data: {
+          text: "Use SAVE20 on checkout",
+          buttonText: "Shop Now",
+          buttonHref: "/products",
+          position: "bottom-left",
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#1f2937",
+          radius: 999,
+          border: { enabled: true, width: 1, color: "#f59e0b" },
+          shadow: "md",
+        },
+      },
+      {
+        id: "demo",
+        label: "Book Demo",
+        data: {
+          text: "Want a walkthrough?",
+          buttonText: "Book Demo",
+          buttonHref: "/demo",
+          position: "bottom-right",
+        },
+        styleOverrides: {
+          container: "fluid",
+          maxWidth: "2xl",
+          padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          bg: { type: "none" },
+          textColor: "#0f172a",
+          radius: 999,
+          border: { enabled: true, width: 1, color: "#cbd5e1" },
+          shadow: "lg",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  Object.entries(p.data).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-10 rounded-full border bg-white flex items-center px-2 text-[10px]">
+                  {p.data.buttonText}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Field
+          label="Text"
+          value={props.text || ""}
+          onChange={(v: any) => setProp("text", v)}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="Button Text"
+            value={props.buttonText || ""}
+            onChange={(v: any) => setProp("buttonText", v)}
+          />
+          <Field
+            label="Button Link"
+            value={props.buttonHref || ""}
+            onChange={(v: any) => setProp("buttonHref", v)}
+          />
+        </div>
+        <Select
+          label="Position"
+          value={props.position || "bottom-right"}
+          onChange={(v: any) => setProp("position", v)}
+          options={["bottom-right", "bottom-left"]}
+        />
+      </div>
+    );
+  }
+
+  if (type === "ContentSplitShowcase/V1") {
+    const bullets = Array.isArray(props.bullets) ? props.bullets : [];
+    const presets = [
+      {
+        id: "saas",
+        label: "SaaS Showcase",
+        data: {
+          title: "Ship better pages with visual control",
+          subtitle: "Design, content, and commerce in one workflow.",
+          bullets: ["Reusable blocks", "Live visual editing", "Store-ready checkout"],
+          ctaText: "Start Building",
+          ctaHref: "/",
+          reverse: false,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 56, right: 12, bottom: 56, left: 12 },
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+          radius: 16,
+          border: { enabled: false, width: 1, color: "#cbd5e1" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "ecomm",
+        label: "Ecommerce Showcase",
+        data: {
+          title: "Show products with clean storytelling",
+          subtitle: "Highlight value, social proof, and quick actions.",
+          bullets: ["Variant-ready products", "Promotion engine", "Cart + order management"],
+          ctaText: "Browse Catalog",
+          ctaHref: "/products",
+          reverse: true,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 56, right: 12, bottom: 56, left: 12 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#f8fafc", to: "#e2e8f0", direction: "to-r" },
+          },
+          textColor: "#0f172a",
+          radius: 16,
+          border: { enabled: true, width: 1, color: "#cbd5e1" },
+          shadow: "none",
+        },
+      },
+      {
+        id: "agency",
+        label: "Agency Showcase",
+        data: {
+          title: "Deliver polished websites faster",
+          subtitle: "Use templates and structured sections to accelerate delivery.",
+          bullets: ["Client-ready presets", "Theme controls", "Flexible layouts"],
+          ctaText: "View Work",
+          ctaHref: "/work",
+          reverse: false,
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "xl",
+          padding: { top: 56, right: 12, bottom: 56, left: 12 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#0f172a", to: "#334155", direction: "to-r" },
+          },
+          textColor: "#e2e8f0",
+          radius: 16,
+          border: { enabled: false, width: 1, color: "#334155" },
+          shadow: "none",
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  Object.entries(p.data).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-12 rounded bg-slate-50 border border-slate-200 px-2 flex items-center text-xs">
+                  {p.data.title}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <div className="space-y-2">
+          {bullets.map((b: string, i: number) => (
+            <div key={i} className="flex items-center gap-2">
+              <Field
+                label={`Bullet ${i + 1}`}
+                value={b || ""}
+                onChange={(v: any) => setPropPath(`bullets.${i}`, v)}
+              />
+              <button
+                type="button"
+                className="text-xs text-red-500 border rounded px-2 py-1 mt-6"
+                onClick={() =>
+                  setProp(
+                    "bullets",
+                    bullets.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setProp("bullets", [...bullets, "New bullet"])}
+            className="border rounded px-3 py-1 text-sm hover:bg-muted"
+          >
+            + Add Bullet
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Field
+            label="CTA Text"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="CTA Link"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+        <label className="flex items-center gap-2 border rounded p-2">
+          <input
+            type="checkbox"
+            checked={!!props.reverse}
+            onChange={(e) => setProp("reverse", e.target.checked)}
+          />
+          <span className="text-sm">Reverse columns</span>
+        </label>
+        <ImageField
+          siteId={siteId}
+          label="Media"
+          assetIdValue={props.mediaAssetId || ""}
+          altValue={props.mediaAlt || ""}
+          onChangeAssetId={(v: any) => setProp("mediaAssetId", v)}
+          onChangeAssetUrl={(v: any) => setProp("mediaUrl", v)}
+          onChangeAlt={(v: any) => setProp("mediaAlt", v)}
+          assetsMap={assetsMap}
+          assetUrlValue={props.mediaUrl || DEFAULT_IMAGE}
+        />
+      </div>
+    );
+  }
+
+  if (type === "SocialProofTicker/V1") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const presets = [
+      {
+        id: "purchases",
+        label: "Recent Purchases",
+        data: {
+          speedSec: 30,
+          items: [
+            "A customer from Delhi purchased Premium Hoodie",
+            "18 people bought in the last hour",
+            "Back-in-stock alert active for 12 users",
+          ],
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: { type: "solid", color: "#ecfdf5" },
+          textColor: "#065f46",
+          radius: 0,
+        },
+      },
+      {
+        id: "reviews",
+        label: "Reviews & Ratings",
+        data: {
+          speedSec: 36,
+          items: [
+            "Rated 4.9/5 by 1,200+ customers",
+            "Verified buyer: quality exceeded expectations",
+            "Top-rated support for response time",
+          ],
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: {
+            type: "gradient",
+            gradient: { from: "#ecfeff", to: "#f0fdf4", direction: "to-r" },
+          },
+          textColor: "#065f46",
+          radius: 0,
+        },
+      },
+      {
+        id: "shipping",
+        label: "Delivery Signals",
+        data: {
+          speedSec: 28,
+          items: [
+            "Ships in 24 hours",
+            "Free shipping over Rs 999",
+            "COD available in 20,000+ pincodes",
+          ],
+        },
+        styleOverrides: {
+          container: "boxed",
+          maxWidth: "2xl",
+          padding: { top: 10, right: 0, bottom: 10, left: 0 },
+          bg: { type: "solid", color: "#f0f9ff" },
+          textColor: "#0c4a6e",
+          radius: 0,
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <ResetStyleButton />
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Visual Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted"
+                onClick={() => {
+                  setProp("items", p.data.items);
+                  setProp("speedSec", p.data.speedSec);
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div className="h-10 rounded bg-emerald-50 border border-emerald-200 px-2 flex items-center text-[10px] text-emerald-900">
+                  {p.data.items[0]}
+                </div>
+                <div className="mt-1 text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <Select
+          label="Width"
+          value={props.contentWidth || "2xl"}
+          onChange={(v: any) => setProp("contentWidth", v)}
+          options={["sm", "md", "lg", "xl", "2xl"]}
+        />
+        <NumberField
+          label="Speed (seconds)"
+          value={Number(props.speedSec ?? 35)}
+          onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
+        />
+        {items.map((item: string, i: number) => (
+          <div key={i} className="border rounded p-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs opacity-60">Message #{i + 1}</div>
+              <button
+                type="button"
+                className="text-xs text-red-500"
+                onClick={() =>
+                  setProp(
+                    "items",
+                    items.filter((_: any, idx: number) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+            <Field
+              label="Text"
+              value={item || ""}
+              onChange={(v: any) => setPropPath(`items.${i}`, v)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => setProp("items", [...items, "New social proof message"])}
+          className="border rounded px-3 py-1 text-sm hover:bg-muted"
+        >
+          + Add Message
+        </button>
+      </div>
+    );
+  }
+
   if (type === "StatsCounter/V1") {
     const stats = props.stats || [];
 
@@ -1812,7 +4266,9 @@ const ICON_OPTIONS = [
   "Gift",
   "Sparkles",
   "Star",
+  "Palette",
   "BadgePercent",
+  "Award",
   "CreditCard",
   "Truck",
   "Package",
@@ -1825,6 +4281,7 @@ const ICON_OPTIONS = [
   "Mail",
   "Phone",
   "MessageCircle",
+  "RotateCcw",
   "Info",
   "HelpCircle",
   "Shield",
@@ -2329,6 +4786,17 @@ function defaultPropsFor(type: string) {
       ctaHref: "/products",
       secondaryCtaText: "",
       secondaryCtaHref: "",
+      splitPanelTitle: "",
+      splitHighlights: [],
+      splitPanelCtaText: "",
+      splitPanelCtaHref: "",
+      centeredBadgeText: "",
+      centeredTrustLine: "",
+      centeredStats: [],
+      promoBadgeText: "",
+      promoCode: "",
+      promoNote: "",
+      promoBullets: [],
       align: "left",
       contentWidth: "xl",
       minHeight: 520,
@@ -2523,6 +4991,96 @@ function defaultPropsFor(type: string) {
     return {
       title: "Your Title here",
       subtitle: "Subtitle Here",
+    };
+  if (type === "MarqueeStrip/V1")
+    return {
+      items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
+      speedSec: 30,
+      pauseOnHover: true,
+    };
+  if (type === "SpotlightCards/V1")
+    return {
+      title: "Why Choose Us",
+      subtitle: "Everything built to improve conversion.",
+      cards: [
+        { title: "Fast Setup", description: "Go live quickly with visual blocks.", icon: "⚡", href: "#" },
+        { title: "Design Flexibility", description: "Customize every section deeply.", icon: "🎨", href: "#" },
+        { title: "Commerce Ready", description: "Catalog, cart, and checkout included.", icon: "🛒", href: "#" },
+      ],
+    };
+  if (type === "ProcessTimeline/V1")
+    return {
+      title: "How It Works",
+      subtitle: "A simple three-step process.",
+      steps: [
+        { title: "Create Site", description: "Setup your store and theme." },
+        { title: "Build Pages", description: "Compose sections and blocks." },
+        { title: "Launch", description: "Publish and track growth." },
+      ],
+    };
+  if (type === "MediaGalleryMasonry/V1")
+    return {
+      title: "Gallery",
+      subtitle: "Showcase your brand visuals.",
+      columns: 3,
+      items: [{}, {}, {}, {}, {}],
+    };
+  if (type === "VideoHeroLite/V1")
+    return {
+      title: "Build and launch faster",
+      subtitle: "Modern pages with visual control.",
+      ctaText: "Get Started",
+      ctaHref: "/",
+      minHeight: 520,
+      overlayOpacity: 0.45,
+      videoUrl: "",
+      posterUrl: "",
+    };
+  if (type === "KPIRibbon/V1")
+    return {
+      items: [
+        { value: "120K+", label: "Orders Processed", icon: "📦" },
+        { value: "99.9%", label: "Platform Uptime", icon: "⚡" },
+        { value: "4.8/5", label: "Customer Rating", icon: "⭐" },
+        { value: "24/7", label: "Support", icon: "💬" },
+      ],
+    };
+  if (type === "InteractiveTabs/V1")
+    return {
+      title: "Explore",
+      subtitle: "Keep content organized in tabs.",
+      tabs: [
+        { label: "Overview", title: "Overview", content: "Explain your core value." },
+        { label: "Features", title: "Features", content: "List key capabilities." },
+        { label: "Use Cases", title: "Use Cases", content: "Show who it is for." },
+      ],
+    };
+  if (type === "FloatingCTA/V1")
+    return {
+      text: "Need help choosing?",
+      buttonText: "Talk to us",
+      buttonHref: "/contact",
+      position: "bottom-right",
+    };
+  if (type === "ContentSplitShowcase/V1")
+    return {
+      title: "Build beautiful pages with confidence",
+      subtitle: "Combine storytelling and commerce in one clean layout.",
+      bullets: ["Visual editor", "Reusable blocks", "Store-ready flow"],
+      ctaText: "Get Started",
+      ctaHref: "/",
+      reverse: false,
+      mediaUrl: "",
+      mediaAlt: "",
+    };
+  if (type === "SocialProofTicker/V1")
+    return {
+      items: [
+        "A customer from Mumbai just purchased Premium Hoodie",
+        "45 people bought in the last 24 hours",
+        "Rated 4.8/5 by 1200+ customers",
+      ],
+      speedSec: 35,
     };
   return {};
 }
