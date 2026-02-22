@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useCartOptional } from "./cart-context";
 import type { CartItem } from "./cart-context";
 import { normalizeImageUrl } from "../commerce/image-utils";
+import { ArrowRight, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 
 type Props = {
   title?: string;
@@ -162,97 +163,139 @@ export default function CartPageV1({
 
   if (!items.length) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-        <div className="text-lg font-semibold text-slate-900">{emptyTitle}</div>
-        <a
-          href={emptyCtaHref}
-          className="mt-4 inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white"
-        >
-          {emptyCtaText}
-        </a>
+      <div className="min-h-[100vh] rounded-3xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-8 md:p-12">
+        <div className="mx-auto flex min-h-[40vh] max-w-xl flex-col items-center justify-center text-center">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+            <ShoppingBag className="h-6 w-6" />
+          </div>
+          <div className="text-2xl font-semibold tracking-tight text-slate-900">
+            {emptyTitle}
+          </div>
+          <div className="mt-2 text-sm text-slate-500">
+            Add products to your cart to continue checkout.
+          </div>
+          <a
+            href={emptyCtaHref}
+            className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white"
+          >
+            {emptyCtaText}
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <div className="text-lg font-semibold text-slate-900">{title}</div>
-        <div className="mt-6 space-y-4">
+    <div className="min-h-[100vh] rounded-3xl border border-slate-200 bg-slate-50/60 p-4 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <div>
+          <div className="text-xl font-semibold tracking-tight text-slate-900">{title}</div>
+          <div className="mt-0.5 text-sm text-slate-500">
+            {items.length} item{items.length > 1 ? "s" : ""} in your cart
+          </div>
+        </div>
+        <a
+          href={emptyCtaHref}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          Continue shopping
+          <ArrowRight className="h-4 w-4" />
+        </a>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.5fr_0.5fr]">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 md:p-6">
+        <div className="hidden grid-cols-[1fr_auto_auto] border-b border-slate-100 pb-3 text-xs font-medium uppercase tracking-wide text-slate-500 md:grid">
+          <span>Product</span>
+          <span className="px-6">Quantity</span>
+          <span>Total</span>
+        </div>
+        <div className="mt-3 space-y-4">
           {items.map((item) => (
             <div
               key={`${item.product_id}-${item.variant_id || ""}`}
-              className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-center"
+              className="flex flex-col gap-4 rounded-xl border border-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              {item.image ? (
-                <img
-                  src={normalizeImageUrl(item.image)}
-                  alt={item.title}
-                  className="h-20 w-20 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-lg bg-slate-100" />
-              )}
-              <div className="flex-1">
-                <div className="text-sm font-medium text-slate-900">
-                  {item.title}
-                </div>
-                {item.variant_label ? (
-                  <div className="mt-0.5 text-xs text-slate-500">{item.variant_label}</div>
-                ) : null}
-                <div className="mt-1 text-xs text-slate-500">
-                  ₹{(item.price_cents / 100).toFixed(2)}
+              <div className="flex min-w-0 items-center gap-3">
+                {item.image ? (
+                  <img
+                    src={normalizeImageUrl(item.image)}
+                    alt={item.title}
+                    className="h-20 w-20 rounded-xl border border-slate-200 object-cover"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-xl border border-slate-200 bg-slate-100" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="line-clamp-2 text-sm font-medium text-slate-900">
+                    {item.title}
+                  </div>
+                  {item.variant_label ? (
+                    <div className="mt-0.5 line-clamp-1 text-xs text-slate-500">{item.variant_label}</div>
+                  ) : null}
+                  <div className="mt-1 text-xs text-slate-500">
+                    ₹{(item.price_cents / 100).toFixed(2)} each
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+
+              <div className="flex items-center justify-between gap-3 sm:justify-end">
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+                  {cart ? (
+                    <>
+                      <button
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() =>
+                          cart.updateQty(
+                            item.product_id,
+                            item.variant_id,
+                            item.qty - 1
+                          )
+                        }
+                      >
+                        -
+                      </button>
+                      <div className="min-w-[24px] text-center text-sm font-medium">
+                        {item.qty}
+                      </div>
+                      <button
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() =>
+                          cart.updateQty(
+                            item.product_id,
+                            item.variant_id,
+                            item.qty + 1
+                          )
+                        }
+                      >
+                        +
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-400">Qty {item.qty}</div>
+                  )}
+                </div>
                 {cart ? (
-                  <>
-                    <button
-                      className="h-8 w-8 rounded-md border border-slate-200 text-sm"
-                      onClick={() =>
-                        cart.updateQty(
-                          item.product_id,
-                          item.variant_id,
-                          item.qty - 1
-                        )
-                      }
-                    >
-                      -
-                    </button>
-                    <div className="min-w-[32px] text-center text-sm">
-                      {item.qty}
-                    </div>
-                    <button
-                      className="h-8 w-8 rounded-md border border-slate-200 text-sm"
-                      onClick={() =>
-                        cart.updateQty(
-                          item.product_id,
-                          item.variant_id,
-                          item.qty + 1
-                        )
-                      }
-                    >
-                      +
-                    </button>
-                    <button
-                      className="ml-2 text-xs text-slate-500 hover:text-slate-700"
-                      onClick={() =>
-                        cart.removeItem(item.product_id, item.variant_id)
-                      }
-                    >
-                      Remove
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-xs text-slate-400">Qty {item.qty}</div>
-                )}
+                  <button
+                    className="text-xs text-slate-500 hover:text-slate-700"
+                    onClick={() =>
+                      cart.removeItem(item.product_id, item.variant_id)
+                    }
+                  >
+                    Remove
+                  </button>
+                ) : null}
+                <div className="min-w-[90px] text-right text-sm font-semibold text-slate-900">
+                  ₹{((item.price_cents * item.qty) / 100).toFixed(2)}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 lg:sticky lg:top-6 lg:self-start">
         <div className="text-lg font-semibold text-slate-900">Summary</div>
         <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
           <span>Subtotal</span>
@@ -314,6 +357,16 @@ export default function CartPageV1({
             ₹{(total / 100).toFixed(2)}
           </span>
         </div>
+        <div className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <div className="flex items-center gap-2">
+            <Truck className="h-4 w-4 text-slate-700" />
+            Delivery charges calculated at checkout
+          </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-slate-700" />
+            Secure checkout & safe payments
+          </div>
+        </div>
 
         {orderNumber ? (
           <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -336,6 +389,7 @@ export default function CartPageV1({
         >
           {creating ? "Processing..." : checkoutText}
         </button>
+      </div>
       </div>
 
       {showDialog ? (
