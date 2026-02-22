@@ -10,6 +10,7 @@ export default function SocialProofTickerV1(props: any) {
       "Rated 4.8/5 by 1200+ customers",
     ],
     speedSec = 35,
+    itemGap = 24,
     contentWidth = "2xl",
   } = props || {};
 
@@ -34,7 +35,11 @@ export default function SocialProofTickerV1(props: any) {
         <div className="sp-marquee">
           <div className="sp-track" style={{ animationDuration: `${Math.max(5, Number(speedSec || 35))}s` }}>
             {[...list, ...list].map((item: string, idx: number) => (
-              <span key={`${item}-${idx}`} className="mx-6 inline-flex text-sm font-medium">
+              <span
+                key={`${item}-${idx}`}
+                className="inline-flex text-sm font-medium"
+                style={{ marginInline: `${Math.max(0, Number(itemGap || 24)) / 2}px` }}
+              >
                 {item}
               </span>
             ))}

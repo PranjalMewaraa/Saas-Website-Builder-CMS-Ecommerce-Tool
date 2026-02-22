@@ -807,14 +807,176 @@ export default function LayoutInspector({
           </>
         )}
 
-        {atom.type === "Atomic/Video" && (
+        {atom.type === "Atomic/ImageGallery" && (
           <>
-            <Field
-              label="Video URL"
-              value={atom.props?.src || ""}
+            <div className="grid grid-cols-2 gap-2">
+              <NumberField
+                label="Columns"
+                value={Number(atom.props?.columns || 3)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, columns: Math.max(1, v || 1) };
+                  })
+                }
+              />
+              <NumberField
+                label="Gap"
+                value={Number(atom.props?.gap || 12)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, gap: Math.max(0, v || 0) };
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <NumberField
+                label="Radius"
+                value={Number(atom.props?.radius || 12)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, radius: Math.max(0, v || 0) };
+                  })
+                }
+              />
+              <NumberField
+                label="Image Height"
+                value={Number(atom.props?.imageHeight || 180)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, imageHeight: Math.max(40, v || 40) };
+                  })
+                }
+              />
+            </div>
+            <Select
+              label="Image Fit"
+              value={atom.props?.fit || "cover"}
+              options={["cover", "contain", "fill"]}
               onChange={(v) =>
                 updateAtomic((draftAtom) => {
-                  draftAtom.props = { ...draftAtom.props, src: v };
+                  draftAtom.props = { ...draftAtom.props, fit: v };
+                })
+              }
+            />
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Gallery Images</div>
+              {(Array.isArray(atom.props?.items) ? atom.props.items : []).map(
+                (item: any, idx: number) => (
+                  <div key={item?.id || `gallery_${idx}`} className="rounded-lg border p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600">Image {idx + 1}</div>
+                      <button
+                        type="button"
+                        className="text-xs rounded border px-2 py-1 hover:bg-gray-50"
+                        onClick={() =>
+                          updateAtomic((draftAtom) => {
+                            const items = Array.isArray(draftAtom.props?.items)
+                              ? [...draftAtom.props.items]
+                              : [];
+                            items.splice(idx, 1);
+                            draftAtom.props = { ...draftAtom.props, items };
+                          })
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <ImageField
+                      siteId={siteId}
+                      label="Asset"
+                      assetIdValue={item?.assetId || ""}
+                      altValue={item?.alt || ""}
+                      onChangeAssetId={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), assetId: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      onChangeAlt={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), alt: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      onChangeAssetUrl={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), src: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      assetsMap={assetsMap}
+                      assetUrlValue={item?.src || DEFAULT_IMAGE}
+                    />
+                  </div>
+                ),
+              )}
+              <button
+                type="button"
+                className="w-full rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                onClick={() =>
+                  updateAtomic((draftAtom) => {
+                    const items = Array.isArray(draftAtom.props?.items)
+                      ? [...draftAtom.props.items]
+                      : [];
+                    items.push({
+                      src: DEFAULT_IMAGE,
+                      alt: `Gallery image ${items.length + 1}`,
+                    });
+                    draftAtom.props = { ...draftAtom.props, items };
+                  })
+                }
+              >
+                + Add Image
+              </button>
+            </div>
+          </>
+        )}
+
+        {atom.type === "Atomic/Video" && (
+          <>
+            <ImageField
+              siteId={siteId}
+              label="Video Asset"
+              assetIdValue={atom.props?.assetId || atom.props?.videoAssetId || ""}
+              altValue=""
+              onChangeAssetId={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    assetId: v,
+                    videoAssetId: v,
+                  };
+                })
+              }
+              onChangeAlt={() => {}}
+              onChangeAssetUrl={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    src: v,
+                    videoUrl: v,
+                  };
+                })
+              }
+              assetsMap={assetsMap}
+              assetUrlValue={atom.props?.src || atom.props?.videoUrl || ""}
+            />
+            <Field
+              label="Video URL"
+              value={atom.props?.src || atom.props?.videoUrl || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v, videoUrl: v };
                 })
               }
               placeholder="https://..."

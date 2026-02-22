@@ -22,6 +22,8 @@ export const HeaderV1Schema = z.object({
   ctaTertiaryText: z.string().min(1).max(50).optional(),
   ctaTertiaryHref: z.string().min(1).optional(),
   ctaTertiaryIcon: z.string().max(60).optional(),
+  menuGap: z.coerce.number().int().min(0).max(64).optional(),
+  actionGap: z.coerce.number().int().min(0).max(32).optional(),
   logoAssetId: z.string().min(1).optional(),
   logoUrl: z.string().url().optional(),
   logoAlt: z.string().max(160).optional(),

@@ -7,6 +7,27 @@ type MenuNode = {
   label: string;
   type?: string;
   ref?: { slug?: string; href?: string };
+  children?: MenuNode[];
+  mega?: {
+    enabled?: boolean;
+    columns?: number;
+    sections?: Array<{
+      title?: string;
+      links?: Array<{
+        label?: string;
+        type?: "page" | "external";
+        ref?: { slug?: string; href?: string };
+        href?: string;
+        badge?: string;
+      }>;
+    }>;
+    promo?: {
+      title?: string;
+      description?: string;
+      ctaText?: string;
+      ctaHref?: string;
+    };
+  };
 };
 
 type Menu = {
@@ -32,6 +53,8 @@ type Props = {
   ctaTertiaryText?: string;
   ctaTertiaryHref?: string;
   ctaTertiaryIcon?: string;
+  menuGap?: number;
+  actionGap?: number;
   contentWidth: string;
   logoUrl?: string;
   logoAlt?: string;
@@ -52,6 +75,8 @@ export default function HeaderV1({
   ctaTertiaryText,
   ctaTertiaryHref,
   ctaTertiaryIcon,
+  menuGap = 24,
+  actionGap = 8,
   logoUrl,
   logoAlt,
   contentWidth,
@@ -103,76 +128,71 @@ export default function HeaderV1({
   );
 
   const navNode = (
-    <nav className="flex items-center gap-6 overflow-x-auto">
-      {navItems.map((n) => (
-        <Link
-          key={n.id}
-          href={appendPreviewQuery(
-            n.ref?.slug || n.ref?.href || "#",
-            previewQuery,
-          )}
-          className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
-        >
-          {n.label}
-        </Link>
-      ))}
+    <nav
+      className="flex min-w-0 items-center overflow-visible"
+      style={{ gap: `${Math.max(0, Number(menuGap || 24))}px` }}
+    >
+      {navItems.map((n) => renderNavItem(n, previewQuery, !!__editor))}
     </nav>
   );
 
-  const primaryIcon = getIcon(ctaIcon);
-  const secondaryIcon = getIcon(ctaSecondaryIcon);
-  const tertiaryIcon = getIcon(ctaTertiaryIcon);
+  const PrimaryIcon = getIcon(ctaIcon);
+  const SecondaryIcon = getIcon(ctaSecondaryIcon);
+  const TertiaryIcon = getIcon(ctaTertiaryIcon);
 
   const hasAnyCta =
     (ctaText && ctaHref) ||
     (ctaSecondaryText && ctaSecondaryHref) ||
     (ctaTertiaryText && ctaTertiaryHref) ||
-    (ctaIcon && ctaHref) ||
-    (ctaSecondaryIcon && ctaSecondaryHref) ||
-    (ctaTertiaryIcon && ctaTertiaryHref);
+    (PrimaryIcon && ctaHref) ||
+    (SecondaryIcon && ctaSecondaryHref) ||
+    (TertiaryIcon && ctaTertiaryHref);
 
   const ctaNode = hasAnyCta ? (
-    <div className="flex items-center gap-2">
-      {ctaTertiaryHref && (ctaTertiaryText || tertiaryIcon) ? (
+    <div
+      className="flex items-center"
+      style={{ gap: `${Math.max(0, Number(actionGap || 8))}px` }}
+    >
+      {ctaTertiaryHref && (ctaTertiaryText || TertiaryIcon) ? (
         <Link
           href={appendPreviewQuery(ctaTertiaryHref, previewQuery)}
           className="px-3 py-2 rounded-full text-sm font-medium text-black/70 hover:text-black transition"
         >
-          {tertiaryIcon ? (
-            <tertiaryIcon className="h-4 w-4 inline-block" />
+          {TertiaryIcon ? (
+            <TertiaryIcon className="h-4 w-4 inline-block" />
           ) : null}
           {ctaTertiaryText ? (
-            <span className={tertiaryIcon ? "ml-2" : ""}>
+            <span className={TertiaryIcon ? "ml-2" : ""}>
               {ctaTertiaryText}
             </span>
           ) : null}
         </Link>
       ) : null}
-      {ctaSecondaryHref && (ctaSecondaryText || secondaryIcon) ? (
+      {ctaSecondaryHref && (ctaSecondaryText || SecondaryIcon) ? (
         <Link
           href={appendPreviewQuery(ctaSecondaryHref, previewQuery)}
           className="px-4 py-2 rounded-full border border-black/15 text-sm font-medium hover:border-black/25 transition"
         >
-          {secondaryIcon ? (
-            <secondaryIcon className="h-4 w-4 inline-block" />
+          {SecondaryIcon ? (
+            <SecondaryIcon className="h-4 w-4 inline-block" />
           ) : null}
           {ctaSecondaryText ? (
-            <span className={secondaryIcon ? "ml-2" : ""}>
+            <span className={SecondaryIcon ? "ml-2" : ""}>
               {ctaSecondaryText}
             </span>
           ) : null}
         </Link>
       ) : null}
-      {ctaHref && (ctaText || primaryIcon) ? (
+      {ctaHref && (ctaText || PrimaryIcon) ? (
         <Link
           href={appendPreviewQuery(ctaHref, previewQuery)}
           className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-sm hover:shadow transition"
         >
-          {primaryIcon ? (
-            <primaryIcon className="h-4 w-4 inline-block" />
+          {PrimaryIcon ? (
+            <PrimaryIcon className="h-4 w-4 inline-block" />
           ) : null}
           {ctaText ? (
-            <span className={primaryIcon ? "ml-2" : ""}>{ctaText}</span>
+            <span className={PrimaryIcon ? "ml-2" : ""}>{ctaText}</span>
           ) : null}
         </Link>
       ) : null}
@@ -182,10 +202,10 @@ export default function HeaderV1({
   );
 
   return (
-    <header className="w-full border-b border-black/10 bg-white/70 backdrop-blur">
+    <header className="relative z-[120] isolate w-full !overflow-visible border-b border-black/10 bg-white/70 backdrop-blur">
       <div
-        style={{ maxHeight: "4rem", maxWidth: maxWidth }}
-        className="mx-auto px-4 py-3 flex items-center justify-between gap-6"
+        style={{ maxWidth: maxWidth }}
+        className="relative mx-auto flex items-center justify-between gap-6 !overflow-visible px-4 py-3"
       >
         {layout === "two-col" ? (
           <>
@@ -213,34 +233,22 @@ export default function HeaderV1({
           <>
             <div className="flex items-center gap-5">
               {logoNode}
-              <nav className="hidden lg:flex items-center gap-6 overflow-x-auto">
+              <nav
+                className="hidden min-w-0 lg:flex items-center overflow-visible"
+                style={{ gap: `${Math.max(0, Number(menuGap || 24))}px` }}
+              >
                 {navItems.slice(0, Math.ceil(navItems.length / 2)).map((n) => (
-                  <Link
-                    key={n.id}
-                    href={appendPreviewQuery(
-                      n.ref?.slug || n.ref?.href || "#",
-                      previewQuery,
-                    )}
-                    className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
-                  >
-                    {n.label}
-                  </Link>
+                  renderNavItem(n, previewQuery, !!__editor)
                 ))}
               </nav>
             </div>
             <div className="flex items-center gap-6">
-              <nav className="hidden lg:flex items-center gap-6 overflow-x-auto">
+              <nav
+                className="hidden min-w-0 lg:flex items-center overflow-visible"
+                style={{ gap: `${Math.max(0, Number(menuGap || 24))}px` }}
+              >
                 {navItems.slice(Math.ceil(navItems.length / 2)).map((n) => (
-                  <Link
-                    key={n.id}
-                    href={appendPreviewQuery(
-                      n.ref?.slug || n.ref?.href || "#",
-                      previewQuery,
-                    )}
-                    className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
-                  >
-                    {n.label}
-                  </Link>
+                  renderNavItem(n, previewQuery, !!__editor)
                 ))}
               </nav>
               {ctaNode}
@@ -259,6 +267,17 @@ export default function HeaderV1({
           </>
         )}
       </div>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .mega-item:hover > .mega-panel {
+              visibility: visible !important;
+              opacity: 1 !important;
+              pointer-events: auto !important;
+            }
+          `,
+        }}
+      />
     </header>
   );
 }
@@ -289,4 +308,99 @@ function getIcon(name?: string) {
   if (!name) return null;
   const icon = (Icons as any)[name];
   return typeof icon === "function" ? icon : null;
+}
+
+function renderNavItem(
+  n: MenuNode,
+  previewQuery?: string,
+  __editor?: boolean,
+) {
+  const href = appendPreviewQuery(n.ref?.slug || n.ref?.href || "#", previewQuery);
+  const mega = n.mega;
+  const showMega = !!mega?.enabled;
+  const columns = Math.max(1, Math.min(6, Number(mega?.columns || 3)));
+  const sections =
+    mega?.sections && mega.sections.length
+      ? mega.sections
+      : n.children?.length
+        ? [
+            {
+              title: n.label,
+              links: n.children.map((c) => ({
+                label: c.label,
+                href: c.ref?.slug || c.ref?.href || "#",
+              })),
+            },
+          ]
+        : [];
+
+  if (!showMega) {
+    return (
+      <Link
+        key={n.id}
+        href={href}
+        className="text-sm font-medium whitespace-nowrap opacity-80 hover:opacity-100 transition"
+      >
+        {n.label}
+      </Link>
+    );
+  }
+
+  return (
+    <div key={n.id} className="mega-item relative -my-2 py-2">
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap opacity-90 hover:opacity-100 transition"
+      >
+        <span>{n.label}</span>
+        <Icons.ChevronDown className="h-3.5 w-3.5 opacity-70" />
+      </Link>
+      <div
+        className={`mega-panel fixed left-1/2 top-[68px] z-[140] w-[min(96vw,1200px)] -translate-x-1/2 ${
+          __editor ? "hidden" : ""
+        }`}
+        style={
+          __editor
+            ? undefined
+            : {
+                visibility: "hidden",
+                opacity: 0,
+                pointerEvents: "none",
+                transition: "opacity 180ms ease",
+              }
+        }
+      >
+        <div className="pt-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+            >
+              {sections.map((section, sIdx) => (
+                <div key={`${section.title || "section"}-${sIdx}`}>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {section.title || `Section ${sIdx + 1}`}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {(section.links || []).map((link: any, lIdx) => (
+                      <Link
+                        key={`${link.label || "link"}-${lIdx}`}
+                        href={appendPreviewQuery(
+                          link.ref?.slug || link.ref?.href || link.href || "#",
+                          previewQuery,
+                        )}
+                        className="block rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        {link.label || `Link ${lIdx + 1}`}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

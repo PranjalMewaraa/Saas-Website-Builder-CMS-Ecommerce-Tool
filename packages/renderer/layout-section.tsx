@@ -191,8 +191,49 @@ function renderAtomicBlock(
     return <img src={src} alt={props.alt || ""} style={imgStyle} />;
   }
 
+  if (type === "Atomic/ImageGallery") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const columns = Math.max(1, Number(props.columns) || 3);
+    const gap = toCssSizeValue(props.gap) || "12px";
+    const radius = toCssSizeValue(props.radius) || "12px";
+    return (
+      <div
+        style={{
+          ...style,
+          display: "grid",
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gap,
+        }}
+      >
+        {items.map((item: any, idx: number) => {
+          const src = resolveAssetUrl(item?.assetId, assets) || item?.src || "";
+          return (
+            <img
+              key={item?.id || `${block.id}_img_${idx}`}
+              src={src || DEFAULT_IMAGE}
+              alt={item?.alt || ""}
+              style={{
+                width: "100%",
+                height:
+                  toCssSizeValue(item?.height) ||
+                  toCssSizeValue(props.imageHeight) ||
+                  "180px",
+                objectFit: item?.fit || props.fit || "cover",
+                borderRadius: radius,
+                background: "#f3f4f6",
+              }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
   if (type === "Atomic/Video") {
-    const src = props.src || resolveAssetUrl(props.assetId, assets);
+    const src =
+      props.src ||
+      props.videoUrl ||
+      resolveAssetUrl(props.assetId || props.videoAssetId, assets);
     if (!src) {
       return (
         <div

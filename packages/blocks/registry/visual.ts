@@ -54,6 +54,9 @@ import {
   CategoryGridV1Schema,
   BrandGridV1Schema,
   BestSellersV1Schema,
+  MegaMenuV1Schema,
+  StoreLocatorV1Schema,
+  BundleOfferV1Schema,
 } from "../../schemas/blocks/commerce";
 import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
@@ -125,6 +128,9 @@ import SocialProofTickerV1 from "../marketing/SocialProofTicker";
 import CategoryGridV1 from "../commerce/CategoryGrid";
 import BrandGridV1 from "../commerce/BrandGrid";
 import BestSellersV1 from "../commerce/BestSellers";
+import MegaMenuV1 from "../commerce/MegaMenu";
+import StoreLocatorV1 from "../commerce/StoreLocator";
+import BundleOfferV1 from "../commerce/BundleOffer";
 
 export const VISUAL_BLOCKS: Record<
   string,
@@ -262,6 +268,21 @@ export const VISUAL_BLOCKS: Record<
     type: "BestSellers/V1",
     schema: BestSellersV1Schema,
     render: BestSellersV1,
+  },
+  "MegaMenu/V1": {
+    type: "MegaMenu/V1",
+    schema: MegaMenuV1Schema,
+    render: MegaMenuV1,
+  },
+  "StoreLocator/V1": {
+    type: "StoreLocator/V1",
+    schema: StoreLocatorV1Schema,
+    render: StoreLocatorV1,
+  },
+  "BundleOffer/V1": {
+    type: "BundleOffer/V1",
+    schema: BundleOfferV1Schema,
+    render: BundleOfferV1,
   },
   "BentoGrid/V1": {
     type: "BentoGrid/V1",

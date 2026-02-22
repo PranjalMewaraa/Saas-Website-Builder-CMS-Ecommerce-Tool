@@ -41,7 +41,7 @@ export function VisualCanvas({
 
   if (!blocks.length) {
     return (
-      <div className="min-h-[70vh] bg-gray-50 p-6 rounded-xl">
+      <div className="h-full min-h-0 bg-gray-50 p-6 rounded-xl">
         <div className="border border-dashed border-gray-300 rounded-xl p-10 text-center bg-white">
           <div className="text-lg font-semibold text-gray-800">
             Start building your page
@@ -78,15 +78,10 @@ export function VisualCanvas({
 
   return (
     <div
-      className="min-h-[70vh] bg-gray-50 p-6 rounded-xl space-y-6 overflow-auto"
+      className="h-full min-h-0 bg-gray-50 p-6 rounded-xl space-y-6 overflow-x-hidden"
       style={gridStyle}
     >
-      <div
-        style={{
-          transform: `scale(${zoom / 100})`,
-          transformOrigin: "top left",
-        }}
-      >
+      <div style={{ zoom: `${Math.max(25, Math.min(200, zoom))}%` } as any}>
         <div className="space-y-6">
           {blocks.map((b: any) => {
             if (b.type === "Layout/Section") {

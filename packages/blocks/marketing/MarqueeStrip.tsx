@@ -7,6 +7,7 @@ export default function MarqueeStripV1(props: any) {
     items = ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
     speedSec = 30,
     pauseOnHover = true,
+    itemGap = 24,
     contentWidth = "2xl",
   } = props || {};
 
@@ -34,7 +35,11 @@ export default function MarqueeStripV1(props: any) {
             style={{ animationDuration: `${Math.max(5, Number(speedSec || 30))}s` }}
           >
             {[...list, ...list].map((item: string, idx: number) => (
-              <span key={`${item}-${idx}`} className="mx-6 inline-flex text-sm font-medium">
+              <span
+                key={`${item}-${idx}`}
+                className="inline-flex text-sm font-medium"
+                style={{ marginInline: `${Math.max(0, Number(itemGap || 24)) / 2}px` }}
+              >
                 {item}
               </span>
             ))}

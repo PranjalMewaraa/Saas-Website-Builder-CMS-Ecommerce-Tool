@@ -215,7 +215,7 @@ async function BlockRenderer({
 
   if (!def) {
     return (
-      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+      <div data-block-id={block.id} className={outerClass} style={safeOuterStyle}>
         <div className={`${innerClass} __inner`} style={innerStyle}>
           <div className="border rounded p-3 text-sm">
             Missing block: <b>{block.type}</b>
@@ -351,9 +351,22 @@ async function BlockRenderer({
       }
     }
 
+    const isHeader = block.type.startsWith("Header/");
+    const safeOuterStyle: any = { ...outerStyle };
+    const safeInnerStyle: any = { ...innerStyle };
+    if (isHeader) {
+      // Mega menu panels must be allowed to escape header wrappers.
+      safeOuterStyle.overflow = "visible";
+      safeInnerStyle.overflow = "visible";
+      safeOuterStyle.position = safeOuterStyle.position || "relative";
+      safeInnerStyle.position = safeInnerStyle.position || "relative";
+      safeOuterStyle.zIndex = Math.max(Number(safeOuterStyle.zIndex || 0), 120);
+      safeInnerStyle.zIndex = Math.max(Number(safeInnerStyle.zIndex || 0), 120);
+    }
+
     return (
       <div data-block-id={block.id} className={outerClass} style={outerStyle}>
-        <div className={`${innerClass} __inner`} style={innerStyle}>
+        <div className={`${innerClass} __inner`} style={safeInnerStyle}>
           <StyleWrapper style={finalStyle}>
             <Comp
               {...props}

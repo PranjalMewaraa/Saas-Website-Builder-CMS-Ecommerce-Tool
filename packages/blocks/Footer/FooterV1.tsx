@@ -49,6 +49,8 @@ type Props = {
   panelBorderWidth?: number;
   panelRadius?: number;
   panelTextColor?: string;
+  menuColumnGap?: number;
+  menuLinkGapX?: number;
   menuGroups?: FooterMenuGroup[];
   __editor?: boolean;
   previewQuery?: string;
@@ -73,6 +75,8 @@ export default function FooterV1({
   panelBorderWidth,
   panelRadius,
   panelTextColor,
+  menuColumnGap = 32,
+  menuLinkGapX = 24,
   menuGroups,
   __editor,
   previewQuery,
@@ -240,7 +244,10 @@ export default function FooterV1({
               {brandBadge ? <div className="mt-5">{renderBadge(brandBadge, badgeStyle)}</div> : null}
             </div>
             {columns.length ? (
-              <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4">
+              <div
+                className="mt-10 grid grid-cols-2 md:grid-cols-4"
+                style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+              >
                 {columns.map((group, idx) => (
                   <div key={`col-t2-${idx}`} className="text-center">
                     <h3
@@ -297,7 +304,10 @@ export default function FooterV1({
                 </p>
                 {brandBadge ? <div className="mt-6">{renderBadge(brandBadge, badgeStyle)}</div> : null}
               </div>
-              <div className="grid grid-cols-2 gap-8">
+              <div
+                className="grid grid-cols-2"
+                style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+              >
                 {columns.slice(0, 4).map((group, idx) => (
                   <div key={`col-t3-${idx}`}>
                     <h3
@@ -352,7 +362,10 @@ export default function FooterV1({
                 <p className="text-sm opacity-80">{brandDescription}</p>
               </div>
               <div className="md:col-span-2">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                <div
+                  className="flex flex-wrap items-center gap-y-3 text-sm"
+                  style={{ columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px` }}
+                >
                   {columns.flatMap((g) => g.items).slice(0, 12).map((n) => (
                     <Link
                       key={`flat-${n.id}`}
@@ -394,7 +407,10 @@ export default function FooterV1({
                 </p>
               </div>
               {columns.length ? (
-                <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+                <div
+                  className="flex flex-wrap gap-y-3 text-sm"
+                  style={{ columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px` }}
+                >
                   {columns[0].items.slice(0, 6).map((n) => (
                     <Link
                       key={n.id}
@@ -442,7 +458,10 @@ export default function FooterV1({
               </div>
 
               {columns.length ? (
-                <div className="grid grid-cols-2 gap-8 md:col-span-3 md:grid-cols-4">
+                <div
+                  className="grid grid-cols-2 md:col-span-3 md:grid-cols-4"
+                  style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+                >
                   {columns.map((group, idx) => (
                     <div key={`col-${idx}`}>
                       <h3

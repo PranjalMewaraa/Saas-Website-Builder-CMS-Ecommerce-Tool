@@ -104,8 +104,64 @@ function renderAtomicPreview(
     return <img src={src} alt={props.alt || ""} style={imgStyle} />;
   }
 
+  if (block.type === "Atomic/ImageGallery") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const columns = Math.max(1, Number(props.columns) || 3);
+    const gap = toCssSizeValue(props.gap) || "12px";
+    const radius = toCssSizeValue(props.radius) || "12px";
+    return (
+      <div
+        style={{
+          ...style,
+          display: "grid",
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gap,
+        }}
+      >
+        {items.length === 0 ? (
+          <div
+            style={{
+              border: "1px dashed rgba(0,0,0,0.2)",
+              padding: "24px",
+              fontSize: "12px",
+              color: "rgba(0,0,0,0.5)",
+              gridColumn: `span ${columns}`,
+            }}
+          >
+            Image Gallery
+          </div>
+        ) : (
+          items.map((item: any, idx: number) => {
+            const src =
+              resolveAssetUrl(item?.assetId, assetsMap) || item?.src || "";
+            return (
+              <img
+                key={item?.id || `${block.id}_img_${idx}`}
+                src={src || undefined}
+                alt={item?.alt || ""}
+                style={{
+                  width: "100%",
+                  height:
+                    toCssSizeValue(item?.height) ||
+                    toCssSizeValue(props.imageHeight) ||
+                    "180px",
+                  objectFit: item?.fit || props.fit || "cover",
+                  borderRadius: radius,
+                  background: "#f3f4f6",
+                }}
+              />
+            );
+          })
+        )}
+      </div>
+    );
+  }
+
   if (block.type === "Atomic/Video") {
-    const src = props.src || resolveAssetUrl(props.assetId, assetsMap);
+    const src =
+      props.src ||
+      props.videoUrl ||
+      resolveAssetUrl(props.assetId || props.videoAssetId, assetsMap);
     if (!src) {
       return (
         <div
@@ -538,6 +594,12 @@ export default function VisualLayoutSection({
       type: "Atomic/Image",
       title: "Image",
       description: "Responsive image block",
+      group: "Media",
+    },
+    {
+      type: "Atomic/ImageGallery",
+      title: "Image Gallery",
+      description: "Grid of images",
       group: "Media",
     },
     {
@@ -1683,7 +1745,7 @@ export default function VisualLayoutSection({
         >
           <div
             ref={dialogRef}
-            className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-xl"
+            className="w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-2xl bg-white p-4 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">

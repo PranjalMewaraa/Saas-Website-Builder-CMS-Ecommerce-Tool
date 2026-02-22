@@ -816,11 +816,18 @@ function getBlockGroups(types: string[], searchText: string) {
     },
     {
       title: "Site Essentials",
-      items: inSet(["Header", "Hero", "Footer"]),
+      items: inSet(["Header", "Hero", "Footer", "MegaMenu"]),
     },
     {
       title: "Catalog & Product Discovery",
-      items: inSet(["ProductGrid", "ProductList", "CategoryGrid", "BrandGrid", "BestSellers"]),
+      items: inSet([
+        "ProductGrid",
+        "ProductList",
+        "CategoryGrid",
+        "BrandGrid",
+        "BestSellers",
+        "StoreLocator",
+      ]),
     },
     {
       title: "Product Details & Checkout",
@@ -855,7 +862,7 @@ function getBlockGroups(types: string[], searchText: string) {
     },
     {
       title: "Pricing & Offers",
-      items: inSet(["PricingTable", "ProductHighlight"]),
+      items: inSet(["PricingTable", "ProductHighlight", "BundleOffer"]),
     },
     {
       title: "Forms",
@@ -903,6 +910,9 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("CategoryGrid")) return "Categories";
   if (type.startsWith("BrandGrid")) return "Brands";
   if (type.startsWith("BestSellers")) return "Best Sellers";
+  if (type.startsWith("MegaMenu")) return "Mega Menu";
+  if (type.startsWith("StoreLocator")) return "Store Locator";
+  if (type.startsWith("BundleOffer")) return "Bundle Offer";
   if (type.startsWith("BentoGrid")) return "Bento";
   if (type.startsWith("BeforeAfterSlider")) return "Before/After";
   if (type.startsWith("StickyPromoBar")) return "Promo Bar";
@@ -948,6 +958,8 @@ function defaultPropsFor(type: string) {
     return {
       menuId: "menu_main",
       layout: "three-col",
+      menuGap: 24,
+      actionGap: 8,
       ctaText: "Shop",
       ctaHref: "/products",
       ctaSecondaryText: "Learn more",
@@ -965,6 +977,13 @@ function defaultPropsFor(type: string) {
           textStyle: "normal",
         },
       ],
+      layout: "multi-column",
+      menuColumnGap: 32,
+      menuLinkGapX: 24,
+      description: "Building better digital experiences since 2023.",
+      badgeText: "Designed for modern storefronts",
+      showSocials: true,
+      socialLinks: [],
     };
   if (type === "Hero/V1")
     return {
@@ -1201,10 +1220,13 @@ function defaultPropsFor(type: string) {
     return {
       title: "Shop by Brand",
       subtitle: "Browse your trusted brands.",
+      ctaText: "View all brands",
+      ctaHref: "/brands",
+      gap: 16,
       brands: [
-        { name: "Urban Co", href: "#" },
-        { name: "Nova Fit", href: "#" },
-        { name: "Northline", href: "#" },
+        { name: "Urban Co", href: "#", logo: "" },
+        { name: "Nova Fit", href: "#", logo: "" },
+        { name: "Northline", href: "#", logo: "" },
       ],
     };
   if (type === "BestSellers/V1")
@@ -1215,6 +1237,78 @@ function defaultPropsFor(type: string) {
         { title: "Premium Hoodie", price: "₹1,999", href: "#" },
         { title: "Everyday Sneakers", price: "₹2,499", href: "#" },
         { title: "Classic Denim", price: "₹1,799", href: "#" },
+      ],
+    };
+  if (type === "MegaMenu/V1")
+    return {
+      title: "Explore",
+      subtitle: "Navigate your catalog quickly.",
+      columns: 4,
+      ctaText: "View all products",
+      ctaHref: "/products",
+      showSearch: true,
+      searchPlaceholder: "Search products, collections, brands...",
+      sections: [
+        {
+          title: "New Arrivals",
+          links: [
+            { label: "Latest Drop", href: "/products", badge: "New" },
+            { label: "Trending", href: "/products?sort=newest" },
+          ],
+        },
+        {
+          title: "Collections",
+          links: [
+            { label: "Summer", href: "/products?collection=summer" },
+            { label: "Essentials", href: "/products?collection=essentials" },
+          ],
+        },
+      ],
+      promo: {
+        title: "Weekend Drop",
+        description: "Up to 40% off selected items.",
+        image:
+          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+        ctaText: "Shop Offer",
+        ctaHref: "/products",
+      },
+    };
+  if (type === "StoreLocator/V1")
+    return {
+      title: "Find a store near you",
+      subtitle: "See address, contact and opening hours.",
+      searchPlaceholder: "Search city or area",
+      showMap: true,
+      ctaText: "Contact support",
+      ctaHref: "/contact",
+      stores: [
+        {
+          name: "Flagship Store",
+          badge: "Open",
+          address: "21 Market Street",
+          city: "Mumbai",
+          state: "MH",
+          phone: "+91 90000 00001",
+          email: "flagship@example.com",
+          hours: "Mon-Sat 10 AM - 9 PM",
+          mapUrl: "https://maps.google.com/?q=Mumbai",
+        },
+      ],
+    };
+  if (type === "BundleOffer/V1")
+    return {
+      title: "Bundle and save more",
+      subtitle: "Get instant discount when buying together.",
+      currency: "INR",
+      discountType: "percent",
+      discountValue: 10,
+      ctaText: "Buy bundle",
+      ctaHref: "/cart",
+      note: "Discount applies at checkout.",
+      items: [
+        { name: "Classic Tee", qty: 1, price: 899, image: "" },
+        { name: "Athletic Jogger", qty: 1, price: 1499, image: "" },
+        { name: "Everyday Cap", qty: 1, price: 499, image: "" },
       ],
     };
   if (type === "BentoGrid/V1")
@@ -1249,6 +1343,8 @@ function defaultPropsFor(type: string) {
     return {
       title: "See the transformation",
       subtitle: "Drag the slider to compare before and after.",
+      beforeImageAssetId: "",
+      afterImageAssetId: "",
       beforeLabel: "Before",
       afterLabel: "After",
       height: 420,
@@ -1259,6 +1355,13 @@ function defaultPropsFor(type: string) {
       ctaText: "Shop Now",
       ctaHref: "/products",
       position: "top",
+      align: "center",
+      offsetX: 12,
+      offsetY: 8,
+      radius: 12,
+      maxWidth: "1152px",
+      dismissible: false,
+      theme: "dark",
     };
   if (type === "TestimonialCarousel/V1")
     return {
@@ -1296,6 +1399,7 @@ function defaultPropsFor(type: string) {
       items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
       speedSec: 30,
       pauseOnHover: true,
+      itemGap: 24,
     };
   if (type === "SpotlightCards/V1")
     return {
@@ -1332,7 +1436,9 @@ function defaultPropsFor(type: string) {
       ctaHref: "/",
       minHeight: 520,
       overlayOpacity: 0.45,
+      videoAssetId: "",
       videoUrl: "",
+      posterAssetId: "",
       posterUrl: "",
     };
   if (type === "KPIRibbon/V1")
@@ -1380,6 +1486,7 @@ function defaultPropsFor(type: string) {
         "Rated 4.8/5 by 1200+ customers",
       ],
       speedSec: 35,
+      itemGap: 24,
     };
   if (type === "Layout/Section")
     return {

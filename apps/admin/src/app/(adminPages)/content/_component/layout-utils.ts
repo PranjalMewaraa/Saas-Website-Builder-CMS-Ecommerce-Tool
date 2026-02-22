@@ -68,6 +68,7 @@ export type LayoutAtomicBlock = {
   type:
     | "Atomic/Text"
     | "Atomic/Image"
+    | "Atomic/ImageGallery"
     | "Atomic/Video"
     | "Atomic/Button"
     | "Atomic/Icon"
@@ -185,6 +186,7 @@ function uid(prefix: string) {
 export const ATOMIC_TYPES: LayoutAtomicBlock["type"][] = [
   "Atomic/Text",
   "Atomic/Image",
+  "Atomic/ImageGallery",
   "Atomic/Video",
   "Atomic/Button",
   "Atomic/Icon",
@@ -261,11 +263,27 @@ export function createAtomicBlock(
       style: { width: "100%" },
     };
   }
+  if (type === "Atomic/ImageGallery") {
+    return {
+      id: uid("atom"),
+      type,
+      props: {
+        columns: 3,
+        gap: 12,
+        radius: 12,
+        items: Array.from({ length: 6 }).map((_, i) => ({
+          src: defaultImage,
+          alt: `Gallery image ${i + 1}`,
+        })),
+      },
+      style: { width: "100%" },
+    };
+  }
   if (type === "Atomic/Video") {
     return {
       id: uid("atom"),
       type,
-      props: { src: "", controls: true },
+      props: { src: "", videoUrl: "", controls: true },
       style: { width: "100%" },
     };
   }

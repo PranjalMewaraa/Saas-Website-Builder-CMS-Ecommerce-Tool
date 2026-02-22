@@ -119,6 +119,18 @@ export function BlockPropsForm({
               options={["sm", "md", "lg", "xl", "2xl"]}
             />
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <NumberField
+              label="Menu Gap"
+              value={Number(props.menuGap ?? 24)}
+              onChange={(n: any) => setProp("menuGap", Math.max(0, Number(n || 0)))}
+            />
+            <NumberField
+              label="Action Gap"
+              value={Number(props.actionGap ?? 8)}
+              onChange={(n: any) => setProp("actionGap", Math.max(0, Number(n || 0)))}
+            />
+          </div>
           {menus.length ? (
             <label className="block space-y-1.5">
               <div className="text-sm font-medium">Menu</div>
@@ -662,6 +674,22 @@ export function BlockPropsForm({
               value={props.contentWidth || "xl"}
               onChange={(v: any) => setProp("contentWidth", v)}
               options={["sm", "md", "lg", "xl", "2xl"]}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <NumberField
+              label="Menu Column Gap"
+              value={Number(props.menuColumnGap ?? 32)}
+              onChange={(n: any) =>
+                setProp("menuColumnGap", Math.max(0, Number(n || 0)))
+              }
+            />
+            <NumberField
+              label="Menu Link Gap X"
+              value={Number(props.menuLinkGapX ?? 24)}
+              onChange={(n: any) =>
+                setProp("menuLinkGapX", Math.max(0, Number(n || 0)))
+              }
             />
           </div>
         </div>
@@ -2036,6 +2064,751 @@ export function BlockPropsForm({
     );
   }
 
+  if (type === "BrandGrid/V1") {
+    const brands = Array.isArray(props.brands) ? props.brands : [];
+    return (
+      <div className="space-y-3">
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">Content</div>
+          <Select
+            label="Width"
+            value={props.contentWidth || "xl"}
+            onChange={(v: any) => setProp("contentWidth", v)}
+            options={["sm", "md", "lg", "xl", "2xl"]}
+          />
+          <Field
+            label="Title"
+            value={props.title || ""}
+            onChange={(v: any) => setProp("title", v)}
+          />
+          <Field
+            label="Subtitle"
+            value={props.subtitle || ""}
+            onChange={(v: any) => setProp("subtitle", v)}
+          />
+          <NumberField
+            label="Grid Gap"
+            value={Number(props.gap ?? 16)}
+            onChange={(n: any) => setProp("gap", Math.max(0, Number(n || 0)))}
+          />
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="text-sm font-medium">CTA</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Field
+              label="CTA Text"
+              value={props.ctaText || ""}
+              onChange={(v: any) => setProp("ctaText", v)}
+            />
+            <Field
+              label="CTA Link"
+              value={props.ctaHref || ""}
+              onChange={(v: any) => setProp("ctaHref", v)}
+            />
+          </div>
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Brands</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-muted"
+              onClick={() =>
+                setProp("brands", [...brands, { name: "New Brand", href: "#", logo: "" }])
+              }
+            >
+              + Add Brand
+            </button>
+          </div>
+          {brands.map((b: any, i: number) => (
+            <div key={i} className="border rounded p-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-xs opacity-60">Brand #{i + 1}</div>
+                <button
+                  type="button"
+                  className="text-xs text-red-500"
+                  onClick={() =>
+                    setProp(
+                      "brands",
+                      brands.filter((_: any, idx: number) => idx !== i),
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+              <Field
+                label="Name"
+                value={b.name || ""}
+                onChange={(v: any) => setPropPath(`brands.${i}.name`, v)}
+              />
+              <Field
+                label="Link"
+                value={b.href || ""}
+                onChange={(v: any) => setPropPath(`brands.${i}.href`, v)}
+              />
+              <ImageField
+                siteId={siteId}
+                label="Logo"
+                assetIdValue={b.logoAssetId || ""}
+                altValue={b.name || ""}
+                onChangeAssetId={(v: any) => setPropPath(`brands.${i}.logoAssetId`, v)}
+                onChangeAssetUrl={(v: any) => setPropPath(`brands.${i}.logo`, v)}
+                onChangeAlt={() => {}}
+                assetsMap={assetsMap}
+                assetUrlValue={b.logo || ""}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "MegaMenu/V1") {
+    const sections = Array.isArray(props.sections) ? props.sections : [];
+    const presets = [
+      {
+        id: "catalog",
+        label: "Catalog",
+        props: {
+          title: "Explore Catalog",
+          subtitle: "Browse by category, collection and trend.",
+          columns: 4,
+          showSearch: true,
+          ctaText: "View all products",
+          ctaHref: "/products",
+          sections: [
+            {
+              title: "New Arrivals",
+              links: [
+                { label: "Latest Drop", href: "/products", badge: "New" },
+                { label: "Trending", href: "/products?sort=newest" },
+              ],
+            },
+            {
+              title: "Collections",
+              links: [
+                { label: "Summer", href: "/products?collection=summer" },
+                { label: "Essentials", href: "/products?collection=essentials" },
+              ],
+            },
+          ],
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+          borderColor: "#e2e8f0",
+          borderWidth: 1,
+          radius: 16,
+          padding: { top: 40, right: 24, bottom: 40, left: 24 },
+        },
+      },
+      {
+        id: "minimal",
+        label: "Minimal",
+        props: {
+          title: "Quick Navigation",
+          subtitle: "Fast paths to your most visited pages.",
+          columns: 3,
+          showSearch: false,
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#111827",
+          borderColor: "#d1d5db",
+          borderWidth: 1,
+          radius: 12,
+          padding: { top: 32, right: 20, bottom: 32, left: 20 },
+        },
+      },
+      {
+        id: "dark",
+        label: "Dark Commerce",
+        props: {
+          title: "Shop Everything",
+          subtitle: "Collections, offers and shortcuts in one panel.",
+          columns: 5,
+          showSearch: true,
+          promo: {
+            title: "Weekend Drop",
+            description: "Limited-time markdowns on selected products.",
+            image:
+              "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+            ctaText: "Shop Offer",
+            ctaHref: "/products",
+          },
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#e2e8f0",
+          borderColor: "#334155",
+          borderWidth: 1,
+          radius: 16,
+          padding: { top: 40, right: 24, bottom: 40, left: 24 },
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Preset Packs</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted transition"
+                onClick={() => {
+                  if (setProps) setProps({ ...(props || {}), ...p.props });
+                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div
+                  className={`h-12 rounded-md border mb-2 ${
+                    p.id === "dark"
+                      ? "bg-slate-900 border-slate-700"
+                      : p.id === "minimal"
+                        ? "bg-slate-50 border-slate-200"
+                        : "bg-white border-slate-200"
+                  }`}
+                >
+                  <div className="grid grid-cols-4 gap-1 p-2 h-full">
+                    <div
+                      className={`rounded-sm ${
+                        p.id === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      }`}
+                    />
+                    <div
+                      className={`rounded-sm ${
+                        p.id === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      }`}
+                    />
+                    <div
+                      className={`rounded-sm ${
+                        p.id === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      }`}
+                    />
+                    <div className={p.id === "dark" ? "bg-amber-300 rounded-sm" : "bg-slate-300 rounded-sm"} />
+                  </div>
+                </div>
+                <div className="text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+          <ResetStyleButton />
+        </div>
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <NumberField
+            label="Columns"
+            value={Number(props.columns || 4)}
+            onChange={(v: any) =>
+              setProp("columns", Math.max(1, Math.min(6, Number(v || 1))))
+            }
+          />
+          <Select
+            label="Show Search"
+            value={props.showSearch === false ? "no" : "yes"}
+            onChange={(v: any) => setProp("showSearch", v === "yes")}
+            options={["yes", "no"]}
+          />
+        </div>
+        <Field
+          label="Search Placeholder"
+          value={props.searchPlaceholder || ""}
+          onChange={(v: any) => setProp("searchPlaceholder", v)}
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="CTA Text"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="CTA Link"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+
+        <div className="border rounded p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Sections</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-muted"
+              onClick={() =>
+                setProp("sections", [
+                  ...sections,
+                  { title: "New Section", links: [{ label: "Link", href: "#" }] },
+                ])
+              }
+            >
+              + Add Section
+            </button>
+          </div>
+          {sections.map((section: any, i: number) => (
+            <div key={i} className="border rounded p-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-xs opacity-60">Section #{i + 1}</div>
+                <button
+                  type="button"
+                  className="text-xs text-red-500"
+                  onClick={() =>
+                    setProp(
+                      "sections",
+                      sections.filter((_: any, idx: number) => idx !== i),
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+              <Field
+                label="Section Title"
+                value={section?.title || ""}
+                onChange={(v: any) => setPropPath(`sections.${i}.title`, v)}
+              />
+              {Array.isArray(section?.links)
+                ? section.links.map((link: any, lidx: number) => (
+                    <div key={lidx} className="rounded border p-2 space-y-2">
+                      <Field
+                        label="Label"
+                        value={link?.label || ""}
+                        onChange={(v: any) =>
+                          setPropPath(`sections.${i}.links.${lidx}.label`, v)
+                        }
+                      />
+                      <Field
+                        label="Href"
+                        value={link?.href || ""}
+                        onChange={(v: any) =>
+                          setPropPath(`sections.${i}.links.${lidx}.href`, v)
+                        }
+                      />
+                      <Field
+                        label="Badge"
+                        value={link?.badge || ""}
+                        onChange={(v: any) =>
+                          setPropPath(`sections.${i}.links.${lidx}.badge`, v)
+                        }
+                      />
+                    </div>
+                  ))
+                : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "StoreLocator/V1") {
+    const stores = Array.isArray(props.stores) ? props.stores : [];
+    const presets = [
+      {
+        id: "map-first",
+        label: "Map First",
+        props: {
+          title: "Find nearby stores",
+          subtitle: "Search city and open directions.",
+          showMap: true,
+          ctaText: "Get support",
+          ctaHref: "/contact",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#f8fafc" },
+          textColor: "#0f172a",
+          borderColor: "#cbd5e1",
+          borderWidth: 1,
+          radius: 14,
+          padding: { top: 40, right: 24, bottom: 40, left: 24 },
+        },
+      },
+      {
+        id: "list-first",
+        label: "List Focused",
+        props: {
+          title: "Store directory",
+          subtitle: "Browse all stores with contact details.",
+          showMap: false,
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#111827",
+          borderColor: "#e5e7eb",
+          borderWidth: 1,
+          radius: 12,
+          padding: { top: 32, right: 20, bottom: 32, left: 20 },
+        },
+      },
+      {
+        id: "premium",
+        label: "Premium Cards",
+        props: {
+          title: "Visit our experience stores",
+          subtitle: "Premium in-store help and pickup options.",
+          showMap: true,
+          ctaText: "Book a visit",
+          ctaHref: "/contact",
+        },
+        styleOverrides: {
+          bg: {
+            type: "gradient",
+            gradient: { from: "#ffffff", to: "#e2e8f0", angle: 180 },
+          },
+          textColor: "#0f172a",
+          borderColor: "#cbd5e1",
+          borderWidth: 1,
+          radius: 16,
+          padding: { top: 44, right: 24, bottom: 44, left: 24 },
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Preset Packs</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted transition"
+                onClick={() => {
+                  if (setProps) setProps({ ...(props || {}), ...p.props });
+                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div
+                  className={`h-12 rounded-md border mb-2 p-2 ${
+                    p.id === "premium"
+                      ? "bg-gradient-to-b from-white to-slate-200 border-slate-300"
+                      : p.id === "list-first"
+                        ? "bg-white border-slate-200"
+                        : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <div className="grid grid-cols-[1fr_auto] gap-2 h-full">
+                    <div className="space-y-1">
+                      <div className="h-2 w-3/4 rounded bg-slate-300" />
+                      <div className="h-2 w-1/2 rounded bg-slate-200" />
+                    </div>
+                    <div
+                      className={`w-6 rounded ${
+                        p.id === "list-first" ? "bg-slate-200" : "bg-slate-300"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+          <ResetStyleButton />
+        </div>
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <Field
+          label="Search Placeholder"
+          value={props.searchPlaceholder || ""}
+          onChange={(v: any) => setProp("searchPlaceholder", v)}
+        />
+        <Select
+          label="Show Map"
+          value={props.showMap === false ? "no" : "yes"}
+          onChange={(v: any) => setProp("showMap", v === "yes")}
+          options={["yes", "no"]}
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="CTA Text"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="CTA Link"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+        <div className="border rounded p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Stores</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-muted"
+              onClick={() =>
+                setProp("stores", [...stores, { name: "New Store", city: "", mapUrl: "" }])
+              }
+            >
+              + Add Store
+            </button>
+          </div>
+          {stores.map((store: any, i: number) => (
+            <div key={i} className="border rounded p-2 space-y-2">
+              <Field
+                label="Name"
+                value={store?.name || ""}
+                onChange={(v: any) => setPropPath(`stores.${i}.name`, v)}
+              />
+              <Field
+                label="Badge"
+                value={store?.badge || ""}
+                onChange={(v: any) => setPropPath(`stores.${i}.badge`, v)}
+              />
+              <Field
+                label="Address"
+                value={store?.address || ""}
+                onChange={(v: any) => setPropPath(`stores.${i}.address`, v)}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Field
+                  label="City"
+                  value={store?.city || ""}
+                  onChange={(v: any) => setPropPath(`stores.${i}.city`, v)}
+                />
+                <Field
+                  label="State"
+                  value={store?.state || ""}
+                  onChange={(v: any) => setPropPath(`stores.${i}.state`, v)}
+                />
+              </div>
+              <Field
+                label="Map URL"
+                value={store?.mapUrl || ""}
+                onChange={(v: any) => setPropPath(`stores.${i}.mapUrl`, v)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "BundleOffer/V1") {
+    const items = Array.isArray(props.items) ? props.items : [];
+    const presets = [
+      {
+        id: "starter-bundle",
+        label: "Starter Bundle",
+        props: {
+          title: "Starter bundle",
+          subtitle: "Perfect set for first-time buyers.",
+          discountType: "percent",
+          discountValue: 10,
+          items: [
+            { name: "Classic Tee", qty: 1, price: 899, image: "" },
+            { name: "Athletic Jogger", qty: 1, price: 1499, image: "" },
+          ],
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#ffffff" },
+          textColor: "#0f172a",
+          borderColor: "#e5e7eb",
+          borderWidth: 1,
+          radius: 16,
+          padding: { top: 40, right: 24, bottom: 40, left: 24 },
+        },
+      },
+      {
+        id: "clearance",
+        label: "Clearance Deal",
+        props: {
+          title: "Clearance bundle",
+          subtitle: "Big savings on selected inventory.",
+          discountType: "fixed",
+          discountValue: 500,
+          ctaText: "Claim deal",
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#fef2f2" },
+          textColor: "#7f1d1d",
+          borderColor: "#fecaca",
+          borderWidth: 1,
+          radius: 12,
+          padding: { top: 32, right: 20, bottom: 32, left: 20 },
+        },
+      },
+      {
+        id: "premium-kit",
+        label: "Premium Kit",
+        props: {
+          title: "Premium complete kit",
+          subtitle: "Everything you need in one checkout.",
+          discountType: "percent",
+          discountValue: 15,
+          items: [
+            { name: "Signature Hoodie", qty: 1, price: 2199, image: "" },
+            { name: "Performance Jogger", qty: 1, price: 1799, image: "" },
+            { name: "Core Tee", qty: 2, price: 999, image: "" },
+          ],
+        },
+        styleOverrides: {
+          bg: { type: "solid", color: "#0f172a" },
+          textColor: "#e2e8f0",
+          borderColor: "#334155",
+          borderWidth: 1,
+          radius: 16,
+          padding: { top: 40, right: 24, bottom: 40, left: 24 },
+        },
+      },
+    ];
+    return (
+      <div className="space-y-3">
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Preset Packs</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded-lg p-2 text-left hover:bg-muted transition"
+                onClick={() => {
+                  if (setProps) setProps({ ...(props || {}), ...p.props });
+                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  applyPresetStylePack(p.styleOverrides);
+                }}
+              >
+                <div
+                  className={`h-12 rounded-md border mb-2 p-2 ${
+                    p.id === "premium-kit"
+                      ? "bg-slate-900 border-slate-700"
+                      : p.id === "clearance"
+                        ? "bg-rose-50 border-rose-200"
+                        : "bg-white border-slate-200"
+                  }`}
+                >
+                  <div className="flex h-full items-end gap-1">
+                    <div className={p.id === "premium-kit" ? "h-3 w-4 rounded bg-slate-600" : "h-3 w-4 rounded bg-slate-300"} />
+                    <div className={p.id === "premium-kit" ? "h-5 w-4 rounded bg-slate-500" : "h-5 w-4 rounded bg-slate-400"} />
+                    <div className={p.id === "premium-kit" ? "h-4 w-4 rounded bg-slate-400" : "h-4 w-4 rounded bg-slate-300"} />
+                    <div className={p.id === "clearance" ? "ml-auto h-3 w-8 rounded bg-rose-300" : "ml-auto h-3 w-8 rounded bg-emerald-300"} />
+                  </div>
+                </div>
+                <div className="text-xs font-medium">{p.label}</div>
+              </button>
+            ))}
+          </div>
+          <ResetStyleButton />
+        </div>
+        <Field
+          label="Title"
+          value={props.title || ""}
+          onChange={(v: any) => setProp("title", v)}
+        />
+        <Field
+          label="Subtitle"
+          value={props.subtitle || ""}
+          onChange={(v: any) => setProp("subtitle", v)}
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Field
+            label="Currency"
+            value={props.currency || "INR"}
+            onChange={(v: any) => setProp("currency", v)}
+          />
+          <Select
+            label="Discount Type"
+            value={props.discountType || "percent"}
+            onChange={(v: any) => setProp("discountType", v)}
+            options={["percent", "fixed"]}
+          />
+          <NumberField
+            label="Discount Value"
+            value={Number(props.discountValue || 0)}
+            onChange={(v: any) =>
+              setProp("discountValue", Math.max(0, Number(v || 0)))
+            }
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="CTA Text"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="CTA Link"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+        <Field
+          label="Note"
+          value={props.note || ""}
+          onChange={(v: any) => setProp("note", v)}
+        />
+        <div className="border rounded p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">Items</div>
+            <button
+              type="button"
+              className="text-xs border rounded px-2 py-1 hover:bg-muted"
+              onClick={() =>
+                setProp("items", [...items, { name: "New Item", qty: 1, price: 0 }])
+              }
+            >
+              + Add Item
+            </button>
+          </div>
+          {items.map((item: any, i: number) => (
+            <div key={i} className="border rounded p-2 space-y-2">
+              <Field
+                label="Name"
+                value={item?.name || ""}
+                onChange={(v: any) => setPropPath(`items.${i}.name`, v)}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <NumberField
+                  label="Qty"
+                  value={Number(item?.qty || 1)}
+                  onChange={(v: any) =>
+                    setPropPath(`items.${i}.qty`, Math.max(1, Number(v || 1)))
+                  }
+                />
+                <NumberField
+                  label="Price"
+                  value={Number(item?.price || 0)}
+                  onChange={(v: any) =>
+                    setPropPath(`items.${i}.price`, Math.max(0, Number(v || 0)))
+                  }
+                />
+              </div>
+              <Field
+                label="Image URL"
+                value={item?.image || ""}
+                onChange={(v: any) => setPropPath(`items.${i}.image`, v)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (type === "ProductHighlight/V1") {
     return (
       <div className="space-y-3">
@@ -2314,15 +3087,27 @@ export function BlockPropsForm({
           value={props.subtitle || ""}
           onChange={(v: any) => setProp("subtitle", v)}
         />
-        <Field
-          label="beforeImage"
-          value={props.beforeImage || ""}
-          onChange={(v: any) => setProp("beforeImage", v)}
+        <ImageField
+          siteId={siteId}
+          label="Before Image"
+          assetIdValue={props.beforeImageAssetId || ""}
+          altValue={props.beforeLabel || ""}
+          onChangeAssetId={(v: any) => setProp("beforeImageAssetId", v)}
+          onChangeAssetUrl={(v: any) => setProp("beforeImage", v)}
+          onChangeAlt={(v: any) => setProp("beforeLabel", v)}
+          assetsMap={assetsMap}
+          assetUrlValue={props.beforeImage || DEFAULT_IMAGE}
         />
-        <Field
-          label="afterImage"
-          value={props.afterImage || ""}
-          onChange={(v: any) => setProp("afterImage", v)}
+        <ImageField
+          siteId={siteId}
+          label="After Image"
+          assetIdValue={props.afterImageAssetId || ""}
+          altValue={props.afterLabel || ""}
+          onChangeAssetId={(v: any) => setProp("afterImageAssetId", v)}
+          onChangeAssetUrl={(v: any) => setProp("afterImage", v)}
+          onChangeAlt={(v: any) => setProp("afterLabel", v)}
+          assetsMap={assetsMap}
+          assetUrlValue={props.afterImage || DEFAULT_IMAGE}
         />
         <Field
           label="beforeLabel"
@@ -2354,41 +3139,182 @@ export function BlockPropsForm({
   }
 
   if (type === "StickyPromoBar/V1") {
+    const presets = [
+      {
+        id: "dark-top",
+        label: "Dark Top",
+        props: {
+          text: "Free shipping on orders above Rs 999",
+          ctaText: "Shop Now",
+          ctaHref: "/products",
+          position: "top",
+          align: "center",
+          theme: "dark",
+          offsetX: 12,
+          offsetY: 8,
+          radius: 12,
+          bgColor: "",
+          textColor: "",
+          ctaBgColor: "",
+          ctaTextColor: "",
+        },
+      },
+      {
+        id: "brand-center",
+        label: "Brand Center",
+        props: {
+          text: "New arrivals are live. Limited launch discount.",
+          ctaText: "Explore",
+          ctaHref: "/products",
+          position: "top",
+          align: "center",
+          theme: "brand",
+          offsetX: 20,
+          offsetY: 10,
+          radius: 14,
+          bgColor: "",
+          textColor: "",
+          ctaBgColor: "",
+          ctaTextColor: "",
+        },
+      },
+      {
+        id: "bottom-alert",
+        label: "Bottom Alert",
+        props: {
+          text: "Save 20% with code SAVE20",
+          ctaText: "Apply Offer",
+          ctaHref: "/cart",
+          position: "bottom",
+          align: "right",
+          theme: "danger",
+          offsetX: 16,
+          offsetY: 12,
+          radius: 14,
+          bgColor: "",
+          textColor: "",
+          ctaBgColor: "",
+          ctaTextColor: "",
+        },
+      },
+    ];
+
     return (
       <div className="space-y-3">
+        <div className="space-y-2 border rounded p-2">
+          <div className="text-xs opacity-70">Quick Presets</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="border rounded p-2 text-left text-xs hover:bg-muted"
+                onClick={() => {
+                  Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                }}
+              >
+                <div className="h-8 rounded bg-slate-100 px-2 flex items-center">
+                  {p.label}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
         <Field
           label="text"
           value={props.text || ""}
           onChange={(v: any) => setProp("text", v)}
         />
-        <Field
-          label="ctaText"
-          value={props.ctaText || ""}
-          onChange={(v: any) => setProp("ctaText", v)}
-        />
-        <Field
-          label="ctaHref"
-          value={props.ctaHref || ""}
-          onChange={(v: any) => setProp("ctaHref", v)}
-        />
-        <Select
-          label="position"
-          value={props.position || "top"}
-          onChange={(v: any) => setProp("position", v)}
-          options={["top", "bottom"]}
-        />
-        <Select
-          label="Theme"
-          value={props.theme || "dark"}
-          onChange={(v: any) => setProp("theme", v)}
-          options={[
-            { label: "Dark", value: "dark" },
-            { label: "Brand", value: "brand" },
-            { label: "Light", value: "light" },
-            { label: "Success", value: "success" },
-            { label: "Danger", value: "danger" },
-          ]}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="ctaText"
+            value={props.ctaText || ""}
+            onChange={(v: any) => setProp("ctaText", v)}
+          />
+          <Field
+            label="ctaHref"
+            value={props.ctaHref || ""}
+            onChange={(v: any) => setProp("ctaHref", v)}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <Select
+            label="position"
+            value={props.position || "top"}
+            onChange={(v: any) => setProp("position", v)}
+            options={["top", "bottom"]}
+          />
+          <Select
+            label="align"
+            value={props.align || "center"}
+            onChange={(v: any) => setProp("align", v)}
+            options={["left", "center", "right"]}
+          />
+          <Select
+            label="Theme"
+            value={props.theme || "dark"}
+            onChange={(v: any) => setProp("theme", v)}
+            options={[
+              { label: "Dark", value: "dark" },
+              { label: "Brand", value: "brand" },
+              { label: "Light", value: "light" },
+              { label: "Success", value: "success" },
+              { label: "Danger", value: "danger" },
+            ]}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <NumberField
+            label="Offset X"
+            value={Number(props.offsetX ?? 12)}
+            onChange={(n: any) => setProp("offsetX", Math.max(0, Number(n || 0)))}
+          />
+          <NumberField
+            label="Offset Y"
+            value={Number(props.offsetY ?? 8)}
+            onChange={(n: any) => setProp("offsetY", Math.max(0, Number(n || 0)))}
+          />
+          <Field
+            label="Max Width"
+            value={props.maxWidth || "1152px"}
+            onChange={(v: any) => setProp("maxWidth", v)}
+          />
+          <NumberField
+            label="Radius"
+            value={Number(props.radius ?? 12)}
+            onChange={(n: any) => setProp("radius", Math.max(0, Number(n || 0)))}
+          />
+        </div>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={!!props.dismissible}
+            onChange={(e) => setProp("dismissible", e.target.checked)}
+          />
+          Dismiss button
+        </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <ColorPickerInput
+            label="Bar BG (optional)"
+            value={props.bgColor || ""}
+            onChange={(v: any) => setProp("bgColor", v)}
+          />
+          <ColorPickerInput
+            label="Bar Text (optional)"
+            value={props.textColor || ""}
+            onChange={(v: any) => setProp("textColor", v)}
+          />
+          <ColorPickerInput
+            label="CTA BG (optional)"
+            value={props.ctaBgColor || ""}
+            onChange={(v: any) => setProp("ctaBgColor", v)}
+          />
+          <ColorPickerInput
+            label="CTA Text (optional)"
+            value={props.ctaTextColor || ""}
+            onChange={(v: any) => setProp("ctaTextColor", v)}
+          />
+        </div>
       </div>
     );
   }
@@ -2743,6 +3669,11 @@ export function BlockPropsForm({
           label="Speed (seconds)"
           value={Number(props.speedSec ?? 30)}
           onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
+        />
+        <NumberField
+          label="Item Gap"
+          value={Number(props.itemGap ?? 24)}
+          onChange={(n: any) => setProp("itemGap", Math.max(0, Number(n || 0)))}
         />
         <label className="flex items-center gap-2 border rounded p-2">
           <input
@@ -3385,7 +4316,7 @@ export function BlockPropsForm({
           value={props.subtitle || ""}
           onChange={(v: any) => setProp("subtitle", v)}
         />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <Field
             label="CTA Text"
             value={props.ctaText || ""}
@@ -3415,16 +4346,40 @@ export function BlockPropsForm({
           />
           <div className="text-xs opacity-60">{props.overlayOpacity ?? 0.45}</div>
         </label>
-        <Field
-          label="Video URL"
-          value={props.videoUrl || ""}
-          onChange={(v: any) => setProp("videoUrl", v)}
+        <ImageField
+          siteId={siteId}
+          label="Video Asset"
+          assetIdValue={props.videoAssetId || ""}
+          altValue={""}
+          onChangeAssetId={(v: any) => setProp("videoAssetId", v)}
+          onChangeAssetUrl={(v: any) => setProp("videoUrl", v)}
+          onChangeAlt={() => {}}
+          assetsMap={assetsMap}
+          assetUrlValue={props.videoUrl || ""}
         />
-        <Field
-          label="Poster URL"
-          value={props.posterUrl || ""}
-          onChange={(v: any) => setProp("posterUrl", v)}
+        <ImageField
+          siteId={siteId}
+          label="Poster Image"
+          assetIdValue={props.posterAssetId || ""}
+          altValue={""}
+          onChangeAssetId={(v: any) => setProp("posterAssetId", v)}
+          onChangeAssetUrl={(v: any) => setProp("posterUrl", v)}
+          onChangeAlt={() => {}}
+          assetsMap={assetsMap}
+          assetUrlValue={props.posterUrl || DEFAULT_IMAGE}
         />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Field
+            label="Video URL (manual override)"
+            value={props.videoUrl || ""}
+            onChange={(v: any) => setProp("videoUrl", v)}
+          />
+          <Field
+            label="Poster URL (manual override)"
+            value={props.posterUrl || ""}
+            onChange={(v: any) => setProp("posterUrl", v)}
+          />
+        </div>
       </div>
     );
   }
@@ -4116,6 +5071,11 @@ export function BlockPropsForm({
           value={Number(props.speedSec ?? 35)}
           onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
         />
+        <NumberField
+          label="Item Gap"
+          value={Number(props.itemGap ?? 24)}
+          onChange={(n: any) => setProp("itemGap", Math.max(0, Number(n || 0)))}
+        />
         {items.map((item: string, i: number) => (
           <div key={i} className="border rounded p-2 space-y-2">
             <div className="flex justify-between items-center">
@@ -4449,7 +5409,7 @@ export function Field({
   placeholder?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -4475,7 +5435,7 @@ export function NumberField({
   onChange: (val: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -4503,13 +5463,13 @@ function Select({
   onChange: (val: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-sm font-semibold text-slate-700 ml-0.5">
         {label}
       </label>
-      <div className="relative group">
+      <div className="relative group min-w-0">
         <select
-          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+          className="w-full min-w-0 appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
                      transition-all duration-200 outline-none
                      hover:border-slate-400
                      focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
@@ -4753,6 +5713,8 @@ function defaultPropsFor(type: string) {
     return {
       menuId: "menu_main",
       layout: "three-col",
+      menuGap: 24,
+      actionGap: 8,
       ctaText: "Shop",
       ctaHref: "/products",
       ctaSecondaryText: "Learn more",
@@ -4771,6 +5733,8 @@ function defaultPropsFor(type: string) {
         },
       ],
       layout: "multi-column",
+      menuColumnGap: 32,
+      menuLinkGapX: 24,
       description: "Building better digital experiences since 2023.",
       badgeText: "Designed for modern storefronts",
       showSocials: true,
@@ -4937,6 +5901,80 @@ function defaultPropsFor(type: string) {
         },
       ],
     };
+  if (type === "BrandGrid/V1")
+    return {
+      title: "Shop by Brand",
+      subtitle: "Browse your trusted brands.",
+      ctaText: "View all brands",
+      ctaHref: "/brands",
+      gap: 16,
+      brands: [
+        { name: "Urban Co", href: "#", logo: "" },
+        { name: "Nova Fit", href: "#", logo: "" },
+        { name: "Northline", href: "#", logo: "" },
+      ],
+    };
+  if (type === "MegaMenu/V1")
+    return {
+      title: "Explore",
+      subtitle: "Navigate your catalog quickly.",
+      columns: 4,
+      ctaText: "View all products",
+      ctaHref: "/products",
+      showSearch: true,
+      searchPlaceholder: "Search products, collections, brands...",
+      sections: [
+        {
+          title: "New Arrivals",
+          links: [
+            { label: "Latest Drop", href: "/products", badge: "New" },
+            { label: "Trending", href: "/products?sort=newest" },
+          ],
+        },
+      ],
+      promo: {
+        title: "Weekend Drop",
+        description: "Up to 40% off selected items.",
+        image:
+          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop",
+        ctaText: "Shop Offer",
+        ctaHref: "/products",
+      },
+    };
+  if (type === "StoreLocator/V1")
+    return {
+      title: "Find a store near you",
+      subtitle: "See address, contact and opening hours.",
+      searchPlaceholder: "Search city or area",
+      showMap: true,
+      ctaText: "Contact support",
+      ctaHref: "/contact",
+      stores: [
+        {
+          name: "Flagship Store",
+          badge: "Open",
+          address: "21 Market Street",
+          city: "Mumbai",
+          state: "MH",
+          mapUrl: "https://maps.google.com/?q=Mumbai",
+        },
+      ],
+    };
+  if (type === "BundleOffer/V1")
+    return {
+      title: "Bundle and save more",
+      subtitle: "Get instant discount when buying together.",
+      currency: "INR",
+      discountType: "percent",
+      discountValue: 10,
+      ctaText: "Buy bundle",
+      ctaHref: "/cart",
+      note: "Discount applies at checkout.",
+      items: [
+        { name: "Classic Tee", qty: 1, price: 899, image: "" },
+        { name: "Athletic Jogger", qty: 1, price: 1499, image: "" },
+      ],
+    };
   if (type === "ProductHighlight/V1")
     return {
       title: "Product Title",
@@ -4997,6 +6035,7 @@ function defaultPropsFor(type: string) {
       items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
       speedSec: 30,
       pauseOnHover: true,
+      itemGap: 24,
     };
   if (type === "SpotlightCards/V1")
     return {
@@ -5033,7 +6072,9 @@ function defaultPropsFor(type: string) {
       ctaHref: "/",
       minHeight: 520,
       overlayOpacity: 0.45,
+      videoAssetId: "",
       videoUrl: "",
+      posterAssetId: "",
       posterUrl: "",
     };
   if (type === "KPIRibbon/V1")
@@ -5081,6 +6122,7 @@ function defaultPropsFor(type: string) {
         "Rated 4.8/5 by 1200+ customers",
       ],
       speedSec: 35,
+      itemGap: 24,
     };
   return {};
 }

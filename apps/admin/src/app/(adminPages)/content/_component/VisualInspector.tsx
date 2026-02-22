@@ -21,7 +21,7 @@ export function Field({
   placeholder?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -99,7 +99,7 @@ export function UnitField({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -149,7 +149,7 @@ export function TextArea({
   onChange: (val: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -175,7 +175,7 @@ export function NumberField({
   onChange: (val: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className="flex flex-col gap-1.5 w-full min-w-0">
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
         {label}
       </label>
@@ -207,9 +207,9 @@ function Select({
       <label className="text-sm font-semibold text-slate-700 ml-0.5">
         {label}
       </label>
-      <div className="relative group">
+      <div className="relative group min-w-0">
         <select
-          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+          className="w-full min-w-0 appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
                      transition-all duration-200 outline-none
                      hover:border-slate-400
                      focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
