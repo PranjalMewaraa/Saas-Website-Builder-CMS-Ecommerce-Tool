@@ -12,7 +12,9 @@
     "mongo:indexes": "tsx scripts/mongo-indexes.ts",
     "seed:mysql": "tsx scripts/seed-mysql.ts",
     "seed:snapshot": "tsx scripts/seed-snapshot.ts",
-    "seed:commerce-v2": "tsx scripts/seed-commerce-v2-backfill.ts"
+    "seed:commerce-v2": "tsx scripts/seed-commerce-v2-backfill.ts",
+    "fix:duplicate-emails": "tsx scripts/fix-duplicate-user-emails.ts",
+    "fix:duplicate-emails:apply": "tsx scripts/fix-duplicate-user-emails.ts --apply"
   },
   "dependencies": {
     "@acme/auth": "workspace:*",

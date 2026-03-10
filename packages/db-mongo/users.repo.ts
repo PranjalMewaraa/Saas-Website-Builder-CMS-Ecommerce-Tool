@@ -25,6 +25,11 @@ export async function findUserByEmail(tenant_id: string, email: string) {
   return col.findOne({ tenant_id, email: email.toLowerCase() });
 }
 
+export async function findUsersByEmail(email: string) {
+  const col = await usersCollection();
+  return col.find({ email: email.toLowerCase() }).toArray();
+}
+
 export async function findUserById(user_id: string) {
   const col = await usersCollection();
   return col.findOne({ _id: user_id });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createTenant } from "@acme/db-mongo/";
 import { createUser } from "@acme/db-mongo/";
+import { findUsersByEmail } from "@acme/db-mongo/";
 
 function id(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -13,6 +14,14 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { ok: false, error: "Missing fields" },
       { status: 400 },
+    );
+  }
+
+  const existing = await findUsersByEmail(String(email));
+  if (existing.length > 0) {
+    return NextResponse.json(
+      { ok: false, error: "Email already in use. Please login instead." },
+      { status: 409 },
     );
   }
 

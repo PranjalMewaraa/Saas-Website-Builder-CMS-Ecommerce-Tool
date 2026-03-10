@@ -1,25 +1,28 @@
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { findUserByEmail } from "../db-mongo/users.repo";
+import { findUsersByEmail } from "../db-mongo/users.repo";
 export const authOptions = {
   session: { strategy: "jwt" },
   providers: [
     Credentials({
       name: "Email & Password",
       credentials: {
-        tenant: { label: "Tenant ID", type: "text" },
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials: any) {
-        if (!credentials?.tenant || !credentials.email || !credentials.password)
-          return null;
+        if (!credentials?.email || !credentials.password) return null;
 
-        const tenant_id = String(credentials.tenant).trim();
         const email = String(credentials.email).toLowerCase().trim();
         const password = String(credentials.password);
 
-        const user = await findUserByEmail(tenant_id, email);
+        const users = await findUsersByEmail(email);
+        if (!users.length) return null;
+        if (users.length > 1) {
+          // avoid ambiguous login when same email exists in multiple tenants
+          return null;
+        }
+        const user = users[0];
         if (!user) return null;
 
         const ok = await bcrypt.compare(password, user.password_hash);

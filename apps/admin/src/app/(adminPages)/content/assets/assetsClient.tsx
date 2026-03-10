@@ -107,47 +107,20 @@ export default function AssetsClient({ siteId }: { siteId: string }) {
     setBusy(true);
     setUploadStatus("uploading");
     try {
-      const signRes = await fetch(
-        `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, mime: file.type }),
-        },
-      );
-
-      if (!signRes.ok) throw new Error("Sign failed");
-
-      const signData = await signRes.json();
-
       const formData = new FormData();
-      Object.entries(signData.upload.fields).forEach(([k, v]) => {
-        formData.append(k, v as string);
-      });
       formData.append("file", file);
 
-      const postRes = await fetch(signData.upload.url, {
+      const postRes = await fetch(
+        `/api/admin/assets/upload?site_id=${encodeURIComponent(siteId)}`,
+        {
         method: "POST",
         body: formData,
       });
 
-      if (!postRes.ok) throw new Error("Upload failed");
-
-      const finRes = await fetch(
-        `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: signData.key,
-            url: signData.finalUrl,
-            mime: file.type,
-            size_bytes: file.size,
-          }),
-        },
-      );
-
-      if (!finRes.ok) throw new Error("Finalize failed");
+      if (!postRes.ok) {
+        const errData = await postRes.json().catch(() => ({}));
+        throw new Error(errData?.error || "Upload failed");
+      }
 
       setUploadStatus("success");
       await refresh();

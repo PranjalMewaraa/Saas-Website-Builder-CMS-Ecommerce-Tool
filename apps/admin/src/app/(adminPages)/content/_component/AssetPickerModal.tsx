@@ -68,81 +68,27 @@ export default function AssetPickerModal({
         size: file.size,
       });
 
-      const signRes = await fetch(
-        `/api/admin/assets/sign?site_id=${encodeURIComponent(siteId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filename: file.name, mime: file.type }),
-        },
-      );
-
-      const signText = await signRes.text();
-      const signData = signText ? JSON.parse(signText) : {};
-      if (!signRes.ok) {
-        console.error("[asset-upload] sign failed", {
-          reqId,
-          status: signRes.status,
-          body: signData,
-        });
-        throw new Error(signData?.error || "Sign failed");
-      }
-      console.info("[asset-upload] sign success", {
-        reqId,
-        key: signData?.key,
-        uploadUrl: signData?.upload?.url,
-      });
-
       const formData = new FormData();
-      Object.entries(signData.upload.fields).forEach(([k, v]) =>
-        formData.append(k, v as string),
-      );
       formData.append("file", file);
 
-      const postRes = await fetch(signData.upload.url, {
+      const postRes = await fetch(
+        `/api/admin/assets/upload?site_id=${encodeURIComponent(siteId)}`,
+        {
         method: "POST",
         body: formData,
       });
 
       if (!postRes.ok) {
-        const uploadBody = await postRes.text().catch(() => "");
-        console.error("[asset-upload] s3 post failed", {
+        const uploadBody = await postRes.json().catch(() => ({}));
+        console.error("[asset-upload] upload failed", {
           reqId,
           status: postRes.status,
           body: uploadBody,
         });
-        throw new Error("Upload failed");
+        throw new Error(uploadBody?.error || "Upload failed");
       }
-      console.info("[asset-upload] s3 post success", { reqId });
-
-      const finRes = await fetch(
-        `/api/admin/assets/finalize?site_id=${encodeURIComponent(siteId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            key: signData.key,
-            url: signData.finalUrl,
-            mime: file.type,
-            size_bytes: file.size,
-          }),
-        },
-      );
-
-      const finText = await finRes.text();
-      const finData = finText ? JSON.parse(finText) : {};
-      if (!finRes.ok) {
-        console.error("[asset-upload] finalize failed", {
-          reqId,
-          status: finRes.status,
-          body: finData,
-        });
-        throw new Error(finData?.error || "Finalize failed");
-      }
-      console.info("[asset-upload] finalize success", {
-        reqId,
-        assetId: finData?.asset?._id,
-      });
+      const finData = await postRes.json();
+      console.info("[asset-upload] upload success", { reqId, assetId: finData?.asset?._id });
 
       // Refresh list
       await loadAssets();
@@ -151,14 +97,12 @@ export default function AssetPickerModal({
       const picked = finData?.asset
         ? {
             _id: finData.asset._id,
-            key: finData.asset.key || signData.key,
-            url: finData.asset.url || signData.finalUrl,
+            key: finData.asset.key,
+            url: finData.asset.url,
             alt: finData.asset.alt || "",
           }
-        : {
-            key: signData.key,
-            url: signData.finalUrl,
-          };
+        : null;
+      if (!picked) throw new Error("Upload succeeded but asset payload missing");
       onPick(picked);
 
       onClose();

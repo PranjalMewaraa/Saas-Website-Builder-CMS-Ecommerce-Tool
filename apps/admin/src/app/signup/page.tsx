@@ -25,7 +25,6 @@ export default function SignupPage() {
     }
 
     await signIn("credentials", {
-      tenant: data.tenant_id,
       email: form.email,
       password: form.password,
       redirect: true,
