@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUI } from "@/app/_components/ui/UiProvider";
 import {
   GripVertical,
@@ -10,13 +10,10 @@ import {
   Plus,
   Save,
   Settings2,
-  Trash2,
 } from "lucide-react";
 
 import { useEditorMode } from "../../../(adminPages)/content/_component/useEditorMode";
-import ImageField from "../../../(adminPages)/content/_component/ImageField";
 import { useAssetsMap } from "../../../(adminPages)/content/_component/useAssetsMap";
-import StylePreviewCard from "../../../(adminPages)/content/_component/StylePreviewCard";
 import { VisualInspector } from "../../../(adminPages)/content/_component/VisualInspector";
 import { VisualCanvas } from "../../../(adminPages)/content/_component/VisualCanvas";
 import LayoutInspector from "../../../(adminPages)/content/_component/LayoutInspector";
@@ -38,12 +35,30 @@ function safeJsonParse(text: string) {
 
 const BLOCK_TYPES = ALL_BLOCK_TYPES.filter((t) => !t.startsWith("Atomic/"));
 
+function ensureEditorLayout(raw: any) {
+  const next =
+    raw && typeof raw === "object" ? structuredClone(raw) : { version: 1 };
+  if (!Array.isArray(next.sections)) next.sections = [];
+  if (!next.sections[0]) next.sections[0] = { id: "sec_main", blocks: [] };
+  if (!Array.isArray(next.sections[0].blocks)) next.sections[0].blocks = [];
+  return next;
+}
+
+async function readJsonSafely(res: Response) {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 /* ---------------- main ---------------- */
 
 export default function PageEditorStudioClient({
   siteId,
   pageId,
-  urlMode,
 }: {
   siteId: string;
   pageId: string;
@@ -72,100 +87,193 @@ export default function PageEditorStudioClient({
   const [addBlockTab, setAddBlockTab] = useState<"templates" | "blocks">(
     "blocks",
   );
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success">(
     "idle",
   );
   const [dragBlockId, setDragBlockId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const [pageRes, presetsRes, formsRes, themeRes, templatesRes] =
-        await Promise.all([
-          fetch(
-            `/api/admin/pages?site_id=${encodeURIComponent(
-              siteId,
-            )}&page_id=${encodeURIComponent(pageId)}`,
-            { cache: "no-store" },
-          ),
-          fetch(
-            `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
-            { cache: "no-store" },
-          ),
-          fetch(`/api/admin/forms?site_id=${encodeURIComponent(siteId)}`, {
-            cache: "no-store",
-          }),
-          fetch(`/api/admin/theme?site_id=${encodeURIComponent(siteId)}`, {
-            cache: "no-store",
-          }),
-          fetch(
-            `/api/admin/block-templates?site_id=${encodeURIComponent(siteId)}`,
-            { cache: "no-store" },
-          ),
-        ]);
+      setLoadState("loading");
+      setLoadError(null);
+      try {
+        const [pageRes, presetsRes, formsRes, themeRes, templatesRes] =
+          await Promise.all([
+            fetch(
+              `/api/admin/pages?site_id=${encodeURIComponent(
+                siteId,
+              )}&page_id=${encodeURIComponent(pageId)}`,
+              { cache: "no-store" },
+            ),
+            fetch(
+              `/api/admin/style-presets?site_id=${encodeURIComponent(siteId)}`,
+              { cache: "no-store" },
+            ),
+            fetch(`/api/admin/forms?site_id=${encodeURIComponent(siteId)}`, {
+              cache: "no-store",
+            }),
+            fetch(`/api/admin/theme?site_id=${encodeURIComponent(siteId)}`, {
+              cache: "no-store",
+            }),
+            fetch(
+              `/api/admin/block-templates?site_id=${encodeURIComponent(siteId)}`,
+              { cache: "no-store" },
+            ),
+          ]);
 
-      const [pageData, presetsData, formsData, themeData, templatesData] =
-        await Promise.all([
-          pageRes.json(),
-          presetsRes.json(),
-          formsRes.json(),
-          themeRes.json(),
-          templatesRes.json(),
-        ]);
+        if (
+          !pageRes.ok ||
+          !presetsRes.ok ||
+          !formsRes.ok ||
+          !themeRes.ok ||
+          !templatesRes.ok
+        ) {
+          throw new Error("Failed to load editor data.");
+        }
 
-      setPresets(presetsData.presets ?? []);
-      setForms(formsData.forms ?? []);
-      setBlockTemplates(templatesData.templates ?? []);
-      const tokens = themeData.theme?.draft_tokens || {};
-      const palette = [
-        tokens["--color-primary"],
-        tokens["--color-bg"],
-        tokens["--color-text"],
-        tokens["--color-dark"],
-        tokens["--color-light"],
-      ].filter(Boolean);
-      setThemePalette(palette);
+        const [pageData, presetsData, formsData, themeData, templatesData] =
+          await Promise.all([
+            readJsonSafely(pageRes),
+            readJsonSafely(presetsRes),
+            readJsonSafely(formsRes),
+            readJsonSafely(themeRes),
+            readJsonSafely(templatesRes),
+          ]);
 
-      if (pageData.page) {
-        setPage(pageData.page);
-        setLayoutJson(
-          JSON.stringify(pageData.page.draft_layout ?? {}, null, 2),
-        );
+        if (cancelled) return;
+
+        setPresets(presetsData?.presets ?? []);
+        setForms(formsData?.forms ?? []);
+        setBlockTemplates(templatesData?.templates ?? []);
+        const tokens = themeData?.theme?.draft_tokens || {};
+        const palette = [
+          tokens["--color-primary"],
+          tokens["--color-bg"],
+          tokens["--color-text"],
+          tokens["--color-dark"],
+          tokens["--color-light"],
+        ].filter(Boolean);
+        setThemePalette(palette);
+
+        if (!pageData?.page) {
+          throw new Error("Page data was not found.");
+        }
+
+        const normalizedLayout = ensureEditorLayout(pageData.page.draft_layout);
+        setPage({ ...pageData.page, draft_layout: normalizedLayout });
+        setLayoutJson(JSON.stringify(normalizedLayout, null, 2));
+        setLoadState("ready");
+      } catch (error: any) {
+        if (cancelled) return;
+        const message = error?.message || "Unable to load the page editor.";
+        setLoadError(message);
+        setLoadState("error");
+        toast({
+          variant: "error",
+          title: "Editor failed to load",
+          description: message,
+        });
       }
     })();
-  }, [siteId, pageId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [siteId, pageId, toast]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const res = await fetch(
-        `/api/admin/menus?site_id=${encodeURIComponent(siteId)}`,
-        { cache: "no-store" },
-      );
-      const data = await res.json();
-      setMenus(data.menus ?? []);
+      try {
+        const res = await fetch(
+          `/api/admin/menus?site_id=${encodeURIComponent(siteId)}`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) throw new Error("Failed to load menus.");
+        const data = await readJsonSafely(res);
+        if (!cancelled) setMenus(data?.menus ?? []);
+      } catch (error: any) {
+        if (cancelled) return;
+        toast({
+          variant: "error",
+          title: "Menus unavailable",
+          description:
+            error?.message || "Some menu-connected blocks may be incomplete.",
+        });
+      }
     })();
-  }, [siteId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [siteId, toast]);
 
   useEffect(() => {
     if (selection) setLeftPanelTab("inspector");
   }, [selection]);
 
-  async function saveLayout(nextLayout: any) {
-    setSaveStatus("saving");
-
-    await fetch(`/api/admin/pages?site_id=${encodeURIComponent(siteId)}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ page_id: page._id, draft_layout: nextLayout }),
-    });
-
-    setPage({ ...page, draft_layout: nextLayout });
-    setLayoutJson(JSON.stringify(nextLayout, null, 2));
-
-    setSaveStatus("success");
-    setTimeout(() => setSaveStatus("idle"), 2200);
+  function applyDraftLayout(nextLayout: any) {
+    const normalized = ensureEditorLayout(nextLayout);
+    setPage((prev: any) =>
+      prev ? { ...prev, draft_layout: normalized } : prev,
+    );
+    setLayoutJson(JSON.stringify(normalized, null, 2));
+    return normalized;
   }
 
-  if (!page) {
+  function mutateDraftLayout(mutator: (draft: any) => void) {
+    const next = ensureEditorLayout(page?.draft_layout);
+    mutator(next);
+    return applyDraftLayout(next);
+  }
+
+  async function saveLayout(nextLayout: any) {
+    setSaveStatus("saving");
+    try {
+      const normalized = ensureEditorLayout(nextLayout);
+      const res = await fetch(
+        `/api/admin/pages?site_id=${encodeURIComponent(siteId)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            page_id: page._id,
+            draft_layout: normalized,
+          }),
+        },
+      );
+      const data = await readJsonSafely(res);
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || "Failed to save page draft.");
+      }
+
+      applyDraftLayout(normalized);
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus("idle"), 2200);
+    } catch (error: any) {
+      setSaveStatus("idle");
+      toast({
+        variant: "error",
+        title: "Save failed",
+        description: error?.message || "Failed to save page draft.",
+      });
+    }
+  }
+
+  const layout = ensureEditorLayout(page?.draft_layout);
+  const blocks = layout.sections?.[0]?.blocks ?? [];
+
+  useEffect(() => {
+    if (!selection?.blockId) return;
+    const stillExists = blocks.some((b: any) => b.id === selection.blockId);
+    if (!stillExists) setSelection(null);
+  }, [blocks, selection]);
+
+  if (loadState === "loading") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin h-6 w-6 border-4 border-primary border-t-transparent rounded-full" />
@@ -173,12 +281,28 @@ export default function PageEditorStudioClient({
     );
   }
 
-  const layout = page.draft_layout || {
-    version: 1,
-    sections: [{ id: "sec_main", blocks: [] }],
-  };
+  if (loadState === "error" || !page) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+          <div className="text-lg font-semibold text-red-900">
+            Editor unavailable
+          </div>
+          <p className="mt-2 text-sm text-red-700">
+            {loadError || "We could not load this page right now."}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const blocks = layout.sections?.[0]?.blocks ?? [];
   const selectedBlock = blocks.find((b: any) => b.id === selection?.blockId);
   const inspectorProps = {
     block: selectedBlock,
@@ -227,69 +351,69 @@ export default function PageEditorStudioClient({
     }
     if (type === "Form/V1" && forms.length) defaults.formId = forms[0]._id;
 
-    const next = structuredClone(layout);
-    next.sections[0].blocks.push({
-      id,
-      type,
-      props: defaults,
-      style: defaultStyleFor(type),
+    mutateDraftLayout((next) => {
+      next.sections[0].blocks.push({
+        id,
+        type,
+        props: defaults,
+        style: defaultStyleFor(type),
+      });
     });
-
-    setPage({ ...page, draft_layout: next });
-    setLayoutJson(JSON.stringify(next, null, 2));
+    setSelection({ kind: "block", blockId: id });
   }
 
   function updateBlock(idx: number, nextBlock: any) {
-    const next = structuredClone(layout);
-    next.sections[0].blocks[idx] = nextBlock;
-    setPage({ ...page, draft_layout: next });
-    setLayoutJson(JSON.stringify(next, null, 2));
+    mutateDraftLayout((next) => {
+      next.sections[0].blocks[idx] = nextBlock;
+    });
   }
 
   function updateBlockById(blockId: string, nextBlock: any) {
-    const next = structuredClone(layout);
-    const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
-    if (idx < 0) return;
-    next.sections[0].blocks[idx] = nextBlock;
-    setPage({ ...page, draft_layout: next });
-    setLayoutJson(JSON.stringify(next, null, 2));
+    mutateDraftLayout((next) => {
+      const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
+      if (idx < 0) return;
+      next.sections[0].blocks[idx] = nextBlock;
+    });
   }
 
   function moveBlock(idx: number, dir: -1 | 1) {
-    const next = structuredClone(layout);
-    const arr = next.sections[0].blocks;
-    const j = idx + dir;
-    if (j < 0 || j >= arr.length) return;
-    [arr[idx], arr[j]] = [arr[j], arr[idx]];
-    setPage({ ...page, draft_layout: next });
+    mutateDraftLayout((next) => {
+      const arr = next.sections[0].blocks;
+      const j = idx + dir;
+      if (j < 0 || j >= arr.length) return;
+      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+    });
   }
 
   function moveBlockTo(fromId: string, toId: string) {
     if (!fromId || !toId || fromId === toId) return;
-    const next = structuredClone(layout);
-    const arr = next.sections[0].blocks;
-    const fromIndex = arr.findIndex((b: any) => b.id === fromId);
-    const toIndex = arr.findIndex((b: any) => b.id === toId);
-    if (fromIndex < 0 || toIndex < 0) return;
-    const [item] = arr.splice(fromIndex, 1);
-    arr.splice(toIndex, 0, item);
-    setPage({ ...page, draft_layout: next });
+    mutateDraftLayout((next) => {
+      const arr = next.sections[0].blocks;
+      const fromIndex = arr.findIndex((b: any) => b.id === fromId);
+      const toIndex = arr.findIndex((b: any) => b.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return;
+      const [item] = arr.splice(fromIndex, 1);
+      arr.splice(toIndex, 0, item);
+    });
   }
 
   function deleteBlock(idx: number) {
-    const next = structuredClone(layout);
-    next.sections[0].blocks.splice(idx, 1);
-    setPage({ ...page, draft_layout: next });
+    mutateDraftLayout((next) => {
+      next.sections[0].blocks.splice(idx, 1);
+    });
   }
 
   function duplicateBlockById(blockId: string) {
-    const next = structuredClone(layout);
-    const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
-    if (idx < 0) return;
-    const copy = structuredClone(next.sections[0].blocks[idx]);
-    copy.id = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    next.sections[0].blocks.splice(idx + 1, 0, copy);
-    setPage({ ...page, draft_layout: next });
+    let nextId = "";
+    mutateDraftLayout((next) => {
+      const idx = next.sections[0].blocks.findIndex((b: any) => b.id === blockId);
+      if (idx < 0) return;
+      const copy = structuredClone(next.sections[0].blocks[idx]);
+      nextId = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      copy.id = nextId;
+      next.sections[0].blocks.splice(idx + 1, 0, copy);
+    });
+    if (nextId) setSelection({ kind: "block", blockId: nextId });
   }
 
   async function saveBlockAsTemplate(block: any) {
@@ -350,11 +474,12 @@ export default function PageEditorStudioClient({
   }
 
   function addBlockFromTemplate(tpl: any) {
-    const next = structuredClone(layout);
     const block = structuredClone(tpl.block || {});
     block.id = `b_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    next.sections[0].blocks.push(block);
-    setPage({ ...page, draft_layout: next });
+    mutateDraftLayout((next) => {
+      next.sections[0].blocks.push(block);
+    });
+    setSelection({ kind: "block", blockId: block.id });
     setAddBlockOpen(false);
   }
 
