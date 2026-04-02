@@ -96,7 +96,7 @@ export function BlockPropsForm({
   if (type === "Header/V1") {
     return (
       <div className="space-y-3">
-        <div className="border rounded p-3 space-y-3">
+        <div className=" rounded p-1 space-y-3">
           <div className="text-sm font-medium">Structure</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Select
@@ -123,12 +123,16 @@ export function BlockPropsForm({
             <NumberField
               label="Menu Gap"
               value={Number(props.menuGap ?? 24)}
-              onChange={(n: any) => setProp("menuGap", Math.max(0, Number(n || 0)))}
+              onChange={(n: any) =>
+                setProp("menuGap", Math.max(0, Number(n || 0)))
+              }
             />
             <NumberField
               label="Action Gap"
               value={Number(props.actionGap ?? 8)}
-              onChange={(n: any) => setProp("actionGap", Math.max(0, Number(n || 0)))}
+              onChange={(n: any) =>
+                setProp("actionGap", Math.max(0, Number(n || 0)))
+              }
             />
           </div>
           {menus.length ? (
@@ -158,7 +162,7 @@ export function BlockPropsForm({
           )}
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" rounded p-1 space-y-3">
           <div className="text-sm font-medium">Branding</div>
           <Field
             label="logoAssetId"
@@ -174,7 +178,7 @@ export function BlockPropsForm({
           />
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" rounded p-1 space-y-3">
           <div className="text-sm font-medium">Primary Button</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Field
@@ -197,7 +201,7 @@ export function BlockPropsForm({
           />
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className="  p-1 space-y-3">
           <div className="text-sm font-medium">Secondary Button</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Field
@@ -220,7 +224,7 @@ export function BlockPropsForm({
           />
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" rounded p-1 space-y-3">
           <div className="text-sm font-medium">Tertiary Button</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Field
@@ -1417,7 +1421,9 @@ export function BlockPropsForm({
                 type="button"
                 className="border rounded-lg p-2 text-left text-xs hover:bg-muted"
                 onClick={() => {
-                  Object.entries(p.data).forEach(([k, v]) => setProp(k, v as any));
+                  Object.entries(p.data).forEach(([k, v]) =>
+                    setProp(k, v as any),
+                  );
                 }}
               >
                 <div className="h-8 rounded bg-slate-100 mb-1" />
@@ -1431,7 +1437,14 @@ export function BlockPropsForm({
             label="variant"
             value={props.variant || "default"}
             onChange={(v: any) => setProp("variant", v)}
-            options={["default", "outline", "minimal", "split", "card", "sticky"]}
+            options={[
+              "default",
+              "outline",
+              "minimal",
+              "split",
+              "card",
+              "sticky",
+            ]}
           />
           <Select
             label="size"
@@ -1530,7 +1543,9 @@ export function BlockPropsForm({
           <NumberField
             label="radius"
             value={Number(props.radius ?? 10)}
-            onChange={(v: any) => setProp("radius", Math.max(0, Number(v || 0)))}
+            onChange={(v: any) =>
+              setProp("radius", Math.max(0, Number(v || 0)))
+            }
           />
         </div>
       </div>
@@ -1541,7 +1556,9 @@ export function BlockPropsForm({
     const bg = props.bg || { type: "none" };
     const heroPreset = props.heroPreset || "Basic";
 
-    const applyHeroPreset = (preset: "Basic" | "Split" | "Centered" | "Promo") => {
+    const applyHeroPreset = (
+      preset: "Basic" | "Split" | "Centered" | "Promo",
+    ) => {
       const base = {
         ...props,
         heroPreset: preset,
@@ -1592,7 +1609,12 @@ export function BlockPropsForm({
           ],
           splitPanelCtaText: "See Demo",
           splitPanelCtaHref: "/",
-          bg: { ...(bg || {}), type: "image", imageUrl: bg.imageUrl || DEFAULT_IMAGE, overlayOpacity: 0.42 },
+          bg: {
+            ...(bg || {}),
+            type: "image",
+            imageUrl: bg.imageUrl || DEFAULT_IMAGE,
+            overlayOpacity: 0.42,
+          },
         });
       }
       if (preset === "Centered") {
@@ -1631,8 +1653,17 @@ export function BlockPropsForm({
           promoBadgeText: "Limited Time Offer",
           promoCode: "SAVE20",
           promoNote: "Valid on eligible products. Limited duration.",
-          promoBullets: ["Free shipping over Rs 999", "7-day returns", "COD available"],
-          bg: { ...(bg || {}), type: "image", imageUrl: bg.imageUrl || DEFAULT_IMAGE, overlayOpacity: 0.5 },
+          promoBullets: [
+            "Free shipping over Rs 999",
+            "7-day returns",
+            "COD available",
+          ],
+          bg: {
+            ...(bg || {}),
+            type: "image",
+            imageUrl: bg.imageUrl || DEFAULT_IMAGE,
+            overlayOpacity: 0.5,
+          },
         });
       }
 
@@ -1643,7 +1674,7 @@ export function BlockPropsForm({
 
     return (
       <div className="space-y-3">
-        <div className="border rounded p-3 space-y-3">
+        <div className=" rounded space-y-3">
           <div className="text-sm font-medium">Structure</div>
           <Select
             label="Hero Preset"
@@ -1679,7 +1710,7 @@ export function BlockPropsForm({
           />
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" space-y-3">
           <div className="text-sm font-medium">Content</div>
           <Field
             label="headline"
@@ -1695,7 +1726,7 @@ export function BlockPropsForm({
           />
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" space-y-3">
           <div className="text-sm font-medium">Actions</div>
           <div className="grid grid-cols-2 gap-2">
             <Field
@@ -1727,7 +1758,7 @@ export function BlockPropsForm({
           </div>
         </div>
 
-        <div className="border rounded p-3 space-y-3">
+        <div className=" space-y-3">
           <div className="text-sm font-medium">Layout</div>
           <div className="grid grid-cols-3 gap-2">
             <Select
@@ -1751,41 +1782,47 @@ export function BlockPropsForm({
         </div>
 
         {heroPreset === "Split" || heroPreset === "Advanced" ? (
-          <div className="border rounded p-2 space-y-2">
+          <div className=" space-y-2">
             <div className="text-sm font-medium">Split Panel Content</div>
             <Field
               label="Panel Title"
               value={props.splitPanelTitle || ""}
               onChange={(v: any) => setProp("splitPanelTitle", v)}
             />
-            {(Array.isArray(props.splitHighlights) ? props.splitHighlights : []).map(
-              (item: string, i: number) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Field
-                    label={`Highlight ${i + 1}`}
-                    value={item || ""}
-                    onChange={(v: any) => setPropPath(`splitHighlights.${i}`, v)}
-                  />
-                  <button
-                    type="button"
-                    className="text-xs text-red-500 border rounded px-2 py-1 mt-6"
-                    onClick={() =>
-                      setProp(
-                        "splitHighlights",
-                        (props.splitHighlights || []).filter((_: any, idx: number) => idx !== i),
-                      )
-                    }
-                  >
-                    Remove
-                  </button>
-                </div>
-              ),
-            )}
+            {(Array.isArray(props.splitHighlights)
+              ? props.splitHighlights
+              : []
+            ).map((item: string, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <Field
+                  label={`Highlight ${i + 1}`}
+                  value={item || ""}
+                  onChange={(v: any) => setPropPath(`splitHighlights.${i}`, v)}
+                />
+                <button
+                  type="button"
+                  className="text-xs text-red-500 border rounded px-2 py-1 mt-6"
+                  onClick={() =>
+                    setProp(
+                      "splitHighlights",
+                      (props.splitHighlights || []).filter(
+                        (_: any, idx: number) => idx !== i,
+                      ),
+                    )
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
             <button
               type="button"
               className="border rounded px-2 py-1 text-xs hover:bg-muted"
               onClick={() =>
-                setProp("splitHighlights", [...(props.splitHighlights || []), "New highlight"])
+                setProp("splitHighlights", [
+                  ...(props.splitHighlights || []),
+                  "New highlight",
+                ])
               }
             >
               + Add Highlight
@@ -1806,7 +1843,7 @@ export function BlockPropsForm({
         ) : null}
 
         {heroPreset === "Centered" ? (
-          <div className="border rounded p-2 space-y-2">
+          <div className=" space-y-2">
             <div className="text-sm font-medium">Centered Trust Layer</div>
             <Field
               label="Badge Text"
@@ -1818,39 +1855,49 @@ export function BlockPropsForm({
               value={props.centeredTrustLine || ""}
               onChange={(v: any) => setProp("centeredTrustLine", v)}
             />
-            {(Array.isArray(props.centeredStats) ? props.centeredStats : []).map(
-              (s: any, i: number) => (
-                <div key={i} className="grid grid-cols-2 gap-2 border rounded p-2">
-                  <Field
-                    label="Value"
-                    value={s?.value || ""}
-                    onChange={(v: any) => setPropPath(`centeredStats.${i}.value`, v)}
-                  />
-                  <Field
-                    label="Label"
-                    value={s?.label || ""}
-                    onChange={(v: any) => setPropPath(`centeredStats.${i}.label`, v)}
-                  />
-                  <button
-                    type="button"
-                    className="text-xs text-red-500 border rounded px-2 py-1 col-span-2"
-                    onClick={() =>
-                      setProp(
-                        "centeredStats",
-                        (props.centeredStats || []).filter((_: any, idx: number) => idx !== i),
-                      )
-                    }
-                  >
-                    Remove Stat
-                  </button>
-                </div>
-              ),
-            )}
+            {(Array.isArray(props.centeredStats)
+              ? props.centeredStats
+              : []
+            ).map((s: any, i: number) => (
+              <div key={i} className="grid grid-cols-2 gap-2 ">
+                <Field
+                  label="Value"
+                  value={s?.value || ""}
+                  onChange={(v: any) =>
+                    setPropPath(`centeredStats.${i}.value`, v)
+                  }
+                />
+                <Field
+                  label="Label"
+                  value={s?.label || ""}
+                  onChange={(v: any) =>
+                    setPropPath(`centeredStats.${i}.label`, v)
+                  }
+                />
+                <button
+                  type="button"
+                  className="text-xs text-red-500 border rounded px-2 py-1 col-span-2"
+                  onClick={() =>
+                    setProp(
+                      "centeredStats",
+                      (props.centeredStats || []).filter(
+                        (_: any, idx: number) => idx !== i,
+                      ),
+                    )
+                  }
+                >
+                  Remove Stat
+                </button>
+              </div>
+            ))}
             <button
               type="button"
               className="border rounded px-2 py-1 text-xs hover:bg-muted"
               onClick={() =>
-                setProp("centeredStats", [...(props.centeredStats || []), { value: "", label: "" }])
+                setProp("centeredStats", [
+                  ...(props.centeredStats || []),
+                  { value: "", label: "" },
+                ])
               }
             >
               + Add Stat
@@ -1890,7 +1937,9 @@ export function BlockPropsForm({
                     onClick={() =>
                       setProp(
                         "promoBullets",
-                        (props.promoBullets || []).filter((_: any, idx: number) => idx !== i),
+                        (props.promoBullets || []).filter(
+                          (_: any, idx: number) => idx !== i,
+                        ),
                       )
                     }
                   >
@@ -1903,7 +1952,10 @@ export function BlockPropsForm({
               type="button"
               className="border rounded px-2 py-1 text-xs hover:bg-muted"
               onClick={() =>
-                setProp("promoBullets", [...(props.promoBullets || []), "New promo bullet"])
+                setProp("promoBullets", [
+                  ...(props.promoBullets || []),
+                  "New promo bullet",
+                ])
               }
             >
               + Add Bullet
@@ -1913,7 +1965,7 @@ export function BlockPropsForm({
 
         {/* Background controls */}
         {variant === "image" ? (
-          <div className="border rounded p-2 space-y-2">
+          <div className=" space-y-2">
             <div className="text-sm opacity-70">Background Image</div>
 
             <ImageField
@@ -2403,7 +2455,10 @@ export function BlockPropsForm({
               type="button"
               className="text-xs border rounded px-2 py-1 hover:bg-muted"
               onClick={() =>
-                setProp("brands", [...brands, { name: "New Brand", href: "#", logo: "" }])
+                setProp("brands", [
+                  ...brands,
+                  { name: "New Brand", href: "#", logo: "" },
+                ])
               }
             >
               + Add Brand
@@ -2441,8 +2496,12 @@ export function BlockPropsForm({
                 label="Logo"
                 assetIdValue={b.logoAssetId || ""}
                 altValue={b.name || ""}
-                onChangeAssetId={(v: any) => setPropPath(`brands.${i}.logoAssetId`, v)}
-                onChangeAssetUrl={(v: any) => setPropPath(`brands.${i}.logo`, v)}
+                onChangeAssetId={(v: any) =>
+                  setPropPath(`brands.${i}.logoAssetId`, v)
+                }
+                onChangeAssetUrl={(v: any) =>
+                  setPropPath(`brands.${i}.logo`, v)
+                }
                 onChangeAlt={() => {}}
                 assetsMap={assetsMap}
                 assetUrlValue={b.logo || ""}
@@ -2479,7 +2538,10 @@ export function BlockPropsForm({
               title: "Collections",
               links: [
                 { label: "Summer", href: "/products?collection=summer" },
-                { label: "Essentials", href: "/products?collection=essentials" },
+                {
+                  label: "Essentials",
+                  href: "/products?collection=essentials",
+                },
               ],
             },
           ],
@@ -2550,7 +2612,8 @@ export function BlockPropsForm({
                 className="border rounded-lg p-2 text-left hover:bg-muted transition"
                 onClick={() => {
                   if (setProps) setProps({ ...(props || {}), ...p.props });
-                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  else
+                    Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
                   applyPresetStylePack(p.styleOverrides);
                 }}
               >
@@ -2579,7 +2642,13 @@ export function BlockPropsForm({
                         p.id === "dark" ? "bg-slate-700" : "bg-slate-200"
                       }`}
                     />
-                    <div className={p.id === "dark" ? "bg-amber-300 rounded-sm" : "bg-slate-300 rounded-sm"} />
+                    <div
+                      className={
+                        p.id === "dark"
+                          ? "bg-amber-300 rounded-sm"
+                          : "bg-slate-300 rounded-sm"
+                      }
+                    />
                   </div>
                 </div>
                 <div className="text-xs font-medium">{p.label}</div>
@@ -2640,7 +2709,10 @@ export function BlockPropsForm({
               onClick={() =>
                 setProp("sections", [
                   ...sections,
-                  { title: "New Section", links: [{ label: "Link", href: "#" }] },
+                  {
+                    title: "New Section",
+                    links: [{ label: "Link", href: "#" }],
+                  },
                 ])
               }
             >
@@ -2777,7 +2849,8 @@ export function BlockPropsForm({
                 className="border rounded-lg p-2 text-left hover:bg-muted transition"
                 onClick={() => {
                   if (setProps) setProps({ ...(props || {}), ...p.props });
-                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  else
+                    Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
                   applyPresetStylePack(p.styleOverrides);
                 }}
               >
@@ -2848,7 +2921,10 @@ export function BlockPropsForm({
               type="button"
               className="text-xs border rounded px-2 py-1 hover:bg-muted"
               onClick={() =>
-                setProp("stores", [...stores, { name: "New Store", city: "", mapUrl: "" }])
+                setProp("stores", [
+                  ...stores,
+                  { name: "New Store", city: "", mapUrl: "" },
+                ])
               }
             >
               + Add Store
@@ -2975,7 +3051,8 @@ export function BlockPropsForm({
                 className="border rounded-lg p-2 text-left hover:bg-muted transition"
                 onClick={() => {
                   if (setProps) setProps({ ...(props || {}), ...p.props });
-                  else Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
+                  else
+                    Object.entries(p.props).forEach(([k, v]) => setProp(k, v));
                   applyPresetStylePack(p.styleOverrides);
                 }}
               >
@@ -2989,10 +3066,34 @@ export function BlockPropsForm({
                   }`}
                 >
                   <div className="flex h-full items-end gap-1">
-                    <div className={p.id === "premium-kit" ? "h-3 w-4 rounded bg-slate-600" : "h-3 w-4 rounded bg-slate-300"} />
-                    <div className={p.id === "premium-kit" ? "h-5 w-4 rounded bg-slate-500" : "h-5 w-4 rounded bg-slate-400"} />
-                    <div className={p.id === "premium-kit" ? "h-4 w-4 rounded bg-slate-400" : "h-4 w-4 rounded bg-slate-300"} />
-                    <div className={p.id === "clearance" ? "ml-auto h-3 w-8 rounded bg-rose-300" : "ml-auto h-3 w-8 rounded bg-emerald-300"} />
+                    <div
+                      className={
+                        p.id === "premium-kit"
+                          ? "h-3 w-4 rounded bg-slate-600"
+                          : "h-3 w-4 rounded bg-slate-300"
+                      }
+                    />
+                    <div
+                      className={
+                        p.id === "premium-kit"
+                          ? "h-5 w-4 rounded bg-slate-500"
+                          : "h-5 w-4 rounded bg-slate-400"
+                      }
+                    />
+                    <div
+                      className={
+                        p.id === "premium-kit"
+                          ? "h-4 w-4 rounded bg-slate-400"
+                          : "h-4 w-4 rounded bg-slate-300"
+                      }
+                    />
+                    <div
+                      className={
+                        p.id === "clearance"
+                          ? "ml-auto h-3 w-8 rounded bg-rose-300"
+                          : "ml-auto h-3 w-8 rounded bg-emerald-300"
+                      }
+                    />
                   </div>
                 </div>
                 <div className="text-xs font-medium">{p.label}</div>
@@ -3055,7 +3156,10 @@ export function BlockPropsForm({
               type="button"
               className="text-xs border rounded px-2 py-1 hover:bg-muted"
               onClick={() =>
-                setProp("items", [...items, { name: "New Item", qty: 1, price: 0 }])
+                setProp("items", [
+                  ...items,
+                  { name: "New Item", qty: 1, price: 0 },
+                ])
               }
             >
               + Add Item
@@ -3554,12 +3658,16 @@ export function BlockPropsForm({
           <NumberField
             label="Offset X"
             value={Number(props.offsetX ?? 12)}
-            onChange={(n: any) => setProp("offsetX", Math.max(0, Number(n || 0)))}
+            onChange={(n: any) =>
+              setProp("offsetX", Math.max(0, Number(n || 0)))
+            }
           />
           <NumberField
             label="Offset Y"
             value={Number(props.offsetY ?? 8)}
-            onChange={(n: any) => setProp("offsetY", Math.max(0, Number(n || 0)))}
+            onChange={(n: any) =>
+              setProp("offsetY", Math.max(0, Number(n || 0)))
+            }
           />
           <Field
             label="Max Width"
@@ -3569,7 +3677,9 @@ export function BlockPropsForm({
           <NumberField
             label="Radius"
             value={Number(props.radius ?? 12)}
-            onChange={(n: any) => setProp("radius", Math.max(0, Number(n || 0)))}
+            onChange={(n: any) =>
+              setProp("radius", Math.max(0, Number(n || 0)))
+            }
           />
         </div>
         <label className="inline-flex items-center gap-2 text-sm">
@@ -3685,7 +3795,10 @@ export function BlockPropsForm({
               label="rating (1-5)"
               value={Number(t.rating ?? 5)}
               onChange={(n: any) =>
-                setPropPath(`testimonials.${i}.rating`, Math.max(1, Math.min(5, n)))
+                setPropPath(
+                  `testimonials.${i}.rating`,
+                  Math.max(1, Math.min(5, n)),
+                )
               }
             />
           </div>
@@ -3838,7 +3951,9 @@ export function BlockPropsForm({
                     key={`${ri}-${ci}`}
                     label={columns[ci] || `Value ${ci + 1}`}
                     value={val || ""}
-                    onChange={(v: any) => setPropPath(`rows.${ri}.values.${ci}`, v)}
+                    onChange={(v: any) =>
+                      setPropPath(`rows.${ri}.values.${ci}`, v)
+                    }
                   />
                 ),
               )}
@@ -3955,7 +4070,9 @@ export function BlockPropsForm({
         <NumberField
           label="Speed (seconds)"
           value={Number(props.speedSec ?? 30)}
-          onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
+          onChange={(n: any) =>
+            setProp("speedSec", Math.max(5, Number(n || 5)))
+          }
         />
         <NumberField
           label="Item Gap"
@@ -4221,9 +4338,18 @@ export function BlockPropsForm({
         id: "onboarding",
         label: "3-Step Onboarding",
         steps: [
-          { title: "Setup Store", description: "Choose store type and theme preset." },
-          { title: "Add Catalog", description: "Create categories, products, and variants." },
-          { title: "Launch Live", description: "Publish pages and start taking orders." },
+          {
+            title: "Setup Store",
+            description: "Choose store type and theme preset.",
+          },
+          {
+            title: "Add Catalog",
+            description: "Create categories, products, and variants.",
+          },
+          {
+            title: "Launch Live",
+            description: "Publish pages and start taking orders.",
+          },
         ],
         styleOverrides: {
           container: "boxed",
@@ -4240,10 +4366,22 @@ export function BlockPropsForm({
         id: "funnel",
         label: "Conversion Funnel",
         steps: [
-          { title: "Attract", description: "Drive traffic with campaigns and SEO." },
-          { title: "Convert", description: "Use social proof, offers, and CTAs." },
-          { title: "Retain", description: "Follow up with support and promotions." },
-          { title: "Repeat", description: "Build loyalty with repeat-purchase offers." },
+          {
+            title: "Attract",
+            description: "Drive traffic with campaigns and SEO.",
+          },
+          {
+            title: "Convert",
+            description: "Use social proof, offers, and CTAs.",
+          },
+          {
+            title: "Retain",
+            description: "Follow up with support and promotions.",
+          },
+          {
+            title: "Repeat",
+            description: "Build loyalty with repeat-purchase offers.",
+          },
         ],
         styleOverrides: {
           container: "boxed",
@@ -4278,7 +4416,9 @@ export function BlockPropsForm({
               >
                 <div className="h-12 rounded bg-slate-50 border border-slate-200 px-2 py-1 text-[10px]">
                   {p.steps.map((s: any, idx: number) => (
-                    <div key={idx}>{idx + 1}. {s.title}</div>
+                    <div key={idx}>
+                      {idx + 1}. {s.title}
+                    </div>
                   ))}
                 </div>
                 <div className="mt-1 text-xs font-medium">{p.label}</div>
@@ -4336,7 +4476,10 @@ export function BlockPropsForm({
           onClick={() =>
             setProp("steps", [
               ...steps,
-              { title: `Step ${steps.length + 1}`, description: "Describe this step" },
+              {
+                title: `Step ${steps.length + 1}`,
+                description: "Describe this step",
+              },
             ])
           }
           className="border rounded px-3 py-1 text-sm hover:bg-muted"
@@ -4469,7 +4612,9 @@ export function BlockPropsForm({
               label="Image"
               assetIdValue={item.imageAssetId || ""}
               altValue={item.alt || ""}
-              onChangeAssetId={(v: any) => setPropPath(`items.${i}.imageAssetId`, v)}
+              onChangeAssetId={(v: any) =>
+                setPropPath(`items.${i}.imageAssetId`, v)
+              }
               onChangeAssetUrl={(v: any) => setPropPath(`items.${i}.image`, v)}
               onChangeAlt={(v: any) => setPropPath(`items.${i}.alt`, v)}
               assetsMap={assetsMap}
@@ -4618,7 +4763,9 @@ export function BlockPropsForm({
         <NumberField
           label="Min Height"
           value={Number(props.minHeight ?? 520)}
-          onChange={(n: any) => setProp("minHeight", Math.max(320, Number(n || 320)))}
+          onChange={(n: any) =>
+            setProp("minHeight", Math.max(320, Number(n || 320)))
+          }
         />
         <label className="block space-y-1">
           <div className="text-sm font-medium">Overlay Opacity</div>
@@ -4631,7 +4778,9 @@ export function BlockPropsForm({
             value={props.overlayOpacity ?? 0.45}
             onChange={(e) => setProp("overlayOpacity", Number(e.target.value))}
           />
-          <div className="text-xs opacity-60">{props.overlayOpacity ?? 0.45}</div>
+          <div className="text-xs opacity-60">
+            {props.overlayOpacity ?? 0.45}
+          </div>
         </label>
         <ImageField
           siteId={siteId}
@@ -4809,9 +4958,21 @@ export function BlockPropsForm({
         id: "product",
         label: "Product Info Tabs",
         tabs: [
-          { label: "Overview", title: "Overview", content: "Highlight top product value." },
-          { label: "Specs", title: "Specifications", content: "List important technical details." },
-          { label: "Shipping", title: "Shipping & Returns", content: "Delivery and return policy." },
+          {
+            label: "Overview",
+            title: "Overview",
+            content: "Highlight top product value.",
+          },
+          {
+            label: "Specs",
+            title: "Specifications",
+            content: "List important technical details.",
+          },
+          {
+            label: "Shipping",
+            title: "Shipping & Returns",
+            content: "Delivery and return policy.",
+          },
         ],
         styleOverrides: {
           container: "boxed",
@@ -4828,9 +4989,21 @@ export function BlockPropsForm({
         id: "saas",
         label: "SaaS Feature Tabs",
         tabs: [
-          { label: "Features", title: "Features", content: "Core features and capabilities." },
-          { label: "Integrations", title: "Integrations", content: "Apps and ecosystem support." },
-          { label: "Security", title: "Security", content: "Data and compliance details." },
+          {
+            label: "Features",
+            title: "Features",
+            content: "Core features and capabilities.",
+          },
+          {
+            label: "Integrations",
+            title: "Integrations",
+            content: "Apps and ecosystem support.",
+          },
+          {
+            label: "Security",
+            title: "Security",
+            content: "Data and compliance details.",
+          },
         ],
         styleOverrides: {
           container: "boxed",
@@ -4847,9 +5020,21 @@ export function BlockPropsForm({
         id: "faq",
         label: "FAQ Tabs",
         tabs: [
-          { label: "Ordering", title: "Ordering", content: "How to place and track your order." },
-          { label: "Payments", title: "Payments", content: "Accepted payment methods." },
-          { label: "Support", title: "Support", content: "How to reach support and SLA." },
+          {
+            label: "Ordering",
+            title: "Ordering",
+            content: "How to place and track your order.",
+          },
+          {
+            label: "Payments",
+            title: "Payments",
+            content: "Accepted payment methods.",
+          },
+          {
+            label: "Support",
+            title: "Support",
+            content: "How to reach support and SLA.",
+          },
         ],
         styleOverrides: {
           container: "boxed",
@@ -4884,7 +5069,10 @@ export function BlockPropsForm({
               >
                 <div className="h-12 rounded border bg-slate-50 px-2 py-1 text-[10px]">
                   {p.tabs.map((t: any, i: number) => (
-                    <span key={i} className="inline-block mr-1 mb-1 rounded bg-slate-200 px-1.5 py-0.5">
+                    <span
+                      key={i}
+                      className="inline-block mr-1 mb-1 rounded bg-slate-200 px-1.5 py-0.5"
+                    >
                       {t.label}
                     </span>
                   ))}
@@ -4949,7 +5137,11 @@ export function BlockPropsForm({
           onClick={() =>
             setProp("tabs", [
               ...tabs,
-              { label: `Tab ${tabs.length + 1}`, title: "Title", content: "Content" },
+              {
+                label: `Tab ${tabs.length + 1}`,
+                title: "Title",
+                content: "Content",
+              },
             ])
           }
           className="border rounded px-3 py-1 text-sm hover:bg-muted"
@@ -5083,7 +5275,11 @@ export function BlockPropsForm({
         data: {
           title: "Ship better pages with visual control",
           subtitle: "Design, content, and commerce in one workflow.",
-          bullets: ["Reusable blocks", "Live visual editing", "Store-ready checkout"],
+          bullets: [
+            "Reusable blocks",
+            "Live visual editing",
+            "Store-ready checkout",
+          ],
           ctaText: "Start Building",
           ctaHref: "/",
           reverse: false,
@@ -5105,7 +5301,11 @@ export function BlockPropsForm({
         data: {
           title: "Show products with clean storytelling",
           subtitle: "Highlight value, social proof, and quick actions.",
-          bullets: ["Variant-ready products", "Promotion engine", "Cart + order management"],
+          bullets: [
+            "Variant-ready products",
+            "Promotion engine",
+            "Cart + order management",
+          ],
           ctaText: "Browse Catalog",
           ctaHref: "/products",
           reverse: true,
@@ -5129,8 +5329,13 @@ export function BlockPropsForm({
         label: "Agency Showcase",
         data: {
           title: "Deliver polished websites faster",
-          subtitle: "Use templates and structured sections to accelerate delivery.",
-          bullets: ["Client-ready presets", "Theme controls", "Flexible layouts"],
+          subtitle:
+            "Use templates and structured sections to accelerate delivery.",
+          bullets: [
+            "Client-ready presets",
+            "Theme controls",
+            "Flexible layouts",
+          ],
           ctaText: "View Work",
           ctaHref: "/work",
           reverse: false,
@@ -5356,7 +5561,9 @@ export function BlockPropsForm({
         <NumberField
           label="Speed (seconds)"
           value={Number(props.speedSec ?? 35)}
-          onChange={(n: any) => setProp("speedSec", Math.max(5, Number(n || 5)))}
+          onChange={(n: any) =>
+            setProp("speedSec", Math.max(5, Number(n || 5)))
+          }
         />
         <NumberField
           label="Item Gap"
@@ -5389,7 +5596,9 @@ export function BlockPropsForm({
         ))}
         <button
           type="button"
-          onClick={() => setProp("items", [...items, "New social proof message"])}
+          onClick={() =>
+            setProp("items", [...items, "New social proof message"])
+          }
           className="border rounded px-3 py-1 text-sm hover:bg-muted"
         >
           + Add Message
@@ -6345,7 +6554,12 @@ function defaultPropsFor(type: string) {
     };
   if (type === "MarqueeStrip/V1")
     return {
-      items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
+      items: [
+        "Free Shipping",
+        "Easy Returns",
+        "Secure Checkout",
+        "24x7 Support",
+      ],
       speedSec: 30,
       pauseOnHover: true,
       itemGap: 24,
@@ -6355,9 +6569,24 @@ function defaultPropsFor(type: string) {
       title: "Why Choose Us",
       subtitle: "Everything built to improve conversion.",
       cards: [
-        { title: "Fast Setup", description: "Go live quickly with visual blocks.", icon: "⚡", href: "#" },
-        { title: "Design Flexibility", description: "Customize every section deeply.", icon: "🎨", href: "#" },
-        { title: "Commerce Ready", description: "Catalog, cart, and checkout included.", icon: "🛒", href: "#" },
+        {
+          title: "Fast Setup",
+          description: "Go live quickly with visual blocks.",
+          icon: "⚡",
+          href: "#",
+        },
+        {
+          title: "Design Flexibility",
+          description: "Customize every section deeply.",
+          icon: "🎨",
+          href: "#",
+        },
+        {
+          title: "Commerce Ready",
+          description: "Catalog, cart, and checkout included.",
+          icon: "🛒",
+          href: "#",
+        },
       ],
     };
   if (type === "ProcessTimeline/V1")
@@ -6404,9 +6633,21 @@ function defaultPropsFor(type: string) {
       title: "Explore",
       subtitle: "Keep content organized in tabs.",
       tabs: [
-        { label: "Overview", title: "Overview", content: "Explain your core value." },
-        { label: "Features", title: "Features", content: "List key capabilities." },
-        { label: "Use Cases", title: "Use Cases", content: "Show who it is for." },
+        {
+          label: "Overview",
+          title: "Overview",
+          content: "Explain your core value.",
+        },
+        {
+          label: "Features",
+          title: "Features",
+          content: "List key capabilities.",
+        },
+        {
+          label: "Use Cases",
+          title: "Use Cases",
+          content: "Show who it is for.",
+        },
       ],
     };
   if (type === "FloatingCTA/V1")
