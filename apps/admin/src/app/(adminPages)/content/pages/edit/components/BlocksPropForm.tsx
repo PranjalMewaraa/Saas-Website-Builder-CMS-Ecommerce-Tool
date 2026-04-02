@@ -6025,7 +6025,7 @@ function RichTextEditor({
     if (!editor) return;
     const current = editor.getHTML();
     if (current !== (value || "")) {
-      editor.commands.setContent(value || "<p></p>", false);
+      editor.commands.setContent(value || "<p></p>");
     }
   }, [value, editor]);
 

@@ -383,6 +383,7 @@ export default function LayoutInspector({
   menus = [],
   forms = [],
   themePalette = [],
+  activeBreakpoint = "desktop",
   onDeleteBlock,
   onChangeBlock,
 }: {
@@ -393,6 +394,7 @@ export default function LayoutInspector({
   menus?: any[];
   forms?: any[];
   themePalette?: string[];
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
   onDeleteBlock?: (id: string) => void;
   onChangeBlock: (nextBlock: any) => void;
 }) {
@@ -469,6 +471,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               draft.style = nextStyle;
@@ -659,6 +662,7 @@ export default function LayoutInspector({
 
         <ResponsiveRowLayoutFields
           row={row}
+          activeBreakpoint={activeBreakpoint}
           onChange={(bp, patch) =>
             applyUpdate((draft) => {
               const target = draft.rows.find((r) => r.id === row.id);
@@ -678,6 +682,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const target = draft.rows.find((r) => r.id === row.id);
@@ -702,6 +707,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             applyUpdate((draft) => {
               const targetRow = draft.rows.find((r) => r.id === row.id);
@@ -1601,6 +1607,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={onStyleChange}
         />
       </div>
@@ -1648,6 +1655,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             updateGroup(selection.atomicId, (gp) => {
               gp.style = nextStyle;
@@ -1686,6 +1694,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             updateGroup(selection.atomicId, (gp) => {
               const target = gp.rows.find((r: any) => r.id === row.id);
@@ -1714,6 +1723,7 @@ export default function LayoutInspector({
           palette={themePalette}
           siteId={siteId}
           assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
           onChange={(nextStyle) =>
             updateGroup(selection.atomicId, (gp) => {
               const r = gp.rows.find((rr: any) => rr.id === row.id);
@@ -2116,9 +2126,11 @@ function Checkbox({
 }
 function ResponsiveRowLayoutFields({
   row,
+  activeBreakpoint = "desktop",
   onChange,
 }: {
   row: any;
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
   onChange: (
     bp: "tablet" | "mobile",
     patch: {
@@ -2132,6 +2144,13 @@ function ResponsiveRowLayoutFields({
   ) => void;
 }) {
   const [bp, setBp] = useState<"tablet" | "mobile">("tablet");
+
+  useEffect(() => {
+    if (activeBreakpoint === "tablet" || activeBreakpoint === "mobile") {
+      setBp(activeBreakpoint);
+    }
+  }, [activeBreakpoint]);
+
   const override = row.layout?.responsive?.[bp] || {};
   const display = override.display || row.layout?.display || "grid";
 
@@ -2215,15 +2234,26 @@ function StyleFields({
   palette = [],
   siteId,
   assetsMap,
+  activeBreakpoint = "desktop",
   onChange,
 }: {
   style: any;
   palette?: string[];
   siteId?: string;
   assetsMap?: any;
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
   onChange: (next: any) => void;
 }) {
   const [bp, setBp] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  useEffect(() => {
+    if (activeBreakpoint === "tablet" || activeBreakpoint === "mobile") {
+      setBp(activeBreakpoint);
+      return;
+    }
+    setBp("desktop");
+  }, [activeBreakpoint]);
+
   const root = style || {};
   const s = bp === "desktop" ? root : root?.responsive?.[bp] || {};
   const resolvedBg =

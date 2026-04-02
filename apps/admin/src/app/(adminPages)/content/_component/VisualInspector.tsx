@@ -6,6 +6,10 @@ import StylePreviewCard from "./StylePreviewCard";
 import { BlockPropsForm } from "../pages/edit/components/BlocksPropForm";
 import ColorPickerInput from "./ColorPickerInput";
 import ImageField from "./ImageField";
+import {
+  getBlockStyleCapabilities,
+  hasAnyStyleCapability,
+} from "@acme/blocks/registry/block-style-capabilities";
 
 /* small local UI helpers */
 
@@ -277,6 +281,88 @@ function Checkbox({
 
 /* ---------------- component ---------------- */
 
+type EditorBreakpoint = "desktop" | "laptop" | "tablet" | "mobile";
+
+function deepClone<T>(value: T): T {
+  return structuredClone(value);
+}
+
+function getPathValue(source: any, path: string) {
+  return path.split(".").reduce((acc, part) => acc?.[part], source);
+}
+
+function setPathValue(source: any, path: string, value: any) {
+  const parts = path.split(".");
+  let current = source;
+  for (let i = 0; i < parts.length - 1; i++) {
+    current = current[parts[i]] ??= {};
+  }
+  current[parts.at(-1)!] = value;
+}
+
+function deletePathValue(source: any, path: string) {
+  const parts = path.split(".");
+  const parents: Array<{ parent: any; key: string }> = [];
+  let current = source;
+
+  for (const part of parts.slice(0, -1)) {
+    if (!current || typeof current !== "object") return;
+    parents.push({ parent: current, key: part });
+    current = current[part];
+  }
+
+  if (!current || typeof current !== "object") return;
+  delete current[parts.at(-1)!];
+
+  for (let i = parents.length - 1; i >= 0; i--) {
+    const { parent, key } = parents[i];
+    const child = parent[key];
+    if (
+      child &&
+      typeof child === "object" &&
+      !Array.isArray(child) &&
+      Object.keys(child).length === 0
+    ) {
+      delete parent[key];
+    } else {
+      break;
+    }
+  }
+}
+
+function mergeResponsiveLayer(base: any, patch: any): any {
+  if (!patch || typeof patch !== "object") return { ...(base || {}) };
+  const output = Array.isArray(base) ? [...base] : { ...(base || {}) };
+
+  for (const [key, value] of Object.entries(patch)) {
+    const current = (output as any)[key];
+    if (
+      value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      current &&
+      typeof current === "object" &&
+      !Array.isArray(current)
+    ) {
+      (output as any)[key] = mergeResponsiveLayer(current, value);
+    } else {
+      (output as any)[key] = value;
+    }
+  }
+
+  return output;
+}
+
+function countLeafOverrides(value: any): number {
+  if (!value || typeof value !== "object") return 0;
+  return Object.values(value).reduce((count, entry) => {
+    if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      return count + countLeafOverrides(entry);
+    }
+    return count + 1;
+  }, 0);
+}
+
 export function VisualInspector({
   block,
   siteId,
@@ -284,6 +370,7 @@ export function VisualInspector({
   forms,
   menus,
   themePalette = [],
+  activeBreakpoint = "desktop",
   onDeleteBlock,
   onChange,
 }: any) {
@@ -292,20 +379,20 @@ export function VisualInspector({
   /* -------- props helpers -------- */
 
   function setProp(key: string, val: any) {
-    const next = structuredClone(block);
+    const next = deepClone(block);
     next.props = next.props ?? {};
     next.props[key] = val;
     onChange(next);
   }
 
   function setProps(nextProps: any) {
-    const next = structuredClone(block);
+    const next = deepClone(block);
     next.props = nextProps ?? {};
     onChange(next);
   }
 
   function setPropPath(path: string, val: any) {
-    const next = structuredClone(block);
+    const next = deepClone(block);
     next.props = next.props || {};
     const parts = path.split(".");
     let cur = next.props;
@@ -318,45 +405,131 @@ export function VisualInspector({
 
   /* -------- style helpers -------- */
 
-  function setStyle(path: string, val: any) {
-    const next = structuredClone(block);
-    next.style = next.style ?? { overrides: {} };
-    next.style.overrides = next.style.overrides ?? {};
+  const styleBreakpoint: EditorBreakpoint =
+    activeBreakpoint === "tablet" || activeBreakpoint === "mobile"
+      ? activeBreakpoint
+      : "desktop";
 
-    const parts = path.split(".");
-    let cur = next.style.overrides;
-    for (let i = 0; i < parts.length - 1; i++) {
-      cur = cur[parts[i]] = cur[parts[i]] ?? {};
+  function getEffectiveOverrides(style: any, breakpoint: EditorBreakpoint) {
+    const base = style?.overrides ?? {};
+    if (breakpoint === "desktop") return base;
+
+    const tablet = style?.responsive?.tablet ?? {};
+    const mobile = style?.responsive?.mobile ?? {};
+
+    return breakpoint === "mobile"
+      ? mergeResponsiveLayer(mergeResponsiveLayer(base, tablet), mobile)
+      : mergeResponsiveLayer(base, tablet);
+  }
+
+  function getCurrentLayerOverrides(style: any, breakpoint: EditorBreakpoint) {
+    if (breakpoint === "desktop") return style?.overrides ?? {};
+    if (breakpoint === "tablet") return style?.responsive?.tablet ?? {};
+    return style?.responsive?.mobile ?? {};
+  }
+
+  function setStyle(path: string, val: any) {
+    const next = deepClone(block);
+    next.style = next.style ?? { overrides: {}, responsive: {} };
+    next.style.overrides = next.style.overrides ?? {};
+    next.style.responsive = next.style.responsive ?? {};
+
+    const target =
+      styleBreakpoint === "desktop"
+        ? next.style.overrides
+        : (next.style.responsive[styleBreakpoint] ??= {});
+
+    setPathValue(target, path, val);
+    onChange(next);
+  }
+
+  function clearBreakpointStyle(path?: string) {
+    if (styleBreakpoint === "desktop") return;
+
+    const next = deepClone(block);
+    next.style = next.style ?? { overrides: {}, responsive: {} };
+    next.style.responsive = next.style.responsive ?? {};
+
+    if (!next.style.responsive?.[styleBreakpoint]) return;
+
+    if (!path) {
+      delete next.style.responsive[styleBreakpoint];
+    } else {
+      deletePathValue(next.style.responsive[styleBreakpoint], path);
+      const layer = next.style.responsive[styleBreakpoint];
+      if (
+        layer &&
+        typeof layer === "object" &&
+        !Array.isArray(layer) &&
+        Object.keys(layer).length === 0
+      ) {
+        delete next.style.responsive[styleBreakpoint];
+      }
     }
-    cur[parts.at(-1)!] = val;
 
     onChange(next);
   }
 
   function setStyleOverrides(overrides: any) {
-    const next = structuredClone(block);
+    const next = deepClone(block);
     next.style = next.style ?? { overrides: {} };
     next.style.overrides = { ...(next.style.overrides || {}), ...overrides };
     onChange(next);
   }
 
   function replaceStyleOverrides(overrides: any) {
-    const next = structuredClone(block);
+    const next = deepClone(block);
     next.style = next.style ?? { overrides: {} };
     next.style.overrides = { ...(overrides || {}) };
     onChange(next);
   }
 
-  function setPreset(id: string) {
-    const next = structuredClone(block);
-    next.style = { ...next.style, presetId: id || undefined };
-    onChange(next);
-  }
-
-  const overrides = block?.style?.overrides ?? {};
+  const overrides = useMemo(
+    () => getEffectiveOverrides(block?.style, styleBreakpoint),
+    [block?.style, styleBreakpoint],
+  );
+  const currentLayerOverrides = useMemo(
+    () => getCurrentLayerOverrides(block?.style, styleBreakpoint),
+    [block?.style, styleBreakpoint],
+  );
   const display = overrides.display ?? "block";
-
+  const capabilities = useMemo(
+    () => getBlockStyleCapabilities(block?.type || ""),
+    [block?.type],
+  );
+  const showAnyStyleControls = hasAnyStyleCapability(capabilities);
+  const responsiveOverrideCount = useMemo(
+    () =>
+      styleBreakpoint === "desktop"
+        ? 0
+        : countLeafOverrides(currentLayerOverrides),
+    [currentLayerOverrides, styleBreakpoint],
+  );
   const previewStyle = useMemo(() => overrides, [overrides]);
+
+  const breakpointLabel =
+    styleBreakpoint === "desktop"
+      ? "Desktop Base"
+      : `${styleBreakpoint[0].toUpperCase()}${styleBreakpoint.slice(1)} Override`;
+
+  function renderResetLink(path: string) {
+    if (
+      styleBreakpoint === "desktop" ||
+      getPathValue(currentLayerOverrides, path) === undefined
+    ) {
+      return null;
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => clearBreakpointStyle(path)}
+        className="text-[10px] font-medium text-slate-500 hover:text-slate-900"
+      >
+        Use inherited value
+      </button>
+    );
+  }
 
   /* ---------------- UI ---------------- */
 
@@ -425,315 +598,497 @@ export function VisualInspector({
         menus={menus}
       />
 
-      {/* -------- appearance -------- */}
+      {showAnyStyleControls ? (
+        <div className="border-t pt-4 space-y-4">
+          <h3 className="font-medium">Design & Styling</h3>
 
-      <div className="border-t pt-4 space-y-4">
-        <h3 className="font-medium">Design & Styling</h3>
-
-        <>
-          <Section id="layout" title="Layout & Alignment">
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Select
-                  label="Display"
-                  value={display}
-                  onChange={(v: string) => setStyle("display", v)}
-                  options={["block", "flex", "grid"]}
-                />
-                <Select
-                  label="Text Align"
-                  value={overrides.align?.text ?? "left"}
-                  onChange={(v: string) => setStyle("align.text", v)}
-                  options={["left", "center", "right"]}
-                />
-              </div>
-
-              {display === "flex" ? (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Select
-                      label="Direction"
-                      value={overrides.flexDirection ?? "row"}
-                      onChange={(v: string) => setStyle("flexDirection", v)}
-                      options={["row", "column"]}
-                    />
-                    <Select
-                      label="Wrap"
-                      value={overrides.flexWrap ?? "nowrap"}
-                      onChange={(v: string) => setStyle("flexWrap", v)}
-                      options={["nowrap", "wrap"]}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Select
-                      label="Align Items"
-                      value={overrides.align?.items ?? "stretch"}
-                      onChange={(v: string) => setStyle("align.items", v)}
-                      options={["start", "center", "end", "stretch"]}
-                    />
-                    <Select
-                      label="Justify Content"
-                      value={overrides.align?.justify ?? "start"}
-                      onChange={(v: string) => setStyle("align.justify", v)}
-                      options={["start", "center", "end", "between"]}
-                    />
-                  </div>
-                  <NumberField
-                    label="Gap"
-                    value={overrides.gap ?? 0}
-                    onChange={(n: number) => setStyle("gap", n)}
-                  />
-                </>
-              ) : null}
-
-              {display === "grid" ? (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <NumberField
-                      label="Grid Columns"
-                      value={overrides.gridColumns ?? 1}
-                      onChange={(n: number) => setStyle("gridColumns", n)}
-                    />
-                    <NumberField
-                      label="Grid Rows"
-                      value={overrides.gridRows ?? 1}
-                      onChange={(n: number) => setStyle("gridRows", n)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Select
-                      label="Align Items"
-                      value={overrides.align?.items ?? "stretch"}
-                      onChange={(v: string) => setStyle("align.items", v)}
-                      options={["start", "center", "end", "stretch"]}
-                    />
-                    <Select
-                      label="Justify Content"
-                      value={overrides.align?.justify ?? "start"}
-                      onChange={(v: string) => setStyle("align.justify", v)}
-                      options={["start", "center", "end", "between"]}
-                    />
-                  </div>
-                  <NumberField
-                    label="Gap"
-                    value={overrides.gap ?? 0}
-                    onChange={(n: number) => setStyle("gap", n)}
-                  />
-                </>
-              ) : null}
-            </div>
-          </Section>
-
-          <Section id="size" title="Size & Spacing">
-            <div className="mt-3 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Select
-                  label="Container"
-                  value={overrides.container ?? "boxed"}
-                  onChange={(v: string) => setStyle("container", v)}
-                  options={["boxed", "full"]}
-                />
-                <Select
-                  label="Max Width"
-                  value={overrides.maxWidth ?? "xl"}
-                  onChange={(v: string) => setStyle("maxWidth", v)}
-                  options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(["top", "right", "bottom", "left"] as const).map((side) => (
-                  <NumberField
-                    key={side}
-                    label={`Padding ${side.toUpperCase()}`}
-                    value={overrides.padding?.[side] ?? 0}
-                    onChange={(n: number) => setStyle(`padding.${side}`, n)}
-                  />
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {(["top", "right", "bottom", "left"] as const).map((side) => (
-                  <NumberField
-                    key={side}
-                    label={`Margin ${side.toUpperCase()}`}
-                    value={overrides.margin?.[side] ?? 0}
-                    onChange={(n: number) => setStyle(`margin.${side}`, n)}
-                  />
-                ))}
-              </div>
-            </div>
-          </Section>
-
-          <Section id="typography" title="Typography">
-            <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <NumberField
-                  label="Font Size"
-                  value={overrides.fontSize ?? 16}
-                  onChange={(n: number) => setStyle("fontSize", n)}
-                />
-                <NumberField
-                  label="Font Weight"
-                  value={overrides.fontWeight ?? 400}
-                  onChange={(n: number) => setStyle("fontWeight", n)}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <NumberField
-                  label="Line Height"
-                  value={overrides.lineHeight ?? 24}
-                  onChange={(n: number) => setStyle("lineHeight", n)}
-                />
-                <NumberField
-                  label="Letter Spacing"
-                  value={overrides.letterSpacing ?? 0}
-                  onChange={(n: number) => setStyle("letterSpacing", n)}
-                />
-              </div>
-              <Select
-                label="Text Transform"
-                value={overrides.textTransform ?? "none"}
-                onChange={(v: string) => setStyle("textTransform", v)}
-                options={["none", "uppercase", "lowercase", "capitalize"]}
-              />
-            </div>
-          </Section>
-
-          <Section id="color" title="Color & Border">
-            <div className="mt-3 space-y-3">
-              <ColorPickerInput
-                label="Text Color"
-                value={overrides.textColor ?? ""}
-                onChange={(v: string) => setStyle("textColor", v)}
-                placeholder="#111111"
-                palette={themePalette}
-              />
-              <Checkbox
-                label="Enable Border"
-                value={!!overrides.border?.enabled}
-                onChange={(v: boolean) => setStyle("border.enabled", v)}
-              />
-              <div className="grid grid-cols-1 gap-3">
-                <ColorPickerInput
-                  label="Border Color"
-                  value={overrides.border?.color ?? ""}
-                  onChange={(v: string) => setStyle("border.color", v)}
-                  placeholder="#e5e7eb"
-                  palette={themePalette}
-                />
-                <NumberField
-                  label="Border Width"
-                  value={overrides.border?.width ?? 1}
-                  onChange={(n: number) => setStyle("border.width", n)}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-3">
-                <NumberField
-                  label="Border Radius"
-                  value={overrides.radius ?? 0}
-                  onChange={(n: number) => setStyle("radius", n)}
-                />
-                <Select
-                  label="Shadow"
-                  value={overrides.shadow ?? "none"}
-                  onChange={(v: string) => setStyle("shadow", v)}
-                  options={["none", "sm", "md", "lg"]}
-                />
-              </div>
-            </div>
-          </Section>
-
-          <Section id="background" title="Background">
-            <div className="mt-3 space-y-3">
-              <Select
-                label="Type"
-                value={overrides.bg?.type ?? "none"}
-                onChange={(v: string) => setStyle("bg.type", v)}
-                options={["none", "solid", "gradient", "image"]}
-              />
-
-              {overrides.bg?.type === "solid" && (
-                <ColorPickerInput
-                  label="Color"
-                  value={overrides.bg?.color ?? ""}
-                  onChange={(v: string) => setStyle("bg.color", v)}
-                  placeholder="#ffffff"
-                  palette={themePalette}
-                />
-              )}
-
-              {overrides.bg?.type === "gradient" && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <ColorPickerInput
-                    label="From"
-                    value={overrides.bg?.gradient?.from ?? ""}
-                    onChange={(v: string) => setStyle("bg.gradient.from", v)}
-                    placeholder="#0f172a"
-                    palette={themePalette}
-                  />
-                  <ColorPickerInput
-                    label="To"
-                    value={overrides.bg?.gradient?.to ?? ""}
-                    onChange={(v: string) => setStyle("bg.gradient.to", v)}
-                    placeholder="#38bdf8"
-                    palette={themePalette}
-                  />
-                  <Select
-                    label="Direction"
-                    value={overrides.bg?.gradient?.direction ?? "to-r"}
-                    onChange={(v: string) =>
-                      setStyle("bg.gradient.direction", v)
-                    }
-                    options={["to-r", "to-l", "to-b", "to-t"]}
-                  />
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Editing
+                  </span>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200">
+                    {breakpointLabel}
+                  </span>
+                  {styleBreakpoint !== "desktop" ? (
+                    <span className="text-[11px] text-slate-500">
+                      {responsiveOverrideCount} local override
+                      {responsiveOverrideCount === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
                 </div>
-              )}
+                <p className="text-xs leading-5 text-slate-500">
+                  {styleBreakpoint === "desktop"
+                    ? "Desktop values become the default foundation for every smaller device."
+                    : "These controls inherit from desktop automatically. Any change here creates a breakpoint-only override."}
+                </p>
+              </div>
+              {styleBreakpoint !== "desktop" ? (
+                <button
+                  type="button"
+                  onClick={() => clearBreakpointStyle()}
+                  className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                >
+                  Reset {styleBreakpoint}
+                </button>
+              ) : null}
+            </div>
+          </div>
 
-              {overrides.bg?.type === "image" && (
-                <div className="space-y-3">
-                  <ImageField
-                    siteId={siteId}
-                    label="Background Image"
-                    assetIdValue={overrides.bg?.imageAssetId || ""}
-                    altValue=""
-                    assetsMap={assetsMap}
-                    onChangeAssetId={(v: any) => setStyle("bg.imageAssetId", v)}
-                    onChangeAssetUrl={(v: any) => setStyle("bg.imageUrl", v)}
-                    onChangeAlt={() => {}}
-                  />
-                  <ColorPickerInput
-                    label="Overlay Color"
-                    value={overrides.bg?.overlayColor ?? ""}
-                    onChange={(v: string) => setStyle("bg.overlayColor", v)}
-                    placeholder="rgba(0,0,0,0.4)"
-                    palette={themePalette}
-                  />
-                  <div className="space-y-1.5">
-                    <div className="text-sm font-medium">Overlay Opacity</div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={overrides.bg?.overlayOpacity ?? 0.35}
-                      onChange={(e) =>
-                        setStyle("bg.overlayOpacity", Number(e.target.value))
-                      }
-                      className="w-full"
-                    />
-                    <div className="text-xs text-right text-muted-foreground">
-                      {(overrides.bg?.overlayOpacity ?? 0.35).toFixed(2)}
+          <>
+            {(capabilities.display ||
+              capabilities.textAlign ||
+              capabilities.flex ||
+              capabilities.grid) && (
+              <Section id="layout" title="Layout & Alignment">
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {capabilities.display ? (
+                      <div className="space-y-1">
+                        <Select
+                          label="Display"
+                          value={display}
+                          onChange={(v: string) => setStyle("display", v)}
+                          options={["block", "flex", "grid"]}
+                        />
+                        {renderResetLink("display")}
+                      </div>
+                    ) : null}
+                    {capabilities.textAlign ? (
+                      <div className="space-y-1">
+                        <Select
+                          label="Text Align"
+                          value={overrides.align?.text ?? "left"}
+                          onChange={(v: string) => setStyle("align.text", v)}
+                          options={["left", "center", "right"]}
+                        />
+                        {renderResetLink("align.text")}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {capabilities.flex && display === "flex" ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Select
+                            label="Direction"
+                            value={overrides.flexDirection ?? "row"}
+                            onChange={(v: string) => setStyle("flexDirection", v)}
+                            options={["row", "column"]}
+                          />
+                          {renderResetLink("flexDirection")}
+                        </div>
+                        <div className="space-y-1">
+                          <Select
+                            label="Wrap"
+                            value={overrides.flexWrap ?? "nowrap"}
+                            onChange={(v: string) => setStyle("flexWrap", v)}
+                            options={["nowrap", "wrap"]}
+                          />
+                          {renderResetLink("flexWrap")}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Select
+                            label="Align Items"
+                            value={overrides.align?.items ?? "stretch"}
+                            onChange={(v: string) => setStyle("align.items", v)}
+                            options={["start", "center", "end", "stretch"]}
+                          />
+                          {renderResetLink("align.items")}
+                        </div>
+                        <div className="space-y-1">
+                          <Select
+                            label="Justify Content"
+                            value={overrides.align?.justify ?? "start"}
+                            onChange={(v: string) => setStyle("align.justify", v)}
+                            options={["start", "center", "end", "between"]}
+                          />
+                          {renderResetLink("align.justify")}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <NumberField
+                          label="Gap"
+                          value={overrides.gap ?? 0}
+                          onChange={(n: number) => setStyle("gap", n)}
+                        />
+                        {renderResetLink("gap")}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {capabilities.grid && display === "grid" ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <NumberField
+                            label="Grid Columns"
+                            value={overrides.gridColumns ?? 1}
+                            onChange={(n: number) => setStyle("gridColumns", n)}
+                          />
+                          {renderResetLink("gridColumns")}
+                        </div>
+                        <div className="space-y-1">
+                          <NumberField
+                            label="Grid Rows"
+                            value={overrides.gridRows ?? 1}
+                            onChange={(n: number) => setStyle("gridRows", n)}
+                          />
+                          {renderResetLink("gridRows")}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Select
+                            label="Align Items"
+                            value={overrides.align?.items ?? "stretch"}
+                            onChange={(v: string) => setStyle("align.items", v)}
+                            options={["start", "center", "end", "stretch"]}
+                          />
+                          {renderResetLink("align.items")}
+                        </div>
+                        <div className="space-y-1">
+                          <Select
+                            label="Justify Content"
+                            value={overrides.align?.justify ?? "start"}
+                            onChange={(v: string) => setStyle("align.justify", v)}
+                            options={["start", "center", "end", "between"]}
+                          />
+                          {renderResetLink("align.justify")}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <NumberField
+                          label="Gap"
+                          value={overrides.gap ?? 0}
+                          onChange={(n: number) => setStyle("gap", n)}
+                        />
+                        {renderResetLink("gap")}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </Section>
+            )}
+
+            {(capabilities.container ||
+              capabilities.maxWidth ||
+              capabilities.padding ||
+              capabilities.margin) && (
+              <Section id="size" title="Size & Spacing">
+                <div className="mt-3 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {capabilities.container ? (
+                      <div className="space-y-1">
+                        <Select
+                          label="Container"
+                          value={overrides.container ?? "boxed"}
+                          onChange={(v: string) => setStyle("container", v)}
+                          options={["boxed", "full"]}
+                        />
+                        {renderResetLink("container")}
+                      </div>
+                    ) : null}
+                    {capabilities.maxWidth ? (
+                      <div className="space-y-1">
+                        <Select
+                          label="Max Width"
+                          value={overrides.maxWidth ?? "xl"}
+                          onChange={(v: string) => setStyle("maxWidth", v)}
+                          options={["auto", "sm", "md", "lg", "xl", "2xl", "full"]}
+                        />
+                        {renderResetLink("maxWidth")}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {capabilities.padding ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {(["top", "right", "bottom", "left"] as const).map((side) => (
+                        <div key={side} className="space-y-1">
+                          <NumberField
+                            label={`Padding ${side.toUpperCase()}`}
+                            value={overrides.padding?.[side] ?? 0}
+                            onChange={(n: number) => setStyle(`padding.${side}`, n)}
+                          />
+                          {renderResetLink(`padding.${side}`)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {capabilities.margin ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {(["top", "right", "bottom", "left"] as const).map((side) => (
+                        <div key={side} className="space-y-1">
+                          <NumberField
+                            label={`Margin ${side.toUpperCase()}`}
+                            value={overrides.margin?.[side] ?? 0}
+                            onChange={(n: number) => setStyle(`margin.${side}`, n)}
+                          />
+                          {renderResetLink(`margin.${side}`)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </Section>
+            )}
+
+            {capabilities.typography ? (
+              <Section id="typography" title="Typography">
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <NumberField
+                        label="Font Size"
+                        value={overrides.fontSize ?? 16}
+                        onChange={(n: number) => setStyle("fontSize", n)}
+                      />
+                      {renderResetLink("fontSize")}
+                    </div>
+                    <div className="space-y-1">
+                      <NumberField
+                        label="Font Weight"
+                        value={overrides.fontWeight ?? 400}
+                        onChange={(n: number) => setStyle("fontWeight", n)}
+                      />
+                      {renderResetLink("fontWeight")}
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <NumberField
+                        label="Line Height"
+                        value={overrides.lineHeight ?? 24}
+                        onChange={(n: number) => setStyle("lineHeight", n)}
+                      />
+                      {renderResetLink("lineHeight")}
+                    </div>
+                    <div className="space-y-1">
+                      <NumberField
+                        label="Letter Spacing"
+                        value={overrides.letterSpacing ?? 0}
+                        onChange={(n: number) => setStyle("letterSpacing", n)}
+                      />
+                      {renderResetLink("letterSpacing")}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Select
+                      label="Text Transform"
+                      value={overrides.textTransform ?? "none"}
+                      onChange={(v: string) => setStyle("textTransform", v)}
+                      options={["none", "uppercase", "lowercase", "capitalize"]}
+                    />
+                    {renderResetLink("textTransform")}
+                  </div>
                 </div>
-              )}
-            </div>
-          </Section>
-        </>
+              </Section>
+            ) : null}
 
-        <StylePreviewCard style={previewStyle} title="Live Style Preview" />
-      </div>
+            {(capabilities.textColor ||
+              capabilities.border ||
+              capabilities.radius ||
+              capabilities.shadow) && (
+              <Section id="color" title="Color & Border">
+                <div className="mt-3 space-y-3">
+                  {capabilities.textColor ? (
+                    <div className="space-y-1">
+                      <ColorPickerInput
+                        label="Text Color"
+                        value={overrides.textColor ?? ""}
+                        onChange={(v: string) => setStyle("textColor", v)}
+                        placeholder="#111111"
+                        palette={themePalette}
+                      />
+                      {renderResetLink("textColor")}
+                    </div>
+                  ) : null}
+                  {capabilities.border ? (
+                    <div className="space-y-1">
+                      <Checkbox
+                        label="Enable Border"
+                        value={!!overrides.border?.enabled}
+                        onChange={(v: boolean) => setStyle("border.enabled", v)}
+                      />
+                      {renderResetLink("border.enabled")}
+                    </div>
+                  ) : null}
+                  <div className="grid grid-cols-1 gap-3">
+                    {capabilities.border ? (
+                      <>
+                        <div className="space-y-1">
+                          <ColorPickerInput
+                            label="Border Color"
+                            value={overrides.border?.color ?? ""}
+                            onChange={(v: string) => setStyle("border.color", v)}
+                            placeholder="#e5e7eb"
+                            palette={themePalette}
+                          />
+                          {renderResetLink("border.color")}
+                        </div>
+                        <div className="space-y-1">
+                          <NumberField
+                            label="Border Width"
+                            value={overrides.border?.width ?? 1}
+                            onChange={(n: number) => setStyle("border.width", n)}
+                          />
+                          {renderResetLink("border.width")}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {capabilities.radius ? (
+                      <div className="space-y-1">
+                        <NumberField
+                          label="Border Radius"
+                          value={overrides.radius ?? 0}
+                          onChange={(n: number) => setStyle("radius", n)}
+                        />
+                        {renderResetLink("radius")}
+                      </div>
+                    ) : null}
+                    {capabilities.shadow ? (
+                      <div className="space-y-1">
+                        <Select
+                          label="Shadow"
+                          value={overrides.shadow ?? "none"}
+                          onChange={(v: string) => setStyle("shadow", v)}
+                          options={["none", "sm", "md", "lg"]}
+                        />
+                        {renderResetLink("shadow")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </Section>
+            )}
+
+            {capabilities.background ? (
+              <Section id="background" title="Background">
+                <div className="mt-3 space-y-3">
+                  <div className="space-y-1">
+                    <Select
+                      label="Type"
+                      value={overrides.bg?.type ?? "none"}
+                      onChange={(v: string) => setStyle("bg.type", v)}
+                      options={["none", "solid", "gradient", "image"]}
+                    />
+                    {renderResetLink("bg.type")}
+                  </div>
+
+                  {overrides.bg?.type === "solid" && (
+                    <div className="space-y-1">
+                      <ColorPickerInput
+                        label="Color"
+                        value={overrides.bg?.color ?? ""}
+                        onChange={(v: string) => setStyle("bg.color", v)}
+                        placeholder="#ffffff"
+                        palette={themePalette}
+                      />
+                      {renderResetLink("bg.color")}
+                    </div>
+                  )}
+
+                  {overrides.bg?.type === "gradient" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <ColorPickerInput
+                          label="From"
+                          value={overrides.bg?.gradient?.from ?? ""}
+                          onChange={(v: string) => setStyle("bg.gradient.from", v)}
+                          placeholder="#0f172a"
+                          palette={themePalette}
+                        />
+                        {renderResetLink("bg.gradient.from")}
+                      </div>
+                      <div className="space-y-1">
+                        <ColorPickerInput
+                          label="To"
+                          value={overrides.bg?.gradient?.to ?? ""}
+                          onChange={(v: string) => setStyle("bg.gradient.to", v)}
+                          placeholder="#38bdf8"
+                          palette={themePalette}
+                        />
+                        {renderResetLink("bg.gradient.to")}
+                      </div>
+                      <div className="space-y-1">
+                        <Select
+                          label="Direction"
+                          value={overrides.bg?.gradient?.direction ?? "to-r"}
+                          onChange={(v: string) => setStyle("bg.gradient.direction", v)}
+                          options={["to-r", "to-l", "to-b", "to-t"]}
+                        />
+                        {renderResetLink("bg.gradient.direction")}
+                      </div>
+                    </div>
+                  )}
+
+                  {overrides.bg?.type === "image" && (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <ImageField
+                          siteId={siteId}
+                          label="Background Image"
+                          assetIdValue={overrides.bg?.imageAssetId || ""}
+                          altValue=""
+                          assetsMap={assetsMap}
+                          onChangeAssetId={(v: any) => setStyle("bg.imageAssetId", v)}
+                          onChangeAssetUrl={(v: any) => setStyle("bg.imageUrl", v)}
+                          onChangeAlt={() => {}}
+                        />
+                        {renderResetLink("bg.imageAssetId") ||
+                          renderResetLink("bg.imageUrl")}
+                      </div>
+                      <div className="space-y-1">
+                        <ColorPickerInput
+                          label="Overlay Color"
+                          value={overrides.bg?.overlayColor ?? ""}
+                          onChange={(v: string) => setStyle("bg.overlayColor", v)}
+                          placeholder="rgba(0,0,0,0.4)"
+                          palette={themePalette}
+                        />
+                        {renderResetLink("bg.overlayColor")}
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="text-sm font-medium">Overlay Opacity</div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={overrides.bg?.overlayOpacity ?? 0.35}
+                          onChange={(e) =>
+                            setStyle("bg.overlayOpacity", Number(e.target.value))
+                          }
+                          className="w-full"
+                        />
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-xs text-right text-muted-foreground">
+                            {(overrides.bg?.overlayOpacity ?? 0.35).toFixed(2)}
+                          </div>
+                          {renderResetLink("bg.overlayOpacity")}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Section>
+            ) : null}
+          </>
+
+          {capabilities.stylePreview ? (
+            <StylePreviewCard style={previewStyle} title="Live Style Preview" />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

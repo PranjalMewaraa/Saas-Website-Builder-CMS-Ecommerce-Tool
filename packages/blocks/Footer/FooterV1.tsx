@@ -170,16 +170,16 @@ export default function FooterV1({
     contentWidth === "auto"
       ? ""
       : contentWidth === "sm"
-      ? "640px"
-      : contentWidth === "md"
-        ? "768px"
-        : contentWidth === "lg"
-          ? "1024px"
-          : contentWidth === "xl"
-            ? "1280px"
-            : contentWidth === "2xl"
-              ? "1536px"
-              : undefined;
+        ? "640px"
+        : contentWidth === "md"
+          ? "768px"
+          : contentWidth === "lg"
+            ? "1024px"
+            : contentWidth === "xl"
+              ? "1280px"
+              : contentWidth === "2xl"
+                ? "1536px"
+                : undefined;
   const resolvedPanelBg: NonNullable<Props["panelBg"]> =
     panelBg && panelBg.type
       ? panelBg
@@ -243,12 +243,19 @@ export default function FooterV1({
                 <div className="text-xl font-semibold mb-3">YourBrand</div>
               )}
               <p className="text-sm leading-6 opacity-80">{brandDescription}</p>
-              {brandBadge ? <div className="mt-5">{renderBadge(brandBadge, badgeStyle)}</div> : null}
+              {brandBadge ? (
+                <div className="mt-5">
+                  {renderBadge(brandBadge, badgeStyle)}
+                </div>
+              ) : null}
             </div>
             {columns.length ? (
               <div
                 className="mt-10 grid grid-cols-2 md:grid-cols-4"
-                style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+                style={{
+                  columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`,
+                  rowGap: "24px",
+                }}
               >
                 {columns.map((group, idx) => (
                   <div key={`col-t2-${idx}`} className="text-center">
@@ -260,7 +267,10 @@ export default function FooterV1({
                     </h3>
                     <ul
                       className="space-y-3"
-                      style={resolveTextListStyle(group.textSize, group.textStyle)}
+                      style={resolveTextListStyle(
+                        group.textSize,
+                        group.textStyle,
+                      )}
                     >
                       {group.items.map((n) => (
                         <li key={n.id}>
@@ -304,11 +314,18 @@ export default function FooterV1({
                 <p className="text-sm leading-7 opacity-85 max-w-xl">
                   {brandDescription}
                 </p>
-                {brandBadge ? <div className="mt-6">{renderBadge(brandBadge, badgeStyle)}</div> : null}
+                {brandBadge ? (
+                  <div className="mt-6">
+                    {renderBadge(brandBadge, badgeStyle)}
+                  </div>
+                ) : null}
               </div>
               <div
                 className="grid grid-cols-2"
-                style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+                style={{
+                  columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`,
+                  rowGap: "24px",
+                }}
               >
                 {columns.slice(0, 4).map((group, idx) => (
                   <div key={`col-t3-${idx}`}>
@@ -320,7 +337,10 @@ export default function FooterV1({
                     </h3>
                     <ul
                       className="space-y-3"
-                      style={resolveTextListStyle(group.textSize, group.textStyle)}
+                      style={resolveTextListStyle(
+                        group.textSize,
+                        group.textStyle,
+                      )}
                     >
                       {group.items.map((n) => (
                         <li key={n.id}>
@@ -366,20 +386,25 @@ export default function FooterV1({
               <div className="md:col-span-2">
                 <div
                   className="flex flex-wrap items-center gap-y-3 text-sm"
-                  style={{ columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px` }}
+                  style={{
+                    columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px`,
+                  }}
                 >
-                  {columns.flatMap((g) => g.items).slice(0, 12).map((n) => (
-                    <Link
-                      key={`flat-${n.id}`}
-                      href={appendPreviewQuery(
-                        n.ref?.slug || n.ref?.href || "#",
-                        previewQuery,
-                      )}
-                      className="transition-opacity hover:opacity-100 opacity-80"
-                    >
-                      {n.label}
-                    </Link>
-                  ))}
+                  {columns
+                    .flatMap((g) => g.items)
+                    .slice(0, 12)
+                    .map((n) => (
+                      <Link
+                        key={`flat-${n.id}`}
+                        href={appendPreviewQuery(
+                          n.ref?.slug || n.ref?.href || "#",
+                          previewQuery,
+                        )}
+                        className="transition-opacity hover:opacity-100 opacity-80"
+                      >
+                        {n.label}
+                      </Link>
+                    ))}
                 </div>
               </div>
             </div>
@@ -411,7 +436,9 @@ export default function FooterV1({
               {columns.length ? (
                 <div
                   className="flex flex-wrap gap-y-3 text-sm"
-                  style={{ columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px` }}
+                  style={{
+                    columnGap: `${Math.max(0, Number(menuLinkGapX || 24))}px`,
+                  }}
                 >
                   {columns[0].items.slice(0, 6).map((n) => (
                     <Link
@@ -430,50 +457,60 @@ export default function FooterV1({
             </div>
           </div>
         ) : (
-          <div className="px-6 py-12 md:px-10" style={panelStyle}>
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-4 md:gap-8">
-              <div className="md:col-span-1">
+          <div className="px-4 py-10 md:px-10 lg:py-16" style={panelStyle}>
+            <div className="flex flex-col xl:flex-row gap-8 xl:gap-8 gap-12">
+              {/* Brand Section: 100% width on mobile, roughly 33% (4/12) on desktop */}
+              <div className="flex-none w-full lg:w-1/3">
                 {logoUrl ? (
                   <Link
                     href={appendPreviewQuery("/", previewQuery)}
-                    className="inline-flex items-center mb-4"
+                    className="inline-flex items-center mb-5"
                   >
                     <Image
                       src={logoUrl}
                       alt={logoAlt || "Logo"}
                       width={180}
                       height={56}
-                      className="h-9 w-auto"
+                      className="h-8 w-auto md:h-9"
                     />
                   </Link>
                 ) : (
-                  <div className="text-xl font-semibold mb-3">YourBrand</div>
+                  <div className="text-xl font-bold mb-4 tracking-tight">
+                    YourBrand
+                  </div>
                 )}
-                <p className="text-sm leading-6 opacity-80">
+                <p className="text-sm leading-7 opacity-70 max-w-sm">
                   {brandDescription}
                 </p>
-                {brandBadge ? (
-                  <div className="mt-6">
+                {brandBadge && (
+                  <div className="mt-6 flex">
                     {renderBadge(brandBadge, badgeStyle)}
                   </div>
-                ) : null}
+                )}
               </div>
 
+              {/* Links Section: flex-grow to fill remaining 2/3 width */}
               {columns.length ? (
                 <div
-                  className="grid grid-cols-2 md:col-span-3 md:grid-cols-4"
-                  style={{ columnGap: `${Math.max(0, Number(menuColumnGap || 32))}px`, rowGap: "24px" }}
+                  className="flex-grow flex flex-wrap"
+                  style={{
+                    columnGap: `clamp(16px, 4vw, ${menuColumnGap || 32}px)`,
+                    rowGap: "40px",
+                  }}
                 >
                   {columns.map((group, idx) => (
-                    <div key={`col-${idx}`}>
+                    <div
+                      key={`col-${idx}`}
+                      className="flex flex-col min-w-[140px] w-[calc(50%-16px)] sm:w-[calc(33.333%-22px)] md:w-[calc(25%-24px)]"
+                    >
                       <h3
-                        className="mb-4 text-xs uppercase tracking-[0.2em] opacity-80"
+                        className="mb-5 text-[10px] font-bold uppercase tracking-[0.2em] opacity-50"
                         style={resolveTextStyle(group.textStyle)}
                       >
                         {group.title || "Links"}
                       </h3>
                       <ul
-                        className="space-y-3"
+                        className="space-y-3.5"
                         style={resolveTextListStyle(
                           group.textSize,
                           group.textStyle,
@@ -486,7 +523,7 @@ export default function FooterV1({
                                 n.ref?.slug || n.ref?.href || "#",
                                 previewQuery,
                               )}
-                              className="transition-opacity hover:opacity-100 opacity-80"
+                              className="transition-all hover:opacity-100 opacity-70 hover:translate-x-0.5 inline-block"
                             >
                               {n.label}
                             </Link>
@@ -501,7 +538,7 @@ export default function FooterV1({
           </div>
         )}
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-8 text-xs opacity-70 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex sm:flex-col gap-4 border-t border-white/10 pt-8 text-xs opacity-70 xl:flex-row sm:items-center sm:justify-between">
           <div>© {new Date().getFullYear()} Store — All rights reserved.</div>
           {showSocials && socials.length ? (
             <div className="flex flex-wrap gap-3">

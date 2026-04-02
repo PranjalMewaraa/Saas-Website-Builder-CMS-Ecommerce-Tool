@@ -35,6 +35,15 @@ function safeJsonParse(text: string) {
 
 const BLOCK_TYPES = ALL_BLOCK_TYPES.filter((t) => !t.startsWith("Atomic/"));
 
+const EDITOR_BREAKPOINTS = {
+  desktop: { label: "Desktop", width: null },
+  laptop: { label: "Laptop", width: 1280 },
+  tablet: { label: "Tablet", width: 834 },
+  mobile: { label: "Mobile", width: 390 },
+} as const;
+
+type EditorBreakpoint = keyof typeof EDITOR_BREAKPOINTS;
+
 function ensureEditorLayout(raw: any) {
   const next =
     raw && typeof raw === "object" ? structuredClone(raw) : { version: 1 };
@@ -70,6 +79,9 @@ export default function PageEditorStudioClient({
   const [tab, setTab] = useState<"layout" | "seo">("layout");
   const [selection, setSelection] = useState<LayoutSelection | null>(null);
   const [zoom, setZoom] = useState(100);
+  const [fitCanvas, setFitCanvas] = useState(true);
+  const [activeBreakpoint, setActiveBreakpoint] =
+    useState<EditorBreakpoint>("desktop");
   const [showGrid, setShowGrid] = useState(true);
   const [showOutlines, setShowOutlines] = useState(true);
   const [leftPanelTab, setLeftPanelTab] = useState<"layers" | "inspector">(
@@ -312,6 +324,7 @@ export default function PageEditorStudioClient({
     menus,
     forms,
     themePalette,
+    activeBreakpoint,
     onDeleteBlock: (id: string) => {
       const idx = blocks.findIndex((b: any) => b.id === id);
       if (idx >= 0) deleteBlock(idx);
@@ -325,6 +338,7 @@ export default function PageEditorStudioClient({
     forms,
     menus,
     themePalette,
+    activeBreakpoint,
     onDeleteBlock: (id: string) => {
       const idx = blocks.findIndex((b: any) => b.id === id);
       if (idx >= 0) deleteBlock(idx);
@@ -521,9 +535,13 @@ export default function PageEditorStudioClient({
                       setShowGrid={setShowGrid}
                       zoom={zoom}
                       setZoom={setZoom}
+                      fitCanvas={fitCanvas}
+                      setFitCanvas={setFitCanvas}
                       page={page}
                       showOutlines={showOutlines}
                       setShowOutlines={setShowOutlines}
+                      activeBreakpoint={activeBreakpoint}
+                      setActiveBreakpoint={setActiveBreakpoint}
                     />
 
                     <div className="flex bg-slate-100 p-1 rounded-xl">
@@ -668,6 +686,8 @@ export default function PageEditorStudioClient({
                     showGrid={showGrid}
                     showOutlines={showOutlines}
                     zoom={zoom}
+                    fitMode={fitCanvas}
+                    activeBreakpoint={activeBreakpoint}
                     onAddBlock={addBlockOfType}
                     onDeleteBlock={(id: string) => {
                       const idx = blocks.findIndex((b: any) => b.id === id);
@@ -1667,6 +1687,25 @@ function defaultPropsFor(type: string) {
 }
 
 function defaultStyleFor(type: string) {
+  if (type === "Header/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        padding: { top: 20, right: 24, bottom: 20, left: 24 },
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        textColor: "#0f172a",
+      },
+      responsive: {
+        tablet: {
+          padding: { top: 16, right: 18, bottom: 16, left: 18 },
+        },
+        mobile: {
+          padding: { top: 14, right: 14, bottom: 14, left: 14 },
+        },
+      },
+    };
+  }
+
   if (type === "Footer/V1") {
     return {
       presetId: undefined,
@@ -1674,95 +1713,139 @@ function defaultStyleFor(type: string) {
         bg: { type: "solid", color: "#0f172a" },
         textColor: "#94a3b8",
         padding: { top: 64, right: 24, bottom: 32, left: 24 },
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
       },
-      responsive: {},
+      responsive: {
+        tablet: {
+          padding: { top: 48, right: 20, bottom: 28, left: 20 },
+        },
+        mobile: {
+          padding: { top: 36, right: 16, bottom: 24, left: 16 },
+          fontSize: 14,
+          lineHeight: 22,
+        },
+      },
     };
   }
+
+  if (type === "Hero/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        padding: { top: 88, right: 24, bottom: 88, left: 24 },
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        fontSize: 56,
+        lineHeight: 64,
+        letterSpacing: -0.8,
+        textColor: "#0f172a",
+      },
+      responsive: {
+        tablet: {
+          padding: { top: 64, right: 20, bottom: 64, left: 20 },
+          fontSize: 44,
+          lineHeight: 52,
+          letterSpacing: -0.4,
+        },
+        mobile: {
+          padding: { top: 40, right: 16, bottom: 40, left: 16 },
+          fontSize: 32,
+          lineHeight: 40,
+          letterSpacing: -0.2,
+        },
+      },
+    };
+  }
+
+  if (type === "ProductGrid/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        padding: { top: 56, right: 24, bottom: 56, left: 24 },
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        maxWidth: "full",
+        align: { text: "left" },
+      },
+      responsive: {
+        tablet: {
+          padding: { top: 40, right: 20, bottom: 40, left: 20 },
+        },
+        mobile: {
+          padding: { top: 28, right: 16, bottom: 28, left: 16 },
+        },
+      },
+    };
+  }
+
   return { presetId: undefined, overrides: {}, responsive: {} };
 }
 
 const Toolbar = ({
   zoom,
   setZoom,
+  fitCanvas,
+  setFitCanvas,
   showGrid,
   setShowGrid,
   page,
   showOutlines,
   setShowOutlines,
+  activeBreakpoint,
+  setActiveBreakpoint,
 }: any) => {
-  const [view, setView] = useState("desktop");
-
   const devices = [
-    { id: "desktop", icon: <path d="M2 3h20v12H2zM8 21h8M12 17v4" /> },
-    { id: "laptop", icon: <path d="M2 16h20M4 6h16v10H4zM2 20h20" /> },
+    {
+      id: "desktop",
+      label: "Desktop",
+      width: "Fluid",
+      icon: <path d="M2 3h20v12H2zM8 21h8M12 17v4" />,
+    },
+    {
+      id: "laptop",
+      label: "Laptop",
+      width: "1280px",
+      icon: <path d="M2 16h20M4 6h16v10H4zM2 20h20" />,
+    },
     {
       id: "tablet",
+      label: "Tablet",
+      width: "834px",
       icon: (
         <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01" />
       ),
     },
     {
       id: "mobile",
+      label: "Mobile",
+      width: "390px",
       icon: (
         <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01" />
       ),
     },
   ];
+  const activeDevice =
+    devices.find((device) => device.id === activeBreakpoint) || devices[0];
 
   return (
-    <div className="flex flex-col justify-center gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col px-3 min-w-30 max-w-50">
-          <div className="text-[13px] flex items-center gap-4 font-bold text-slate-900 truncate tracking-tight">
-            {page.name || page.title || "Untitled Page"}{" "}
-            <span>
-              <div className="text-[10px] font-medium text-slate-400 truncate font-mono">
-                Slug: {page.slug || "/home"}
-              </div>
-            </span>
-          </div>
+    <div className="flex flex-col justify-center gap-3">
+      <div className="min-w-0 px-1">
+        <div className="truncate text-[13px] font-bold tracking-tight text-slate-900">
+          {page.name || page.title || "Untitled Page"}
         </div>
-        <div className="h-8 w-px bg-slate-200/60 mx-1" />
-        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
-          <select
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none cursor-pointer appearance-none pr-1"
-          >
-            {[70, 80, 90, 100, 110, 125, 150].map((z) => (
-              <option key={z} value={z}>
-                {z}%
-              </option>
-            ))}
-          </select>
-          <svg
-            className="w-3 h-3 text-slate-400 pointer-events-none"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+        <div className="truncate pt-0.5 text-[10px] font-medium text-slate-400 font-mono">
+          Slug: {page.slug || "/home"}
         </div>
       </div>
 
-      <div className="flex items-center gap-3 bg-white/90  border border-slate-200 rounded-2xl p-1.5  w-full">
-        {/* 1. Page Info Section */}
-
-        {/* 2. Device Segmented Control */}
-        <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/90 p-1.5">
+        <div className="flex flex-col gap-1 rounded-xl border border-slate-200/50 bg-slate-100/80 p-1.5">
+          <div className="flex items-center gap-2">
           {devices.map((device) => (
             <button
               key={device.id}
-              onClick={() => setView(device.id)}
-              title={device.id.charAt(0).toUpperCase() + device.id.slice(1)}
+              onClick={() => setActiveBreakpoint(device.id)}
+              title={`${device.label} preview`}
               className={`p-2 rounded-lg transition-all duration-200 ${
-                view === device.id
+                activeBreakpoint === device.id
                   ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
                   : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
               }`}
@@ -1780,32 +1863,77 @@ const Toolbar = ({
               </svg>
             </button>
           ))}
+          </div>
+          <div className="px-1 text-[10px] font-medium leading-tight text-slate-500">
+            {activeDevice.label} · {activeDevice.width}
+          </div>
         </div>
 
-        {/* 3. Zoom Control */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200/50 bg-slate-100/80 p-1">
+            <button
+              onClick={() => setFitCanvas(true)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                fitCanvas
+                  ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Fit
+            </button>
+            <div className="flex items-center rounded-lg bg-slate-50 border border-slate-200 px-2 py-1">
+              <select
+                value={zoom}
+                onChange={(e) => {
+                  setFitCanvas(false);
+                  setZoom(Number(e.target.value));
+                }}
+                className="bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none cursor-pointer appearance-none pr-1"
+              >
+                {[70, 80, 90, 100, 110, 125, 150].map((z) => (
+                  <option key={z} value={z}>
+                    {z}%
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="w-3 h-3 text-slate-400 pointer-events-none"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
 
-        {/* 4. View Toggles */}
-        <div className="flex items-center gap-1 h-full bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
-          <button
-            onClick={() => setShowGrid(!showGrid)}
-            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-              showGrid
-                ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Grid
-          </button>
-          <button
-            onClick={() => setShowOutlines(!showOutlines)}
-            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-              showOutlines
-                ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Outlines
-          </button>
+          <div className="flex items-center gap-1 rounded-xl border border-slate-200/50 bg-slate-100/80 p-1">
+            <button
+              onClick={() => setShowGrid(!showGrid)}
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                showGrid
+                  ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Grid
+            </button>
+            <button
+              onClick={() => setShowOutlines(!showOutlines)}
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                showOutlines
+                  ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              Outlines
+            </button>
+          </div>
         </div>
       </div>
     </div>

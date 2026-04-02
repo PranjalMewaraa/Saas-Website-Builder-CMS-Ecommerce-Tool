@@ -12,6 +12,22 @@ export function StyleWrapper({
   const margin = o.margin ?? {};
 
   const css: React.CSSProperties = {
+    display: o.display || undefined,
+    flexDirection: o.flexDirection || undefined,
+    flexWrap: o.flexWrap || undefined,
+    gap: o.gap || undefined,
+    gridTemplateColumns:
+      typeof o.gridColumns === "number"
+        ? `repeat(${Math.max(1, o.gridColumns)}, minmax(0, 1fr))`
+        : undefined,
+    gridTemplateRows:
+      typeof o.gridRows === "number"
+        ? `repeat(${Math.max(1, o.gridRows)}, minmax(0, auto))`
+        : undefined,
+    alignItems: mapAlignValue(o.align?.items),
+    justifyContent: mapJustifyValue(o.align?.justify),
+    textAlign: o.align?.text || undefined,
+
     paddingTop: padding.top,
     paddingRight: padding.right,
     paddingBottom: padding.bottom,
@@ -23,7 +39,15 @@ export function StyleWrapper({
     marginLeft: margin.left,
 
     color: o.textColor || undefined,
+    fontSize: o.fontSize || undefined,
+    fontWeight: o.fontWeight || undefined,
+    lineHeight: o.lineHeight || undefined,
+    letterSpacing: o.letterSpacing || undefined,
+    textTransform: o.textTransform || undefined,
     borderRadius: o.radius || undefined,
+    width:
+      o.container === "full" ? "100%" : o.width || undefined,
+    maxWidth: resolveMaxWidth(o.maxWidth),
 
     boxShadow:
       o.shadow === "sm"
@@ -65,6 +89,50 @@ export function StyleWrapper({
       {children}
     </div>
   );
+}
+
+function resolveMaxWidth(value: string | undefined) {
+  switch (value) {
+    case "sm":
+      return "24rem";
+    case "md":
+      return "28rem";
+    case "lg":
+      return "32rem";
+    case "xl":
+      return "36rem";
+    case "2xl":
+      return "42rem";
+    case "full":
+      return "100%";
+    case "auto":
+    default:
+      return undefined;
+  }
+}
+
+function mapAlignValue(value: string | undefined) {
+  switch (value) {
+    case "start":
+      return "flex-start";
+    case "end":
+      return "flex-end";
+    default:
+      return value || undefined;
+  }
+}
+
+function mapJustifyValue(value: string | undefined) {
+  switch (value) {
+    case "start":
+      return "flex-start";
+    case "end":
+      return "flex-end";
+    case "between":
+      return "space-between";
+    default:
+      return value || undefined;
+  }
 }
 
 function hexToRgba(hex: string, opacity: number) {
