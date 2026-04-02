@@ -1,13 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { OnboardingLogoutButton } from "./_components/OnboardingLogoutButton";
 
 export default function OnboardingWelcome() {
   const router = useRouter();
 
   return (
     <div className="max-w-xl mx-auto p-10 space-y-6">
-      <h1 className="text-3xl font-bold">Welcome 🎉</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-3xl font-bold">Welcome 🎉</h1>
+        <OnboardingLogoutButton />
+      </div>
       <p>You’re 1 minute away from launching your site.</p>
 
       <ul className="list-disc ml-6">

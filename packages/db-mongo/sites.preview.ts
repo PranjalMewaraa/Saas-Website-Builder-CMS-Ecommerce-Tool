@@ -1,4 +1,5 @@
 import { getMongoDb } from "./index";
+import type { SiteDoc, SnapshotDoc } from "./sites.repo";
 
 function randomToken(len = 32) {
   const chars =
@@ -14,7 +15,7 @@ export async function ensureSitePreviewToken(
   site_id: string,
 ) {
   const db = await getMongoDb();
-  const sites = db.collection("sites");
+  const sites = db.collection<SiteDoc>("sites");
 
   const site = await sites.findOne({ _id: site_id, tenant_id });
   if (!site) throw new Error("SITE_NOT_FOUND");
@@ -33,7 +34,7 @@ export async function regenerateSitePreviewToken(
   site_id: string,
 ) {
   const db = await getMongoDb();
-  const sites = db.collection("sites");
+  const sites = db.collection<SiteDoc>("sites");
 
   const site = await sites.findOne({ _id: site_id, tenant_id });
   if (!site) throw new Error("SITE_NOT_FOUND");
@@ -53,7 +54,7 @@ export async function setDraftSnapshotId(
 ) {
   const db = await getMongoDb();
   await db
-    .collection("sites")
+    .collection<SiteDoc>("sites")
     .updateOne(
       { _id: site_id, tenant_id },
       { $set: { draft_snapshot_id: snapshot_id, updated_at: new Date() } },
@@ -63,10 +64,10 @@ export async function setDraftSnapshotId(
 export async function getSiteByHandle(handle: string) {
   console.log(handle);
   const db = await getMongoDb();
-  return db.collection("sites").findOne({ handle });
+  return db.collection<SiteDoc>("sites").findOne({ handle });
 }
 
 export async function getSnapshotById(snapshot_id: string) {
   const db = await getMongoDb();
-  return db.collection("snapshots").findOne({ _id: snapshot_id });
+  return db.collection<SnapshotDoc>("snapshots").findOne({ _id: snapshot_id });
 }

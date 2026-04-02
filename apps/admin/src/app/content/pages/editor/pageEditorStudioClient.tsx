@@ -350,15 +350,18 @@ export default function PageEditorStudioClient({
                 </button>
               </div>
             ) : mode === "visual" ? (
-              <div className="grid h-[calc(100vh-20px)] gap-4 min-h-0 grid-cols-[320px_minmax(0,1fr)]">
+              <div className="grid h-[calc(100vh-20px)] gap-4 min-h-0 grid-cols-[320px_minmax(0,1fr)] overflow-y-hidden">
                 <div className="shadow-2xl rounded-xl bg-white p-3 min-h-0 flex flex-col">
                   <div className="space-y-3 shrink-0 border-b border-gray-100 pb-3">
-                    <div className="text-base font-semibold text-gray-900 leading-tight">
-                      {page.name || page.title || page.slug}
-                    </div>
-                    <div className="text-xs font-mono text-gray-500 truncate">
-                      {page.slug || "/"}
-                    </div>
+                    <Toolbar
+                      showGrid={showGrid}
+                      setShowGrid={setShowGrid}
+                      zoom={zoom}
+                      setZoom={setZoom}
+                      page={page}
+                      showOutlines={showOutlines}
+                      setShowOutlines={setShowOutlines}
+                    />
                     <button
                       onClick={openAddBlockDialog}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50"
@@ -515,37 +518,7 @@ export default function PageEditorStudioClient({
                   </div>
                 </div>
 
-                <div className="visual-canvas-scroll space-y-4 overflow-y-auto pr-1 min-h-0">
-                  <div className="flex flex-wrap items-center gap-3 bg-white border rounded-xl px-3 py-2">
-                    <div className="text-xs text-gray-500">Zoom</div>
-                    <select
-                      value={zoom}
-                      onChange={(e) => setZoom(Number(e.target.value))}
-                      className="border rounded px-2 py-1 text-xs"
-                    >
-                      {[70, 80, 90, 100, 110, 125, 150].map((z) => (
-                        <option key={z} value={z}>
-                          {z}%
-                        </option>
-                      ))}
-                    </select>
-                    <label className="inline-flex items-center gap-2 text-xs text-gray-600">
-                      <input
-                        type="checkbox"
-                        checked={showGrid}
-                        onChange={(e) => setShowGrid(e.target.checked)}
-                      />
-                      Grid
-                    </label>
-                    <label className="inline-flex items-center gap-2 text-xs text-gray-600">
-                      <input
-                        type="checkbox"
-                        checked={showOutlines}
-                        onChange={(e) => setShowOutlines(e.target.checked)}
-                      />
-                      Outlines
-                    </label>
-                  </div>
+                <div className="visual-canvas-scroll space-y-4 overflow-y-hidden pr-1 min-h-0">
                   <VisualCanvas
                     layout={layout}
                     selection={selection}
@@ -1351,7 +1324,8 @@ function defaultPropsFor(type: string) {
         },
         {
           title: "Fast checkout flow",
-          description: "Reduced friction from product page to order completion.",
+          description:
+            "Reduced friction from product page to order completion.",
           badge: "Speed",
           size: "sm",
           href: "#",
@@ -1402,7 +1376,8 @@ function defaultPropsFor(type: string) {
           rating: 5,
         },
         {
-          quote: "Visual editing is clean and fast. We ship pages much quicker now.",
+          quote:
+            "Visual editing is clean and fast. We ship pages much quicker now.",
           name: "Riya Mehta",
           role: "Marketing Lead, Nova Fit",
           rating: 5,
@@ -1422,7 +1397,12 @@ function defaultPropsFor(type: string) {
     };
   if (type === "MarqueeStrip/V1")
     return {
-      items: ["Free Shipping", "Easy Returns", "Secure Checkout", "24x7 Support"],
+      items: [
+        "Free Shipping",
+        "Easy Returns",
+        "Secure Checkout",
+        "24x7 Support",
+      ],
       speedSec: 30,
       pauseOnHover: true,
       itemGap: 24,
@@ -1432,9 +1412,24 @@ function defaultPropsFor(type: string) {
       title: "Why Choose Us",
       subtitle: "Everything built to improve conversion.",
       cards: [
-        { title: "Fast Setup", description: "Go live quickly with visual blocks.", icon: "⚡", href: "#" },
-        { title: "Design Flexibility", description: "Customize every section deeply.", icon: "🎨", href: "#" },
-        { title: "Commerce Ready", description: "Catalog, cart, and checkout included.", icon: "🛒", href: "#" },
+        {
+          title: "Fast Setup",
+          description: "Go live quickly with visual blocks.",
+          icon: "⚡",
+          href: "#",
+        },
+        {
+          title: "Design Flexibility",
+          description: "Customize every section deeply.",
+          icon: "🎨",
+          href: "#",
+        },
+        {
+          title: "Commerce Ready",
+          description: "Catalog, cart, and checkout included.",
+          icon: "🛒",
+          href: "#",
+        },
       ],
     };
   if (type === "ProcessTimeline/V1")
@@ -1481,9 +1476,21 @@ function defaultPropsFor(type: string) {
       title: "Explore",
       subtitle: "Keep content organized in tabs.",
       tabs: [
-        { label: "Overview", title: "Overview", content: "Explain your core value." },
-        { label: "Features", title: "Features", content: "List key capabilities." },
-        { label: "Use Cases", title: "Use Cases", content: "Show who it is for." },
+        {
+          label: "Overview",
+          title: "Overview",
+          content: "Explain your core value.",
+        },
+        {
+          label: "Features",
+          title: "Features",
+          content: "List key capabilities.",
+        },
+        {
+          label: "Use Cases",
+          title: "Use Cases",
+          content: "Show who it is for.",
+        },
       ],
     };
   if (type === "FloatingCTA/V1")
@@ -1539,3 +1546,134 @@ function defaultStyleFor(type: string) {
   }
   return { presetId: undefined, overrides: {}, responsive: {} };
 }
+
+const Toolbar = ({
+  zoom,
+  setZoom,
+  showGrid,
+  setShowGrid,
+  page,
+  showOutlines,
+  setShowOutlines,
+}: any) => {
+  const [view, setView] = useState("desktop");
+
+  const devices = [
+    { id: "desktop", icon: <path d="M2 3h20v12H2zM8 21h8M12 17v4" /> },
+    { id: "laptop", icon: <path d="M2 16h20M4 6h16v10H4zM2 20h20" /> },
+    {
+      id: "tablet",
+      icon: (
+        <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01" />
+      ),
+    },
+    {
+      id: "mobile",
+      icon: (
+        <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01" />
+      ),
+    },
+  ];
+
+  return (
+    <div className="flex flex-col justify-center gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col px-3 min-w-30 max-w-50">
+          <div className="text-[13px] flex items-center gap-4 font-bold text-slate-900 truncate tracking-tight">
+            {page.name || page.title || "Untitled Page"}{" "}
+            <span>
+              <div className="text-[10px] font-medium text-slate-400 truncate font-mono">
+                Slug: {page.slug || "/home"}
+              </div>
+            </span>
+          </div>
+        </div>
+        <div className="h-8 w-px bg-slate-200/60 mx-1" />
+        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+          <select
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none cursor-pointer appearance-none pr-1"
+          >
+            {[70, 80, 90, 100, 110, 125, 150].map((z) => (
+              <option key={z} value={z}>
+                {z}%
+              </option>
+            ))}
+          </select>
+          <svg
+            className="w-3 h-3 text-slate-400 pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={3}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 bg-white/90  border border-slate-200 rounded-2xl p-1.5  w-full">
+        {/* 1. Page Info Section */}
+
+        {/* 2. Device Segmented Control */}
+        <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+          {devices.map((device) => (
+            <button
+              key={device.id}
+              onClick={() => setView(device.id)}
+              title={device.id.charAt(0).toUpperCase() + device.id.slice(1)}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                view === device.id
+                  ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4"
+              >
+                {device.icon}
+              </svg>
+            </button>
+          ))}
+        </div>
+
+        {/* 3. Zoom Control */}
+
+        {/* 4. View Toggles */}
+        <div className="flex items-center gap-1 h-full bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+          <button
+            onClick={() => setShowGrid(!showGrid)}
+            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              showGrid
+                ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Grid
+          </button>
+          <button
+            onClick={() => setShowOutlines(!showOutlines)}
+            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              showOutlines
+                ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Outlines
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

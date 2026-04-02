@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { headers } from "next/headers";
 import { getSiteByHandle, getMongoDb } from "@acme/db-mongo";
@@ -63,7 +64,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <StorefrontProviders>{children}</StorefrontProviders>
+        <Suspense fallback={children}>
+          <StorefrontProviders>{children}</StorefrontProviders>
+        </Suspense>
       </body>
     </html>
   );

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUI } from "../../_components/ui/UiProvider";
+import { OnboardingLogoutButton } from "../_components/OnboardingLogoutButton";
+import type { AiSiteBlueprint } from "@/lib/ai/blueprint-schema";
 import {
   AI_SITE_TAXONOMY,
   listArchetypes,
@@ -32,7 +34,7 @@ export default function CreateSitePage() {
   const [prompt, setPrompt] = useState("");
   const [ecommerce, setEcommerce] = useState(true);
   const [generatingPreview, setGeneratingPreview] = useState(false);
-  const [blueprint, setBlueprint] = useState<any | null>(null);
+  const [blueprint, setBlueprint] = useState<AiSiteBlueprint | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -117,7 +119,10 @@ export default function CreateSitePage() {
 
   return (
     <div className="max-w-2xl mx-auto p-10 space-y-4">
-      <h1 className="text-xl font-bold">Create your site</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-xl font-bold">Create your site</h1>
+        <OnboardingLogoutButton />
+      </div>
       <div className="inline-flex rounded-lg border p-1">
         <button
           type="button"
@@ -240,7 +245,7 @@ export default function CreateSitePage() {
             <div className="max-h-40 overflow-auto rounded border bg-slate-50 p-2">
               <div className="text-xs font-medium text-slate-700 mb-1">Preview Pages</div>
               <ul className="space-y-1">
-                {blueprint.pages.map((p: any) => (
+                {blueprint.pages.map((p) => (
                   <li key={p.slug} className="text-xs text-slate-600 flex justify-between gap-2">
                     <span>{p.title}</span>
                     <span>{p.slug}</span>

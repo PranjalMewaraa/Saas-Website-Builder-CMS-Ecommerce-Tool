@@ -61,3 +61,21 @@ export async function createUser(args: {
   await col.insertOne(doc);
   return doc;
 }
+
+export async function updateUserPasswordById(args: {
+  user_id: string;
+  password: string;
+}) {
+  const col = await usersCollection();
+  const password_hash = await bcrypt.hash(args.password, 10);
+
+  await col.updateOne(
+    { _id: args.user_id },
+    {
+      $set: {
+        password_hash,
+        updated_at: new Date(),
+      },
+    },
+  );
+}

@@ -1,13 +1,21 @@
-/** @type {import('next').NextConfig} */
+import path from "node:path";
 
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const skipBuildChecks = process.env.DOCKER_BUILD_SKIP_CHECKS === "1";
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(__dirname, "../../"),
   transpilePackages: [
-    "../../packages/blocks",
-    "../../packages/renderer",
-    "../../packages/schemas",
-    "../../packages/db-mysql",
-    "../../packages/db-mongo",
-    "../../packages/core",
+    "@acme/auth",
+    "@acme/blocks",
+    "@acme/core",
+    "@acme/db-mongo",
+    "@acme/db-mysql",
+    "@acme/renderer",
+    "@acme/schemas",
+    "@acme/ui",
   ],
   images: {
     remotePatterns: [
@@ -17,6 +25,9 @@ const nextConfig = {
       },
     ],
   },
+  typescript: {
+    ignoreBuildErrors: skipBuildChecks,
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
