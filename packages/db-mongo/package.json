@@ -1,0 +1,16 @@
+{
+  "name": "@acme/db-mongo",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "mongodb": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.28",
+    "typescript": "^5.9.3"
+  }
+}

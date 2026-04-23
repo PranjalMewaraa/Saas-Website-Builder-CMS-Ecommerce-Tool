@@ -1,0 +1,14 @@
+{
+  "name": "@acme/db-mysql",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "mysql2": "^3.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.5",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,2771 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import * as LucideIcons from "lucide-react";
+import ImageField from "./ImageField";
+import ColorPickerInput from "./ColorPickerInput";
+import { ChevronDown } from "lucide-react";
+const DEFAULT_IMAGE =
+  "https://imgs.search.brave.com/GLCxUyWW7lshyjIi8e1QFNPxtjJG3c2S4i0ItSnljVI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTk4/MDI3NjkyNC92ZWN0/b3Ivbm8tcGhvdG8t/dGh1bWJuYWlsLWdy/YXBoaWMtZWxlbWVu/dC1uby1mb3VuZC1v/ci1hdmFpbGFibGUt/aW1hZ2UtaW4tdGhl/LWdhbGxlcnktb3It/YWxidW0tZmxhdC5q/cGc_cz02MTJ4NjEy/Jnc9MCZrPTIwJmM9/WkJFM05xZnpJZUhH/RFBreXZ1bFV3MTRT/YVdmRGoyclp0eWlL/djN0b0l0az0";
+import {
+  type LayoutSelection,
+  type LayoutSectionProps,
+  type LayoutAtomicBlock,
+  createDefaultSectionProps,
+  createDefaultCol,
+} from "./layout-utils";
+import { ROW_PRESET_OPTIONS } from "../../../../../../../packages/renderer/layout-section";
+
+const ROW_PRESET_PREVIEWS: Record<
+  string,
+  { label: string; template: string; cols: number }
+> = {
+  "1-col": { label: "1 Column", template: "minmax(0, 1fr)", cols: 1 },
+  "2-col": {
+    label: "2 Columns",
+    template: "repeat(2, minmax(0, 1fr))",
+    cols: 2,
+  },
+  "3-col": {
+    label: "3 Columns",
+    template: "repeat(3, minmax(0, 1fr))",
+    cols: 3,
+  },
+  "4-col": {
+    label: "4 Columns",
+    template: "repeat(4, minmax(0, 1fr))",
+    cols: 4,
+  },
+  "sidebar-left": {
+    label: "Sidebar Left",
+    template: "minmax(0, 1fr) minmax(0, 2fr)",
+    cols: 2,
+  },
+  "sidebar-right": {
+    label: "Sidebar Right",
+    template: "minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 2,
+  },
+  "three-uneven": {
+    label: "3 Uneven",
+    template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 3,
+  },
+  "two-one": {
+    label: "2 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 2,
+  },
+  "one-two": {
+    label: "1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 2fr)",
+    cols: 2,
+  },
+  "three-one": {
+    label: "3 / 1",
+    template: "minmax(0, 3fr) minmax(0, 1fr)",
+    cols: 2,
+  },
+  "one-three": {
+    label: "1 / 3",
+    template: "minmax(0, 1fr) minmax(0, 3fr)",
+    cols: 2,
+  },
+  "two-one-one": {
+    label: "2 / 1 / 1",
+    template: "minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr)",
+    cols: 3,
+  },
+  "one-one-two": {
+    label: "1 / 1 / 2",
+    template: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr)",
+    cols: 3,
+  },
+  "one-two-one": {
+    label: "1 / 2 / 1",
+    template: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+    cols: 3,
+  },
+};
+
+const ICON_OPTIONS = [
+  "ShoppingBag",
+  "ShoppingCart",
+  "Tag",
+  "Gift",
+  "Sparkles",
+  "Star",
+  "BadgePercent",
+  "CreditCard",
+  "Truck",
+  "Package",
+  "Heart",
+  "ThumbsUp",
+  "ArrowRight",
+  "ArrowUpRight",
+  "ChevronRight",
+  "Link",
+  "Mail",
+  "Phone",
+  "MessageCircle",
+  "Info",
+  "HelpCircle",
+  "Shield",
+  "Lock",
+  "User",
+  "Users",
+  "Globe",
+  "MapPin",
+  "Clock",
+  "Calendar",
+  "Camera",
+  "Play",
+  "Video",
+  "Image",
+  "Search",
+  "Filter",
+  "Plus",
+  "Minus",
+  "Check",
+  "X",
+];
+
+const CARD_PRESETS = {
+  clean: {
+    label: "Clean",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.12)",
+      borderWidth: 1,
+      radius: 16,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "sm",
+    },
+  },
+  shadow: {
+    label: "Shadow",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 20,
+      padding: { top: 20, right: 20, bottom: 20, left: 20 },
+      shadow: "lg",
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.04)",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 18,
+      padding: { top: 18, right: 18, bottom: 18, left: 18 },
+      shadow: "none",
+    },
+  },
+  outline: {
+    label: "Outline",
+    style: {
+      bgColor: "transparent",
+      borderColor: "rgba(15,23,42,0.2)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "none",
+    },
+  },
+  gradient: {
+    label: "Gradient",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 20,
+      padding: { top: 20, right: 20, bottom: 20, left: 20 },
+      shadow: "lg",
+    },
+  },
+  glass: {
+    label: "Glass",
+    style: {
+      bgColor: "rgba(255,255,255,0.08)",
+      borderColor: "rgba(255,255,255,0.2)",
+      borderWidth: 1,
+      radius: 20,
+      padding: { top: 18, right: 18, bottom: 18, left: 18 },
+      shadow: "sm",
+    },
+  },
+};
+
+const ACCORDION_PRESETS = {
+  minimal: {
+    label: "Minimal",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.12)",
+      borderWidth: 1,
+      radius: 12,
+      padding: { top: 12, right: 12, bottom: 12, left: 12 },
+    },
+  },
+  elevated: {
+    label: "Elevated",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 16,
+      padding: { top: 14, right: 14, bottom: 14, left: 14 },
+      shadow: "sm",
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.04)",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 12, right: 12, bottom: 12, left: 12 },
+    },
+  },
+  boxed: {
+    label: "Boxed",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.18)",
+      borderWidth: 1,
+      radius: 8,
+      padding: { top: 10, right: 12, bottom: 10, left: 12 },
+    },
+  },
+  card: {
+    label: "Card",
+    style: {
+      bgColor: "#ffffff",
+      borderColor: "rgba(15,23,42,0.08)",
+      borderWidth: 1,
+      radius: 18,
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+      shadow: "md",
+    },
+  },
+};
+
+const COUNTDOWN_PRESETS = {
+  bold: {
+    label: "Bold",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 16,
+      padding: { top: 12, right: 16, bottom: 12, left: 16 },
+      fontSize: 20,
+      fontWeight: 600,
+    },
+  },
+  soft: {
+    label: "Soft",
+    style: {
+      bgColor: "rgba(15,23,42,0.06)",
+      textColor: "#0f172a",
+      radius: 14,
+      padding: { top: 10, right: 14, bottom: 10, left: 14 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  minimal: {
+    label: "Minimal",
+    style: {
+      bgColor: "transparent",
+      textColor: "#0f172a",
+      radius: 0,
+      padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  outline: {
+    label: "Outline",
+    style: {
+      bgColor: "transparent",
+      textColor: "#0f172a",
+      borderColor: "rgba(15,23,42,0.2)",
+      borderWidth: 1,
+      radius: 14,
+      padding: { top: 10, right: 14, bottom: 10, left: 14 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+  pill: {
+    label: "Pill",
+    style: {
+      bgColor: "#0f172a",
+      textColor: "#ffffff",
+      radius: 999,
+      padding: { top: 10, right: 18, bottom: 10, left: 18 },
+      fontSize: 18,
+      fontWeight: 600,
+    },
+  },
+};
+
+const TEXT_STYLE_PRESETS: Record<
+  string,
+  { label: string; style: Record<string, any> }
+> = {
+  body: { label: "Body", style: { fontSize: 16, lineHeight: 24 } },
+  subheading: {
+    label: "Subheading",
+    style: { fontSize: 18, lineHeight: 26, fontWeight: 500 },
+  },
+  heading: {
+    label: "Heading",
+    style: { fontSize: 32, lineHeight: 40, fontWeight: 700 },
+  },
+  eyebrow: {
+    label: "Eyebrow",
+    style: {
+      fontSize: 12,
+      lineHeight: 16,
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      fontWeight: 600,
+    },
+  },
+};
+
+const BUTTON_STYLE_PRESETS: Record<
+  string,
+  { label: string; style: Record<string, any> }
+> = {
+  primary: {
+    label: "Primary",
+    style: {
+      bgColor: "#111827",
+      textColor: "#ffffff",
+      padding: { top: 10, right: 18, bottom: 10, left: 18 },
+      radius: 8,
+      borderWidth: 0,
+    },
+  },
+  secondary: {
+    label: "Secondary",
+    style: {
+      bgColor: "#f3f4f6",
+      textColor: "#111827",
+      padding: { top: 10, right: 18, bottom: 10, left: 18 },
+      radius: 8,
+      borderWidth: 0,
+    },
+  },
+  outline: {
+    label: "Outline",
+    style: {
+      bgColor: "transparent",
+      textColor: "#111827",
+      borderColor: "#d1d5db",
+      borderWidth: 1,
+      padding: { top: 10, right: 18, bottom: 10, left: 18 },
+      radius: 8,
+    },
+  },
+};
+
+export default function LayoutInspector({
+  block,
+  selection,
+  siteId,
+  assetsMap,
+  menus = [],
+  forms = [],
+  themePalette = [],
+  activeBreakpoint = "desktop",
+  onDeleteBlock,
+  onChangeBlock,
+}: {
+  block: any;
+  selection: LayoutSelection | null;
+  siteId: string;
+  assetsMap: any;
+  menus?: any[];
+  forms?: any[];
+  themePalette?: string[];
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
+  onDeleteBlock?: (id: string) => void;
+  onChangeBlock: (nextBlock: any) => void;
+}) {
+  if (!block) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Select a layout section to edit.
+      </div>
+    );
+  }
+  if (!selection || selection.kind === "block") {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Select a section, row, column, or atomic block to edit.
+      </div>
+    );
+  }
+
+  const props: LayoutSectionProps =
+    block.props && block.props.rows ? block.props : createDefaultSectionProps();
+  const formOptions = (forms || []).map((f: any) => ({
+    value: f._id,
+    label: f.name ? `${f.name} — ${f._id}` : f._id,
+  }));
+
+  function applyUpdate(mutator: (draft: LayoutSectionProps) => void) {
+    const next = structuredClone(props);
+    mutator(next);
+    onChangeBlock({ ...block, props: next });
+  }
+
+  function updateGroup(atomicId: string, mutator: (groupProps: any) => void) {
+    applyUpdate((draft) => {
+      for (const r of draft.rows) {
+        for (const c of r.cols || []) {
+          const target = (c.blocks || []).find((b: any) => b.id === atomicId);
+          if (target && target.type === "Atomic/Group") {
+            target.props = target.props || { rows: [] };
+            mutator(target.props);
+            return;
+          }
+        }
+      }
+    });
+  }
+
+  function getGroup(atomicId: string) {
+    for (const r of props.rows) {
+      for (const c of r.cols || []) {
+        const target = (c.blocks || []).find((b: any) => b.id === atomicId);
+        if (target && target.type === "Atomic/Group") return target;
+      }
+    }
+    return null;
+  }
+
+  if (selection.kind === "layout-section") {
+    return (
+      <div className="space-y-5 ">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Section Settings</div>
+          {onDeleteBlock && (
+            <button
+              className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
+              onClick={() => onDeleteBlock(block.id)}
+              type="button"
+            >
+              Delete Section Block
+            </button>
+          )}
+        </div>
+        <StyleFields
+          style={props.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            applyUpdate((draft) => {
+              draft.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-row") {
+    const row = props.rows.find((r) => r.id === selection.rowId);
+    if (!row) return null;
+
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Row Settings</div>
+
+        <Select
+          label="Layout Mode"
+          value={row.layout?.mode || "preset"}
+          options={["preset", "manual"]}
+          onChange={(v) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.mode = v as any;
+            })
+          }
+        />
+
+        {row.layout?.mode !== "manual" ? (
+          <div className="space-y-3">
+            <div className="text-sm font-medium">Row Preset</div>
+            <div className="grid grid-cols-2 gap-3">
+              {ROW_PRESET_OPTIONS.map((o) => {
+                const def = ROW_PRESET_PREVIEWS[o.id];
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    className={`border rounded-lg p-2 text-left text-xs ${
+                      (row.layout?.presetId || "1-col") === o.id
+                        ? "ring-2 ring-blue-500 border-blue-300"
+                        : "border-gray-200 hover:bg-gray-50"
+                    }`}
+                    onClick={() =>
+                      applyUpdate((draft) => {
+                        const target = draft.rows.find((r) => r.id === row.id);
+                        if (!target) return;
+                        target.layout = target.layout || {};
+                        target.layout.presetId = o.id;
+                        target.layout.display = "grid";
+                        const preset = ROW_PRESET_PREVIEWS[o.id];
+                        if (preset) {
+                          const needed = preset.cols;
+                          target.layout.columns = needed;
+                          target.cols = target.cols || [];
+                          if (target.cols.length < needed) {
+                            for (let i = target.cols.length; i < needed; i++) {
+                              target.cols.push(createDefaultCol());
+                            }
+                          } else if (target.cols.length > needed) {
+                            target.cols = target.cols.slice(0, needed);
+                          }
+                        }
+                      })
+                    }
+                  >
+                    <div className="text-[11px] font-medium mb-2">
+                      {def?.label || o.id}
+                    </div>
+                    <div
+                      className="grid gap-2"
+                      style={{
+                        gridTemplateColumns: def?.template || "repeat(1, 1fr)",
+                      }}
+                    >
+                      {Array.from(
+                        { length: def?.cols || 1 },
+                        (_, idx) => idx,
+                      ).map((idx) => (
+                        <div
+                          key={idx}
+                          className="h-6 rounded bg-gray-100 border border-dashed border-gray-300"
+                        />
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <Select
+              label="Display"
+              value={row.layout?.display || "grid"}
+              options={["grid", "flex"]}
+              onChange={(v) =>
+                applyUpdate((draft) => {
+                  const target = draft.rows.find((r) => r.id === row.id);
+                  if (!target) return;
+                  target.layout = target.layout || {};
+                  target.layout.display = v as any;
+                })
+              }
+            />
+
+            {(row.layout?.display || "grid") === "grid" ? (
+              <NumberField
+                label="Columns"
+                value={row.layout?.columns || row.cols.length || 1}
+                onChange={(n) =>
+                  applyUpdate((draft) => {
+                    const target = draft.rows.find((r) => r.id === row.id);
+                    if (!target) return;
+                    target.layout = target.layout || {};
+                    target.layout.columns = n;
+                    if (n > (target.cols?.length || 0)) {
+                      const toAdd = n - (target.cols?.length || 0);
+                      target.cols = target.cols || [];
+                      for (let i = 0; i < toAdd; i++) {
+                        target.cols.push(createDefaultCol());
+                      }
+                    }
+                  })
+                }
+              />
+            ) : (
+              <Checkbox
+                label="Wrap"
+                value={!!row.layout?.wrap}
+                onChange={(v) =>
+                  applyUpdate((draft) => {
+                    const target = draft.rows.find((r) => r.id === row.id);
+                    if (!target) return;
+                    target.layout = target.layout || {};
+                    target.layout.wrap = v;
+                  })
+                }
+              />
+            )}
+          </>
+        )}
+
+        <NumberField
+          label="Gap"
+          value={Number(row.layout?.gap ?? 24)}
+          onChange={(n) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.gap = n;
+            })
+          }
+        />
+
+        <Select
+          label="Align"
+          value={row.layout?.align || "stretch"}
+          options={["start", "center", "end", "stretch"]}
+          onChange={(v) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.align = v as any;
+            })
+          }
+        />
+
+        <Select
+          label="Justify"
+          value={row.layout?.justify || "start"}
+          options={["start", "center", "end", "between", "around", "evenly"]}
+          onChange={(v) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.justify = v as any;
+            })
+          }
+        />
+
+        <ResponsiveRowLayoutFields
+          row={row}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(bp, patch) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.responsive = target.layout.responsive || {};
+              target.layout.responsive[bp] = {
+                ...(target.layout.responsive[bp] || {}),
+                ...patch,
+              };
+            })
+          }
+        />
+
+        <StyleFields
+          style={row.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            applyUpdate((draft) => {
+              const target = draft.rows.find((r) => r.id === row.id);
+              if (target) target.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-col") {
+    const row = props.rows.find((r) => r.id === selection.rowId);
+    const col = row?.cols.find((c) => c.id === selection.colId);
+    if (!row || !col) return null;
+
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Column Settings</div>
+        <StyleFields
+          style={col.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            applyUpdate((draft) => {
+              const targetRow = draft.rows.find((r) => r.id === row.id);
+              const targetCol = targetRow?.cols.find((c) => c.id === col.id);
+              if (targetCol) targetCol.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  function renderAtomicEditor(
+    atom: LayoutAtomicBlock,
+    updateAtomic: (mutator: (draftAtom: LayoutAtomicBlock) => void) => void,
+    onStyleChange: (nextStyle: any) => void,
+  ) {
+    return (
+      <div className="space-y-6">
+        <div className="text-sm font-medium">Atomic Block</div>
+
+        {atom.type === "Atomic/Text" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Typography Presets</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(TEXT_STYLE_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="px-3 py-1.5 text-xs border rounded-full hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Select
+              label="Tag"
+              value={atom.props?.tag || "p"}
+              options={["p", "span", "h1", "h2", "h3", "h4", "h5", "h6"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, tag: v };
+                })
+              }
+            />
+            <TextArea
+              label="Text"
+              value={atom.props?.text || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, text: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Image" && (
+          <>
+            <ImageField
+              siteId={siteId}
+              label="Image Asset"
+              assetIdValue={atom.props?.assetId || ""}
+              altValue={atom.props?.alt || ""}
+              onChangeAssetId={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, assetId: v };
+                })
+              }
+              onChangeAlt={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, alt: v };
+                })
+              }
+              onChangeAssetUrl={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
+                })
+              }
+              assetsMap={assetsMap}
+              assetUrlValue={atom.props?.src || DEFAULT_IMAGE}
+            />
+            <Field
+              label="Image URL"
+              value={atom.props?.src || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
+                })
+              }
+              placeholder="https://..."
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/ImageGallery" && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <NumberField
+                label="Columns"
+                value={Number(atom.props?.columns || 3)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, columns: Math.max(1, v || 1) };
+                  })
+                }
+              />
+              <NumberField
+                label="Gap"
+                value={Number(atom.props?.gap || 12)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, gap: Math.max(0, v || 0) };
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <NumberField
+                label="Radius"
+                value={Number(atom.props?.radius || 12)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, radius: Math.max(0, v || 0) };
+                  })
+                }
+              />
+              <NumberField
+                label="Image Height"
+                value={Number(atom.props?.imageHeight || 180)}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, imageHeight: Math.max(40, v || 40) };
+                  })
+                }
+              />
+            </div>
+            <Select
+              label="Image Fit"
+              value={atom.props?.fit || "cover"}
+              options={["cover", "contain", "fill"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, fit: v };
+                })
+              }
+            />
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Gallery Images</div>
+              {(Array.isArray(atom.props?.items) ? atom.props.items : []).map(
+                (item: any, idx: number) => (
+                  <div key={item?.id || `gallery_${idx}`} className="rounded-lg border p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600">Image {idx + 1}</div>
+                      <button
+                        type="button"
+                        className="text-xs rounded border px-2 py-1 hover:bg-gray-50"
+                        onClick={() =>
+                          updateAtomic((draftAtom) => {
+                            const items = Array.isArray(draftAtom.props?.items)
+                              ? [...draftAtom.props.items]
+                              : [];
+                            items.splice(idx, 1);
+                            draftAtom.props = { ...draftAtom.props, items };
+                          })
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <ImageField
+                      siteId={siteId}
+                      label="Asset"
+                      assetIdValue={item?.assetId || ""}
+                      altValue={item?.alt || ""}
+                      onChangeAssetId={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), assetId: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      onChangeAlt={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), alt: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      onChangeAssetUrl={(v: any) =>
+                        updateAtomic((draftAtom) => {
+                          const items = Array.isArray(draftAtom.props?.items)
+                            ? [...draftAtom.props.items]
+                            : [];
+                          items[idx] = { ...(items[idx] || {}), src: v };
+                          draftAtom.props = { ...draftAtom.props, items };
+                        })
+                      }
+                      assetsMap={assetsMap}
+                      assetUrlValue={item?.src || DEFAULT_IMAGE}
+                    />
+                  </div>
+                ),
+              )}
+              <button
+                type="button"
+                className="w-full rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                onClick={() =>
+                  updateAtomic((draftAtom) => {
+                    const items = Array.isArray(draftAtom.props?.items)
+                      ? [...draftAtom.props.items]
+                      : [];
+                    items.push({
+                      src: DEFAULT_IMAGE,
+                      alt: `Gallery image ${items.length + 1}`,
+                    });
+                    draftAtom.props = { ...draftAtom.props, items };
+                  })
+                }
+              >
+                + Add Image
+              </button>
+            </div>
+          </>
+        )}
+
+        {atom.type === "Atomic/Video" && (
+          <>
+            <ImageField
+              siteId={siteId}
+              label="Video Asset"
+              assetIdValue={atom.props?.assetId || atom.props?.videoAssetId || ""}
+              altValue=""
+              onChangeAssetId={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    assetId: v,
+                    videoAssetId: v,
+                  };
+                })
+              }
+              onChangeAlt={() => {}}
+              onChangeAssetUrl={(v: any) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    src: v,
+                    videoUrl: v,
+                  };
+                })
+              }
+              assetsMap={assetsMap}
+              assetUrlValue={atom.props?.src || atom.props?.videoUrl || ""}
+            />
+            <Field
+              label="Video URL"
+              value={atom.props?.src || atom.props?.videoUrl || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v, videoUrl: v };
+                })
+              }
+              placeholder="https://..."
+            />
+            <Field
+              label="Poster URL"
+              value={atom.props?.poster || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, poster: v };
+                })
+              }
+              placeholder="https://..."
+            />
+            <Checkbox
+              label="Autoplay"
+              value={!!atom.props?.autoplay}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, autoplay: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Muted"
+              value={!!atom.props?.muted}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, muted: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Loop"
+              value={!!atom.props?.loop}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, loop: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Controls"
+              value={atom.props?.controls ?? true}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, controls: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Button" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Button Presets</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(BUTTON_STYLE_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="px-3 py-1.5 text-xs border rounded-full hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field
+              label="Label"
+              value={atom.props?.label || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, label: v };
+                })
+              }
+            />
+            <Field
+              label="Href"
+              value={atom.props?.href || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, href: v };
+                })
+              }
+              placeholder="/"
+            />
+            <Select
+              label="Target"
+              value={atom.props?.target || "_self"}
+              options={["_self", "_blank"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, target: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Icon" && (
+          <>
+            <IconPicker
+              label="Icon"
+              value={atom.props?.icon || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, icon: v };
+                })
+              }
+            />
+            <UnitField
+              label="Size"
+              value={atom.props?.size ?? 24}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, size: v };
+                })
+              }
+            />
+            <ColorPickerInput
+              label="Color"
+              value={atom.props?.color || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, color: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Divider" && (
+          <>
+            <Select
+              label="Orientation"
+              value={atom.props?.orientation || "horizontal"}
+              options={["horizontal", "vertical"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, orientation: v };
+                })
+              }
+            />
+            <UnitField
+              label="Thickness"
+              value={atom.props?.thickness ?? 1}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, thickness: v };
+                })
+              }
+            />
+            <UnitField
+              label="Length"
+              value={atom.props?.length ?? "100%"}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, length: v };
+                })
+              }
+            />
+            <ColorPickerInput
+              label="Color"
+              value={atom.props?.color || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, color: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Spacer" && (
+          <>
+            <Select
+              label="Axis"
+              value={atom.props?.axis || "vertical"}
+              options={["vertical", "horizontal"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, axis: v };
+                })
+              }
+            />
+            <UnitField
+              label="Size"
+              value={atom.props?.size ?? 24}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, size: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Form" && (
+          <>
+            {formOptions.length ? (
+              <Select
+                label="Form"
+                value={atom.props?.formId || ""}
+                options={formOptions}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+              />
+            ) : (
+              <Field
+                label="Form Id"
+                value={atom.props?.formId || ""}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, formId: v };
+                  })
+                }
+                placeholder="form_xxx"
+              />
+            )}
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+            <Field
+              label="Submit Text"
+              value={atom.props?.submitText || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, submitText: v };
+                })
+              }
+              placeholder="Submit"
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Badge" && (
+          <>
+            <Select
+              label="Style"
+              value={atom.props?.variant || "type-1"}
+              options={["type-1", "type-2", "type-3", "type-4", "type-5"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, variant: v };
+                })
+              }
+            />
+            <Field
+              label="Text"
+              value={atom.props?.text || "Badge"}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, text: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/List" && (
+          <>
+            <Checkbox
+              label="Ordered"
+              value={!!atom.props?.ordered}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, ordered: v };
+                })
+              }
+            />
+            {!atom.props?.ordered && (
+              <IconPicker
+                label="Icon"
+                value={atom.props?.icon || ""}
+                onChange={(v) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = { ...draftAtom.props, icon: v };
+                  })
+                }
+              />
+            )}
+            <TextArea
+              label="Items (one per line)"
+              value={(atom.props?.items || []).join("\n")}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = {
+                    ...draftAtom.props,
+                    items: v
+                      .split("\n")
+                      .map((i) => i.trim())
+                      .filter(Boolean),
+                  };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Card" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Card Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(CARD_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-12 rounded-md border"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    />
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+            <TextArea
+              label="Body"
+              value={atom.props?.body || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, body: v };
+                })
+              }
+            />
+            <Field
+              label="Image URL"
+              value={atom.props?.imageUrl || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, imageUrl: v };
+                })
+              }
+              placeholder="https://..."
+            />
+            <Field
+              label="Button Text"
+              value={atom.props?.buttonText || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, buttonText: v };
+                })
+              }
+            />
+            <Field
+              label="Button Href"
+              value={atom.props?.buttonHref || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, buttonHref: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Accordion" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Accordion Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(ACCORDION_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-10 rounded-md border"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    />
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <TextArea
+              label="Items (title:content per line)"
+              value={(atom.props?.items || [])
+                .map((i: any) => `${i.title}: ${i.content}`)
+                .join("\n")}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  const items = v
+                    .split("\n")
+                    .map((line) => line.split(":"))
+                    .filter((parts) => parts[0]?.trim())
+                    .map(([title, ...rest]) => ({
+                      title: (title || "").trim(),
+                      content: rest.join(":").trim(),
+                    }));
+                  draftAtom.props = { ...draftAtom.props, items };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Menu" && (
+          <>
+            <label className="block space-y-1.5">
+              <div className="text-sm font-medium">Menu</div>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={atom.props?.menuId || ""}
+                onChange={(e) =>
+                  updateAtomic((draftAtom) => {
+                    draftAtom.props = {
+                      ...draftAtom.props,
+                      menuId: e.target.value,
+                    };
+                  })
+                }
+              >
+                <option value="">(select a menu)</option>
+                {menus.map((m: any) => (
+                  <option key={m._id || m.id} value={m._id || m.id}>
+                    {m.name || m._id || m.id}
+                    {m.slot ? ` (slot: ${m.slot})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Select
+              label="Orientation"
+              value={atom.props?.orientation || "horizontal"}
+              options={["horizontal", "vertical"]}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, orientation: v };
+                })
+              }
+            />
+            <UnitField
+              label="Item Gap"
+              value={atom.props?.itemGap ?? 16}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, itemGap: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Show Divider"
+              value={!!atom.props?.showDivider}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, showDivider: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Countdown" && (
+          <>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Countdown Presets</div>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(COUNTDOWN_PRESETS).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    onClick={() =>
+                      updateAtomic((draftAtom) => {
+                        draftAtom.style = {
+                          ...(draftAtom.style || {}),
+                          ...preset.style,
+                        };
+                      })
+                    }
+                  >
+                    <div
+                      className="h-10 rounded-md border flex items-center justify-center text-[11px] font-semibold"
+                      style={{
+                        background:
+                          preset.style.bgColor === "transparent"
+                            ? "transparent"
+                            : preset.style.bgColor,
+                        color: preset.style.textColor || "#0f172a",
+                        borderColor: preset.style.borderColor || "transparent",
+                      }}
+                    >
+                      2d 04h 12m
+                    </div>
+                    <div className="mt-1 text-xs font-medium">
+                      {preset.label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Field
+              label="Target Date (ISO)"
+              value={atom.props?.targetDate || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, targetDate: v };
+                })
+              }
+              placeholder="2026-12-31T23:59:00Z"
+            />
+            <Field
+              label="Label"
+              value={atom.props?.label || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, label: v };
+                })
+              }
+            />
+            <Checkbox
+              label="Show Seconds"
+              value={!!atom.props?.showSeconds}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, showSeconds: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        {atom.type === "Atomic/Embed" && (
+          <>
+            <TextArea
+              label="Embed Code (HTML)"
+              value={atom.props?.code || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, code: v };
+                })
+              }
+            />
+            <Field
+              label="Or URL (iframe src)"
+              value={atom.props?.src || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, src: v };
+                })
+              }
+            />
+            <Field
+              label="Title"
+              value={atom.props?.title || ""}
+              onChange={(v) =>
+                updateAtomic((draftAtom) => {
+                  draftAtom.props = { ...draftAtom.props, title: v };
+                })
+              }
+            />
+          </>
+        )}
+
+        <StyleFields
+          style={atom.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={onStyleChange}
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-atomic") {
+    const row = props.rows.find((r) => r.id === selection.rowId);
+    const col = row?.cols.find((c) => c.id === selection.colId);
+    const atom = col?.blocks.find((b) => b.id === selection.atomicId);
+    if (!row || !col || !atom) return null;
+
+    function updateAtomic(mutator: (draftAtom: LayoutAtomicBlock) => void) {
+      applyUpdate((draft) => {
+        for (const r of draft.rows) {
+          for (const c of r.cols || []) {
+            const target = c.blocks.find((b) => b.id === atom.id);
+            if (target) {
+              mutator(target);
+              return;
+            }
+          }
+        }
+      });
+    }
+
+    return renderAtomicEditor(atom, updateAtomic, (nextStyle) =>
+      applyUpdate((draft) => {
+        const targetRow = draft.rows.find((r) => r.id === row.id);
+        const targetCol = targetRow?.cols.find((c) => c.id === col.id);
+        const targetAtom = targetCol?.blocks.find((b) => b.id === atom.id);
+        if (targetAtom) targetAtom.style = nextStyle;
+      }),
+    );
+  }
+
+  if (selection.kind === "layout-group") {
+    const groupBlock = getGroup(selection.atomicId);
+    if (!groupBlock) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Settings</div>
+        <StyleFields
+          style={groupBlock.props?.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            updateGroup(selection.atomicId, (gp) => {
+              gp.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-row") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
+    if (!groupBlock || !row) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Row Settings</div>
+        <Select
+          label="Layout Mode"
+          value={row.layout?.mode || "preset"}
+          options={["preset", "manual"]}
+          onChange={(v) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const target = gp.rows.find((r: any) => r.id === row.id);
+              if (!target) return;
+              target.layout = target.layout || {};
+              target.layout.mode = v as any;
+            })
+          }
+        />
+        <StyleFields
+          style={row.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const target = gp.rows.find((r: any) => r.id === row.id);
+              if (target) target.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-col") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
+    const col =
+      row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
+    if (!groupBlock || !row || !col) return null;
+    return (
+      <div className="space-y-5">
+        <div className="text-sm font-medium">Group Column Settings</div>
+        <StyleFields
+          style={col.style}
+          palette={themePalette}
+          siteId={siteId}
+          assetsMap={assetsMap}
+          activeBreakpoint={activeBreakpoint}
+          onChange={(nextStyle) =>
+            updateGroup(selection.atomicId, (gp) => {
+              const r = gp.rows.find((rr: any) => rr.id === row.id);
+              const c = r?.cols?.find((cc: any) => cc.id === col.id);
+              if (c) c.style = nextStyle;
+            })
+          }
+        />
+      </div>
+    );
+  }
+
+  if (selection.kind === "layout-group-atomic") {
+    const groupBlock = getGroup(selection.atomicId);
+    const row =
+      groupBlock?.props?.rows?.find(
+        (r: any) => r.id === selection.groupRowId,
+      ) || null;
+    const col =
+      row?.cols?.find((c: any) => c.id === selection.groupColId) || null;
+    const atom =
+      col?.blocks?.find((b: any) => b.id === selection.groupAtomicId) || null;
+    if (!groupBlock || !row || !col || !atom) return null;
+    return renderAtomicEditor(
+      atom,
+      (mutator) =>
+        updateGroup(selection.atomicId, (gp) => {
+          const r = gp.rows.find((rr: any) => rr.id === row.id);
+          const c = r?.cols?.find((cc: any) => cc.id === col.id);
+          const a = c?.blocks?.find((bb: any) => bb.id === atom.id);
+          if (a) mutator(a);
+        }),
+      (nextStyle) =>
+        updateGroup(selection.atomicId, (gp) => {
+          const r = gp.rows.find((rr: any) => rr.id === row.id);
+          const c = r?.cols?.find((cc: any) => cc.id === col.id);
+          const a = c?.blocks?.find((bb: any) => bb.id === atom.id);
+          if (a) a.style = nextStyle;
+        }),
+    );
+  }
+
+  return null;
+}
+
+function IconPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const items = ICON_OPTIONS.filter((name) =>
+    name.toLowerCase().includes(query.toLowerCase()),
+  );
+  const Current = value ? (LucideIcons as any)[value] : null;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-sm font-medium">{label}</div>
+      <button
+        type="button"
+        className="w-full border rounded-lg px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-2">
+          {Current ? <Current className="h-4 w-4" /> : null}
+          <span className="text-sm text-gray-700">{value || "None"}</span>
+        </div>
+        <span className="text-xs text-gray-500">{open ? "Close" : "Pick"}</span>
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Pick an icon</div>
+              <button
+                type="button"
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => setOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <input
+              className="mt-3 w-full border rounded-md px-2 py-1.5 text-sm"
+              placeholder="Search icons"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <div className="mt-3 max-h-64 overflow-auto grid grid-cols-6 gap-2">
+              <button
+                type="button"
+                className="border rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+                title="None"
+              >
+                None
+              </button>
+              {items.map((name) => {
+                const Icon = (LucideIcons as any)[name];
+                if (!Icon) return null;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    className="border rounded-md px-2 py-2 text-xs hover:bg-gray-50 flex items-center justify-center"
+                    onClick={() => {
+                      onChange(name);
+                      setOpen(false);
+                    }}
+                    title={name}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// 1. Standard Input Field
+export function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <input
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200 placeholder:text-slate-400
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+// 2. Unit Field (Merged Input & Select)
+export function UnitField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: string | number) => void;
+  placeholder?: string;
+}) {
+  const [text, setText] = useState(value ?? "");
+  const [unit, setUnit] = useState("px");
+
+  useEffect(() => {
+    const v = value ?? "";
+    setText(v);
+    const m = String(v)
+      .trim()
+      .match(/(px|%|em|rem|vh|vw)$/);
+    if (m) setUnit(m[1]);
+  }, [value]);
+
+  function parseAndEmit(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      onChange("");
+      return;
+    }
+    if (trimmed === "auto") {
+      onChange("auto");
+      return;
+    }
+    const match = trimmed.match(/^(-?\d+(?:\.\d+)?)(px|%|em|rem|vh|vw)$/);
+    if (match) {
+      onChange(`${match[1]}${match[2]}`);
+      return;
+    }
+    const num = Number(trimmed);
+    if (!Number.isNaN(num)) {
+      onChange(num);
+      return;
+    }
+    onChange(trimmed);
+  }
+
+  function onUnitChange(nextUnit: string) {
+    setUnit(nextUnit);
+    const current = String(text || "").trim();
+    if (!current || current === "auto") {
+      onChange(current);
+      return;
+    }
+    const numMatch = current.match(/^(-?\d+(?:\.\d+)?)(?:px|%|em|rem|vh|vw)?$/);
+    if (numMatch) {
+      const next = `${numMatch[1]}${nextUnit}`;
+      setText(next);
+      onChange(next);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <div className="group flex items-stretch bg-white border border-slate-200 rounded-lg overflow-hidden transition-all duration-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
+        <input
+          className="w-full px-3 py-2 text-sm font-mono focus:outline-none placeholder:text-slate-400"
+          value={text}
+          onChange={(e) => {
+            const next = e.target.value;
+            setText(next);
+            const m = next.trim().match(/(px|%|em|rem|vh|vw)$/);
+            if (m) setUnit(m[1]);
+            parseAndEmit(next);
+          }}
+          placeholder={placeholder}
+        />
+        <div className="relative flex items-center border-l border-slate-100 bg-slate-50/50 px-1 hover:bg-slate-100 transition-colors">
+          <select
+            className="appearance-none bg-transparent pl-2 pr-6 py-1 text-[10px] font-bold text-slate-500 cursor-pointer focus:outline-none"
+            value={unit}
+            onChange={(e) => onUnitChange(e.target.value)}
+          >
+            {["px", "%", "em", "rem", "vh", "vw"].map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={10}
+            className="absolute right-2 pointer-events-none text-slate-400"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 3. Text Area
+export function TextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: any;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <textarea
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[100px]
+                   transition-all duration-200 resize-y
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
+// 4. Number Field
+export function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+        {label}
+      </label>
+      <input
+        type="number"
+        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+                   transition-all duration-200
+                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
+                   [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        value={Number.isNaN(value) ? 0 : value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </div>
+  );
+}
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<string | { label: string; value: string }>;
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label className="text-sm font-semibold text-slate-700 ml-0.5">
+        {label}
+      </label>
+      <div className="relative group">
+        <select
+          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+                     transition-all duration-200 outline-none
+                     hover:border-slate-400
+                     focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          {options.map((o) => {
+            const optLabel = typeof o === "string" ? o : o.label;
+            const optValue = typeof o === "string" ? o : o.value;
+            return (
+              <option key={optValue} value={optValue}>
+                {optLabel}
+              </option>
+            );
+          })}
+        </select>
+        {/* Custom Chevron for a more premium feel */}
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500">
+          <ChevronDown size={16} strokeWidth={2.5} />
+        </div>
+      </div>
+    </div>
+  );
+}
+function Checkbox({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (val: boolean) => void;
+}) {
+  return (
+    <label className="group flex items-center gap-3 cursor-pointer select-none">
+      <div className="relative flex items-center">
+        <input
+          type="checkbox"
+          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 
+                     bg-white transition-all checked:bg-blue-600 checked:border-blue-600
+                     focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        {/* The checkmark icon that appears when checked */}
+        <svg
+          className="absolute h-3.5 w-3.5 inset-x-0.5 pointer-events-none hidden peer-checked:block text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+        {label}
+      </span>
+    </label>
+  );
+}
+function ResponsiveRowLayoutFields({
+  row,
+  activeBreakpoint = "desktop",
+  onChange,
+}: {
+  row: any;
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
+  onChange: (
+    bp: "tablet" | "mobile",
+    patch: {
+      display?: "grid" | "flex";
+      columns?: number;
+      gap?: number | string;
+      align?: "start" | "center" | "end" | "stretch";
+      justify?: "start" | "center" | "end" | "between" | "around" | "evenly";
+      wrap?: boolean;
+    },
+  ) => void;
+}) {
+  const [bp, setBp] = useState<"tablet" | "mobile">("tablet");
+
+  useEffect(() => {
+    if (activeBreakpoint === "tablet" || activeBreakpoint === "mobile") {
+      setBp(activeBreakpoint);
+    }
+  }, [activeBreakpoint]);
+
+  const override = row.layout?.responsive?.[bp] || {};
+  const display = override.display || row.layout?.display || "grid";
+
+  return (
+    <details className="border rounded-lg p-3 bg-white shadow-sm">
+      <summary className="cursor-pointer text-sm font-medium">
+        Responsive Row Layout
+      </summary>
+      <div className="mt-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-[11px] text-gray-500">
+          Set only what should change on {bp}. Everything else inherits desktop.
+        </div>
+
+        <Select
+          label="Display"
+          value={display}
+          options={["grid", "flex"]}
+          onChange={(v) => onChange(bp, { display: v as "grid" | "flex" })}
+        />
+
+        {display === "grid" ? (
+          <NumberField
+            label="Columns"
+            value={Number(override.columns || 0)}
+            onChange={(n) => onChange(bp, { columns: n || undefined })}
+          />
+        ) : (
+          <Checkbox
+            label="Wrap"
+            value={!!override.wrap}
+            onChange={(v) => onChange(bp, { wrap: v })}
+          />
+        )}
+
+        <UnitField
+          label="Gap"
+          value={override.gap || ""}
+          onChange={(v) => onChange(bp, { gap: v })}
+          placeholder="16"
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label="Align"
+            value={override.align || row.layout?.align || "stretch"}
+            options={["start", "center", "end", "stretch"]}
+            onChange={(v) => onChange(bp, { align: v as any })}
+          />
+          <Select
+            label="Justify"
+            value={override.justify || row.layout?.justify || "start"}
+            options={["start", "center", "end", "between", "around", "evenly"]}
+            onChange={(v) => onChange(bp, { justify: v as any })}
+          />
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function StyleFields({
+  style,
+  palette = [],
+  siteId,
+  assetsMap,
+  activeBreakpoint = "desktop",
+  onChange,
+}: {
+  style: any;
+  palette?: string[];
+  siteId?: string;
+  assetsMap?: any;
+  activeBreakpoint?: "desktop" | "laptop" | "tablet" | "mobile";
+  onChange: (next: any) => void;
+}) {
+  const [bp, setBp] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  useEffect(() => {
+    if (activeBreakpoint === "tablet" || activeBreakpoint === "mobile") {
+      setBp(activeBreakpoint);
+      return;
+    }
+    setBp("desktop");
+  }, [activeBreakpoint]);
+
+  const root = style || {};
+  const s = bp === "desktop" ? root : root?.responsive?.[bp] || {};
+  const resolvedBg =
+    s.bg ??
+    (s.bgColor ? { type: "solid", color: s.bgColor } : { type: "none" });
+  const bgType = resolvedBg.type || "none";
+
+  function set(path: string, val: any) {
+    const next = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? next
+        : (((next.responsive ||= {})[bp] ||= {}) as Record<string, any>);
+    const parts = path.split(".");
+    let cur = target;
+    for (let i = 0; i < parts.length - 1; i++) {
+      cur = cur[parts[i]] ??= {};
+    }
+    cur[parts.at(-1)!] = val;
+    onChange(next);
+  }
+
+  function setBg(next: any) {
+    const updated = structuredClone(root);
+    const target =
+      bp === "desktop"
+        ? updated
+        : (((updated.responsive ||= {})[bp] ||= {}) as Record<string, any>);
+    target.bg = { ...(target.bg || {}), ...next };
+    if (next.type === "none") {
+      target.bgColor = undefined;
+    }
+    if (next.type === "solid") {
+      const color = next.color ?? target.bg?.color;
+      if (color) target.bgColor = color;
+    }
+    onChange(updated);
+  }
+
+  return (
+    <div className="space-y-4 ">
+      <div className="space-y-2">
+        <div className="text-sm font-medium">Style</div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Breakpoint</span>
+          {(["desktop", "tablet", "mobile"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              className={`text-xs px-2 py-1 rounded border ${
+                bp === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              }`}
+              onClick={() => setBp(key)}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+        {bp !== "desktop" ? (
+          <div className="text-[11px] text-gray-500">
+            Editing {bp} override. Empty fields inherit desktop values.
+          </div>
+        ) : null}
+      </div>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Layout & Alignment
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Display"
+              value={s.display || "block"}
+              options={["block", "flex", "grid"]}
+              onChange={(v) => set("display", v)}
+            />
+            <Select
+              label="Direction"
+              value={s.flexDirection || "row"}
+              options={["row", "column"]}
+              onChange={(v) => set("flexDirection", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Wrap"
+              value={s.flexWrap || "nowrap"}
+              options={["nowrap", "wrap"]}
+              onChange={(v) => set("flexWrap", v)}
+            />
+            <UnitField
+              label="Gap"
+              value={s.gap || ""}
+              onChange={(v) => set("gap", v)}
+              placeholder="12"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Items"
+              value={s.align || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("align", v)}
+            />
+            <Select
+              label="Justify Content"
+              value={s.justify || "start"}
+              options={[
+                "start",
+                "center",
+                "end",
+                "between",
+                "around",
+                "evenly",
+              ]}
+              onChange={(v) => set("justify", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Align Self"
+              value={s.alignSelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("alignSelf", v)}
+            />
+            <Select
+              label="Justify Self"
+              value={s.justifySelf || "stretch"}
+              options={["start", "center", "end", "stretch"]}
+              onChange={(v) => set("justifySelf", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <NumberField
+              label="Grid Columns"
+              value={Number(s.gridColumns || 0)}
+              onChange={(v) => set("gridColumns", v || undefined)}
+            />
+            <NumberField
+              label="Grid Rows"
+              value={Number(s.gridRows || 0)}
+              onChange={(v) => set("gridRows", v || undefined)}
+            />
+          </div>
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Size & Spacing
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Width"
+              value={s.width || ""}
+              onChange={(v) => set("width", v)}
+              placeholder="100%"
+            />
+            <UnitField
+              label="Max Width"
+              value={s.maxWidth || ""}
+              onChange={(v) => set("maxWidth", v)}
+              placeholder="1200px"
+            />
+            <UnitField
+              label="Min Width"
+              value={s.minWidth || ""}
+              onChange={(v) => set("minWidth", v)}
+              placeholder="0"
+            />
+            <UnitField
+              label="Height"
+              value={s.height || ""}
+              onChange={(v) => set("height", v)}
+              placeholder="auto"
+            />
+            <UnitField
+              label="Max Height"
+              value={s.maxHeight || ""}
+              onChange={(v) => set("maxHeight", v)}
+              placeholder="800px"
+            />
+            <UnitField
+              label="Min Height"
+              value={s.minHeight || ""}
+              onChange={(v) => set("minHeight", v)}
+              placeholder="0"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Padding Top"
+              value={Number(s.padding?.top ?? 0)}
+              onChange={(v) => set("padding.top", v)}
+            />
+            <UnitField
+              label="Padding Right"
+              value={Number(s.padding?.right ?? 0)}
+              onChange={(v) => set("padding.right", v)}
+            />
+            <UnitField
+              label="Padding Bottom"
+              value={Number(s.padding?.bottom ?? 0)}
+              onChange={(v) => set("padding.bottom", v)}
+            />
+            <UnitField
+              label="Padding Left"
+              value={Number(s.padding?.left ?? 0)}
+              onChange={(v) => set("padding.left", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Margin Top"
+              value={Number(s.margin?.top ?? 0)}
+              onChange={(v) => set("margin.top", v)}
+            />
+            <UnitField
+              label="Margin Right"
+              value={Number(s.margin?.right ?? 0)}
+              onChange={(v) => set("margin.right", v)}
+            />
+            <UnitField
+              label="Margin Bottom"
+              value={Number(s.margin?.bottom ?? 0)}
+              onChange={(v) => set("margin.bottom", v)}
+            />
+            <UnitField
+              label="Margin Left"
+              value={Number(s.margin?.left ?? 0)}
+              onChange={(v) => set("margin.left", v)}
+            />
+          </div>
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Background
+        </summary>
+        <div className="mt-3 space-y-3">
+          <Select
+            label="Type"
+            value={bgType}
+            options={["none", "solid", "gradient", "image", "video"]}
+            onChange={(v) => setBg({ type: v })}
+          />
+
+          {bgType === "solid" ? (
+            <ColorPickerInput
+              label="Color"
+              value={resolvedBg.color || ""}
+              onChange={(v) => setBg({ type: "solid", color: v })}
+              placeholder="#ffffff"
+              palette={palette}
+            />
+          ) : null}
+
+          {bgType === "gradient" ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="From"
+                  value={resolvedBg.gradient?.from || ""}
+                  onChange={(v) =>
+                    setBg({
+                      type: "gradient",
+                      gradient: { ...resolvedBg.gradient, from: v },
+                    })
+                  }
+                  placeholder="#0f172a"
+                  palette={palette}
+                />
+                <ColorPickerInput
+                  label="To"
+                  value={resolvedBg.gradient?.to || ""}
+                  onChange={(v) =>
+                    setBg({
+                      type: "gradient",
+                      gradient: { ...resolvedBg.gradient, to: v },
+                    })
+                  }
+                  placeholder="#38bdf8"
+                  palette={palette}
+                />
+              </div>
+              <NumberField
+                label="Angle"
+                value={Number(resolvedBg.gradient?.angle ?? 180)}
+                onChange={(v) =>
+                  setBg({
+                    type: "gradient",
+                    gradient: { ...resolvedBg.gradient, angle: v },
+                  })
+                }
+              />
+            </div>
+          ) : null}
+
+          {bgType === "image" ? (
+            <div className="space-y-3">
+              <ImageField
+                siteId={siteId || ""}
+                label="Background Image"
+                assetIdValue={resolvedBg.imageAssetId || ""}
+                assetUrlValue={resolvedBg.imageUrl || ""}
+                altValue=""
+                assetsMap={assetsMap}
+                onChangeAssetId={(v) =>
+                  setBg({ type: "image", imageAssetId: v })
+                }
+                onChangeAssetUrl={(v) => setBg({ type: "image", imageUrl: v })}
+                onChangeAlt={() => {}}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Select
+                  label="Size"
+                  value={resolvedBg.imageSize || "cover"}
+                  options={["cover", "contain", "auto"]}
+                  onChange={(v) => setBg({ type: "image", imageSize: v })}
+                />
+                <Select
+                  label="Repeat"
+                  value={resolvedBg.imageRepeat || "no-repeat"}
+                  options={["no-repeat", "repeat", "repeat-x", "repeat-y"]}
+                  onChange={(v) => setBg({ type: "image", imageRepeat: v })}
+                />
+              </div>
+              <Field
+                label="Position"
+                value={resolvedBg.imagePosition || "center"}
+                onChange={(v) => setBg({ type: "image", imagePosition: v })}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="Overlay Color"
+                  value={resolvedBg.overlayColor || ""}
+                  onChange={(v) => setBg({ type: "image", overlayColor: v })}
+                  placeholder="#000000"
+                  palette={palette}
+                />
+                <NumberField
+                  label="Overlay Opacity"
+                  value={Number(resolvedBg.overlayOpacity ?? 0.35)}
+                  onChange={(v) => setBg({ type: "image", overlayOpacity: v })}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {bgType === "video" ? (
+            <div className="space-y-3">
+              <Field
+                label="Video URL"
+                value={resolvedBg.videoUrl || ""}
+                onChange={(v) => setBg({ type: "video", videoUrl: v })}
+                placeholder="https://..."
+              />
+              <Field
+                label="Poster"
+                value={resolvedBg.videoPoster || ""}
+                onChange={(v) => setBg({ type: "video", videoPoster: v })}
+                placeholder="https://..."
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Checkbox
+                  label="Autoplay"
+                  value={!!resolvedBg.videoAutoplay}
+                  onChange={(v) => setBg({ type: "video", videoAutoplay: v })}
+                />
+                <Checkbox
+                  label="Muted"
+                  value={resolvedBg.videoMuted ?? true}
+                  onChange={(v) => setBg({ type: "video", videoMuted: v })}
+                />
+                <Checkbox
+                  label="Loop"
+                  value={resolvedBg.videoLoop ?? true}
+                  onChange={(v) => setBg({ type: "video", videoLoop: v })}
+                />
+                <Checkbox
+                  label="Controls"
+                  value={!!resolvedBg.videoControls}
+                  onChange={(v) => setBg({ type: "video", videoControls: v })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <ColorPickerInput
+                  label="Overlay Color"
+                  value={resolvedBg.overlayColor || ""}
+                  onChange={(v) => setBg({ type: "video", overlayColor: v })}
+                  placeholder="#000000"
+                  palette={palette}
+                />
+                <NumberField
+                  label="Overlay Opacity"
+                  value={Number(resolvedBg.overlayOpacity ?? 0.35)}
+                  onChange={(v) => setBg({ type: "video", overlayOpacity: v })}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Color & Border
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-1 gap-3 min-w-0">
+            <ColorPickerInput
+              label="Text Color"
+              value={s.textColor || ""}
+              onChange={(v) => set("textColor", v)}
+              placeholder="#111111"
+              palette={palette}
+            />
+            <ColorPickerInput
+              label="Border Color"
+              value={s.borderColor || ""}
+              onChange={(v) => set("borderColor", v)}
+              placeholder="#e5e7eb"
+              palette={palette}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 min-w-0">
+            <UnitField
+              label="Border Width"
+              value={s.borderWidth || ""}
+              onChange={(v) => set("borderWidth", v)}
+              placeholder="1"
+            />
+            <Field
+              label="Radius"
+              value={s.radius || ""}
+              onChange={(v) => set("radius", v)}
+              placeholder="8"
+            />
+          </div>
+
+          <Select
+            label="Shadow"
+            value={s.shadow || "none"}
+            options={["none", "sm", "md", "lg"]}
+            onChange={(v) => set("shadow", v)}
+          />
+        </div>
+      </details>
+
+      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+        <summary className="cursor-pointer text-sm font-medium">
+          Typography
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Text Align"
+              value={s.textAlign || "left"}
+              options={["left", "center", "right"]}
+              onChange={(v) => set("textAlign", v)}
+            />
+            <Select
+              label="Text Transform"
+              value={s.textTransform || "none"}
+              options={["none", "uppercase", "lowercase", "capitalize"]}
+              onChange={(v) => set("textTransform", v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Font Size"
+              value={s.fontSize || ""}
+              onChange={(v) => set("fontSize", v)}
+              placeholder="16"
+            />
+            <UnitField
+              label="Font Weight"
+              value={s.fontWeight || ""}
+              onChange={(v) => set("fontWeight", v)}
+              placeholder="400"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <UnitField
+              label="Line Height"
+              value={s.lineHeight || ""}
+              onChange={(v) => set("lineHeight", v)}
+              placeholder="24"
+            />
+            <UnitField
+              label="Letter Spacing"
+              value={s.letterSpacing || ""}
+              onChange={(v) => set("letterSpacing", v)}
+              placeholder="0.2"
+            />
+          </div>
+        </div>
+      </details>
+    </div>
+  );
+}

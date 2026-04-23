@@ -1,0 +1,37 @@
+{
+  "name": "saas-store-builder",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "pnpm --parallel --filter admin --filter storefront dev",
+    "dev:all": "pnpm --parallel --filter './apps/*' dev",
+    "dev:turbo": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/bcrypt": "^6.0.0",
+    "clsx": "^2.1.1",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^4.1.18",
+    "turbo": "^2.7.3",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@tiptap/extension-link": "^3.19.0",
+    "@tiptap/extension-placeholder": "^3.19.0",
+    "@tiptap/extension-text-align": "^3.19.0",
+    "@tiptap/extension-typography": "^3.19.0",
+    "@tiptap/extension-underline": "^3.19.0",
+    "@tiptap/react": "^3.19.0",
+    "@tiptap/starter-kit": "^3.19.0",
+    "lucide-react": "^0.562.0",
+    "web-vitals": "^5.1.0"
+  }
+}

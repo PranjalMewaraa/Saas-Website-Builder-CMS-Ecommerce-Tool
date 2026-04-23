@@ -1,0 +1,864 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+type CategoryAttr = {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  is_required?: number | boolean;
+  options?: Array<{ label: string; value: string }>;
+};
+
+type VariantDraft = {
+  id: string;
+  sku: string;
+  price: string;
+  inventory: string;
+  options: Array<{ name: string; value: string }>;
+};
+
+type ProductImage = {
+  id: string;
+  url: string;
+  alt?: string | null;
+  variant_id?: string | null;
+};
+
+function newVariantId() {
+  return `var_${Math.random().toString(36).slice(2, 18)}`.slice(0, 26);
+}
+
+function emptyVariant(): VariantDraft {
+  return {
+    id: newVariantId(),
+    sku: "",
+    price: "",
+    inventory: "",
+    options: [{ name: "", value: "" }],
+  };
+}
+
+function buildCategoryOptions(
+  categories: Array<{ id: string; name: string; parent_id?: string | null }>,
+) {
+  const byParent: Record<string, Array<{ id: string; name: string }>> = {};
+  const roots: Array<{ id: string; name: string; parent_id?: string | null }> = [];
+  for (const c of categories || []) {
+    const parent = c.parent_id || "";
+    if (!parent) roots.push(c);
+    if (!byParent[parent]) byParent[parent] = [];
+    byParent[parent].push(c);
+  }
+  for (const k of Object.keys(byParent)) {
+    byParent[k].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  }
+  const out: Array<{ id: string; label: string }> = [];
+  function walk(nodes: Array<{ id: string; name: string }>, depth: number) {
+    for (const n of nodes) {
+      out.push({ id: n.id, label: `${"— ".repeat(depth)}${n.name}` });
+      const children = byParent[n.id] || [];
+      if (children.length) walk(children, depth + 1);
+    }
+  }
+  walk(roots, 0);
+  return out;
+}
+
+function toVariantDraft(v: any): VariantDraft {
+  const optionsObj =
+    v?.options && typeof v.options === "object" && !Array.isArray(v.options)
+      ? v.options
+      : {};
+  const options = Object.entries(optionsObj).map(([name, value]) => ({
+    name: String(name || ""),
+    value: String(value || ""),
+  }));
+  return {
+    id: v?.id ? String(v.id) : newVariantId(),
+    sku: String(v?.sku || ""),
+    price:
+      v?.price_cents == null ? "" : String((Number(v.price_cents || 0) / 100).toFixed(2)),
+    inventory: v?.inventory_qty == null ? "" : String(Number(v.inventory_qty || 0)),
+    options: options.length ? options : [{ name: "", value: "" }],
+  };
+}
+
+export default function ProductEditClient({
+  siteId,
+  storeId,
+  catalogId,
+  product,
+}: {
+  siteId: string;
+  storeId: string;
+  catalogId?: string;
+  product: any | null;
+}) {
+  const [brands, setBrands] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [attrs, setAttrs] = useState<CategoryAttr[]>([]);
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [attrValues, setAttrValues] = useState<Record<string, any>>(
+    product?.attributes || {},
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [useVariants, setUseVariants] = useState(false);
+  const [variants, setVariants] = useState<VariantDraft[]>([emptyVariant()]);
+  const [variantImageFiles, setVariantImageFiles] = useState<Record<string, File[]>>({});
+  const [imagesLoading, setImagesLoading] = useState(false);
+  const [mainImages, setMainImages] = useState<ProductImage[]>([]);
+  const [variantImages, setVariantImages] = useState<Record<string, ProductImage[]>>({});
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [bRes, cRes] = await Promise.all([
+          fetch(
+            `/api/admin/v2/brands?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+          ),
+          fetch(
+            `/api/admin/v2/categories?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+          ),
+        ]);
+        if (!bRes.ok || !cRes.ok) throw new Error("v2 list failed");
+        const [bData, cData] = await Promise.all([bRes.json(), cRes.json()]);
+        setBrands(bData.brands ?? []);
+        setCategories(cData.categories ?? []);
+      } catch {
+        const [bRes, cRes] = await Promise.all([
+          fetch(
+            `/api/admin/brands?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+          ),
+          fetch(
+            `/api/admin/categories?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`,
+          ),
+        ]);
+        const [bData, cData] = await Promise.all([bRes.json(), cRes.json()]);
+        setBrands(bData.brands ?? []);
+        setCategories(cData.categories ?? []);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [siteId, storeId]);
+
+  useEffect(() => {
+    const initialCategory =
+      product?.store_category_id ||
+      (Array.isArray(product?.category_ids) ? product.category_ids[0] : "");
+    setCategoryId(initialCategory || "");
+  }, [product]);
+
+  useEffect(() => {
+    const list = Array.isArray(product?.variants) ? product.variants : [];
+    if (!list.length) {
+      setUseVariants(false);
+      setVariants([emptyVariant()]);
+      return;
+    }
+    setVariants(list.map((v: any) => toVariantDraft(v)));
+    setUseVariants(
+      list.length > 1 ||
+        list.some((v: any) => {
+          const options = v?.options && typeof v.options === "object" ? v.options : {};
+          return Object.keys(options).some((k) => k !== "default");
+        }),
+    );
+  }, [product]);
+
+  useEffect(() => {
+    if (!categoryId) {
+      setAttrs([]);
+      return;
+    }
+    (async () => {
+      const res = await fetch(
+        `/api/admin/v2/category-attributes?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}&category_id=${encodeURIComponent(categoryId)}&include_inherited=1`,
+      );
+      if (!res.ok) {
+        setAttrs([]);
+        return;
+      }
+      const data = await res.json();
+      setAttrs(data.attributes ?? []);
+    })();
+  }, [siteId, storeId, categoryId]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    (async () => {
+      setImagesLoading(true);
+      try {
+        const res = await fetch(
+          `/api/admin/products/images/list?site_id=${encodeURIComponent(siteId)}&product_id=${encodeURIComponent(product.id)}`,
+          { cache: "no-store" },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return;
+        const rows = Array.isArray(data?.images) ? data.images : [];
+        const nextMain: ProductImage[] = [];
+        const nextVariant: Record<string, ProductImage[]> = {};
+        for (const r of rows) {
+          const img: ProductImage = {
+            id: String(r.id || ""),
+            url: String(r.url || ""),
+            alt: r.alt ? String(r.alt) : null,
+            variant_id: r.variant_id ? String(r.variant_id) : null,
+          };
+          if (!img.url) continue;
+          if (img.variant_id) {
+            if (!nextVariant[img.variant_id]) nextVariant[img.variant_id] = [];
+            nextVariant[img.variant_id].push(img);
+          } else {
+            nextMain.push(img);
+          }
+        }
+        setMainImages(nextMain);
+        setVariantImages(nextVariant);
+      } finally {
+        setImagesLoading(false);
+      }
+    })();
+  }, [product?.id, siteId]);
+
+  const requiredMissing = useMemo(() => {
+    for (const a of attrs) {
+      const required = Number(a.is_required || 0) === 1 || a.is_required === true;
+      if (!required) continue;
+      const v = attrValues[a.code];
+      if (v == null || v === "" || (Array.isArray(v) && v.length === 0)) return a.name;
+    }
+    return null;
+  }, [attrs, attrValues]);
+
+  const categoryOptions = useMemo(
+    () => buildCategoryOptions(categories || []),
+    [categories],
+  );
+
+  if (!product) {
+    return (
+      <div className="border rounded p-4 text-sm text-red-600">
+        Product not found.
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="border rounded p-4 text-sm text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="max-w-5xl mx-auto p-4 space-y-6 pb-32"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setError(null);
+        const form = e.currentTarget as HTMLFormElement;
+        const fd = new FormData(form);
+
+        const payload = {
+          site_id: siteId,
+          store_id: storeId,
+          product_id: product.id,
+          title: String(fd.get("title") || ""),
+          description: String(fd.get("description") || "") || null,
+          sku: String(fd.get("sku") || "") || null,
+          base_price_cents: Math.round(
+            Number(fd.get("price") ?? Number(product.base_price_cents || 0) / 100) * 100,
+          ),
+          inventory_quantity: Math.max(
+            0,
+            Number(fd.get("inventory_quantity") ?? Number(product.inventory_qty || 0)),
+          ),
+          status: String(fd.get("status") || "draft"),
+          brand_id: String(fd.get("brand_id") || "") || null,
+          store_category_id: categoryId || null,
+          attributes: attrValues,
+          variants: undefined as
+            | Array<{
+                id: string;
+                sku?: string | null;
+                price_cents?: number;
+                inventory_qty?: number;
+                options?: Record<string, string>;
+              }>
+            | undefined,
+        };
+        let variantPayload: Array<{
+          id: string;
+          sku?: string | null;
+          price_cents?: number;
+          inventory_qty?: number;
+          options?: Record<string, string>;
+        }> = [];
+
+        if (useVariants) {
+          const cleaned = variants
+            .map((v) => {
+              const options: Record<string, string> = {};
+              for (const pair of v.options || []) {
+                const key = String(pair.name || "").trim();
+                const value = String(pair.value || "").trim();
+                if (!key || !value) continue;
+                options[key] = value;
+              }
+              return {
+                id: v.id,
+                sku: String(v.sku || "").trim() || null,
+                price_cents: Math.round(Number(v.price || 0) * 100),
+                inventory_qty: Math.max(0, Number(v.inventory || 0)),
+                options,
+              };
+            })
+            .filter((v) => v.price_cents >= 0);
+          if (!cleaned.length) {
+            setError("Add at least one variant");
+            return;
+          }
+          const invalid = cleaned.find(
+            (v) => !Number.isFinite(v.price_cents) || !Number.isFinite(v.inventory_qty),
+          );
+          if (invalid) {
+            setError("Variant price and inventory must be valid numbers");
+            return;
+          }
+          variantPayload = cleaned;
+          payload.variants = cleaned;
+        }
+
+        if (requiredMissing) {
+          setError(`Missing required attribute: ${requiredMissing}`);
+          return;
+        }
+
+        try {
+          const v2 = await fetch(`/api/admin/v2/products`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!v2.ok) throw new Error("v2 update failed");
+        } catch {
+          const legacy = await fetch(
+            `/api/admin/products?site_id=${encodeURIComponent(siteId)}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                product_id: product.id,
+                title: payload.title,
+                description: payload.description,
+                sku: payload.sku || undefined,
+                base_price_cents: payload.base_price_cents,
+                status: payload.status,
+                brand_id: payload.brand_id || null,
+                category_ids: payload.store_category_id
+                  ? [payload.store_category_id]
+                  : [],
+                store_id: storeId || undefined,
+              }),
+            },
+          );
+          if (!legacy.ok) {
+            const data = await legacy.json().catch(() => ({}));
+            setError(data.error || "Update failed");
+            return;
+          }
+        }
+
+        if (imageFiles.length) {
+          for (const file of imageFiles) {
+            const formData = new FormData();
+            formData.append("product_id", product.id);
+            formData.append("file", file);
+            const up = await fetch(
+              `/api/admin/products/images/upload?site_id=${encodeURIComponent(siteId)}`,
+              {
+                method: "POST",
+                body: formData,
+              },
+            );
+            if (!up.ok) {
+              const upData = await up.json().catch(() => ({}));
+              setError(upData?.error || "Product image upload failed");
+              return;
+            }
+          }
+        }
+
+        if (variantPayload.length) {
+          for (const variant of variantPayload) {
+            const files = variantImageFiles[variant.id] || [];
+            for (const file of files) {
+              const formData = new FormData();
+              formData.append("product_id", product.id);
+              formData.append("variant_id", variant.id);
+              formData.append("file", file);
+              const up = await fetch(
+                `/api/admin/products/images/upload?site_id=${encodeURIComponent(siteId)}`,
+                {
+                  method: "POST",
+                  body: formData,
+                },
+              );
+              if (!up.ok) {
+                const upData = await up.json().catch(() => ({}));
+                setError(upData?.error || "Variant image upload failed");
+                return;
+              }
+            }
+          }
+        }
+
+        window.location.href = catalogId
+          ? `/products?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(catalogId)}`
+          : `/products?site_id=${encodeURIComponent(siteId)}&store_id=${encodeURIComponent(storeId)}`;
+      }}
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Edit Product
+          </h1>
+          <p className="text-slate-500 font-medium italic">
+            Update product details, media, variants, and availability
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            name="status"
+            className="bg-white border border-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none shadow-sm"
+            defaultValue={product.status || "draft"}
+          >
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-2 block">
+            General Information
+          </label>
+          <div className="space-y-4">
+            <input
+              name="title"
+              className="w-full text-xl font-bold border-none p-0 focus:ring-0 placeholder-slate-300"
+              placeholder="Product Title..."
+              defaultValue={product.title || ""}
+              required
+            />
+            <textarea
+              name="description"
+              rows={4}
+              className="w-full border-slate-100 rounded-xl text-sm focus:border-slate-300 transition-all outline-none bg-slate-50/50 p-4"
+              placeholder="Detailed description..."
+              defaultValue={product.description || ""}
+            />
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-center text-center group">
+          <label className="text-xs font-black uppercase text-slate-500 mb-4 block">
+            Product Gallery
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            id="edit-image-upload"
+            onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
+          />
+          <label htmlFor="edit-image-upload" className="cursor-pointer">
+            <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">
+              🖼️
+            </div>
+            <p className="text-white text-sm font-bold">Upload Media</p>
+            <p className="text-slate-500 text-[10px] mt-1">
+              {imageFiles.length} file{imageFiles.length !== 1 ? "s" : ""} selected
+            </p>
+          </label>
+          <div className="mt-4 text-left">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-2">
+              Existing Images
+            </div>
+            {imagesLoading ? (
+              <div className="text-xs text-slate-400">Loading images...</div>
+            ) : mainImages.length ? (
+              <div className="grid grid-cols-3 gap-2">
+                {mainImages.slice(0, 6).map((img) => (
+                  <img
+                    key={img.id}
+                    src={img.url}
+                    alt={img.alt || ""}
+                    className="h-16 w-full rounded-md object-cover border border-slate-700"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400">No main images</div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-4 block">
+            Logistics
+          </label>
+          <div className="space-y-4">
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 mb-1">BRAND</p>
+              <select
+                name="brand_id"
+                className="w-full text-sm border-slate-100 rounded-lg outline-none"
+                defaultValue={product.brand_id || ""}
+              >
+                <option value="">Auto Brand</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-500 mb-1">IDENTIFIER (SKU)</p>
+              <input
+                name="sku"
+                className="w-full text-sm border-slate-100 rounded-lg outline-none"
+                placeholder="SKU-XXXX"
+                defaultValue={product.sku || ""}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <label className="text-xs font-black uppercase text-slate-400 mb-4 block">
+            Organization & Attributes
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <p className="text-[10px] font-bold text-slate-500 mb-1">CATEGORY *</p>
+              <select
+                name="store_category_id"
+                className="w-full border-slate-100 rounded-lg text-sm bg-slate-50/50 p-2"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+              >
+                <option value="">Select category</option>
+                {categoryOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {attrs.map((a) => {
+              const value = attrValues[a.code] ?? "";
+              return (
+                <div
+                  key={a.id}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-100"
+                >
+                  <p className="text-[10px] font-bold text-slate-500 mb-1">
+                    {a.name.toUpperCase()} {(Number(a.is_required) === 1 || a.is_required) && "*"}
+                  </p>
+                  {a.type === "select" ? (
+                    <select
+                      className="w-full text-xs border-none bg-transparent outline-none p-0"
+                      value={value}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
+                      }
+                    >
+                      <option value="">Choose...</option>
+                      {(a.options || []).map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : a.type === "boolean" ? (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(attrValues[a.code])}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.checked }))
+                      }
+                    />
+                  ) : (
+                    <input
+                      type={a.type === "number" ? "number" : a.type === "date" ? "date" : "text"}
+                      className="w-full text-xs border-none bg-transparent outline-none p-0 placeholder-slate-400"
+                      placeholder={`Enter ${a.name}...`}
+                      value={value}
+                      onChange={(e) =>
+                        setAttrValues((prev) => ({ ...prev, [a.code]: e.target.value }))
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {!useVariants && (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <label className="text-xs font-black uppercase text-emerald-600 block">
+              Single Item Pricing
+            </label>
+            <div className="mt-4 space-y-4">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-emerald-700">
+                  ₹
+                </span>
+                <input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  className="w-full pl-8 border-emerald-200 bg-white rounded-xl text-lg font-bold outline-none"
+                  placeholder="0.00"
+                  defaultValue={Number(product.base_price_cents || 0) / 100}
+                  required
+                />
+              </div>
+              <input
+                name="inventory_quantity"
+                type="number"
+                min={0}
+                className="w-full border-emerald-200 bg-white rounded-xl text-sm p-2 outline-none"
+                placeholder="Stock Level"
+                defaultValue={Number(product.inventory_qty || 0)}
+                required
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={`bg-white border rounded-3xl p-6 transition-all ${useVariants ? "border-blue-200 bg-blue-50/10 shadow-lg" : "border-slate-100"}`}>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={useVariants}
+            onChange={(e) => setUseVariants(e.target.checked)}
+          />
+          Use variants (size/color etc)
+        </label>
+        {useVariants ? (
+          <div className="space-y-3">
+            {variants.map((variant, idx) => (
+              <div key={variant.id} className="rounded-lg border border-slate-200 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">Variant {idx + 1}</div>
+                  <button
+                    type="button"
+                    className="text-xs text-red-600 disabled:opacity-40"
+                    disabled={variants.length <= 1}
+                    onClick={() =>
+                      setVariants((prev) => {
+                        const next = prev.filter((_, i) => i !== idx);
+                        setVariantImageFiles((imgPrev) => {
+                          const copy = { ...imgPrev };
+                          delete copy[variant.id];
+                          return copy;
+                        });
+                        return next;
+                      })
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input
+                    className="border p-2 rounded w-full"
+                    placeholder="Variant SKU"
+                    value={variant.sku}
+                    onChange={(e) =>
+                      setVariants((prev) =>
+                        prev.map((v, i) => (i === idx ? { ...v, sku: e.target.value } : v)),
+                      )
+                    }
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="border p-2 rounded w-full"
+                    placeholder="Price"
+                    value={variant.price}
+                    onChange={(e) =>
+                      setVariants((prev) =>
+                        prev.map((v, i) => (i === idx ? { ...v, price: e.target.value } : v)),
+                      )
+                    }
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    className="border p-2 rounded w-full"
+                    placeholder="Inventory"
+                    value={variant.inventory}
+                    onChange={(e) =>
+                      setVariants((prev) =>
+                        prev.map((v, i) =>
+                          i === idx ? { ...v, inventory: e.target.value } : v,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  {(variant.options || []).map((opt, optIdx) => (
+                    <div key={optIdx} className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                      <input
+                        className="border p-2 rounded w-full"
+                        placeholder="Option name (e.g. Color)"
+                        value={opt.name}
+                        onChange={(e) =>
+                          setVariants((prev) =>
+                            prev.map((v, i) =>
+                              i === idx
+                                ? {
+                                    ...v,
+                                    options: v.options.map((o, j) =>
+                                      j === optIdx ? { ...o, name: e.target.value } : o,
+                                    ),
+                                  }
+                                : v,
+                            ),
+                          )
+                        }
+                      />
+                      <input
+                        className="border p-2 rounded w-full"
+                        placeholder="Option value (e.g. Red)"
+                        value={opt.value}
+                        onChange={(e) =>
+                          setVariants((prev) =>
+                            prev.map((v, i) =>
+                              i === idx
+                                ? {
+                                    ...v,
+                                    options: v.options.map((o, j) =>
+                                      j === optIdx ? { ...o, value: e.target.value } : o,
+                                    ),
+                                  }
+                                : v,
+                            ),
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="text-xs text-red-600 disabled:opacity-40 px-2"
+                        disabled={(variant.options || []).length <= 1}
+                        onClick={() =>
+                          setVariants((prev) =>
+                            prev.map((v, i) =>
+                              i === idx
+                                ? {
+                                    ...v,
+                                    options: v.options.filter((_, j) => j !== optIdx),
+                                  }
+                                : v,
+                            ),
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="text-xs border rounded px-2 py-1"
+                    onClick={() =>
+                      setVariants((prev) =>
+                        prev.map((v, i) =>
+                          i === idx
+                            ? { ...v, options: [...(v.options || []), { name: "", value: "" }] }
+                            : v,
+                        ),
+                      )
+                    }
+                  >
+                    + Add option
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium block">Variant Images</label>
+                  {(variantImages[variant.id] || []).length ? (
+                    <div className="mb-2 grid grid-cols-4 gap-2">
+                      {(variantImages[variant.id] || []).slice(0, 8).map((img) => (
+                        <img
+                          key={img.id}
+                          src={img.url}
+                          alt={img.alt || ""}
+                          className="h-14 w-full rounded-md object-cover border border-slate-200"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="border p-2 rounded w-full"
+                    onChange={(e) =>
+                      setVariantImageFiles((prev) => ({
+                        ...prev,
+                        [variant.id]: Array.from(e.target.files || []),
+                      }))
+                    }
+                  />
+                  {(variantImageFiles[variant.id] || []).length ? (
+                    <div className="text-xs text-gray-500">
+                      {(variantImageFiles[variant.id] || []).length} image(s) selected
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="text-sm border rounded px-3 py-1.5"
+              onClick={() => setVariants((prev) => [...prev, emptyVariant()])}
+            >
+              + Add variant
+            </button>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            Leave off to keep single-variant behavior from base price and inventory.
+          </p>
+        )}
+      </div>
+
+      <button className="bg-black text-white px-4 py-2 rounded-xl font-semibold">
+        Save Product
+      </button>
+    </form>
+  );
+}

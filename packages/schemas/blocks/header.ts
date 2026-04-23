@@ -1,0 +1,31 @@
+import { z } from "zod";
+
+export const HeaderV1Schema = z.object({
+  menuId: z.string().min(1),
+  layout: z
+    .enum([
+      "three-col",
+      "two-col",
+      "two-col-nav-cta",
+      "centered-nav",
+      "split-nav",
+      "logo-cta",
+    ])
+    .optional()
+    .default("three-col"),
+  ctaText: z.string().min(1).max(50).optional(),
+  ctaHref: z.string().min(1).optional(),
+  ctaIcon: z.string().max(60).optional(),
+  ctaSecondaryText: z.string().min(1).max(50).optional(),
+  ctaSecondaryHref: z.string().min(1).optional(),
+  ctaSecondaryIcon: z.string().max(60).optional(),
+  ctaTertiaryText: z.string().min(1).max(50).optional(),
+  ctaTertiaryHref: z.string().min(1).optional(),
+  ctaTertiaryIcon: z.string().max(60).optional(),
+  menuGap: z.coerce.number().int().min(0).max(64).optional(),
+  actionGap: z.coerce.number().int().min(0).max(32).optional(),
+  logoAssetId: z.string().min(1).optional(),
+  logoUrl: z.string().url().optional(),
+  logoAlt: z.string().max(160).optional(),
+  contentWidth: z.string().min(1).max(50).optional(),
+});

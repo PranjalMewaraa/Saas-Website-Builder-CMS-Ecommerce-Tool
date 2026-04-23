@@ -1,0 +1,90 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: saas-store-builder-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-saas_builder}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_EXPOSE_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./packages/db-mysql/schema/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+      - ./packages/db-mysql/schema/002_commerce_v2.sql:/docker-entrypoint-initdb.d/002_commerce_v2.sql:ro
+      - ./packages/db-mysql/schema/003_variant_images.sql:/docker-entrypoint-initdb.d/003_variant_images.sql:ro
+      - ./packages/db-mysql/schema/004_promotions.sql:/docker-entrypoint-initdb.d/004_promotions.sql:ro
+      - ./packages/db-mysql/schema/005_currency_inr.sql:/docker-entrypoint-initdb.d/005_currency_inr.sql:ro
+      - ./packages/db-mysql/schema/006_promotions_flexible_targets.sql:/docker-entrypoint-initdb.d/006_promotions_flexible_targets.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    container_name: saas-store-builder-admin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_DB: ${MONGODB_DB}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-saas_builder}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_ENDPOINT2: ${S3_ENDPOINT2:-}
+      S3_REGION: ${S3_REGION:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      CDN_BASE_URL: ${CDN_BASE_URL:-}
+      STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:3002}
+      DEFAULT_SITE_HANDLE: ${DEFAULT_SITE_HANDLE:-nikee}
+    ports:
+      - "${ADMIN_PORT:-3000}:3000"
+
+  storefront:
+    build:
+      context: .
+      dockerfile: Dockerfile.storefront
+    container_name: saas-store-builder-storefront
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      HOSTNAME: 0.0.0.0
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_DB: ${MONGODB_DB}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-saas_builder}
+      CDN_BASE_URL: ${CDN_BASE_URL:-}
+      DEFAULT_SITE_HANDLE: ${DEFAULT_SITE_HANDLE:-nikee}
+    ports:
+      - "${STOREFRONT_PORT:-3002}:3002"
+
+volumes:
+  mysql_data:
