@@ -1,0 +1,172 @@
+RFC-STYLE CASE STUDY
+Title: SaaS Store Builder Platform Architecture and Implementation
+Status: Active Implementation
+
+A) CONTEXT
+The platform is a multi-tenant system that integrates a visual CMS builder with store-scoped e-commerce operations. It must support:
+- rapid site/content creation,
+- safe draft/publish lifecycle,
+- store-scoped catalog management,
+- and backward compatibility with pre-existing data models.
+
+
+B) GOALS
+B.1 Product Goals
+- Single admin surface for content + commerce.
+- Non-technical user workflows for page and catalog setup.
+- Stable runtime rendering across draft and published states.
+
+B.2 Technical Goals
+- Isolate content and commerce domains while enabling composition.
+- Enforce tenant/store scoping.
+- Preserve legacy data and non-destructive migration path.
+
+
+C) NON-GOALS
+- Complete rewrite of all legacy flows in one release.
+- Destructive schema changes to legacy tables/documents.
+- Mandatory migration of all old records before new features can run.
+
+
+D) SYSTEM OVERVIEW
+D.1 Repositories/Modules
+- apps/admin: admin UI + management APIs.
+- apps/storefront: public runtime renderer.
+- packages/blocks: reusable block components.
+- packages/renderer: rendering engine and block composition.
+- packages/schemas: schema contracts (Zod).
+- packages/db-mongo: content persistence.
+- packages/db-mysql: commerce persistence.
+- packages/auth: session/module gating.
+
+D.2 Domain Split
+- MongoDB (content): sites, pages, snapshots, forms, menus, assets, theme, templates.
+- MySQL (commerce): stores, brands, categories, attributes, products, variants, inventory, orders.
+
+
+E) ARCHITECTURE DETAILS
+E.1 Rendering Path
+1. Resolve site context by handle/sid.
+2. Determine runtime mode: published or preview (explicit token only).
+3. Load snapshot (published or draft preview).
+4. Render blocks with safe schema defaults and resolver hooks.
+5. Inject commerce-aware props for commerce blocks.
+
+E.2 Publish Model
+- Draft edits are isolated from live runtime.
+- Publish action creates/links snapshot.
+- Storefront reads published snapshot by default.
+
+E.3 Visual Builder Model
+- Block list + specialized layout section renderer.
+- Layout/Section hierarchy: section -> row -> col -> atomic.
+- Inspector uses conditional controls and grouped settings.
+
+
+F) FEATURE SPECIFICATION (CURRENT)
+F.1 Content
+- Page editor (visual + form/json variants).
+- Block insert dialog with search/categorization.
+- Theme, menu, forms, assets, SEO editors.
+- Template/preset systems.
+
+F.2 Layout/Section
+- Row presets + manual flex/grid controls.
+- Hover UI and contextual controls.
+- Styling with unit-aware inputs.
+- Defaults:
+  - Section style: display:flex, justify:center
+  - Row style: maxWidth: 1208px
+
+F.3 Header/Footer/Hero
+- Header variants and CTA controls.
+- Footer supports multi-menu groups with:
+  - custom section titles
+  - text size and text style per menu group
+- Hero supports preset enum:
+  - Basic
+  - Advanced (scaffolded via renderAdvancedHero branch)
+- Basic Hero background is editable and respected in render runtime.
+
+F.4 Commerce V2
+- Store-scoped brands/categories/attributes/products.
+- Category attribute model supports typed fields and options.
+- Product wizard supports category-driven attributes and variants.
+- PDP/cart/order/inventory operational flow integrated.
+
+F.5 Category Editing
+- Added category edit modal UI (light, glass-like Apple-inspired).
+- Added PUT API at /api/admin/v2/categories for update transactions.
+
+
+G) USER FLOWS
+G.1 Merchant Onboarding
+1. Create site.
+2. Create store + preset.
+3. Configure brands/categories/attributes.
+4. Create products and variants.
+5. Build and publish pages.
+
+G.2 Content Editor
+1. Open page editor.
+2. Insert block/section.
+3. Adjust props/styles in inspector.
+4. Save draft and preview.
+5. Publish snapshot.
+
+G.3 Customer Runtime
+1. Visit published site.
+2. Browse list/PDP.
+3. Add to cart.
+4. Checkout/order placement.
+5. Admin sees order and inventory changes.
+
+
+H) SAFETY + COMPATIBILITY STRATEGY
+- Additive schema migrations only.
+- Legacy fields/tables remain untouched.
+- New writes follow V2 store scope.
+- Read paths include fallback compatibility where required.
+- Module gating enforces feature entitlements per tenant/site.
+
+
+I) RISKS AND MITIGATIONS
+I.1 Risk: Legacy and V2 behavior divergence
+Mitigation: compatibility adapters, scoped routes, phased migration.
+
+I.2 Risk: Preview/publish mode confusion
+Mitigation: explicit token-based preview activation and safe param persistence.
+
+I.3 Risk: Inconsistent admin UI controls
+Mitigation: inspector grouping, conditional controls, unified modal/dialog patterns.
+
+I.4 Risk: Partial type drift in large workspace
+Mitigation: incremental strictness and path-by-path cleanup plan.
+
+
+J) OPERABILITY NOTES
+- Inventory/order screens are available under manage workflows.
+- Form submissions are surfaced in admin management.
+- Runtime behavior now avoids accidental draft switching from persisted token leakage.
+
+
+K) ACCEPTANCE SIGNALS
+- Merchant can complete full journey from setup to published sales flow.
+- Category edits persist from modal and reflect on refresh.
+- Footer can render multiple menu groups with per-group title/style.
+- Hero basic background color changes are visible in editor and storefront runtime.
+
+
+L) NEXT ENGINEERING TASKS
+- Continue replacing ID-only labels with semantic names in remaining admin views.
+- Consolidate duplicate legacy editor paths.
+- Expand tests around publish snapshot correctness and inventory/order transactions.
+- Normalize remaining catalog edits to V2 endpoints.
+
+
+M) CONCLUSION
+The system is now a practical full-stack SaaS builder-commerce platform with:
+- robust content authoring,
+- store-scoped commerce operations,
+- safe publishing architecture,
+- and compatibility-aware evolution strategy.

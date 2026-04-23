@@ -1,0 +1,267 @@
+CASE STUDY
+SaaS Store Builder: Multi-Tenant Visual Website Builder + Headless Commerce Platform
+
+1) OBJECTIVE
+Build a production-ready SaaS platform where a non-technical business owner can:
+- Create and manage one or more websites (sites) under a tenant.
+- Design pages visually using reusable blocks.
+- Manage themes, menus, forms, assets, SEO, templates, and publishing.
+- Operate a full commerce stack (stores, brands, categories, attributes, products, variants, inventory, cart, orders).
+- Publish to a storefront runtime with strong backward compatibility and minimal migration risk.
+
+Primary business goals:
+- Reduce time-to-live for new storefronts.
+- Make content + commerce editable from one admin.
+- Keep data isolated by tenant and store scope.
+- Support draft vs published workflows safely.
+
+
+2) PRODUCT SCOPE
+This platform unifies 3 systems:
+- Content System: page editor, block rendering, assets, SEO, menus, templates, publish snapshots.
+- Commerce System (V2): store-scoped catalog with attributes, variants, inventory, and order flow.
+- Storefront Runtime: resolves live/draft content and renders pages with commerce-aware blocks.
+
+Key requirement: preserve legacy data and behaviors while introducing the new store-scoped commerce model.
+
+
+3) PROJECT STRUCTURE (MONOREPO)
+Top-level apps:
+- apps/admin: Admin console for content + commerce management.
+- apps/storefront: Public rendering app for published/draft websites.
+- apps/builder: Additional builder app context.
+- apps/superadmin: Platform-level admin context.
+
+Core packages:
+- packages/renderer: Runtime rendering engine for blocks/layout/page snapshots.
+- packages/blocks: Block library (Header, Hero, Footer, ProductGrid, ProductList, PDP, cart blocks, atomic blocks, layout section).
+- packages/schemas: Zod schemas for blocks/style/data contracts.
+- packages/db-mongo: Content domain persistence (sites/pages/snapshots/forms/menus/assets/theme/templates).
+- packages/db-mysql: Commerce domain persistence (stores/brands/categories/products/variants/inventory/orders).
+- packages/auth: Auth/session/module gating.
+- packages/core: Shared utilities/modules.
+
+
+4) HIGH-LEVEL ARCHITECTURE
+4.1 Separation of concerns
+- MongoDB stores content/editor state and publishing snapshots.
+- MySQL stores relational commerce entities and transactional operations.
+- Renderer composes content + commerce at runtime.
+
+4.2 Runtime model
+- Admin edits draft entities.
+- Publish action generates/updates a snapshot.
+- Storefront resolves site by handle/sid and loads published snapshot.
+- Preview mode uses explicit token, draft snapshot, and isolated behavior.
+
+4.3 Tenant and scope model
+- Tenant is top-level isolation boundary.
+- Site belongs to tenant.
+- Store belongs to tenant and can be mapped/selected for catalog context.
+- Brands/categories/products/inventory are store-scoped in V2.
+
+
+5) DETAILED FEATURES
+5.1 Visual Page Builder
+- Block-based editing for legacy blocks and new layout-driven sections.
+- Layout/Section block hierarchy:
+  Section -> Row -> Col -> Atomic blocks.
+- Atomic block set includes text/image/video/button/icon/divider/spacer/badge/list/card/accordion/menu/countdown/embed/form/group.
+- Inspector panels with grouped controls, conditional fields, and style editors.
+- Add/duplicate/delete/reorder controls in visual canvas.
+- Drag-and-drop and hover affordances.
+- Rich text editor integration with toolbar enhancements.
+
+5.2 Layout/Section System
+- Rendered to look like real website sections, not abstract editor placeholders.
+- Separate handling path in renderer for layout blocks.
+- Row presets + manual flex/grid controls.
+- Unit-aware inputs for width/height/margin/padding.
+- Added defaults for usable layout ergonomics:
+  - Section style default: display:flex, justify:center.
+  - Row style default: max-width 1208px.
+
+5.3 Block Management UX
+- Global “Add New Block” dialog (not only form view).
+- Category-grouped visual block browser with search and thumbnails.
+- Atomic picker dialog alignment with same UX pattern.
+
+5.4 Header/Footer Enhancements
+- Header variants and configurable CTA button options.
+- Footer presets with multiple style directions.
+- Social URL auto-icon detection and style variants.
+- Extended footer to support multiple menu groups:
+  - each group can map to a different menu,
+  - custom title per group,
+  - per-group text size/style.
+
+5.5 Hero Block Evolution
+- Added Hero preset enum: Basic / Advanced.
+- Introduced switch-case rendering path with scaffolded renderAdvancedHero() branch.
+- Basic background color now properly editable and respected in runtime.
+
+5.6 Content Management
+- Pages CRUD with slug handling and template support.
+- Menus editor and assignment.
+- Forms builder + form submissions management.
+- Asset manager with picker integration.
+- Theme editor with color token integration and color picker improvements.
+
+5.7 Preview + Publish
+- Snapshot-based publish pipeline.
+- Admin preview route and storefront draft rendering.
+- Preview token usage constrained to explicit token presence.
+- Fixed handle/sid persistence logic to prevent accidental draft mode via token carry-over.
+
+5.8 Commerce V2 (Store-Scoped)
+- Store setup flow with preset-driven category/attribute suggestions.
+- Brand/distributor handling by store type.
+- Categories with dynamic attributes per store category.
+- Product wizard with category-driven attribute capture.
+- Variant support (including per-variant images).
+- PDP/cart/order integrations.
+- Order management and inventory management UI in admin.
+
+5.9 Inventory and Orders
+- Inventory adjustment flows with scoped operations.
+- Order detail with customer/shipping/item data.
+- Order status transitions and management workflows.
+- Foundation for status-based customer communications.
+
+5.10 Admin UX Upgrades
+- Shell/sidebar refinements.
+- Manage section grouping for operational screens.
+- Better labels replacing raw IDs in critical places.
+- Empty state and helper text improvements.
+
+
+6) DATA MODEL SUMMARY
+6.1 Mongo content domain (examples)
+- sites
+- pages
+- snapshots
+- menus
+- forms
+- form_submissions
+- assets_meta
+- theme/style presets/templates
+
+6.2 MySQL commerce domain (examples)
+- stores
+- store_profiles
+- brands
+- store_categories
+- store_category_attributes
+- store_category_attribute_options
+- store_products
+- products / product_variants / product_images
+- inventory-related entities/logs
+- commerce_orders / order_items
+
+6.3 Compatibility strategy
+- Additive migrations only.
+- Legacy entities remain readable.
+- New V2 writes are store-scoped.
+- Legacy fallbacks remain where required for existing content.
+
+
+7) USER FLOWS
+7.1 New merchant onboarding flow
+1. Sign up and create site.
+2. Create store and choose preset/type.
+3. Create brand(s) under store constraints.
+4. Create categories and attributes.
+5. Create product(s) + variants + images.
+6. Build pages (home/products/pdp/cart).
+7. Publish snapshot and verify storefront.
+
+7.2 Content editor flow
+1. Open page editor.
+2. Add sections/blocks using dialog.
+3. Configure props and styles in inspector.
+4. Save draft automatically/manual save.
+5. Preview draft.
+6. Publish snapshot.
+
+7.3 Storefront customer flow
+1. Land on published site (handle/sid resolution).
+2. Browse products/listing.
+3. Open product detail by slug.
+4. Add to cart.
+5. Checkout/order placement with stock validation.
+6. Order appears in admin manage/orders.
+
+7.4 Form submission flow
+1. User submits form in storefront.
+2. Submission API stores response.
+3. Admin opens form submissions page and inspects entry details.
+
+
+8) API + RENDER PIPELINES
+8.1 Content pipeline
+- Admin APIs update draft documents in Mongo.
+- Renderer resolves block definitions + schema-safe props.
+- Publish endpoint writes snapshot and links published_snapshot_id.
+
+8.2 Commerce pipeline
+- Admin APIs write to store-scoped MySQL tables.
+- Listing/PDP/cart/order paths query scoped entities.
+- Inventory checked/updated during order operations.
+
+8.3 Cross-domain composition
+- Rendered pages combine snapshot content (Mongo) with commerce data (MySQL) through block resolvers.
+
+
+9) QUALITY, SAFETY, AND RELIABILITY PRACTICES
+- Module gating per tenant/site for controlled feature access.
+- Store scoping in catalog routes to prevent cross-store bleed.
+- Draft/published separation to prevent accidental live edits.
+- Backward compatibility guards for existing data.
+- Schema-first block props to limit invalid rendering states.
+
+Known engineering constraints observed in current state:
+- Workspace contains pre-existing TypeScript issues unrelated to incremental feature changes.
+- Some legacy/parallel editor paths still require consolidation.
+- A few endpoints remain to be fully standardized under V2 update semantics.
+
+
+10) NOTABLE IMPLEMENTED IMPROVEMENTS (RECENT)
+- Multi-menu + custom title/footer typography controls.
+- Hero preset scaffold and editable basic background behavior.
+- Layout section defaults for centered structure and predictable row width.
+- Preview-token leakage fix (published routes no longer auto-forced to draft).
+- Category edit capability via modern modal UX + matching update API.
+
+
+11) CHALLENGES AND RESOLUTION APPROACH
+Challenge: Mixed legacy + V2 commerce models.
+Resolution: Additive V2 pathways, store-scoped enforcement for new writes, legacy-compatible reads.
+
+Challenge: Visual editor complexity with nested layout structures.
+Resolution: explicit selection model + dedicated layout inspector + specialized renderer path.
+
+Challenge: Preview/published mode confusion.
+Resolution: explicit preview token checks and safer client-side param persistence logic.
+
+Challenge: Usability vs flexibility.
+Resolution: progressive disclosure in inspector, defaults, presets, helper text, dialog-driven block insertion.
+
+
+12) OUTCOME
+The platform now supports a practical end-to-end business workflow:
+- Create site -> design pages -> configure catalog -> publish -> sell -> manage orders/inventory/forms.
+
+It combines:
+- modular content composition,
+- store-scoped commerce operations,
+- snapshot-based publishing,
+- and backward compatibility protections,
+inside a single multi-tenant admin and storefront stack.
+
+
+13) NEXT PRACTICAL PHASES
+- Consolidate duplicate/legacy editor paths to one canonical flow.
+- Close remaining V2 endpoint gaps (edit/update parity across all catalog entities).
+- Strengthen automated tests for publish/preview, store scoping, inventory transactions.
+- Expand analytics and operational observability.
+- Continue UI consistency pass for all admin surfaces.
