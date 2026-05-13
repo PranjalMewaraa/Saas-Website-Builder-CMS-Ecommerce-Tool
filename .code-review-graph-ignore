@@ -1,0 +1,14 @@
+node_modules
+.next
+.turbo
+dist
+build
+coverage
+generated
+public
+out
+.cache
+storybook-static
+pnpm-lock.yaml
+apps/*/.next
+packages/*/dist

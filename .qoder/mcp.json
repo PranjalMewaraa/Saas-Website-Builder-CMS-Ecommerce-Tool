@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "/Users/pranjal/.local/pipx/venvs/code-review-graph/bin/python",
+      "args": [
+        "-m",
+        "code_review_graph",
+        "serve"
+      ],
+      "cwd": "/Users/pranjal/Desktop/MyProject/Saas/saas-store-builder",
+      "type": "stdio"
+    }
+  }
+}
