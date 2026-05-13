@@ -11,7 +11,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
 
   await requireSession();
 
-  // Use the resolved values with fallback
+  // Use the resolved values with a fallback
   const siteId = params.site_id || "site_demo";
   const handle = params.handle || "demo-site";
   console.log("PreviewPage params:", { siteId, handle });
