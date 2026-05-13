@@ -33,3 +33,5 @@ export * from "./projectWizard.repo";
 export * from "./commerceV2.repo";
 export * from "./storeTypePresets";
 export * from "./promotions.repo";
+export * from "./customerUsers.repo";
+export * from "./reviews.repo";

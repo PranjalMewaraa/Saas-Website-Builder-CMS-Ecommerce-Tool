@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { getMongoDb } from "@acme/db-mongo";
 import { placeOrderV2 } from "@acme/db-mysql";
+import { getCustomerSession } from "@/lib/auth/get-customer-session";
 
 async function resolveSite(body: any, req: Request) {
   const db = await getMongoDb();
@@ -39,6 +40,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Empty cart" }, { status: 400 });
   }
 
+  const session = await getCustomerSession(req);
+  const customerIdFromSession =
+    session &&
+    session.tenant_id === site.tenant_id &&
+    session.site_id === String(site._id)
+      ? session.customer_id
+      : null;
+
   try {
     const result = await placeOrderV2({
       tenant_id: site.tenant_id,
@@ -46,6 +55,7 @@ export async function POST(req: Request) {
       store_id: String(site.store_id),
       currency: body.currency || "INR",
       customer: body.customer || {},
+      customer_id: customerIdFromSession,
       shipping: body.shipping_address || {},
       coupon_code: body.coupon_code ? String(body.coupon_code) : undefined,
       items: body.items.map((i: any) => ({

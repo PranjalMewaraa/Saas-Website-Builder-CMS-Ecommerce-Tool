@@ -1,5 +1,43 @@
 import { z } from "zod";
 
+export const BreadcrumbsV1Schema = z.object({
+  homeLabel: z.string().optional().default("Home"),
+  homeHref: z.string().optional().default("/"),
+  separator: z.string().optional().default("/"),
+  rootPath: z.string().optional(),
+  showRoot: z.boolean().optional().default(true),
+  contentWidth: z.string().optional(),
+});
+
+export const RecentlyViewedV1Schema = z.object({
+  title: z.string().optional().default("Recently viewed"),
+  emptyText: z.string().optional(),
+  detailPathPrefix: z.string().optional().default("/products"),
+  limit: z.number().int().min(1).max(24).optional().default(8),
+  currency: z.string().optional().default("INR"),
+  contentWidth: z.string().optional(),
+});
+
+export const LiveChatEmbedV1Schema = z.object({
+  provider: z
+    .enum(["intercom", "crisp", "tawk", "custom"])
+    .default("intercom"),
+  appId: z.string().optional(),
+  customScript: z.string().optional(),
+});
+
+export const NewsletterPopupV1Schema = z.object({
+  title: z.string().optional().default("Join our newsletter"),
+  subtitle: z.string().optional(),
+  emailLabel: z.string().optional().default("you@example.com"),
+  submitText: z.string().optional().default("Subscribe"),
+  successText: z.string().optional().default("You're in!"),
+  formId: z.string().optional(),
+  delayMs: z.number().int().min(0).optional().default(4000),
+  exitIntent: z.boolean().optional().default(true),
+  cooldownDays: z.number().int().min(0).optional().default(14),
+});
+
 export const BannerCTAV1Schema = z.object({
   title: z.string().min(1),
   subtitle: z.string().optional(),

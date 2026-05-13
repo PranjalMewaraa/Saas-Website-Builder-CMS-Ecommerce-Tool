@@ -11,6 +11,7 @@ import ProductDetailVisualStub from "../ProductDetail/ProductDetail.visual";
 import CartPageV1 from "../cart/CartPageV1";
 import CartSummaryV1 from "../cart/CartSummaryV1";
 import AddToCartV1 from "../cart/AddToCartV1";
+import CouponInputV1 from "../cart/CouponInputV1";
 import FormV1 from "../Form/FormV1";
 import Hero from "../Hero/HeroV1";
 import {
@@ -36,6 +37,10 @@ import {
   FloatingCTAV1Schema,
   ContentSplitShowcaseV1Schema,
   SocialProofTickerV1Schema,
+  BreadcrumbsV1Schema,
+  RecentlyViewedV1Schema,
+  LiveChatEmbedV1Schema,
+  NewsletterPopupV1Schema,
 } from "../../schemas/blocks/marketing";
 import {
   HeaderV1Schema,
@@ -59,6 +64,7 @@ import {
   MegaMenuV1Schema,
   StoreLocatorV1Schema,
   BundleOfferV1Schema,
+  CouponInputV1Schema,
 } from "../../schemas/blocks/commerce";
 import { Spacer, SpacerDefaults } from "../utility/Spacer";
 import { Divider, DividerDefaults } from "../utility/Divider";
@@ -104,6 +110,10 @@ import {
   AtomicEmbedSchema,
 } from "../../schemas";
 import BannerCTAV1 from "../marketing/BannerCTA";
+import BreadcrumbsV1 from "../marketing/BreadcrumbsV1";
+import RecentlyViewedV1 from "../marketing/RecentlyViewedV1";
+import LiveChatEmbedV1 from "../marketing/LiveChatEmbedV1";
+import NewsletterPopupV1 from "../marketing/NewsletterPopupV1";
 import FeaturesGridV1 from "../marketing/FeaturesGrid";
 import TestimonialsV1 from "../marketing/Testimonials";
 import ProductHighlightV1 from "../commerce/ProductHighlight";
@@ -133,6 +143,26 @@ import BestSellersV1 from "../commerce/BestSellers";
 import MegaMenuV1 from "../commerce/MegaMenu";
 import StoreLocatorV1 from "../commerce/StoreLocator";
 import BundleOfferV1 from "../commerce/BundleOffer";
+import LoginFormV1 from "../account/LoginFormV1";
+import SignupFormV1 from "../account/SignupFormV1";
+import AccountDashboardV1 from "../account/AccountDashboardV1";
+import OrderHistoryV1 from "../account/OrderHistoryV1";
+import LogoutButtonV1 from "../account/LogoutButtonV1";
+import {
+  LoginFormV1Schema,
+  SignupFormV1Schema,
+  AccountDashboardV1Schema,
+  OrderHistoryV1Schema,
+  LogoutButtonV1Schema,
+} from "../../schemas/blocks/account";
+import StarsAtomic from "../reviews/StarsAtomic";
+import ProductReviewsListV1 from "../reviews/ProductReviewsListV1";
+import ProductReviewSubmitV1 from "../reviews/ProductReviewSubmitV1";
+import {
+  StarsAtomicSchema,
+  ProductReviewsListV1Schema,
+  ProductReviewSubmitV1Schema,
+} from "../../schemas/blocks/reviews";
 
 export const BLOCKS: Record<
   string,
@@ -486,6 +516,87 @@ export const BLOCKS: Record<
     type: "Atomic/Group",
     schema: LayoutGroupPropsSchema,
     render: AtomicGroup,
+  },
+
+  // ------------------------
+  // Account (storefront customer accounts)
+  // ------------------------
+
+  "Account/LoginForm/V1": {
+    type: "Account/LoginForm/V1",
+    schema: LoginFormV1Schema,
+    render: LoginFormV1,
+  },
+  "Account/SignupForm/V1": {
+    type: "Account/SignupForm/V1",
+    schema: SignupFormV1Schema,
+    render: SignupFormV1,
+  },
+  "Account/Dashboard/V1": {
+    type: "Account/Dashboard/V1",
+    schema: AccountDashboardV1Schema,
+    render: AccountDashboardV1,
+  },
+  "Account/OrderHistory/V1": {
+    type: "Account/OrderHistory/V1",
+    schema: OrderHistoryV1Schema,
+    render: OrderHistoryV1,
+  },
+  "Account/LogoutButton/V1": {
+    type: "Account/LogoutButton/V1",
+    schema: LogoutButtonV1Schema,
+    render: LogoutButtonV1,
+  },
+
+  // ------------------------
+  // Reviews
+  // ------------------------
+
+  "Atomic/Stars": {
+    type: "Atomic/Stars",
+    schema: StarsAtomicSchema,
+    render: StarsAtomic,
+  },
+  "Product/Reviews/V1": {
+    type: "Product/Reviews/V1",
+    schema: ProductReviewsListV1Schema,
+    render: ProductReviewsListV1,
+  },
+  "Product/ReviewSubmit/V1": {
+    type: "Product/ReviewSubmit/V1",
+    schema: ProductReviewSubmitV1Schema,
+    render: ProductReviewSubmitV1,
+  },
+
+  "Cart/CouponInput/V1": {
+    type: "Cart/CouponInput/V1",
+    schema: CouponInputV1Schema,
+    render: CouponInputV1,
+  },
+
+  // ------------------------
+  // Block library expansion
+  // ------------------------
+
+  "Breadcrumbs/V1": {
+    type: "Breadcrumbs/V1",
+    schema: BreadcrumbsV1Schema,
+    render: BreadcrumbsV1,
+  },
+  "RecentlyViewed/V1": {
+    type: "RecentlyViewed/V1",
+    schema: RecentlyViewedV1Schema,
+    render: RecentlyViewedV1,
+  },
+  "LiveChatEmbed/V1": {
+    type: "LiveChatEmbed/V1",
+    schema: LiveChatEmbedV1Schema,
+    render: LiveChatEmbedV1,
+  },
+  "NewsletterPopup/V1": {
+    type: "NewsletterPopup/V1",
+    schema: NewsletterPopupV1Schema,
+    render: NewsletterPopupV1,
   },
 };
 

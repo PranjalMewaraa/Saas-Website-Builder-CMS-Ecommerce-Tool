@@ -18,7 +18,9 @@ export default function CartSummaryV1({
 }: Props) {
   const cart = useCartOptional();
   const subtotal = cart?.subtotal_cents ?? 0;
+  const discount = cart?.discount_cents ?? 0;
   const total = cart?.total_cents ?? 0;
+  const coupon = cart?.coupon ?? null;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -30,6 +32,17 @@ export default function CartSummaryV1({
             ₹{(subtotal / 100).toFixed(2)}
           </span>
         </div>
+        {discount > 0 ? (
+          <div className="flex items-center justify-between text-emerald-700">
+            <span>
+              Discount
+              {coupon?.code ? ` (${coupon.code})` : ""}
+            </span>
+            <span className="font-medium">
+              −₹{(discount / 100).toFixed(2)}
+            </span>
+          </div>
+        ) : null}
         <div className="flex items-center justify-between">
           <span>Shipping</span>
           <span className="text-slate-500">Calculated at checkout</span>

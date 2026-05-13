@@ -187,6 +187,7 @@ export default function CheckoutPageV1({
                   items: cart.items,
                   subtotal_cents: cart.subtotal_cents,
                   total_cents: cart.total_cents,
+                  coupon_code: cart.coupon?.code,
                   site_id: siteHint.site_id,
                   handle: siteHint.handle,
                   customer: {

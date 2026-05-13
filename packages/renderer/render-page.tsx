@@ -474,6 +474,71 @@ async function BlockRenderer({
     );
   }
 
+  // breadcrumbs derive their trail from the current path
+  if (block.type === "Breadcrumbs/V1") {
+    const Comp = def.render;
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp {...props} path={ctx.path} />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
+  // newsletter popup posts to /api/forms/submit which needs the site handle
+  if (block.type === "NewsletterPopup/V1") {
+    const Comp = def.render;
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp {...props} handle={ctx.snapshot?.handle} />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
+  // product reviews need the request path to derive the product slug
+  if (
+    block.type === "Product/Reviews/V1" ||
+    block.type === "Product/ReviewSubmit/V1"
+  ) {
+    const Comp = def.render;
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp {...props} path={ctx.path} />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
+  // account blocks need tenant + site context for credentials submission
+  if (block.type.startsWith("Account/")) {
+    const Comp = def.render;
+    const siteId =
+      ctx.snapshot?.site_id || ctx.snapshot?.siteId || "";
+    return (
+      <div data-block-id={block.id} className={outerClass} style={outerStyle}>
+        <div className={`${innerClass} __inner`} style={innerStyle}>
+          <StyleWrapper style={finalStyle}>
+            <Comp
+              {...props}
+              tenantId={ctx.tenantId}
+              siteId={siteId}
+            />
+          </StyleWrapper>
+        </div>
+      </div>
+    );
+  }
+
   // forms binding
   if (block.type.startsWith("Form/") || block.type === "Atomic/Form") {
     const formId = props.formId;

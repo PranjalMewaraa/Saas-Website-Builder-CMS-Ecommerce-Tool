@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const CouponInputV1Schema = z.object({
+  label: z.string().optional(),
+  placeholder: z.string().optional().default("Promo code"),
+  applyText: z.string().optional().default("Apply"),
+  removeText: z.string().optional().default("Remove"),
+});
+
 export const ProductHighlightV1Schema = z.object({
   title: z.string(),
   description: z.string(),

@@ -37,3 +37,4 @@ export * from "./formSubmission.repo";
 export * from "./rateLimit.repo";
 export * from "./sectionTemplates.repo";
 export * from "./blockTemplates.repo";
+export * from "./pageRevisions.repo";

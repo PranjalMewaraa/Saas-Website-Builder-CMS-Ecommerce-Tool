@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { requireSession } from "@acme/auth";
 
 export async function POST(req: Request) {
+  await requireSession();
   const { text } = await req.json();
 
   const words = text

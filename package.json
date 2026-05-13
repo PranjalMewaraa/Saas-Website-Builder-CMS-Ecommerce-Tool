@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "pnpm --parallel --filter admin --filter storefront dev",
-    "dev:all": "pnpm --parallel --stream --filter './apps/*' dev",
+    "dev:all": "pnpm --parallel --filter './apps/*' dev",
     "dev:turbo": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",

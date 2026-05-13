@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSession, requireModule } from "@acme/auth";
-import { getMongoDb } from "@acme/db-mongo";
+import { getMongoDb, createPageRevision } from "@acme/db-mongo";
 import { rebuildDraftSnapshot } from "@/lib/rebuildDraftSnapshot";
 
 function normalizeSlug(input: string) {
@@ -701,6 +701,30 @@ export async function PUT(req: Request) {
     { _id: page_id as any, tenant_id, site_id } as any,
     { $set: patch } as any,
   );
+
+  const layoutChanged = typeof body.draft_layout === "object";
+  if (layoutChanged) {
+    const fresh = await col.findOne({
+      _id: page_id as any,
+      tenant_id,
+      site_id,
+    } as any);
+    if (fresh) {
+      await createPageRevision({
+        tenant_id,
+        site_id,
+        page_id,
+        slug: String((fresh as any).slug || page.slug),
+        name: (fresh as any).name ?? null,
+        layout: (fresh as any).draft_layout,
+        seo: (fresh as any).seo ?? null,
+        actor_user_id: session.user.user_id,
+        actor_name: session.user.name ?? session.user.email ?? null,
+        note: typeof body.revision_note === "string" ? body.revision_note : null,
+      }).catch(() => {});
+    }
+  }
+
   await rebuildDraftSnapshot(tenant_id, site_id);
 
   return NextResponse.json({ ok: true });

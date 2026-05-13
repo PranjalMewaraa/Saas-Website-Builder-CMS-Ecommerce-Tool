@@ -1181,6 +1181,7 @@ export async function placeOrderV2(args: {
   store_id: string;
   currency?: string;
   customer?: any;
+  customer_id?: string | null;
   shipping?: any;
   coupon_code?: string;
   items: Array<{ product_id: string; variant_id?: string; qty: number }>;
@@ -1280,13 +1281,14 @@ export async function placeOrderV2(args: {
 
     await conn.query(
       `INSERT INTO commerce_orders
-       (id, tenant_id, site_id, store_id, order_number, status, subtotal_cents, discount_cents, total_cents, currency, customer_json, shipping_json, promotion_id, promotion_code, promotion_name, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, tenant_id, site_id, store_id, customer_id, order_number, status, subtotal_cents, discount_cents, total_cents, currency, customer_json, shipping_json, promotion_id, promotion_code, promotion_name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         order_id,
         args.tenant_id,
         args.site_id,
         args.store_id,
+        args.customer_id || null,
         order_number,
         subtotal,
         discount_cents,
