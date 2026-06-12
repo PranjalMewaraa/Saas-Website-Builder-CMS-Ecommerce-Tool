@@ -50,6 +50,29 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 13 — Builder client repair + token parity (F8, final) — DONE
+Closed the piece Increment 7 deferred: the builder's two large surfaces
+(`builderClient.tsx`, `InspectorPanel.tsx`) were still on legacy utility
+classes, and `builderClient.tsx` did not even compile.
+
+- **Structural repair (committed separately):** `builderClient.tsx` had ~1100
+  lines of the home editor accidentally appended (commit `d0a6898`) — a second
+  `export default`, plus `_component/*` imports unresolvable from the builder
+  path. The real `BuilderClient.addBlock` also called an undefined
+  `defaultProps(type)`. Removed the dead tail and defined `defaultProps` by
+  deriving from each block's zod schema via
+  `getBlockBuilder(type).schema.safeParse({})` (schemas carry `.default()`),
+  so adding a block yields real defaults with no mysql import.
+- **Token parity:** replaced hardcoded utilities with the token set —
+  `bg-black text-white` → `bg-ink text-white`, `bg-red-50` → `bg-danger-soft`,
+  bare `rounded`/`border rounded` → `rounded-control` + explicit `border-line`
+  (no global default border-color exists, so bare `border` was rendering as
+  `currentColor`; `border-line` is both parity and a hairline fix). Directional
+  borders (`border-r`/`border-l`/`border-b`) also paired with `border-line`.
+- Verification: builder `tsc` drops from a non-compiling state to the 6
+  pre-existing baseline errors (InspectorPanel zod-variance, db-mongo,
+  renderer) — none in the touched files.
+
 ## Increment 12 — Inspector decomposition: unified defaultPropsFor (F7, final) — DONE
 Collapsed the drifted `defaultPropsFor` copies into one shared module and
 repointed both live page editors at it, finishing F7.

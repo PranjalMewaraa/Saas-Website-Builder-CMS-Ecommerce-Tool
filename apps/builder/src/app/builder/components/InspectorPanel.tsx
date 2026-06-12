@@ -44,7 +44,7 @@ export default function InspectorPanel({
       </div>
 
       {!parsed.success ? (
-        <div className="border rounded p-2 text-xs bg-red-50">
+        <div className="border border-line rounded-control p-2 text-xs bg-danger-soft">
           Props invalid. You can still edit; publish will fail if invalid.
         </div>
       ) : null}
@@ -64,21 +64,21 @@ export default function InspectorPanel({
           <div className="text-sm font-medium">Style</div>
           <div className="flex gap-2">
             <button
-              className={`border rounded px-2 py-1 text-xs ${bp === "desktop" ? "bg-black text-white" : ""}`}
+              className={`border border-line rounded-control px-2 py-1 text-xs ${bp === "desktop" ? "bg-ink text-white" : ""}`}
               onClick={() => setBp("desktop")}
               type="button"
             >
               Desktop
             </button>
             <button
-              className={`border rounded px-2 py-1 text-xs ${bp === "tablet" ? "bg-black text-white" : ""}`}
+              className={`border border-line rounded-control px-2 py-1 text-xs ${bp === "tablet" ? "bg-ink text-white" : ""}`}
               onClick={() => setBp("tablet")}
               type="button"
             >
               Tablet
             </button>
             <button
-              className={`border rounded px-2 py-1 text-xs ${bp === "mobile" ? "bg-black text-white" : ""}`}
+              className={`border border-line rounded-control px-2 py-1 text-xs ${bp === "mobile" ? "bg-ink text-white" : ""}`}
               onClick={() => setBp("mobile")}
               type="button"
             >
@@ -115,7 +115,7 @@ function PropsEditor({
   if (!shape) {
     return (
       <textarea
-        className="w-full border rounded p-2 font-mono text-xs min-h-[160px]"
+        className="w-full border border-line rounded-control p-2 font-mono text-xs min-h-[160px]"
         value={JSON.stringify(value ?? {}, null, 2)}
         onChange={(e) => {
           try {
@@ -152,7 +152,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
       <label className="block space-y-1">
         <div className="text-xs opacity-70">{label}</div>
         <select
-          className="border rounded p-2 w-full text-sm"
+          className="border border-line rounded-control p-2 w-full text-sm"
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -173,7 +173,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
       <label className="block space-y-1">
         <div className="text-xs opacity-70">{label}</div>
         <select
-          className="border rounded p-2 w-full text-sm"
+          className="border border-line rounded-control p-2 w-full text-sm"
           value={value || ""}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -192,7 +192,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
     // @ts-ignore
     const shape = base.shape as Record<string, z.ZodTypeAny>;
     return (
-      <div className="border rounded p-2 space-y-2">
+      <div className="border border-line rounded-control p-2 space-y-2">
         <div className="text-xs font-semibold">{label}</div>
         {Object.entries(shape).map(([k, s]) => (
           <Field
@@ -212,11 +212,11 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
     const itemSchema = base.element;
     const items = Array.isArray(value) ? value : [];
     return (
-      <div className="border rounded p-2 space-y-2">
+      <div className="border border-line rounded-control p-2 space-y-2">
         <div className="flex items-center justify-between">
           <div className="text-xs font-semibold">{label}</div>
           <button
-            className="border rounded px-2 py-1 text-xs"
+            className="border border-line rounded-control px-2 py-1 text-xs"
             type="button"
             onClick={() => onChange([...items, defaultValueFor(itemSchema)])}
           >
@@ -224,11 +224,11 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
           </button>
         </div>
         {items.map((it: any, i: number) => (
-          <div key={i} className="border rounded p-2">
+          <div key={i} className="border border-line rounded-control p-2">
             <div className="flex items-center justify-between mb-2">
               <div className="text-xs opacity-70">Item {i + 1}</div>
               <button
-                className="border rounded px-2 py-1 text-xs"
+                className="border border-line rounded-control px-2 py-1 text-xs"
                 type="button"
                 onClick={() =>
                   onChange(items.filter((_: any, idx: number) => idx !== i))
@@ -259,7 +259,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
 
   if (base instanceof z.ZodBoolean) {
     return (
-      <label className="flex items-center gap-2 border rounded p-2">
+      <label className="flex items-center gap-2 border border-line rounded-control p-2">
         <input
           type="checkbox"
           checked={!!value}
@@ -275,7 +275,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
       <label className="block space-y-1">
         <div className="text-xs opacity-70">{label}</div>
         <input
-          className="border rounded p-2 w-full text-sm"
+          className="border border-line rounded-control p-2 w-full text-sm"
           type="number"
           value={value ?? ""}
           onChange={(e) => onChange(Number(e.target.value))}
@@ -289,7 +289,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
       <label className="block space-y-1">
         <div className="text-xs opacity-70">{label}</div>
         <select
-          className="border rounded p-2 w-full text-sm"
+          className="border border-line rounded-control p-2 w-full text-sm"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -308,7 +308,7 @@ function Field({ label, schema, value, onChange, snapshotLike }: any) {
     <label className="block space-y-1">
       <div className="text-xs opacity-70">{label}</div>
       <input
-        className="border rounded p-2 w-full text-sm"
+        className="border border-line rounded-control p-2 w-full text-sm"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       />

@@ -585,11 +585,11 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
   return (
     <div className="h-screen grid grid-cols-[300px_1fr_420px]">
       {/* Left: block library + section actions */}
-      <aside className="border-r p-3 overflow-auto space-y-3">
+      <aside className="border-r border-line p-3 overflow-auto space-y-3">
         <div className="flex items-center justify-between">
           <div className="font-semibold">Builder</div>
           <button
-            className="border rounded px-2 py-1 text-xs"
+            className="border border-line rounded-control px-2 py-1 text-xs"
             type="button"
             onClick={addSection}
           >
@@ -599,14 +599,14 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
 
         <div className="flex gap-2">
           <button
-            className={`border rounded px-2 py-1 text-xs ${leftTab === "blocks" ? "bg-black text-white" : ""}`}
+            className={`border border-line rounded-control px-2 py-1 text-xs ${leftTab === "blocks" ? "bg-ink text-white" : ""}`}
             type="button"
             onClick={() => setLeftTab("blocks")}
           >
             Blocks
           </button>
           <button
-            className={`border rounded px-2 py-1 text-xs ${leftTab === "templates" ? "bg-black text-white" : ""}`}
+            className={`border border-line rounded-control px-2 py-1 text-xs ${leftTab === "templates" ? "bg-ink text-white" : ""}`}
             type="button"
             onClick={() => setLeftTab("templates")}
           >
@@ -614,13 +614,13 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           </button>
         </div>
 
-        <div className="border rounded p-2">
+        <div className="border border-line rounded-control p-2">
           <div className="text-xs opacity-70">Selected Section</div>
           <div className="text-sm font-medium">
             {selectedSection?.label || selectedSection?.id}
           </div>
           <button
-            className="border rounded px-2 py-1 text-xs mt-2 w-full"
+            className="border border-line rounded-control px-2 py-1 text-xs mt-2 w-full"
             type="button"
             onClick={saveSectionAsTemplate}
             disabled={!selectedSection}
@@ -643,7 +643,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
         )}
 
         <button
-          className="bg-black text-white rounded px-3 py-2 text-sm w-full"
+          className="bg-ink text-white rounded-control px-3 py-2 text-sm w-full"
           type="button"
           onClick={async () => {
             await saveDraft();
@@ -690,8 +690,8 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           />
         </DndContext>
 
-        <div className="mt-6 border rounded">
-          <div className="text-xs opacity-70 border-b p-2">
+        <div className="mt-6 border border-line rounded-control">
+          <div className="text-xs opacity-70 border-b border-line p-2">
             Live Draft Preview (Renderer)
           </div>
           <div style={(snapshotLike.theme?.tokens || {}) as any}>
@@ -726,7 +726,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
       </main>
 
       {/* Right: inspector */}
-      <aside className="border-l p-3 overflow-auto">
+      <aside className="border-l border-line p-3 overflow-auto">
         {selectedBlock ? (
           <InspectorPanel
             siteId={siteId}
