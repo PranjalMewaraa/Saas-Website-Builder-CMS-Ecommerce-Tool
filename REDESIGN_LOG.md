@@ -70,6 +70,23 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 18 — Form block: stop the submit button overflowing the card — DONE
+Reported via screenshot: a Form block's full-width "Send" button overflowed
+past the right edge of its rounded card. Root cause in `FormV1.tsx`: when no
+`contentWidth` is set (the default), the card's `maxWidth` resolved to
+`undefined`, so the card went **full-bleed** and the `w-full` button stretched
+edge-to-edge and poked past the (unclipped) rounded border.
+
+- **Fix.** The `contentWidth` fallback now returns `640px` instead of
+  `undefined`, so an unconfigured form renders as a comfortable centered card.
+  Added `w-full box-border overflow-hidden` to the card so no child can exceed
+  the rounded boundary.
+- **Published-page impact.** Form blocks that never set an explicit width were
+  full-bleed and now cap at 640px centered; forms with an explicit `contentWidth`
+  are unchanged. Admin `tsc` stays at the 40-error baseline.
+
+---
+
 ## Increment 17 — Renderer defaults: BannerCTA legible out of the box — DONE
 First step of the "renderer defaults" pass (polish how blocks look the moment
 they're added). **BannerCTA** is built for a dark surface — `text-white`
