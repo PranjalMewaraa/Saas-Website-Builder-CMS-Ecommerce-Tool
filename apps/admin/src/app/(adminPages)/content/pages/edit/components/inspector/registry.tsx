@@ -19,11 +19,41 @@ import {
   UtilityDivider,
   UtilityRichText,
 } from "./editors/structure";
+import {
+  BannerCTAV1,
+  FeaturesGridV1,
+  TestimonialsV1,
+  BrandGridV1,
+  MegaMenuV1,
+  StoreLocatorV1,
+  BundleOfferV1,
+  ProductHighlightV1,
+  PricingTableV1,
+  BentoGridV1,
+  BeforeAfterSliderV1,
+  StickyPromoBarV1,
+  TestimonialCarouselV1,
+  ComparisonTableV1,
+  MarqueeStripV1,
+  SpotlightCardsV1,
+  ProcessTimelineV1,
+  MediaGalleryMasonryV1,
+  VideoHeroLiteV1,
+  KPIRibbonV1,
+  InteractiveTabsV1,
+  FloatingCTAV1,
+  ContentSplitShowcaseV1,
+  SocialProofTickerV1,
+  StatsCounterV1,
+  LogosCloudV1,
+  NewsletterSignupV1,
+} from "./editors/marketing";
 
 /**
- * Per-block editor registry. As block branches are extracted out of the
- * BlocksPropForm monolith they get registered here; BlockPropsForm performs a
- * single lookup before falling through to its remaining inline branches.
+ * Per-block editor registry. Every block's inspector lives in an editor module
+ * (commerce / structure / marketing) and is registered here by block type;
+ * BlockPropsForm does a single lookup and renders the match, falling through to
+ * a generic "no form" message for unknown types.
  */
 export const BLOCK_EDITORS: Record<string, ComponentType<BlockEditorProps>> = {
   "ProductList/V1": ProductListV1,
@@ -41,4 +71,31 @@ export const BLOCK_EDITORS: Record<string, ComponentType<BlockEditorProps>> = {
   "Utility/Spacer": UtilitySpacer,
   "Utility/Divider": UtilityDivider,
   "Utility/RichText": UtilityRichText,
+  "BannerCTA/V1": BannerCTAV1,
+  "FeaturesGrid/V1": FeaturesGridV1,
+  "Testimonials/V1": TestimonialsV1,
+  "BrandGrid/V1": BrandGridV1,
+  "MegaMenu/V1": MegaMenuV1,
+  "StoreLocator/V1": StoreLocatorV1,
+  "BundleOffer/V1": BundleOfferV1,
+  "ProductHighlight/V1": ProductHighlightV1,
+  "PricingTable/V1": PricingTableV1,
+  "BentoGrid/V1": BentoGridV1,
+  "BeforeAfterSlider/V1": BeforeAfterSliderV1,
+  "StickyPromoBar/V1": StickyPromoBarV1,
+  "TestimonialCarousel/V1": TestimonialCarouselV1,
+  "ComparisonTable/V1": ComparisonTableV1,
+  "MarqueeStrip/V1": MarqueeStripV1,
+  "SpotlightCards/V1": SpotlightCardsV1,
+  "ProcessTimeline/V1": ProcessTimelineV1,
+  "MediaGalleryMasonry/V1": MediaGalleryMasonryV1,
+  "VideoHeroLite/V1": VideoHeroLiteV1,
+  "KPIRibbon/V1": KPIRibbonV1,
+  "InteractiveTabs/V1": InteractiveTabsV1,
+  "FloatingCTA/V1": FloatingCTAV1,
+  "ContentSplitShowcase/V1": ContentSplitShowcaseV1,
+  "SocialProofTicker/V1": SocialProofTickerV1,
+  "StatsCounter/V1": StatsCounterV1,
+  "LogosCloud/V1": LogosCloudV1,
+  "NewsletterSignup/V1": NewsletterSignupV1,
 };

@@ -50,6 +50,33 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 11 — Inspector decomposition: marketing editors (F7, step 4) — DONE
+Migrated the final cluster — all 27 marketing/section blocks — out of the
+`BlocksPropForm.tsx` monolith, completing the per-block extraction.
+
+This increment (behavior-preserving, the `edit` route only):
+- Added `components/inspector/editors/marketing.tsx` with 27 editors extracted
+  verbatim (BannerCTA, FeaturesGrid, Testimonials, BrandGrid, MegaMenu,
+  StoreLocator, BundleOffer, ProductHighlight, PricingTable, BentoGrid,
+  BeforeAfterSlider, StickyPromoBar, TestimonialCarousel, ComparisonTable,
+  MarqueeStrip, SpotlightCards, ProcessTimeline, MediaGalleryMasonry,
+  VideoHeroLite, KPIRibbon, InteractiveTabs, FloatingCTA, ContentSplitShowcase,
+  SocialProofTicker, StatsCounter, LogosCloud, NewsletterSignup). These call
+  `ResetStyleButton` (as JSX) and `applyPresetStylePack` unguarded, so both were
+  tightened to required in `BlockEditorProps`; the registry already forwards them.
+- Registered all 27 under their block keys.
+- Deleted the 27 inline branches and the now-dead imports they used
+  (`ImageField`, `ColorPickerInput`, the inspector primitives, `DEFAULT_IMAGE`).
+- **`BlocksPropForm.tsx` is now 128 lines** — just the lifted context/state, the
+  three menu/variant/rich-text effects, the registry lookup, and the generic
+  "no form available" fallback for unknown types. Down from the original ~6,700.
+- Net this increment: 3,608 → 128 lines. Typecheck clean for touched files.
+
+_Next step (final F7): build one superset `defaultPropsFor` and repoint `home`
+(and `edit`) at the shared registry, with per-route verification — the four
+existing `defaultPropsFor` copies have drifted, so this needs a careful diff
+rather than a straight move._
+
 ## Increment 10 — Inspector decomposition: structure/hero editors (F7, step 3) — DONE
 Migrated the structural and hero block branches — the largest cluster in the
 monolith — out of `BlocksPropForm.tsx` into the registry.

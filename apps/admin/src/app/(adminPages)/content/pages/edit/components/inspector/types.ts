@@ -24,8 +24,8 @@ export type BlockEditorProps = {
   setVariant: (v: string) => void;
   richMode: "visual" | "html";
   setRichMode: (m: "visual" | "html") => void;
-  ResetStyleButton?: () => ReactNode;
-  applyPresetStylePack?: (overrides: any) => void;
+  ResetStyleButton: () => ReactNode;
+  applyPresetStylePack: (overrides: any) => void;
   formOptions?: Array<{ value: string; label: string }>;
   assignedHeader?: any;
   assignedFooter?: any;
