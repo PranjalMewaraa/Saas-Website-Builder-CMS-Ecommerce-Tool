@@ -105,12 +105,14 @@ export default function FormV1(props: {
             ? "1280px"
             : props.contentWidth === "2xl"
               ? "1536px"
-              : undefined;
+              : // No explicit width: keep the form a comfortable, centered
+                // reading width instead of stretching full-bleed.
+                "640px";
 
   return (
     <section>
       <div
-        className="mx-auto rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm"
+        className="mx-auto w-full box-border overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-10 shadow-sm"
         style={{ maxWidth: maxWidth }}
       >
         {props.title ? (
