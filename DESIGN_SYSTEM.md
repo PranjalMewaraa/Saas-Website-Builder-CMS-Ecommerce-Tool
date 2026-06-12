@@ -2,7 +2,9 @@
 
 The shared visual language and component kit for the admin control panel and
 builder. Components live in `@acme/ui` (`packages/ui`); tokens live in
-`apps/admin/src/app/globals.css` under Tailwind v4 `@theme`.
+`apps/admin/src/app/globals.css` under Tailwind v4 `@theme`. The builder app
+(`apps/builder/src/app/globals.css`) mirrors the same `@theme` set — keep the
+two in sync when a token changes.
 
 > **One rule:** screens compose `@acme/ui` components and reference tokens via
 > utility classes. Don't hardcode hex colors, pixel radii, or one-off form
@@ -100,6 +102,27 @@ restores on close, Tab is trapped, Escape and backdrop click dismiss,
 `ConfirmDialog` is the **standard convention** for "are you sure?" flows; set
 `destructive` for irreversible actions (renders the danger button) and pass
 `loading` while the action is in flight.
+
+---
+
+## Block inspector (builder)
+
+The page-builder inspector is **registry-driven**, not a monolith. To add or
+change a block's edit form:
+
+- **Editors** live in
+  `apps/admin/src/app/(adminPages)/content/pages/edit/components/inspector/editors/`,
+  grouped by domain: `commerce.tsx`, `structure.tsx`, `marketing.tsx`. Each
+  exports one component per block type, typed as `BlockEditorProps` (`types.ts`).
+- **Register** the block in `inspector/registry.tsx` (`BLOCK_EDITORS`), keyed by
+  block type (e.g. `"Hero/V1"`). `BlocksPropForm` does a single lookup and
+  renders the match, falling through to a generic "no form" message.
+- **Shared inputs** (`Field`, `NumberField`, `Select`, `RichTextEditor`,
+  `IconPicker`, …) come from `inspector/primitives`; don't hand-roll inputs.
+- **Defaults** for a new block come from one shared `inspector/defaultPropsFor.ts`.
+
+Don't reintroduce per-type `if (type === …)` branches in `BlocksPropForm` — that
+monolith (F7) is what the registry replaced.
 
 ---
 

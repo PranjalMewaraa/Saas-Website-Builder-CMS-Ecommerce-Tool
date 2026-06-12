@@ -50,6 +50,26 @@ resolution as screens are rebuilt.
 
 ---
 
+## Findings → Resolutions (handoff)
+
+Every audit finding is resolved. Where it landed:
+
+| Finding | Resolution | Where |
+| --- | --- | --- |
+| **F1** — Jargon over plain language | Shell copy rewritten to task language ("Create site", "Current site", "Publish") | Increment 3 (app shell) |
+| **F2** — Unclear primary action | Persistent Publish/status bar in the shell | Increment 3 |
+| **F3** — Accordion nav collapses context | Flat, always-visible grouped nav | Increment 3 |
+| **F4** — Decorative glassmorphism | Solid token-driven surfaces (`bg-surface`/`bg-canvas`), removed glass | Increment 1 (tokens) + Increment 3 |
+| **F5** — Inputs without labels | `Field`/`Input`/`Textarea`/`Select` make a real `<label>` mandatory; auth forms rebuilt on them | Increment 2 (base kit) + Increment 6 (auth) |
+| **F6** — No consistent states | `Skeleton`, `EmptyState`, `Badge`, field `error` in the base kit; applied across rebuilt screens (empty/loading/error/partial/ideal) | Increment 2 + Increments 4–5 |
+| **F7** — `BlocksPropForm.tsx` ~6,700 lines | Decomposed into shared primitives + per-block editor modules behind one registry; `BlocksPropForm` now ~128 lines; one shared `defaultPropsFor` | Increments 8–12 |
+| **F8** — Orphaned/dead code + builder off-token | Removed `_old/pageEditorClient.tsx`; brought `apps/builder` globals to token parity; removed the accidental home-editor paste from `builderClient.tsx` (and fixed its broken `defaultProps`); tokenized `builderClient.tsx` + `InspectorPanel.tsx` | Increment 7 + Increment 13 |
+
+Reference deliverables: **`DESIGN_SYSTEM.md`** (tokens + component kit + quality
+floor) and this log (per-increment detail, newest first).
+
+---
+
 ## Increment 13 — Builder client repair + token parity (F8, final) — DONE
 Closed the piece Increment 7 deferred: the builder's two large surfaces
 (`builderClient.tsx`, `InspectorPanel.tsx`) were still on legacy utility
@@ -363,9 +383,19 @@ clean against the admin app (0 errors in `packages/ui/`).
 
 ---
 
-## Next up
-1. **App shell + nav + Publish bar** (fixes F1–F4).
-2. **Home / dashboard** screen.
-3. **Products / Orders** lists (real tables, empty/loading states — F6).
-4. **Builder** inspector rebuild (F7, F8).
-5. Bring `apps/builder` globals into token parity.
+## Status
+
+All planned increments are complete and all audit findings (F1–F8) are
+resolved — see **Findings → Resolutions** above. The original plan, now done:
+
+1. ~~App shell + nav + Publish bar (F1–F4)~~ — Increment 3.
+2. ~~Home / dashboard~~ — Increment 4.
+3. ~~Products / Orders lists (F6)~~ — Increment 5.
+4. ~~Builder inspector rebuild (F7, F8)~~ — Increments 8–12.
+5. ~~`apps/builder` globals into token parity~~ — Increment 7; full builder
+   surface tokenized in Increment 13.
+
+Possible follow-ups (out of the agreed scope — admin + builder): apply the same
+token/component pass to the **storefront** and **superadmin** apps, and resolve
+the 6 pre-existing builder `tsc` errors (InspectorPanel zod-variance, db-mongo,
+renderer) that predate this redesign.
