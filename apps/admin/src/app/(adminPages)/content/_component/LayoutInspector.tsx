@@ -400,14 +400,14 @@ export default function LayoutInspector({
 }) {
   if (!block) {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted">
         Select a layout section to edit.
       </div>
     );
   }
   if (!selection || selection.kind === "block") {
     return (
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted">
         Select a section, row, column, or atomic block to edit.
       </div>
     );
@@ -458,7 +458,7 @@ export default function LayoutInspector({
           <div className="text-sm font-medium">Section Settings</div>
           {onDeleteBlock && (
             <button
-              className="text-xs text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 rounded"
+              className="text-xs text-danger hover:bg-danger-soft border border-danger/30 px-2 py-1 rounded-control"
               onClick={() => onDeleteBlock(block.id)}
               type="button"
             >
@@ -514,10 +514,10 @@ export default function LayoutInspector({
                   <button
                     key={o.id}
                     type="button"
-                    className={`border rounded-lg p-2 text-left text-xs ${
+                    className={`border rounded-control p-2 text-left text-xs ${
                       (row.layout?.presetId || "1-col") === o.id
-                        ? "ring-2 ring-blue-500 border-blue-300"
-                        : "border-gray-200 hover:bg-gray-50"
+                        ? "ring-2 ring-accent border-accent"
+                        : "border-line hover:bg-accent-soft"
                     }`}
                     onClick={() =>
                       applyUpdate((draft) => {
@@ -557,7 +557,7 @@ export default function LayoutInspector({
                       ).map((idx) => (
                         <div
                           key={idx}
-                          className="h-6 rounded bg-gray-100 border border-dashed border-gray-300"
+                          className="h-6 rounded bg-canvas border border-dashed border-line"
                         />
                       ))}
                     </div>
@@ -738,7 +738,7 @@ export default function LayoutInspector({
                   <button
                     key={key}
                     type="button"
-                    className="px-3 py-1.5 text-xs border rounded-full hover:bg-gray-50"
+                    className="px-3 py-1.5 text-xs border border-line rounded-full hover:bg-accent-soft"
                     onClick={() =>
                       updateAtomic((draftAtom) => {
                         draftAtom.style = {
@@ -869,12 +869,12 @@ export default function LayoutInspector({
               <div className="text-sm font-medium">Gallery Images</div>
               {(Array.isArray(atom.props?.items) ? atom.props.items : []).map(
                 (item: any, idx: number) => (
-                  <div key={item?.id || `gallery_${idx}`} className="rounded-lg border p-2 space-y-2">
+                  <div key={item?.id || `gallery_${idx}`} className="rounded-control border border-line p-2 space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-600">Image {idx + 1}</div>
+                      <div className="text-xs text-muted">Image {idx + 1}</div>
                       <button
                         type="button"
-                        className="text-xs rounded border px-2 py-1 hover:bg-gray-50"
+                        className="text-xs rounded-control border border-line px-2 py-1 hover:bg-accent-soft"
                         onClick={() =>
                           updateAtomic((draftAtom) => {
                             const items = Array.isArray(draftAtom.props?.items)
@@ -928,7 +928,7 @@ export default function LayoutInspector({
               )}
               <button
                 type="button"
-                className="w-full rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                className="w-full rounded-control border border-line px-3 py-2 text-sm hover:bg-accent-soft"
                 onClick={() =>
                   updateAtomic((draftAtom) => {
                     const items = Array.isArray(draftAtom.props?.items)
@@ -1045,7 +1045,7 @@ export default function LayoutInspector({
                   <button
                     key={key}
                     type="button"
-                    className="px-3 py-1.5 text-xs border rounded-full hover:bg-gray-50"
+                    className="px-3 py-1.5 text-xs border border-line rounded-full hover:bg-accent-soft"
                     onClick={() =>
                       updateAtomic((draftAtom) => {
                         draftAtom.style = {
@@ -1310,7 +1310,7 @@ export default function LayoutInspector({
                   <button
                     key={key}
                     type="button"
-                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    className="text-left border border-line rounded-control p-2 hover:bg-accent-soft"
                     onClick={() =>
                       updateAtomic((draftAtom) => {
                         draftAtom.style = {
@@ -1321,7 +1321,7 @@ export default function LayoutInspector({
                     }
                   >
                     <div
-                      className="h-12 rounded-md border"
+                      className="h-12 rounded-md border border-line"
                       style={{
                         background:
                           preset.style.bgColor === "transparent"
@@ -1395,7 +1395,7 @@ export default function LayoutInspector({
                   <button
                     key={key}
                     type="button"
-                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    className="text-left border border-line rounded-control p-2 hover:bg-accent-soft"
                     onClick={() =>
                       updateAtomic((draftAtom) => {
                         draftAtom.style = {
@@ -1406,7 +1406,7 @@ export default function LayoutInspector({
                     }
                   >
                     <div
-                      className="h-10 rounded-md border"
+                      className="h-10 rounded-md border border-line"
                       style={{
                         background:
                           preset.style.bgColor === "transparent"
@@ -1449,7 +1449,7 @@ export default function LayoutInspector({
             <label className="block space-y-1.5">
               <div className="text-sm font-medium">Menu</div>
               <select
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-line rounded-control px-3 py-2 text-sm bg-surface"
                 value={atom.props?.menuId || ""}
                 onChange={(e) =>
                   updateAtomic((draftAtom) => {
@@ -1509,7 +1509,7 @@ export default function LayoutInspector({
                   <button
                     key={key}
                     type="button"
-                    className="text-left border rounded-lg p-2 hover:bg-gray-50"
+                    className="text-left border border-line rounded-control p-2 hover:bg-accent-soft"
                     onClick={() =>
                       updateAtomic((draftAtom) => {
                         draftAtom.style = {
@@ -1520,7 +1520,7 @@ export default function LayoutInspector({
                     }
                   >
                     <div
-                      className="h-10 rounded-md border flex items-center justify-center text-[11px] font-semibold"
+                      className="h-10 rounded-md border border-line flex items-center justify-center text-[11px] font-semibold"
                       style={{
                         background:
                           preset.style.bgColor === "transparent"
@@ -1790,31 +1790,36 @@ function IconPicker({
       <div className="text-sm font-medium">{label}</div>
       <button
         type="button"
-        className="w-full border rounded-lg px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-50"
+        className="w-full border border-line rounded-control px-3 py-2 text-sm flex items-center justify-between hover:bg-accent-soft"
         onClick={() => setOpen((v) => !v)}
       >
         <div className="flex items-center gap-2">
           {Current ? <Current className="h-4 w-4" /> : null}
-          <span className="text-sm text-gray-700">{value || "None"}</span>
+          <span className="text-sm text-ink">{value || "None"}</span>
         </div>
-        <span className="text-xs text-gray-500">{open ? "Close" : "Pick"}</span>
+        <span className="text-xs text-muted">{open ? "Close" : "Pick"}</span>
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pick an icon"
+        >
+          <div className="w-full max-w-xl rounded-modal bg-surface p-4 shadow-raised">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">Pick an icon</div>
+              <div className="text-sm font-medium text-ink">Pick an icon</div>
               <button
                 type="button"
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-muted hover:text-ink"
                 onClick={() => setOpen(false)}
               >
                 Close
               </button>
             </div>
             <input
-              className="mt-3 w-full border rounded-md px-2 py-1.5 text-sm"
+              className="mt-3 w-full border border-line rounded-control px-2 py-1.5 text-sm bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               placeholder="Search icons"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -1822,7 +1827,7 @@ function IconPicker({
             <div className="mt-3 max-h-64 overflow-auto grid grid-cols-6 gap-2">
               <button
                 type="button"
-                className="border rounded-md px-2 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                className="border border-line rounded-control px-2 py-2 text-xs text-muted hover:bg-accent-soft"
                 onClick={() => {
                   onChange("");
                   setOpen(false);
@@ -1838,7 +1843,7 @@ function IconPicker({
                   <button
                     key={name}
                     type="button"
-                    className="border rounded-md px-2 py-2 text-xs hover:bg-gray-50 flex items-center justify-center"
+                    className="border border-line rounded-control px-2 py-2 text-xs hover:bg-accent-soft flex items-center justify-center"
                     onClick={() => {
                       onChange(name);
                       setOpen(false);
@@ -1871,13 +1876,13 @@ export function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+      <label className="text-[11px] font-bold text-muted uppercase tracking-wider ml-0.5">
         {label}
       </label>
       <input
-        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
-                   transition-all duration-200 placeholder:text-slate-400
-                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+        className="w-full bg-surface border border-line rounded-control px-3 py-2 text-sm 
+                   transition-all duration-200 placeholder:text-muted
+                   hover:border-muted/40 focus:border-accent focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -1950,12 +1955,12 @@ export function UnitField({
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+      <label className="text-[11px] font-bold text-muted uppercase tracking-wider ml-0.5">
         {label}
       </label>
-      <div className="group flex items-stretch bg-white border border-slate-200 rounded-lg overflow-hidden transition-all duration-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
+      <div className="group flex items-stretch bg-surface border border-line rounded-control overflow-hidden transition-all duration-200 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent">
         <input
-          className="w-full px-3 py-2 text-sm font-mono focus:outline-none placeholder:text-slate-400"
+          className="w-full px-3 py-2 text-sm font-mono focus:outline-none placeholder:text-muted"
           value={text}
           onChange={(e) => {
             const next = e.target.value;
@@ -1966,9 +1971,9 @@ export function UnitField({
           }}
           placeholder={placeholder}
         />
-        <div className="relative flex items-center border-l border-slate-100 bg-slate-50/50 px-1 hover:bg-slate-100 transition-colors">
+        <div className="relative flex items-center border-l border-line bg-canvas px-1 hover:bg-accent-soft transition-colors">
           <select
-            className="appearance-none bg-transparent pl-2 pr-6 py-1 text-[10px] font-bold text-slate-500 cursor-pointer focus:outline-none"
+            className="appearance-none bg-transparent pl-2 pr-6 py-1 text-[10px] font-bold text-muted cursor-pointer focus:outline-none"
             value={unit}
             onChange={(e) => onUnitChange(e.target.value)}
           >
@@ -1980,7 +1985,7 @@ export function UnitField({
           </select>
           <ChevronDown
             size={10}
-            className="absolute right-2 pointer-events-none text-slate-400"
+            className="absolute right-2 pointer-events-none text-muted"
           />
         </div>
       </div>
@@ -2000,13 +2005,13 @@ export function TextArea({
 }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+      <label className="text-[11px] font-bold text-muted uppercase tracking-wider ml-0.5">
         {label}
       </label>
       <textarea
-        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[100px]
+        className="w-full bg-surface border border-line rounded-control px-3 py-2 text-sm min-h-[100px]
                    transition-all duration-200 resize-y
-                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+                   hover:border-muted/40 focus:border-accent focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -2026,14 +2031,14 @@ export function NumberField({
 }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-0.5">
+      <label className="text-[11px] font-bold text-muted uppercase tracking-wider ml-0.5">
         {label}
       </label>
       <input
         type="number"
-        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm 
+        className="w-full bg-surface border border-line rounded-control px-3 py-2 text-sm 
                    transition-all duration-200
-                   hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none
+                   hover:border-muted/40 focus:border-accent focus-visible:ring-2 focus-visible:ring-accent focus:outline-none
                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         value={Number.isNaN(value) ? 0 : value}
         onChange={(e) => onChange(Number(e.target.value))}
@@ -2054,15 +2059,15 @@ function Select({
 }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-semibold text-slate-700 ml-0.5">
+      <label className="text-sm font-semibold text-ink ml-0.5">
         {label}
       </label>
       <div className="relative group">
         <select
-          className="w-full appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-sm 
+          className="w-full appearance-none bg-surface border border-line rounded-control px-4 py-2.5 text-sm 
                      transition-all duration-200 outline-none
-                     hover:border-slate-400
-                     focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                     hover:border-muted/40
+                     focus:border-accent focus-visible:ring-2 focus-visible:ring-accent"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
@@ -2077,7 +2082,7 @@ function Select({
           })}
         </select>
         {/* Custom Chevron for a more premium feel */}
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted group-focus-within:text-accent">
           <ChevronDown size={16} strokeWidth={2.5} />
         </div>
       </div>
@@ -2098,9 +2103,9 @@ function Checkbox({
       <div className="relative flex items-center">
         <input
           type="checkbox"
-          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 
-                     bg-white transition-all checked:bg-blue-600 checked:border-blue-600
-                     focus:ring-4 focus:ring-blue-500/10 focus:outline-none"
+          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-line
+                     bg-surface transition-all checked:bg-accent checked:border-accent
+                     focus-visible:ring-2 focus-visible:ring-accent focus:outline-none"
           checked={value}
           onChange={(e) => onChange(e.target.checked)}
         />
@@ -2118,7 +2123,7 @@ function Checkbox({
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
-      <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+      <span className="text-sm font-medium text-muted group-hover:text-ink transition-colors">
         {label}
       </span>
     </label>
@@ -2155,21 +2160,21 @@ function ResponsiveRowLayoutFields({
   const display = override.display || row.layout?.display || "grid";
 
   return (
-    <details className="border rounded-lg p-3 bg-white shadow-sm">
+    <details className="border border-line rounded-control p-3 bg-surface shadow-rest">
       <summary className="cursor-pointer text-sm font-medium">
         Responsive Row Layout
       </summary>
       <div className="mt-3 space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Breakpoint</span>
+          <span className="text-xs text-muted">Breakpoint</span>
           {(["tablet", "mobile"] as const).map((key) => (
             <button
               key={key}
               type="button"
               className={`text-xs px-2 py-1 rounded border ${
                 bp === key
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  ? "bg-accent text-accent-fg border-accent"
+                  : "bg-surface text-muted border-line hover:bg-accent-soft"
               }`}
               onClick={() => setBp(key)}
             >
@@ -2178,7 +2183,7 @@ function ResponsiveRowLayoutFields({
           ))}
         </div>
 
-        <div className="text-[11px] text-gray-500">
+        <div className="text-[11px] text-muted">
           Set only what should change on {bp}. Everything else inherits desktop.
         </div>
 
@@ -2298,15 +2303,15 @@ function StyleFields({
       <div className="space-y-2">
         <div className="text-sm font-medium">Style</div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Breakpoint</span>
+          <span className="text-xs text-muted">Breakpoint</span>
           {(["desktop", "tablet", "mobile"] as const).map((key) => (
             <button
               key={key}
               type="button"
               className={`text-xs px-2 py-1 rounded border ${
                 bp === key
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  ? "bg-accent text-accent-fg border-accent"
+                  : "bg-surface text-muted border-line hover:bg-accent-soft"
               }`}
               onClick={() => setBp(key)}
             >
@@ -2315,13 +2320,13 @@ function StyleFields({
           ))}
         </div>
         {bp !== "desktop" ? (
-          <div className="text-[11px] text-gray-500">
+          <div className="text-[11px] text-muted">
             Editing {bp} override. Empty fields inherit desktop values.
           </div>
         ) : null}
       </div>
 
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+      <details open className="border border-line rounded-control p-3 bg-surface shadow-rest">
         <summary className="cursor-pointer text-sm font-medium">
           Layout & Alignment
         </summary>
@@ -2408,7 +2413,7 @@ function StyleFields({
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+      <details open className="border border-line rounded-control p-3 bg-surface shadow-rest">
         <summary className="cursor-pointer text-sm font-medium">
           Size & Spacing
         </summary>
@@ -2500,7 +2505,7 @@ function StyleFields({
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+      <details open className="border border-line rounded-control p-3 bg-surface shadow-rest">
         <summary className="cursor-pointer text-sm font-medium">
           Background
         </summary>
@@ -2669,7 +2674,7 @@ function StyleFields({
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+      <details open className="border border-line rounded-control p-3 bg-surface shadow-rest">
         <summary className="cursor-pointer text-sm font-medium">
           Color & Border
         </summary>
@@ -2715,7 +2720,7 @@ function StyleFields({
         </div>
       </details>
 
-      <details open className="border rounded-lg p-3 bg-white shadow-sm">
+      <details open className="border border-line rounded-control p-3 bg-surface shadow-rest">
         <summary className="cursor-pointer text-sm font-medium">
           Typography
         </summary>
