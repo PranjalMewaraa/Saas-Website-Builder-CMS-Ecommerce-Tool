@@ -50,6 +50,36 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 10 — Inspector decomposition: structure/hero editors (F7, step 3) — DONE
+Migrated the structural and hero block branches — the largest cluster in the
+monolith — out of `BlocksPropForm.tsx` into the registry.
+
+This increment (behavior-preserving, the `edit` route only):
+- Added `components/inspector/editors/structure.tsx` with eight editors
+  extracted verbatim: `HeaderV1`, `LayoutSection`, `FormV1`, `FooterV1`,
+  `HeroV1`, `UtilitySpacer`, `UtilityDivider`, `UtilityRichText`. These consume
+  more of the editor context than the commerce batch (menus, variant state,
+  rich-text mode, `setPropPath`, `siteId`/asset wiring), so `BlockEditorProps`
+  tightened the fields the branches call unguarded to required (`setPropPath`,
+  `setVariant`, `setRichMode`, `menus`, `forms`, `siteId`, `variant`,
+  `richMode`); the registry already forwards all of these.
+- Registered the eight under their block keys (`Hero` and `Hero/V1` both map to
+  `HeroV1`, matching the monolith's `||` branch).
+- Moved the shared `DEFAULT_IMAGE` constant into
+  `components/inspector/constants.ts` so the editor module and the form share
+  one source (avoids a circular import back through `BlocksPropForm`).
+- Deleted the eight migrated inline branches.
+- Net: `BlocksPropForm.tsx` shrank 5,216 → 3,608 lines; no behavior change.
+  Typecheck clean for the touched files.
+- Note: the editor module is named `structure.tsx`, not `layout.tsx` — inside
+  the `app/` tree Next reserves `layout.tsx` as a route file and the type
+  generator rejected the non-default export.
+
+_Next steps (later increments): migrate the remaining ~27 marketing blocks
+(BannerCTA, FeaturesGrid, Testimonials, … NewsletterSignup) into editor modules
+behind the registry; then build one superset `defaultPropsFor` and repoint
+`home` (and `edit`) at it with per-route verification._
+
 ## Increment 9 — Inspector decomposition: commerce editors + registry (F7, step 2) — DONE
 Stood up the per-block editor registry and migrated the first batch of block
 branches out of the `BlocksPropForm.tsx` monolith into dedicated modules. This
