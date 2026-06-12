@@ -3,19 +3,26 @@ import {
   requireSession,
   requireModule,
 } from "../../../../../../../packages/auth";
+import { randomUUID } from "crypto";
 import {
   getOrCreateTheme,
   listMenus,
   listPages,
   listStylePresets,
   createSnapshot,
+  getNextSnapshotVersion,
+  pruneSnapshots,
   getMongoDb,
 } from "../../../../../../../packages/db-mongo";
 import { listAssetsForSnapshot } from "@acme/db-mongo";
 import { listForms } from "@acme/db-mongo";
 
+// Keep the most recent N published snapshots per site; older ones are pruned
+// on each publish (the currently-published snapshot is always retained).
+const SNAPSHOT_RETENTION = 10;
+
 function newSnapshotId(site_id: string) {
-  return `snap_${site_id}_${Date.now()}`;
+  return `snap_${site_id}_${randomUUID()}`;
 }
 
 function normalizeLocalOrigin(raw: string) {
@@ -46,14 +53,6 @@ export async function POST(req: Request) {
   await requireModule({ tenant_id, site_id, module: "builder" });
 
   const db = await getMongoDb();
-
-  const theme = await getOrCreateTheme(tenant_id, site_id);
-  const menus = await listMenus(tenant_id, site_id);
-  const pages = await listPages(tenant_id, site_id);
-  const presets = await listStylePresets(tenant_id, site_id);
-  const assets = await listAssetsForSnapshot(tenant_id, site_id);
-  const forms = await listForms(tenant_id, site_id);
-
   const sitesCol = db.collection<SiteDocLoose>("sites");
 
   const site = await sitesCol.findOne({ _id: site_id as any, tenant_id });
@@ -63,6 +62,33 @@ export async function POST(req: Request) {
       { status: 404 },
     );
   }
+  // Baseline for the concurrency guard below.
+  const baselineUpdatedAt = (site as any).updated_at ?? null;
+
+  const theme = await getOrCreateTheme(tenant_id, site_id);
+  const menus = await listMenus(tenant_id, site_id);
+  const pages = await listPages(tenant_id, site_id);
+  const presets = await listStylePresets(tenant_id, site_id);
+  const assets = await listAssetsForSnapshot(tenant_id, site_id);
+  const forms = await listForms(tenant_id, site_id);
+
+  // Best-effort point-in-time guard: if the site document changed while we
+  // assembled the bundle, the snapshot may mix pre/post-edit state, so abort
+  // and let the caller retry. (Full cross-collection isolation would require a
+  // MongoDB transaction threaded through every read — a larger follow-up.)
+  const siteAfter = await sitesCol.findOne(
+    { _id: site_id as any, tenant_id },
+    { projection: { updated_at: 1 } as any },
+  );
+  const afterUpdatedAt = (siteAfter as any)?.updated_at ?? null;
+  if (String(baselineUpdatedAt) !== String(afterUpdatedAt)) {
+    return NextResponse.json(
+      { ok: false, error: "Site changed during publish. Please retry." },
+      { status: 409 },
+    );
+  }
+
+  const version = await getNextSnapshotVersion(tenant_id, site_id);
 
   const brandLogoAssetId = theme.brand?.logoAssetId;
   const brandLogo =
@@ -93,7 +119,7 @@ export async function POST(req: Request) {
       forms.map((f) => [f._id, { name: f.name, schema: f.draft_schema }]),
     ),
 
-    version: Date.now(),
+    version,
     created_by: session.user.user_id,
     created_at: new Date(),
 
@@ -122,6 +148,14 @@ export async function POST(req: Request) {
     { _id: site_id as any, tenant_id },
     { $set: { published_snapshot_id: snapshot_id, updated_at: new Date() } },
   );
+
+  // Retain the most recent snapshots; never prune the one just published.
+  await pruneSnapshots({
+    tenant_id,
+    site_id,
+    keep: SNAPSHOT_RETENTION,
+    keepId: snapshot_id,
+  });
 
   const STOREFRONT_BASE_URL = normalizeLocalOrigin(
     process.env.STOREFRONT_BASE_URL || "http://localhost:3002",

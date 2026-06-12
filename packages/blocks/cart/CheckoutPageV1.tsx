@@ -180,7 +180,7 @@ export default function CheckoutPageV1({
                   throw new Error("Some items are out of stock");
                 }
               }
-              let res = await fetch("/api/v2/orders", {
+              const res = await fetch("/api/v2/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -205,32 +205,6 @@ export default function CheckoutPageV1({
                   },
                 }),
               });
-              if (!res.ok) {
-                res = await fetch("/api/orders", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    items: cart.items,
-                    subtotal_cents: cart.subtotal_cents,
-                    total_cents: cart.total_cents,
-                    site_id: siteHint.site_id,
-                    handle: siteHint.handle,
-                    customer: {
-                      name: form.name,
-                      email: form.email,
-                      phone: form.phone,
-                    },
-                    shipping_address: {
-                      address1: form.address1,
-                      address2: form.address2,
-                      city: form.city,
-                      state: form.state,
-                      zip: form.zip,
-                      country: form.country,
-                    },
-                  }),
-                });
-              }
               const data = await res.json();
               if (data?.order_number) {
                 setOrderNumber(data.order_number);

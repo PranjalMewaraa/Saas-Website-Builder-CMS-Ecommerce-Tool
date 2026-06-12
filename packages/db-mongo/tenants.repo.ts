@@ -23,6 +23,12 @@ export async function findTenantById(tenant_id: string) {
   const col = await tenantsCollection();
   return col.findOne({ _id: tenant_id });
 }
+
+export async function deleteTenant(tenant_id: string) {
+  const col = await tenantsCollection();
+  await col.deleteOne({ _id: tenant_id });
+}
+
 export async function createTenant(args: { tenant_id: string; plan?: string }) {
   const col = await tenantsCollection();
 

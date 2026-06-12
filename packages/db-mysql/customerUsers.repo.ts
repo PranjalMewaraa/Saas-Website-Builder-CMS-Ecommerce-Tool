@@ -43,11 +43,20 @@ export async function findCustomerUserByEmail(args: {
 
 export async function getCustomerUserById(
   id: string,
+  scope?: { tenant_id?: string; site_id?: string },
 ): Promise<CustomerUser | null> {
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT * FROM customer_users WHERE id = ? LIMIT 1`,
-    [id],
-  );
+  let sql = `SELECT * FROM customer_users WHERE id = ?`;
+  const params: string[] = [id];
+  if (scope?.tenant_id) {
+    sql += ` AND tenant_id = ?`;
+    params.push(scope.tenant_id);
+  }
+  if (scope?.site_id) {
+    sql += ` AND site_id = ?`;
+    params.push(scope.site_id);
+  }
+  sql += ` LIMIT 1`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return (rows[0] as CustomerUser) ?? null;
 }
 

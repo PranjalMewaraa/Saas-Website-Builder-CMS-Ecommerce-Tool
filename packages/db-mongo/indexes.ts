@@ -3,13 +3,14 @@ import { getMongoDb } from "./index";
 export async function ensureMongoIndexes() {
   const db = await getMongoDb();
 
-  // users: unique email per tenant
+  // users: email is globally unique across all tenants.
+  // The credentials login resolves accounts by email alone, so a single
+  // email must map to exactly one account. This also prevents the
+  // duplicate-email lockout where two tenants share an email and login
+  // can no longer disambiguate them.
   await db
     .collection("users")
-    .createIndex(
-      { tenant_id: 1, email: 1 },
-      { unique: true, name: "uq_users_tenant_email" }
-    );
+    .createIndex({ email: 1 }, { unique: true, name: "uq_users_email" });
 
   // tenants
   await db

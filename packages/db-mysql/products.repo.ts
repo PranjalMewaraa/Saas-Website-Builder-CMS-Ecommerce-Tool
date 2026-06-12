@@ -2,6 +2,10 @@ import { pool } from "./index";
 import { newId, nowSql, slugify } from "./id";
 import type { ProductRow, ProductVariantRow } from "./types";
 
+// Minimal shape shared by `pool` and a pooled connection, so helpers can run
+// either standalone or inside a transaction.
+type Queryable = Pick<typeof pool, "query">;
+
 export async function listProducts(tenant_id: string): Promise<ProductRow[]> {
   const [rows] = await pool.query(
     `SELECT * FROM products WHERE tenant_id = ? ORDER BY created_at DESC`,
@@ -108,91 +112,93 @@ export async function createProduct(
     input.slug && input.slug.trim()
       ? slugify(input.slug)
       : slugify(input.title);
-  const slug = await ensureUniqueProductSlug(tenant_id, baseSlug);
 
-  await pool.query(
-    `
-    INSERT INTO products
-      (id, tenant_id, brand_id, title, slug, description, status, base_price_cents, sku, custom_data, created_at, updated_at)
-    VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
-    `,
-    [
-      id,
-      tenant_id,
-      input.brand_id ?? null,
-      input.title.trim(),
-      slug,
-      input.description ?? null,
-      input.status ?? "draft",
-      input.base_price_cents,
-      input.sku ?? null,
-      ts,
-      ts,
-    ],
-  );
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
 
-  if (input.category_ids?.length) {
-    for (const cat_id of input.category_ids) {
-      await pool.query(
-        `INSERT INTO product_categories (tenant_id, product_id, category_id, created_at)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE category_id = VALUES(category_id)`,
-        [tenant_id, id, cat_id, ts],
-      );
-    }
-  }
+    const slug = await ensureUniqueProductSlug(tenant_id, baseSlug, conn);
 
-  // MVP: create one default variant with same price
-  const variant_id = newId("var");
-  await pool.query(
-    `
-    INSERT INTO product_variants
-      (id, tenant_id, product_id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty, created_at, updated_at)
-    VALUES
-      (?, ?, ?, ?, ?, NULL, JSON_OBJECT('default', true), 0, ?, ?)
-    `,
-    [
-      variant_id,
-      tenant_id,
-      id,
-      input.sku ?? null,
-      input.base_price_cents,
-      ts,
-      ts,
-    ],
-  );
-
-  if (input.store_id) {
-    await pool.query(
+    await conn.query(
       `
-      INSERT INTO store_products (tenant_id, store_id, product_id, is_published, overrides, created_at, updated_at)
-      VALUES (?, ?, ?, ?, NULL, ?, ?)
-      ON DUPLICATE KEY UPDATE is_published = VALUES(is_published), updated_at = VALUES(updated_at)
+      INSERT INTO products
+        (id, tenant_id, brand_id, title, slug, description, status, base_price_cents, sku, custom_data, created_at, updated_at)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
       `,
       [
-        tenant_id,
-        input.store_id,
         id,
-        input.status === "active" ? 1 : 0,
+        tenant_id,
+        input.brand_id ?? null,
+        input.title.trim(),
+        slug,
+        input.description ?? null,
+        input.status ?? "draft",
+        input.base_price_cents,
+        input.sku ?? null,
         ts,
         ts,
       ],
     );
-  }
 
-  const [rows] = await pool.query(
-    `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
-    [tenant_id, id],
-  );
-  return (rows as ProductRow[])[0];
+    if (input.category_ids?.length) {
+      for (const cat_id of input.category_ids) {
+        await conn.query(
+          `INSERT INTO product_categories (tenant_id, product_id, category_id, created_at)
+           VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE category_id = VALUES(category_id)`,
+          [tenant_id, id, cat_id, ts],
+        );
+      }
+    }
+
+    // MVP: create one default variant with same price
+    const variant_id = newId("var");
+    await conn.query(
+      `
+      INSERT INTO product_variants
+        (id, tenant_id, product_id, sku, price_cents, compare_at_price_cents, options_json, inventory_qty, created_at, updated_at)
+      VALUES
+        (?, ?, ?, ?, ?, NULL, JSON_OBJECT('default', true), 0, ?, ?)
+      `,
+      [variant_id, tenant_id, id, input.sku ?? null, input.base_price_cents, ts, ts],
+    );
+
+    if (input.store_id) {
+      await conn.query(
+        `
+        INSERT INTO store_products (tenant_id, store_id, product_id, is_published, overrides, created_at, updated_at)
+        VALUES (?, ?, ?, ?, NULL, ?, ?)
+        ON DUPLICATE KEY UPDATE is_published = VALUES(is_published), updated_at = VALUES(updated_at)
+        `,
+        [tenant_id, input.store_id, id, input.status === "active" ? 1 : 0, ts, ts],
+      );
+    }
+
+    const [rows] = await conn.query(
+      `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
+      [tenant_id, id],
+    );
+
+    await conn.commit();
+    return (rows as ProductRow[])[0];
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 }
 
-async function ensureUniqueProductSlug(tenant_id: string, base: string) {
+async function ensureUniqueProductSlug(
+  tenant_id: string,
+  base: string,
+  db: Queryable = pool,
+) {
   let slug = base || "product";
   let i = 2;
   while (true) {
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       `SELECT id FROM products WHERE tenant_id = ? AND slug = ? LIMIT 1`,
       [tenant_id, slug],
     );
@@ -219,72 +225,84 @@ export async function updateProduct(
   const existing = await getProduct(tenant_id, product_id);
   if (!existing) return null;
 
-  let nextSlug = existing.slug;
-  if (input.slug && input.slug.trim() && input.slug !== existing.slug) {
-    const base = slugify(input.slug);
-    nextSlug = await ensureUniqueProductSlug(tenant_id, base);
-  }
-
   const ts = nowSql();
-  await pool.query(
-    `
-    UPDATE products
-    SET title = ?, slug = ?, description = ?, brand_id = ?, status = ?,
-        base_price_cents = ?, sku = ?, updated_at = ?
-    WHERE tenant_id = ? AND id = ?
-    `,
-    [
-      input.title ?? existing.title,
-      nextSlug,
-      input.description ?? existing.description,
-      input.brand_id ?? existing.brand_id,
-      input.status ?? existing.status,
-      input.base_price_cents ?? existing.base_price_cents,
-      input.sku ?? existing.sku,
-      ts,
-      tenant_id,
-      product_id,
-    ],
-  );
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
 
-  if (input.category_ids) {
-    await pool.query(
-      `DELETE FROM product_categories WHERE tenant_id = ? AND product_id = ?`,
-      [tenant_id, product_id],
-    );
-    for (const cat_id of input.category_ids) {
-      await pool.query(
-        `INSERT INTO product_categories (tenant_id, product_id, category_id, created_at)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE category_id = VALUES(category_id)`,
-        [tenant_id, product_id, cat_id, ts],
-      );
+    let nextSlug = existing.slug;
+    if (input.slug && input.slug.trim() && input.slug !== existing.slug) {
+      const base = slugify(input.slug);
+      nextSlug = await ensureUniqueProductSlug(tenant_id, base, conn);
     }
-  }
 
-  if (input.store_id) {
-    await pool.query(
+    await conn.query(
       `
-      INSERT INTO store_products (tenant_id, store_id, product_id, is_published, overrides, created_at, updated_at)
-      VALUES (?, ?, ?, ?, NULL, ?, ?)
-      ON DUPLICATE KEY UPDATE is_published = VALUES(is_published), updated_at = VALUES(updated_at)
+      UPDATE products
+      SET title = ?, slug = ?, description = ?, brand_id = ?, status = ?,
+          base_price_cents = ?, sku = ?, updated_at = ?
+      WHERE tenant_id = ? AND id = ?
       `,
       [
+        input.title ?? existing.title,
+        nextSlug,
+        input.description ?? existing.description,
+        input.brand_id ?? existing.brand_id,
+        input.status ?? existing.status,
+        input.base_price_cents ?? existing.base_price_cents,
+        input.sku ?? existing.sku,
+        ts,
         tenant_id,
-        input.store_id,
         product_id,
-        (input.status ?? existing.status) === "active" ? 1 : 0,
-        ts,
-        ts,
       ],
     );
-  }
 
-  const [rows] = await pool.query(
-    `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
-    [tenant_id, product_id],
-  );
-  return (rows as ProductRow[])[0];
+    if (input.category_ids) {
+      await conn.query(
+        `DELETE FROM product_categories WHERE tenant_id = ? AND product_id = ?`,
+        [tenant_id, product_id],
+      );
+      for (const cat_id of input.category_ids) {
+        await conn.query(
+          `INSERT INTO product_categories (tenant_id, product_id, category_id, created_at)
+           VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE category_id = VALUES(category_id)`,
+          [tenant_id, product_id, cat_id, ts],
+        );
+      }
+    }
+
+    if (input.store_id) {
+      await conn.query(
+        `
+        INSERT INTO store_products (tenant_id, store_id, product_id, is_published, overrides, created_at, updated_at)
+        VALUES (?, ?, ?, ?, NULL, ?, ?)
+        ON DUPLICATE KEY UPDATE is_published = VALUES(is_published), updated_at = VALUES(updated_at)
+        `,
+        [
+          tenant_id,
+          input.store_id,
+          product_id,
+          (input.status ?? existing.status) === "active" ? 1 : 0,
+          ts,
+          ts,
+        ],
+      );
+    }
+
+    const [rows] = await conn.query(
+      `SELECT * FROM products WHERE tenant_id = ? AND id = ? LIMIT 1`,
+      [tenant_id, product_id],
+    );
+
+    await conn.commit();
+    return (rows as ProductRow[])[0];
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function setProductStatus(

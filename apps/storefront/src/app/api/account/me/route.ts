@@ -10,7 +10,10 @@ export async function GET(req: Request) {
       { status: 401 },
     );
   }
-  const user = await getCustomerUserById(session.customer_id);
+  const user = await getCustomerUserById(session.customer_id, {
+    tenant_id: session.tenant_id,
+    site_id: session.site_id,
+  });
   if (!user) {
     return NextResponse.json(
       { ok: false, error: "not_found" },

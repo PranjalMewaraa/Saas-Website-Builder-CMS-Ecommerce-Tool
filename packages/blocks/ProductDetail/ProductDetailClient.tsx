@@ -592,18 +592,11 @@ export default function ProductDetailClient({
                       },
                     };
 
-                    let res = await fetch("/api/v2/orders", {
+                    const res = await fetch("/api/v2/orders", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify(payload),
                     });
-                    if (!res.ok) {
-                      res = await fetch("/api/orders", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
-                      });
-                    }
                     const data = await res.json();
                     if (data?.order_number) {
                       setOrderNumber(data.order_number);
