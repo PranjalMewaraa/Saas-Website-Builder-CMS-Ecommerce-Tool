@@ -18,6 +18,16 @@ import BlockLibraryPanel from "./components/BlockLibraryPanel";
 import SectionCanvas from "./components/SectionCanvas";
 import InspectorPanel from "./components/InspectorPanel";
 import TemplateInsertWizard from "./components/TemplateInsertWizard";
+import {
+  Button,
+  Skeleton,
+  EmptyState,
+  ConfirmDialog,
+  Dialog,
+  Input,
+  Select,
+  Badge,
+} from "@acme/ui";
 
 // builder-safe registry (NO mysql imports)
 import { getBlockBuilder } from "@acme/blocks/registry/builder";
@@ -219,6 +229,20 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [leftTab, setLeftTab] = useState<"blocks" | "templates">("blocks");
 
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+  const [pendingDeleteSectionId, setPendingDeleteSectionId] = useState<
+    string | null
+  >(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateTags, setTemplateTags] = useState("");
+  const [templateScope, setTemplateScope] = useState<"site" | "tenant">("site");
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateError, setTemplateError] = useState("");
+  const [templateSaved, setTemplateSaved] = useState(false);
+
   const [snapshotLike, setSnapshotLike] = useState<any>({
     __mode: "builder",
     is_draft: true,
@@ -334,6 +358,17 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     setPage({ ...page, draft_layout: nextLayout });
   }
 
+  async function handleSaveDraft() {
+    setSaveState("saving");
+    try {
+      await saveDraft();
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2200);
+    } catch {
+      setSaveState("idle");
+    }
+  }
+
   function ensureSectionId() {
     const ids = (layout.sections ?? []).map((s: any) => s.id);
     return selectedSectionId && ids.includes(selectedSectionId)
@@ -359,16 +394,24 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
 
   function deleteSection(sectionId: string) {
     // MVP rule: don't delete first section (home)
+    const idx = (layout.sections ?? []).findIndex(
+      (s: any) => s.id === sectionId
+    );
+    if (idx <= 0) return;
+
+    // if section has blocks, confirm via dialog; otherwise delete immediately
+    const sec = layout.sections[idx];
+    if (sec.blocks?.length) {
+      setPendingDeleteSectionId(sectionId);
+      return;
+    }
+    performDeleteSection(sectionId);
+  }
+
+  function performDeleteSection(sectionId: string) {
     const next = structuredClone(layout);
     const idx = next.sections.findIndex((s: any) => s.id === sectionId);
     if (idx <= 0) return;
-
-    // if section has blocks, confirm
-    const sec = next.sections[idx];
-    if (sec.blocks?.length) {
-      const ok = confirm("Section has blocks. Delete anyway?");
-      if (!ok) return;
-    }
 
     next.sections.splice(idx, 1);
     setLayout(next);
@@ -377,6 +420,7 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     const fallback = next.sections[0]?.id || "";
     setSelectedSectionId(fallback);
     setSelectedBlockId("");
+    setPendingDeleteSectionId(null);
   }
 
   function addBlock(type: string) {
@@ -424,52 +468,60 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     setLayout(next);
     if (selectedBlockId === blockId) setSelectedBlockId("");
   }
-  async function saveSectionAsTemplate() {
-    if (!selectedSection) return;
-    if (!selectedSection.blocks?.length) return alert("Section has no blocks.");
+  function openTemplateDialog() {
+    if (!selectedSection?.blocks?.length) return;
+    setTemplateName(selectedSection.label || "Section Template");
+    setTemplateTags("");
+    setTemplateScope("site");
+    setTemplateError("");
+    setTemplateOpen(true);
+  }
 
-    const name = prompt(
-      "Template name",
-      selectedSection.label || "Section Template"
-    );
-    if (!name) return;
-
-    const makeTenantWide = confirm(
-      "Make this template tenant-wide?\n\nOK = Tenant-wide\nCancel = Site-only"
-    );
-    const scope = makeTenantWide ? "tenant" : "site";
-
-    const tagsText = prompt("Tags (comma separated)", "");
-    const tags = (tagsText || "")
+  async function submitSectionTemplate() {
+    if (!selectedSection?.blocks?.length) return;
+    const name = templateName.trim();
+    if (!name) {
+      setTemplateError("Give the template a name.");
+      return;
+    }
+    const tags = templateTags
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const res = await fetch(
-      `/api/admin/section-templates?site_id=${encodeURIComponent(siteId)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          tags,
-          scope,
-          section: {
-            label: selectedSection.label || "",
-            style: selectedSection.style || {},
-            blocks: selectedSection.blocks,
-          },
-        }),
+    setTemplateSaving(true);
+    setTemplateError("");
+    try {
+      const res = await fetch(
+        `/api/admin/section-templates?site_id=${encodeURIComponent(siteId)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            tags,
+            scope: templateScope,
+            section: {
+              label: selectedSection.label || "",
+              style: selectedSection.style || {},
+              blocks: selectedSection.blocks,
+            },
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!data.ok) {
+        setTemplateError(data.error || "Failed to save template.");
+        return;
       }
-    );
-
-    const data = await res.json();
-    if (!data.ok) return alert(data.error || "Failed to save template");
-    alert(
-      scope === "tenant"
-        ? "Tenant-wide template saved ✅"
-        : "Site template saved ✅"
-    );
+      setTemplateOpen(false);
+      setTemplateSaved(true);
+      setTimeout(() => setTemplateSaved(false), 2200);
+    } catch {
+      setTemplateError("Failed to save template.");
+    } finally {
+      setTemplateSaving(false);
+    }
   }
 
   function insertTemplateAsSectionWithMapping(
@@ -569,7 +621,30 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     setSelectedSectionId(next.sections[targetSectionIndex].id);
   }
 
-  if (!page) return <div className="p-6 opacity-70">Loading…</div>;
+  if (!page) {
+    return (
+      <div className="h-screen grid grid-cols-[300px_1fr_420px]">
+        <aside className="border-r border-line p-3 space-y-3" aria-hidden="true">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </aside>
+        <main className="p-4 space-y-3" aria-hidden="true">
+          <Skeleton className="h-5 w-64" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </main>
+        <aside className="border-l border-line p-3 space-y-3" aria-hidden="true">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-24 w-full" />
+        </aside>
+        <span className="sr-only" role="status">
+          Loading builder…
+        </span>
+      </div>
+    );
+  }
   const selectedSection =
     layout.sections.find((s: any) => s.id === selectedSectionId) ||
     layout.sections[0];
@@ -581,6 +656,14 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
     }
     return null;
   })();
+
+  const totalBlocks = (layout.sections ?? []).reduce(
+    (n: number, s: any) => n + (s.blocks?.length || 0),
+    0
+  );
+  const pendingDeleteSection = pendingDeleteSectionId
+    ? layout.sections.find((s: any) => s.id === pendingDeleteSectionId)
+    : null;
 
   return (
     <div className="h-screen grid grid-cols-[300px_1fr_420px]">
@@ -615,18 +698,26 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
         </div>
 
         <div className="border border-line rounded-control p-2">
-          <div className="text-xs opacity-70">Selected Section</div>
+          <div className="flex items-center justify-between">
+            <div className="text-xs opacity-70">Selected Section</div>
+            {templateSaved ? (
+              <Badge tone="accent" dot>
+                Saved
+              </Badge>
+            ) : null}
+          </div>
           <div className="text-sm font-medium">
             {selectedSection?.label || selectedSection?.id}
           </div>
-          <button
-            className="border border-line rounded-control px-2 py-1 text-xs mt-2 w-full"
-            type="button"
-            onClick={saveSectionAsTemplate}
-            disabled={!selectedSection}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2 w-full"
+            onClick={openTemplateDialog}
+            disabled={!selectedSection?.blocks?.length}
           >
             Save Section as Template
-          </button>
+          </Button>
         </div>
 
         {leftTab === "blocks" ? (
@@ -642,16 +733,14 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           />
         )}
 
-        <button
-          className="bg-ink text-white rounded-control px-3 py-2 text-sm w-full"
-          type="button"
-          onClick={async () => {
-            await saveDraft();
-            alert("Saved draft ✅");
-          }}
+        <Button
+          variant="primary"
+          className="w-full"
+          onClick={handleSaveDraft}
+          loading={saveState === "saving"}
         >
-          Save Draft
-        </button>
+          {saveState === "saved" ? "Saved ✓" : "Save Draft"}
+        </Button>
       </aside>
 
       {/* Center: section canvas + live preview */}
@@ -662,6 +751,24 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           </div>
           <div className="text-xs opacity-60">Site: {siteId} · Page: /</div>
         </div>
+
+        {totalBlocks === 0 ? (
+          <div className="mb-4 border border-line rounded-card">
+            <EmptyState
+              title="This page is empty"
+              description="Add a block from the library on the left to start building. Drag to reorder, click any block to edit it."
+              action={
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => setLeftTab("blocks")}
+                >
+                  Browse blocks
+                </Button>
+              }
+            />
+          </div>
+        ) : null}
 
         <DndContext
           sensors={sensors}
@@ -750,6 +857,77 @@ export default function BuilderClient({ siteId }: { siteId: string }) {
           />
         )}
       </aside>
+
+      <ConfirmDialog
+        open={!!pendingDeleteSection}
+        onClose={() => setPendingDeleteSectionId(null)}
+        onConfirm={() => performDeleteSection(pendingDeleteSectionId!)}
+        title="Delete this section?"
+        description={
+          pendingDeleteSection
+            ? `“${pendingDeleteSection.label || pendingDeleteSection.id}” contains ${pendingDeleteSection.blocks?.length || 0} block(s). This can't be undone.`
+            : undefined
+        }
+        confirmLabel="Delete section"
+        destructive
+      />
+
+      <Dialog
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        title="Save section as template"
+        description="Reuse this section's blocks and styles on other pages or sites."
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setTemplateOpen(false)}
+              disabled={templateSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              onClick={submitSectionTemplate}
+              loading={templateSaving}
+            >
+              Save template
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Template name"
+            required
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            error={templateError && !templateName.trim() ? templateError : undefined}
+          />
+          <Input
+            label="Tags"
+            hint="Comma-separated, e.g. hero, marketing"
+            value={templateTags}
+            onChange={(e) => setTemplateTags(e.target.value)}
+          />
+          <Select
+            label="Scope"
+            hint="Where this template can be reused."
+            value={templateScope}
+            onChange={(e) =>
+              setTemplateScope(e.target.value as "site" | "tenant")
+            }
+          >
+            <option value="site">This site only</option>
+            <option value="tenant">All sites in this account</option>
+          </Select>
+          {templateError && templateName.trim() ? (
+            <p className="text-sm text-danger" role="alert">
+              {templateError}
+            </p>
+          ) : null}
+        </div>
+      </Dialog>
     </div>
   );
 }
