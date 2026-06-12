@@ -70,6 +70,29 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 17 — Renderer defaults: BannerCTA legible out of the box — DONE
+First step of the "renderer defaults" pass (polish how blocks look the moment
+they're added). **BannerCTA** is built for a dark surface — `text-white`
+heading, `text-slate-300` subtitle, white pill button — but its default style
+overrides were empty and `StyleWrapper` defaults `bg.type` to `"none"`. Result:
+a freshly-added BannerCTA rendered **white text on a transparent page =
+invisible**.
+
+- **Fix.** Seeded a dark default in `defaultStyleFor("BannerCTA/V1")`
+  (`bg: solid #0f172a`, `textColor: #ffffff`) — the same pattern already used
+  for `Footer/V1`. Applied to all three editors that seed block styles:
+  `pages/edit/pageEditorClient.tsx`, `pages/home/homePageEditorClient.tsx`,
+  `pages/editor/pageEditorStudioClient.tsx`.
+- **Risk contained.** This changes only **newly inserted** blocks. Already-
+  published BannerCTAs carry their own saved `style`, so their rendering is
+  untouched — no dark-on-dark regressions. No component/markup edit. Admin
+  `tsc` stays at the 40-error baseline.
+
+Next in this pass (each flagged before editing): audit remaining blocks for
+similar out-of-the-box legibility/spacing gaps.
+
+---
+
 ## Increment 16 — Improve blocks: picker previews + inspector tokenization — DONE
 "Improve blocks" pass over the block authoring experience in the Page Editor
 Studio. Four commits, all pure UI (no logic/API/registry/renderer change):
