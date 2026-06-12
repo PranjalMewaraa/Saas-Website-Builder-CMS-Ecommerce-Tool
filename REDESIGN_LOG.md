@@ -50,6 +50,25 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 7 — Builder token parity + dead-code removal — DONE
+Brought `apps/builder` onto the same token foundation as admin and cleared
+audit finding **F8**.
+- `apps/builder/src/app/globals.css`: replaced the stock Next boilerplate
+  (Geist/Arial body, `--background`/`--foreground`, auto dark mode) with the
+  full admin token set (`@theme` colors/radii/shadows/fonts), the
+  `@source "../../../../packages/ui"` scan, the keyboard focus-visible ring,
+  and the reduced-motion reset. Kept in sync with the admin globals.
+- `apps/builder/src/app/layout.tsx`: swapped Geist → Inter + Fraunces
+  (matching admin's `--font-inter`/`--font-fraunces` variables); body now
+  `bg-canvas text-ink font-sans`. Fixed the placeholder "Create Next App"
+  metadata.
+- Removed the orphaned `content/pages/edit/_old/pageEditorClient.tsx`
+  (~36 KB, unreferenced — the live editor is the sibling `pageEditorClient.tsx`).
+- **Scope note:** this establishes the token/font foundation only. The large
+  builder UI (`builderClient.tsx`, `InspectorPanel.tsx`) still uses legacy
+  utility names (`text-foreground`, `bg-primary`, etc.); those are tokenized
+  in the upcoming builder-inspector rebuild (F7).
+
 ## Increment 6 — Auth forms (signup + login) — DONE
 Rebuilt the two unauthenticated entry screens on the design system. Closes
 audit finding **F5** (placeholder-only inputs, no real labels).
