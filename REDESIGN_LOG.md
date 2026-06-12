@@ -70,6 +70,41 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 14 — Builder UX polish: accessible states & dialogs — DONE
+A follow-on pass over the builder's *interaction* quality (not the block
+catalog). The shell and its panels still leaned on jarring native
+`alert/confirm/prompt`, had no real empty/loading states, and the panel
+subcomponents were off-token. Brought them onto `@acme/ui` and the design
+system. No business-logic change — same API endpoints, same payload shapes.
+
+- **Correctness prerequisite (committed separately):** `@acme/ui` is a React
+  component library that declared **no React dependency**. The builder had
+  never imported `@acme/ui` before this work; once it did, `tsc` followed into
+  the package source, failed to resolve `react`, and every component's prop
+  types collapsed to empty (bogus "Cannot find module 'react'" + missing-prop
+  errors). This was a latent issue admin already shipped with (same errors in
+  its baseline). Fixed by mirroring `@acme/renderer`: react/react-dom as
+  `peerDependencies`, `@types/react(-dom)` as `devDependencies`. Cleans the
+  errors from **both** apps' typechecks.
+- **`builderClient.tsx` (states & dialogs):** section-delete with content →
+  destructive `ConfirmDialog` (empty sections still delete immediately); the
+  "Save Section as Template" `prompt`-chain → a real `Dialog` form (name/tags/
+  scope) posting the identical `/api/admin/section-templates` payload, with
+  inline validation + a success `Badge`; Save Draft `alert()` → `Button`
+  loading/"Saved ✓" state; plain "Loading…" → a 3-column `Skeleton` screen with
+  an `sr-only` status; empty canvas → `EmptyState` with a "Browse blocks" next
+  step.
+- **Subcomponents (tokenize + a11y):** `SectionCanvas` (accent ring + token
+  borders; native `prompt` rename → accessible inline input with Enter/Escape),
+  `TemplatesPanel` (native `confirm` delete → `ConfirmDialog` + loading; scope
+  `Badge`; no-results `EmptyState`), `BlockLibraryPanel` (tokenized cards +
+  focus rings, `Input` search, no-match `EmptyState`), `SortableBlockRow`
+  (`Button` actions), `SectionInspectorPanel` (`bg-black` breakpoint toggles →
+  accent/secondary `Button` group with `aria-pressed`/`role=group`),
+  `StyleEditor` (token inputs + focus rings, value-callback helpers intact).
+- Verification: builder `tsc` stays at the 6 pre-existing baseline errors
+  (InspectorPanel zod-variance, db-mongo, renderer) — none in touched files.
+
 ## Increment 13 — Builder client repair + token parity (F8, final) — DONE
 Closed the piece Increment 7 deferred: the builder's two large surfaces
 (`builderClient.tsx`, `InspectorPanel.tsx`) were still on legacy utility
