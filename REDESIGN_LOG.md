@@ -70,6 +70,34 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 15 — Page Editor Studio onto the design system — DONE
+The `/content/pages/editor` "Page Editor Studio" (a second, drag-and-drop
+visual editor distinct from the main builder) had never been touched by the
+redesign and still shipped a slate/blue/indigo/gray/black palette with
+`rounded-xl/2xl` radii and native-looking buttons. Brought it fully onto the
+admin tokens. **Pure styling pass — no logic, API, payload, or layout/grid
+change; the existing `useUI()` toast/confirm/prompt provider stays.**
+
+- **States & actions:** loading → centered `Loader2` spinner + `sr-only`
+  `role=status`; error → tokenized card with `Button` Retry; JSON-mode and the
+  footer **Save Draft** → `@acme/ui` `Button` (`primary`/`accent`-success,
+  `loading` from `saveStatus`).
+- **Left panel & tabs:** panel container on `bg-canvas/surface` + `border-line`
+  + `shadow-rest`; Layers/Inspector and the SEO-view Layout/SEO toggles →
+  `role=tablist`/`role=tab`/`aria-selected`, active `bg-surface text-accent
+  shadow-rest`; layer rows use accent selection ring; empty-layers and
+  empty-inspector states tokenized.
+- **Add Block modal:** `role=dialog`/`aria-modal`; `bg-ink/60` backdrop,
+  `rounded-modal` surface; Blocks/Templates tabs + search input + preview cards
+  on tokens with focus rings; Close → `Button variant="secondary"`.
+- **Canvas Toolbar:** page title/slug, device (laptop/tablet/mobile), zoom,
+  Fit, Grid, Outline controls moved off slate/blue onto tokens with
+  `aria-pressed` and `bg-surface text-accent shadow-rest` active state.
+- Verification: `grep` confirms zero off-brand palette/radius classes remain in
+  the file; admin `tsc` shows no errors in `pageEditorStudioClient.tsx` (the 40
+  baseline errors are pre-existing and elsewhere). Committed separately from any
+  correctness work.
+
 ## Increment 14 — Builder UX polish: accessible states & dialogs — DONE
 A follow-on pass over the builder's *interaction* quality (not the block
 catalog). The shell and its panels still leaned on jarring native
