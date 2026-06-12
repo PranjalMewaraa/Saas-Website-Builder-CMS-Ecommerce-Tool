@@ -2,6 +2,8 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import Link from "next/link";
+import { Card, Input, buttonClass, cn } from "@acme/ui";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "forgot">("login");
@@ -61,7 +63,7 @@ export default function LoginPage() {
     });
 
     if (res?.ok && res.url) {
-      setMessage({ type: "success", text: "Login successful. Redirecting..." });
+      setMessage({ type: "success", text: "Login successful. Redirecting…" });
       window.location.href = res.url;
       return;
     }
@@ -81,78 +83,88 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-4 border rounded-xl p-6"
-      >
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold">
-            {mode === "login" ? "Admin Login" : "Reset Password"}
+    <div className="min-h-screen flex items-center justify-center bg-canvas p-6">
+      <Card className="w-full max-w-sm">
+        <div className="mb-5 space-y-1">
+          <h1 className="font-display text-2xl font-semibold text-ink">
+            {mode === "login" ? "Log in" : "Reset password"}
           </h1>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             {mode === "login"
               ? "Use your email and password to sign in."
               : "Temporary reset flow. Enter your email and set a new password."}
           </p>
         </div>
+
         {message ? (
           <div
-            className={`rounded border px-3 py-2 text-sm ${
+            role={message.type === "error" ? "alert" : "status"}
+            className={cn(
+              "mb-4 rounded-control border px-3 py-2 text-sm",
               message.type === "error"
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-            }`}
+                ? "border-danger/30 bg-danger-soft text-danger"
+                : "border-accent/30 bg-accent-soft text-accent",
+            )}
           >
             {message.text}
           </div>
         ) : null}
-        <input
-          className="w-full border p-2 rounded"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (message) setMessage(null);
-          }}
-        />
-        <input
-          className="w-full border p-2 rounded"
-          placeholder={mode === "login" ? "Password" : "New password"}
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            if (message) setMessage(null);
-          }}
-        />
-        {mode === "forgot" ? (
-          <input
-            className="w-full border p-2 rounded"
-            placeholder="Confirm new password"
-            type="password"
-            value={confirmPassword}
+
+        <form onSubmit={onSubmit} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
             onChange={(e) => {
-              setConfirmPassword(e.target.value);
+              setEmail(e.target.value);
               if (message) setMessage(null);
             }}
           />
-        ) : null}
-        <button
-          disabled={loading}
-          className="w-full bg-black text-white p-2 rounded disabled:opacity-60"
-        >
-          {loading
-            ? mode === "login"
-              ? "Signing in..."
-              : "Updating password..."
-            : mode === "login"
-              ? "Sign In"
-              : "Update Password"}
-        </button>
+          <Input
+            label={mode === "login" ? "Password" : "New password"}
+            type="password"
+            required
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (message) setMessage(null);
+            }}
+          />
+          {mode === "forgot" ? (
+            <Input
+              label="Confirm new password"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (message) setMessage(null);
+              }}
+            />
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={buttonClass({ variant: "accent", className: "w-full" })}
+          >
+            {loading
+              ? mode === "login"
+                ? "Signing in…"
+                : "Updating password…"
+              : mode === "login"
+                ? "Sign in"
+                : "Update password"}
+          </button>
+        </form>
+
         <button
           type="button"
-          className="w-full text-sm text-slate-700 underline underline-offset-2"
+          className="mt-4 w-full text-sm text-muted underline underline-offset-2 hover:text-ink"
           onClick={() => {
             setMode(mode === "login" ? "forgot" : "login");
             setPassword("");
@@ -162,7 +174,19 @@ export default function LoginPage() {
         >
           {mode === "login" ? "Forgot password?" : "Back to login"}
         </button>
-      </form>
+
+        {mode === "login" ? (
+          <p className="mt-4 text-center text-sm text-muted">
+            New here?{" "}
+            <Link
+              href="/signup"
+              className="font-medium text-accent hover:underline"
+            >
+              Create an account
+            </Link>
+          </p>
+        ) : null}
+      </Card>
     </div>
   );
 }

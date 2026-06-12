@@ -50,6 +50,23 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 6 — Auth forms (signup + login) — DONE
+Rebuilt the two unauthenticated entry screens on the design system. Closes
+audit finding **F5** (placeholder-only inputs, no real labels).
+- Both forms now use the `Input` component: every control has a real
+  `<label>`, the email field is `type="email"`, password fields carry the
+  right `autocomplete` (`new-password` / `current-password`), and inputs are
+  wrapped in a `<form>` with a real submit button.
+- Signup converted from on-click handler to `onSubmit`; tokenized `Card`
+  shell, accent submit, cross-link to `/login`.
+- Login keeps its login/forgot mode toggle and inline message banner
+  (banner retokenized to `danger-soft`/`accent-soft` with `role=alert`/
+  `status`); added a cross-link to `/signup`.
+- **Behavior note:** the "Forgot password?" mode still posts to
+  `/api/auth/forgot-password`, which SEC-01 disabled (returns 410). The form
+  surfaces that response through its existing error banner — no new behavior
+  introduced by this UI pass. Removing the reset UI is a separate decision.
+
 ## Increment 5 — Products + Orders lists — DONE
 Rebuilt the two commerce list screens on the design system. All data-fetching,
 bulk actions, and status/publish mutations preserved — UI-only swap.
