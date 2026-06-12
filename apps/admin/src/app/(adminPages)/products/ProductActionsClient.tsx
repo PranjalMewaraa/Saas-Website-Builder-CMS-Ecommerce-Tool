@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { buttonClass } from "@acme/ui";
 import { useUI } from "@/app/_components/ui/UiProvider";
 
 export default function ProductActionsClient({
@@ -57,7 +58,7 @@ export default function ProductActionsClient({
   return (
     <div className="flex items-center gap-2">
       <Link
-        className="px-3 py-2 rounded border text-sm"
+        className={buttonClass({ variant: "secondary", size: "sm" })}
         href={
           catalogId
             ? `/products/${encodeURIComponent(productId)}?site_id=${encodeURIComponent(siteId)}&catalog_id=${encodeURIComponent(catalogId)}`
@@ -68,7 +69,8 @@ export default function ProductActionsClient({
       </Link>
       {status !== "archived" ? (
         <button
-          className="px-3 py-2 rounded border text-sm"
+          type="button"
+          className={buttonClass({ variant: "secondary", size: "sm" })}
           disabled={busy}
           onClick={archiveProduct}
         >
@@ -76,7 +78,8 @@ export default function ProductActionsClient({
         </button>
       ) : (
         <button
-          className="px-3 py-2 rounded border text-sm"
+          type="button"
+          className={buttonClass({ variant: "secondary", size: "sm" })}
           disabled={busy}
           onClick={async () => {
             const ok = await confirm({
@@ -105,7 +108,8 @@ export default function ProductActionsClient({
         </button>
       )}
       <button
-        className="px-3 py-2 rounded border border-red-200 text-red-600 text-sm"
+        type="button"
+        className={buttonClass({ variant: "danger", size: "sm" })}
         disabled={busy}
         onClick={hardDelete}
       >

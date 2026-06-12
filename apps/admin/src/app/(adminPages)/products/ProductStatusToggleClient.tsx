@@ -12,10 +12,10 @@ export default function ProductStatusToggleClient(props: {
   return (
     <button
       type="button"
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
         isActive
-          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-          : "border-amber-300 bg-amber-50 text-amber-800"
+          ? "border-transparent bg-accent-soft text-accent"
+          : "border-transparent bg-draft-soft text-draft"
       }`}
       onClick={async () => {
         const nextStatus: "draft" | "active" = isActive ? "draft" : "active";
@@ -39,11 +39,7 @@ export default function ProductStatusToggleClient(props: {
       }}
       title={isActive ? "Switch to Draft" : "Switch to Active"}
     >
-      <span
-        className={`h-2.5 w-2.5 rounded-full ${
-          isActive ? "bg-emerald-600" : "bg-amber-600"
-        }`}
-      />
+      <span className="h-2.5 w-2.5 rounded-full bg-current" aria-hidden="true" />
       {isActive ? "Active" : "Draft"}
     </button>
   );

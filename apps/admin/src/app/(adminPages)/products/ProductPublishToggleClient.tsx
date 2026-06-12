@@ -11,10 +11,11 @@ export default function ProductPublishToggleClient(props: {
 
   return (
     <button
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
+      type="button"
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
         isPublished
-          ? "border-sky-300 bg-sky-50 text-sky-800"
-          : "border-slate-300 bg-slate-50 text-slate-700"
+          ? "border-transparent bg-accent-soft text-accent"
+          : "border-line bg-canvas text-muted"
       }`}
       onClick={async () => {
         const nextPublished = !isPublished;
@@ -39,11 +40,7 @@ export default function ProductPublishToggleClient(props: {
       }}
       title={isPublished ? "Switch to Unpublished" : "Switch to Published"}
     >
-      <span
-        className={`h-2.5 w-2.5 rounded-full ${
-          isPublished ? "bg-sky-600" : "bg-slate-500"
-        }`}
-      />
+      <span className="h-2.5 w-2.5 rounded-full bg-current" aria-hidden="true" />
       {isPublished ? "Published" : "Unpublished"}
     </button>
   );

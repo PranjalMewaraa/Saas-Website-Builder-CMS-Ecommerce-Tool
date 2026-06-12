@@ -50,6 +50,21 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 5 — Products + Orders lists — DONE
+Rebuilt the two commerce list screens on the design system. All data-fetching,
+bulk actions, and status/publish mutations preserved — UI-only swap.
+- **Products** (`ProductsClient` + `page` + toggle/action sub-components):
+  metric grid → `Card`s; tabs → `role="tablist"`/`tab` with `aria-selected`;
+  native search input on `controlClass()` with `aria-label`; bulk + row actions
+  via `buttonClass`; bulk-confirm dialog → `ConfirmDialog`; status/publish
+  pills tokenized (`bg-accent-soft`/`bg-draft-soft`, `bg-current` dot).
+- **Orders** (`ordersClient`): list rendered as a semantic `<table>` inside a
+  flush `Card`; status cell → `Badge` via `statusTone()`; detail modal → the
+  shared `Dialog` (labeled status `<select>`, customer/shipping cards, items).
+- Five states covered on both: empty / loading (`Skeleton`) / error (toast) /
+  partial (detail still loading) / ideal.
+- No business-logic or API changes.
+
 ## Increment 4 — Home / dashboard (`/content`) — DONE
 Rebuilt the dashboard on the design system (`Card`, `CardHeader`, `Badge`,
 `EmptyState`). All data-fetching (`getSiteStats`, `getCommerceStats`,
