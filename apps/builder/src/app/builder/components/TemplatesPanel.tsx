@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Button, Input, Badge, EmptyState, ConfirmDialog } from "@acme/ui";
 import SectionTemplatePreview from "./SectionTemplatePreview";
 
 function normalize(s: string) {
@@ -18,6 +19,8 @@ export default function TemplatesPanel({
 }) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [q, setQ] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function refresh() {
     const res = await fetch(
@@ -26,6 +29,21 @@ export default function TemplatesPanel({
     );
     const data = await res.json();
     setTemplates(data.templates ?? []);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await fetch(
+        `/api/admin/section-templates?site_id=${encodeURIComponent(siteId)}&template_id=${encodeURIComponent(pendingDelete._id)}`,
+        { method: "DELETE" }
+      );
+      await refresh();
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   useEffect(() => {
@@ -45,8 +63,8 @@ export default function TemplatesPanel({
   return (
     <div className="space-y-3">
       <div className="font-semibold">Section Templates</div>
-      <input
-        className="border rounded p-2 w-full"
+      <Input
+        label="Search templates"
         placeholder="Search templates…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -54,12 +72,17 @@ export default function TemplatesPanel({
 
       <div className="space-y-2">
         {filtered.map((t) => (
-          <div key={t._id} className="border rounded p-2">
-            <div className="font-medium text-sm">{t.name}</div>
-            <div className="text-xs opacity-70">
-              <span className="inline-flex items-center px-2 py-0.5 rounded border mr-2">
+          <div
+            key={t._id}
+            className="border border-line rounded-card bg-surface p-2"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-medium text-sm truncate">{t.name}</div>
+              <Badge tone={t.scope === "tenant" ? "accent" : "neutral"}>
                 {t.scope === "tenant" ? "Tenant-wide" : "Site"}
-              </span>
+              </Badge>
+            </div>
+            <div className="text-xs text-muted mt-0.5">
               {t.section?.blocks?.length || 0} blocks
               {t.tags?.length ? ` · ${t.tags.join(", ")}` : ""}
             </div>
@@ -71,47 +94,61 @@ export default function TemplatesPanel({
             </div>
 
             <div className="flex gap-2 mt-2">
-              <button
-                className="border rounded px-2 py-1 text-xs"
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => onInsertRequest(t)}
               >
                 Insert
-              </button>
+              </Button>
 
-              <button
-                className="border rounded px-2 py-1 text-xs"
-                type="button"
-                onClick={async () => {
-                  const ok = confirm("Delete this template?");
-                  if (!ok) return;
-                  await fetch(
-                    `/api/admin/section-templates?site_id=${encodeURIComponent(siteId)}&template_id=${encodeURIComponent(t._id)}`,
-                    { method: "DELETE" }
-                  );
-                  await refresh();
-                }}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-danger hover:bg-danger-soft"
+                onClick={() => setPendingDelete(t)}
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         ))}
 
         {filtered.length === 0 ? (
-          <div className="text-sm opacity-70 border rounded p-3">
-            No templates found.
-          </div>
+          <EmptyState
+            title="No templates found"
+            description={
+              q.trim()
+                ? `Nothing matches “${q.trim()}”.`
+                : "Save a section as a template to reuse it here."
+            }
+          />
         ) : null}
       </div>
 
-      <button
-        className="border rounded px-3 py-2 text-sm w-full"
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
+        className="w-full"
         onClick={refresh}
       >
         Refresh
-      </button>
+      </Button>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete this template?"
+        description={
+          pendingDelete
+            ? `“${pendingDelete.name}” will be removed. This can't be undone.`
+            : undefined
+        }
+        confirmLabel="Delete template"
+        destructive
+        loading={deleting}
+      />
     </div>
   );
 }

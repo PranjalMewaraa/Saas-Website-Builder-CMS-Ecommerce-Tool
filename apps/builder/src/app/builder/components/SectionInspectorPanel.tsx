@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@acme/ui";
 import StyleEditor from "./StyleEditor";
 
 type Breakpoint = "desktop" | "tablet" | "mobile";
@@ -20,37 +21,33 @@ export default function SectionInspectorPanel({
   onChangeBreakpoint: (bp: Breakpoint) => void;
 }) {
   if (!section)
-    return <div className="opacity-70 text-sm">Select a section</div>;
+    return <div className="text-muted text-sm">Select a section</div>;
+
+  const breakpoints: Breakpoint[] = ["desktop", "tablet", "mobile"];
 
   return (
     <div className="space-y-4">
       <div>
         <div className="font-semibold">Section</div>
-        <div className="text-xs opacity-60">{section.label || section.id}</div>
+        <div className="text-xs text-muted">{section.label || section.id}</div>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          className={`border rounded px-2 py-1 text-xs ${breakpoint === "desktop" ? "bg-black text-white" : ""}`}
-          onClick={() => onChangeBreakpoint("desktop")}
-          type="button"
-        >
-          Desktop
-        </button>
-        <button
-          className={`border rounded px-2 py-1 text-xs ${breakpoint === "tablet" ? "bg-black text-white" : ""}`}
-          onClick={() => onChangeBreakpoint("tablet")}
-          type="button"
-        >
-          Tablet
-        </button>
-        <button
-          className={`border rounded px-2 py-1 text-xs ${breakpoint === "mobile" ? "bg-black text-white" : ""}`}
-          onClick={() => onChangeBreakpoint("mobile")}
-          type="button"
-        >
-          Mobile
-        </button>
+      <div
+        className="flex gap-1.5"
+        role="group"
+        aria-label="Preview breakpoint"
+      >
+        {breakpoints.map((bp) => (
+          <Button
+            key={bp}
+            variant={breakpoint === bp ? "accent" : "secondary"}
+            size="sm"
+            aria-pressed={breakpoint === bp}
+            onClick={() => onChangeBreakpoint(bp)}
+          >
+            {bp.charAt(0).toUpperCase() + bp.slice(1)}
+          </Button>
+        ))}
       </div>
 
       <div className="space-y-2">

@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Button } from "@acme/ui";
 
 export default function SortableBlockRow({
   block,
@@ -35,46 +36,48 @@ export default function SortableBlockRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`border rounded p-2 flex items-center justify-between gap-2 ${selected ? "ring-2 ring-black" : ""}`}
+      className={`border border-line rounded-control bg-surface p-2 flex items-center justify-between gap-2 ${selected ? "ring-2 ring-accent" : ""}`}
       onClick={onSelect}
     >
       <div className="min-w-0">
         <div className="text-sm font-medium truncate">{block.type}</div>
-        <div className="text-xs opacity-60 truncate">{block.id}</div>
+        <div className="text-xs text-muted truncate">{block.id}</div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          className="border rounded px-2 py-1 text-xs"
-          type="button"
+      <div className="flex items-center gap-1.5">
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             onDuplicate();
           }}
         >
           Duplicate
-        </button>
-        <button
-          className="border rounded px-2 py-1 text-xs"
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-danger hover:bg-danger-soft"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
         >
           Delete
-        </button>
+        </Button>
 
-        <button
-          className="border rounded px-2 py-1 text-xs cursor-grab active:cursor-grabbing"
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
+          className="cursor-grab active:cursor-grabbing"
           onClick={(e) => e.stopPropagation()}
           {...attributes}
           {...listeners}
           aria-label="Drag handle"
         >
           Drag
-        </button>
+        </Button>
       </div>
     </div>
   );

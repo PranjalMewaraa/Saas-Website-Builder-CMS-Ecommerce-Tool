@@ -135,8 +135,8 @@ export default function StyleEditor({
       ) : null}
 
       {bg.type === "image" ? (
-        <div className="border rounded p-2 space-y-2">
-          <div className="text-xs opacity-70">Background image</div>
+        <div className="border border-line rounded-control p-2 space-y-2">
+          <div className="text-xs text-muted">Background image</div>
           <Text
             label="imageAssetId"
             value={bg.imageAssetId ?? ""}
@@ -161,7 +161,7 @@ export default function StyleEditor({
           </div>
 
           {/* simple preview */}
-          <div className="border rounded overflow-hidden">
+          <div className="border border-line rounded-control overflow-hidden">
             <div className="h-24" style={previewStyleFromBg(resolvedBg)} />
           </div>
         </div>
@@ -240,12 +240,16 @@ function hexToRgba(hex: string, opacity: number) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+const fieldInputClass =
+  "border border-line rounded-control p-2 w-full text-sm bg-surface " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+
 function Text({ label, value, onChange, placeholder }: any) {
   return (
     <label className="block space-y-1">
-      <div className="text-xs opacity-70">{label}</div>
+      <div className="text-xs text-muted">{label}</div>
       <input
-        className="border rounded p-2 w-full text-sm"
+        className={fieldInputClass}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -257,9 +261,9 @@ function Text({ label, value, onChange, placeholder }: any) {
 function Num({ label, value, onChange, step = "1", min, max }: any) {
   return (
     <label className="block space-y-1">
-      <div className="text-xs opacity-70">{label}</div>
+      <div className="text-xs text-muted">{label}</div>
       <input
-        className="border rounded p-2 w-full text-sm"
+        className={fieldInputClass}
         type="number"
         step={step}
         min={min}
@@ -274,9 +278,9 @@ function Num({ label, value, onChange, step = "1", min, max }: any) {
 function Select({ label, value, onChange, options }: any) {
   return (
     <label className="block space-y-1">
-      <div className="text-xs opacity-70">{label}</div>
+      <div className="text-xs text-muted">{label}</div>
       <select
-        className="border rounded p-2 w-full text-sm"
+        className={fieldInputClass}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
