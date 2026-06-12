@@ -70,6 +70,35 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 16 — Improve blocks: picker previews + inspector tokenization — DONE
+"Improve blocks" pass over the block authoring experience in the Page Editor
+Studio. Four commits, all pure UI (no logic/API/registry/renderer change):
+
+- **Add Block picker — schematic previews.** The picker cards showed only the
+  block name repeated twice (once as a flat label-in-a-box). Replaced the box
+  with a token-colored SVG wireframe (`BlockGlyph`) that schematically shows
+  each block's layout — bar-top/footer, hero, grid, list, split, panel, form,
+  banner, features, quote, pricing columns, map, section, divider, etc.
+  `blockGlyphKind()` maps the 40+ registered types to ~16 archetypes; the card
+  keeps the readable name via `title="Insert …"`, glyph is `aria-hidden`.
+- **VisualInspector — tokenized.** Shared field primitives (Field, UnitField,
+  TextArea, NumberField, Select, Checkbox) plus the breakpoint "Editing" card
+  moved off slate/blue (blue focus rings, rounded-lg/xl) onto surface/line/
+  control + accent focus. Delete Block -> danger token.
+- **LayoutInspector — tokenized.** Same duplicated primitives, plus preset/
+  gallery pickers, breakpoint toggles (bg-black -> accent), collapsible
+  `<details>` panels, and the icon-picker modal (bg-black/40 -> bg-ink/40,
+  bg-white -> surface/rounded-modal, +role=dialog/aria). Bare borders paired
+  with border-line.
+- **ImageField + StylePreviewCard.** ImageField was glassmorphism (F4 finding:
+  rounded-[2rem], bg-white/50, blur, bg-black button) — rebuilt on solid
+  canvas/line/surface, accent button + focus rings. StylePreviewCard frame
+  tokenized; its preview-canvas overlays kept neutral by design.
+- Verification: each file greps clean of off-brand palette/radius classes;
+  admin `tsc` unchanged at its 40 pre-existing baseline errors (none in touched
+  files). Still pending under "improve blocks": renderer default-props/spacing
+  polish and any net-new block types — both structural, to be flagged first.
+
 ## Increment 15 — Page Editor Studio onto the design system — DONE
 The `/content/pages/editor` "Page Editor Studio" (a second, drag-and-drop
 visual editor distinct from the main builder) had never been touched by the
