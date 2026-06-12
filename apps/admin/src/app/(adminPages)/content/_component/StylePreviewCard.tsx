@@ -146,7 +146,7 @@ export default function StylePreviewCard({
       <div className="text-sm opacity-70">{title}</div>
 
       {/* Outer background */}
-      <div className="border rounded-xl overflow-hidden">
+      <div className="border border-line rounded-card overflow-hidden">
         <div style={outerStyle} className="w-full">
           {/* Inner wrapper (radius/border/shadow) */}
           <div className="mx-auto max-w-2xl p-4">

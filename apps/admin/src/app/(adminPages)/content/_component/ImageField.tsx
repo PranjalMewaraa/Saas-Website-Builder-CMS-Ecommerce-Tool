@@ -42,20 +42,20 @@ export default function ImageField({
 
   // --- Styles ---
   const subLabelStyle =
-    "text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1";
+    "text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5 ml-1";
   const glassInput =
-    "bg-white/50 border border-gray-200/60 rounded-xl px-4 py-2.5 text-sm transition-all focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none font-medium text-gray-700";
+    "bg-surface border border-line rounded-control px-4 py-2.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-accent focus:border-accent outline-none font-medium text-ink";
 
   return (
-    <div className="group relative bg-gray-50/30 border border-gray-200/50 rounded-[2rem] p-6 space-y-6 transition-all hover:shadow-xl hover:shadow-gray-200/40 hover:bg-white/80">
+    <div className="group relative bg-canvas border border-line rounded-card p-6 space-y-6 transition-all hover:shadow-raised">
       {/* Top Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex flex-col">
-          <span className="text-sm font-bold text-gray-900 tracking-tight">
+          <span className="text-sm font-bold text-ink tracking-tight">
             {label}
           </span>
           {asset && (
-            <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase mt-1 self-start">
+            <span className="text-[10px] bg-accent-soft text-accent px-2 py-0.5 rounded-full font-bold uppercase mt-1 self-start">
               {asset.kind}
             </span>
           )}
@@ -63,7 +63,7 @@ export default function ImageField({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="bg-black text-white text-xs font-bold px-5 py-2 rounded-full hover:bg-gray-800 transition-all active:scale-95 shadow-md shadow-black/10"
+          className="bg-accent text-accent-fg text-xs font-bold px-5 py-2 rounded-full hover:bg-accent/90 transition-all active:scale-95 shadow-rest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Replace Media
         </button>
@@ -72,17 +72,17 @@ export default function ImageField({
       {/* Visual Preview Section */}
       <div className="relative group/preview">
         {(asset && asset.kind === "image") || resolvedUrl ? (
-          <div className="relative aspect-video max-w-2/3 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200/50 shadow-inner">
+          <div className="relative aspect-video max-w-2/3 rounded-card overflow-hidden bg-canvas border border-line shadow-inner">
             <img
               src={resolvedUrl}
               alt={altValue || asset?.alt || ""}
               className="w-full h-full object-cover transition-transform duration-700 group-hover/preview:scale-105"
             />
-            <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-2xl" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-line rounded-card" />
           </div>
         ) : (
-          <div className="aspect-video rounded-2xl bg-gray-100 flex items-center justify-center border border-dashed border-gray-300">
-            <span className="text-gray-400 text-sm font-medium">
+          <div className="aspect-video rounded-card bg-canvas flex items-center justify-center border border-dashed border-line">
+            <span className="text-muted text-sm font-medium">
               No preview available
             </span>
           </div>
@@ -114,15 +114,15 @@ export default function ImageField({
 
       {/* Read-only URL Bar */}
       <div className="pt-2">
-        <div className="bg-gray-100/50 rounded-2xl px-4 py-3 flex items-center gap-3 border border-gray-200/30">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-[11px] font-mono text-gray-500 truncate flex-1">
+        <div className="bg-canvas rounded-card px-4 py-3 flex items-center gap-3 border border-line">
+          <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="text-[11px] font-mono text-muted truncate flex-1">
             {resolvedUrl}
           </span>
           <button
             type="button"
             onClick={() => navigator.clipboard.writeText(resolvedUrl)}
-            className="text-[10px] font-bold text-gray-400 hover:text-black uppercase tracking-tighter"
+            className="text-[10px] font-bold text-muted hover:text-ink uppercase tracking-tighter"
           >
             Copy
           </button>
