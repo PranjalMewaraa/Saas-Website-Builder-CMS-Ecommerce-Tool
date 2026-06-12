@@ -20,6 +20,7 @@ import AssetPickerModal from "../../_component/AssetPickerModal";
 import ImageField from "../../_component/ImageField";
 import { useAssetsMap } from "../../_component/useAssetsMap";
 import StylePreviewCard from "../../_component/StylePreviewCard";
+import { defaultPropsFor } from "../edit/components/inspector/defaultPropsFor";
 
 function safeJsonParse(text: string) {
   try {
@@ -1077,67 +1078,6 @@ function Select({ label, value, onChange, options }: any) {
   );
 }
 
-function defaultPropsFor(type: string) {
-  if (type === "Header/V1")
-    return { menuId: "menu_main", ctaText: "Shop", ctaHref: "/products" };
-  if (type === "Footer/V1")
-    return {
-      menuId: "menu_footer",
-      menuGroups: [
-        {
-          menuId: "menu_footer",
-          title: "Links",
-          textSize: "sm",
-          textStyle: "normal",
-        },
-      ],
-    };
-  if (type === "Hero")
-    return {
-      headline: "Headline",
-      subhead: "Subhead",
-      ctaText: "Browse",
-      ctaHref: "/products",
-    };
-  if (type === "Hero")
-    return {
-      heroPreset: "Basic",
-      variant: "basic", // basic | image | video
-      headline: "Headline",
-      subhead: "Subhead",
-      ctaText: "Browse",
-      ctaHref: "/products",
-      secondaryCtaText: "",
-      secondaryCtaHref: "",
-      align: "left",
-      contentWidth: "xl",
-      minHeight: 520,
-      bg: {
-        type: "none", // none | image | video
-        color: "#0f172a",
-        overlayColor: "#000000",
-        overlayOpacity: 0.45,
-        imageAssetId: "",
-        imageUrl: "",
-        imageAlt: "",
-        videoAssetId: "",
-        videoUrl: "",
-        posterAssetId: "",
-        posterUrl: "",
-        videoAutoplay: true,
-        videoMuted: true,
-        videoLoop: true,
-        videoControls: false,
-        videoPreload: "metadata",
-      },
-    };
-
-  if (type === "ProductGrid/V1")
-    return { title: "Featured Products", limit: 8 };
-  if (type === "Form/V1")
-    return { formId: "", title: "Contact us", submitText: "Send" };
-  return {};
-}
 
 function defaultStyleFor(type: string) {
   if (type === "Footer/V1") {

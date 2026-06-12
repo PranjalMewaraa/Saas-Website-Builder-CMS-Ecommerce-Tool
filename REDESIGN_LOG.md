@@ -50,6 +50,41 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 12 — Inspector decomposition: unified defaultPropsFor (F7, final) — DONE
+Collapsed the drifted `defaultPropsFor` copies into one shared module and
+repointed both live page editors at it, finishing F7.
+
+Before: three copies of `defaultPropsFor` — `edit/pageEditorClient.tsx`
+(571 lines, the superset, ~45 block types), `home/homePageEditorClient.tsx`
+(61 lines, 5 types), and a dead one in `edit/components/BlockCard.tsx`
+(208 lines, never called/exported).
+
+Drift analysis (home's 5 types vs edit): `Form/V1` identical; `Header/V1`,
+`Footer/V1`, `ProductGrid/V1` were strict subsets of edit (same values, fewer
+keys); `Hero` differed only by key name (home adds bare `"Hero"`, edit keys on
+`"Hero/V1"`). No value conflicts.
+
+This increment:
+- Added `components/inspector/defaultPropsFor.ts` — edit's superset extracted
+  verbatim and exported, with one change: the Hero branch now matches
+  `"Hero/V1" || "Hero"` so the home palette's bare `"Hero"` keeps getting
+  defaults.
+- Repointed `edit` and `home` at the shared module; deleted all three local
+  copies (incl. the dead BlockCard one).
+- **Behavior change (approved — "converge on edit's superset"):** newly-added
+  `Header/Footer/ProductGrid` blocks in the **home editor** now get edit's
+  richer defaults (e.g. Footer defaults to showing description/badge/socials).
+  Home's `Hero` also moves from a minimal 4-key default to the full Hero/V1
+  default — home's richer Hero branch was previously dead code (shadowed by a
+  duplicate `if`), so this also clears that latent bug. Existing saved pages are
+  unaffected; `defaultPropsFor` only runs when a block is added.
+- Net: −840 lines across the two editors + BlockCard. Typecheck unchanged
+  (no new errors).
+
+**F7 is complete:** one decomposed inspector (commerce/structure/marketing
+editor modules + registry) and one shared `defaultPropsFor`, both consumed by
+the edit and home editors. `BlocksPropForm.tsx` went from ~6,700 lines to 128.
+
 ## Increment 11 — Inspector decomposition: marketing editors (F7, step 4) — DONE
 Migrated the final cluster — all 27 marketing/section blocks — out of the
 `BlocksPropForm.tsx` monolith, completing the per-block extraction.
