@@ -2086,6 +2086,20 @@ function defaultStyleFor(type: string) {
     };
   }
 
+  // BannerCTA renders white text + a white pill button, so it needs a dark
+  // surface to be legible. Seed one by default; published blocks keep their
+  // own saved style, so this only affects newly inserted blocks.
+  if (type === "BannerCTA/V1") {
+    return {
+      presetId: undefined,
+      overrides: {
+        bg: { type: "solid", color: "#0f172a" },
+        textColor: "#ffffff",
+      },
+      responsive: {},
+    };
+  }
+
   return { presetId: undefined, overrides: {}, responsive: {} };
 }
 
