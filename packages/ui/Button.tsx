@@ -23,6 +23,19 @@ const sizes: Record<Size, string> = {
   lg: "h-12 px-6 text-base",
 };
 
+/**
+ * Returns the Button's classes. Use to style a non-button element (e.g. a
+ * Next.js <Link>) so it reads as a button without changing its semantics.
+ */
+export function buttonClass(opts?: {
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+}): string {
+  const { variant = "primary", size = "md", className } = opts ?? {};
+  return cn(base, variants[variant], sizes[size], className);
+}
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -51,7 +64,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || loading}
         aria-busy={loading || undefined}
-        className={cn(base, variants[variant], sizes[size], className)}
+        className={buttonClass({ variant, size, className })}
         {...props}
       >
         {loading && <Spinner />}

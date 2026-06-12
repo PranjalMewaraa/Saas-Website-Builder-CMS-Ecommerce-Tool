@@ -1,7 +1,7 @@
 export { cn } from "./cn";
 export type { ClassValue } from "./cn";
 
-export { Button } from "./Button";
+export { Button, buttonClass } from "./Button";
 export type { ButtonProps } from "./Button";
 
 export { Field, fieldAria, controlClass } from "./Field";

@@ -50,6 +50,45 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 3 — App shell: nav + Publish bar — DONE
+Rebuilt the admin chrome (`(adminPages)/shell/AdminShell.tsx`) on tokens and
+the base kit. Fixes audit findings F1–F4.
+- **Flat, always-visible grouped nav** (Overview / Design / Forms / Commerce /
+  Settings) replacing the one-group-at-a-time accordion (F3). Active item uses
+  `bg-accent-soft text-accent` + a left accent bar and `aria-current="page"`.
+- **Persistent top Publish bar** (sticky header): site switcher + Preview +
+  Publish actions always in reach (F2). Publish/Preview link to the existing
+  `/content/publish` and `/content/preview` routes — no API behavior changed.
+- **Plain language** (F1): "Initialize Workspace" / "Active Environment" /
+  "Select a digital asset…" removed; nav reworded ("Store settings", "My
+  store").
+- **Removed glassmorphism** (F4): solid `bg-surface` / `border-line`, no
+  backdrop-blur stacks.
+- **Responsive**: sidebar becomes an off-canvas drawer below `lg` with a
+  hamburger toggle (`aria-expanded`/`aria-controls`), backdrop, and Escape-free
+  click-to-close; nav links close the drawer on navigate.
+- Restyled `_components/SiteSwitcher.tsx` (tokens, listbox a11y roles) and
+  `shell/Logout.tsx` (danger token) to match.
+- Added `buttonClass()` export to `@acme/ui` Button so `<Link>` actions can
+  read as buttons without losing link semantics.
+
+**Behavior change flagged:** removed the client-side "forced site selection"
+modal. It triggered on absence of the `site_id` *URL param*, but the
+authoritative active site comes from the `active_site_id` *cookie* (read by
+`ShellGate`, which already redirects to `/onboarding/create-site` when the
+tenant truly has no site). The modal was a redundant, buggy gate that flashed
+on first load even with an active site. `AdminShell` now accepts the
+authoritative `siteId` prop from `ShellGate` (previously ignored — also the
+source of a TypeScript error) and falls back to it when the URL param is
+absent. Net: the panel still never renders without an active site; the false
+modal is gone.
+
+_Verification:_ `@acme/ui` + admin typecheck clean for all touched files. Dev
+server serves `/` and `/login` (200) so shared modules compile. The `/content`
+route itself requires an authenticated session + MongoDB (server-side
+`ShellGate`), which can't be exercised via unauthenticated curl — **the shell
+still needs a visual pass in an authenticated browser.**
+
 ## Increment 2 — Base component library — DONE (commit `fe86020`)
 Built the accessibility-first base kit in `@acme/ui`, all consuming the new
 tokens:
