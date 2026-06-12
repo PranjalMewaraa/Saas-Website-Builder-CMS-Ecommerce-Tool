@@ -2,35 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@acme/auth";
 import { getMongoDb } from "@acme/db-mongo";
 import { pool } from "@acme/db-mysql";
-
-type DashboardCard = {
-  title: string;
-  value: string;
-  helper?: string;
-  accent?: boolean;
-};
-
-type NavigationCard = {
-  title: string;
-  description: string;
-  href: string;
-  icon?: string; // optional – you can add lucide-react / heroicons later
-};
-
-// ────────────────────────────────────────────────
-//  Config
-// ────────────────────────────────────────────────
-
-const ANALYTICS_CARDS: DashboardCard[] = [
-  { title: "Live Sites", value: "", helper: "Published / Total", accent: true },
-  { title: "Assets", value: "", helper: "" },
-  { title: "Pages", value: "", helper: "" },
-  { title: "Forms", value: "", helper: "Forms • Submissions" },
-  { title: "Menus", value: "", helper: "" },
-  { title: "Templates", value: "", helper: "" },
-  { title: "Products", value: "", helper: "Published", accent: true },
-  { title: "Orders", value: "", helper: "" },
-];
+import { Card, CardHeader, Badge, EmptyState, cn } from "@acme/ui";
 
 const NAV_SECTIONS = [
   {
@@ -262,12 +234,25 @@ export default async function ContentDashboard({
 
   if (!stats.site) {
     return (
-      <div className="mx-auto max-w-5xl py-12 text-center">
-        <h2 className="text-2xl font-semibold text-neutral-900">
-          Site not found
-        </h2>
-        <p className="mt-3 text-neutral-500">Reference: {site_id}</p>
-      </div>
+      <Card className="mx-auto mt-10 max-w-lg">
+        <EmptyState
+          title="We couldn’t find this site"
+          description={
+            <>
+              No site matches the current selection. Pick a different site from
+              the switcher above, or create a new one.
+            </>
+          }
+          action={
+            <Link
+              href="/sites"
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              Manage sites
+            </Link>
+          }
+        />
+      </Card>
     );
   }
 
@@ -277,180 +262,132 @@ export default async function ContentDashboard({
     (m) => m.slot === "header" || m.slot === "footer",
   ).length;
 
-  // Prepare display values
-  const displayStats = [
-    `${stats.runningSites} / ${stats.totalSites}`,
-    stats.assets.count.toString(),
-    stats.pageCount.toString(),
-    `${stats.formsCount} • ${stats.submissionsCount}`,
-    stats.menus.length.toString(),
-    `${stats.sectionTemplatesCount + stats.blockTemplatesCount}`,
-    commerce.products.toString(),
-    commerce.orders.toString(),
+  const statCards: { label: string; value: string; helper: string }[] = [
+    {
+      label: "Live sites",
+      value: `${stats.runningSites} / ${stats.totalSites}`,
+      helper: "Published / total",
+    },
+    {
+      label: "Pages",
+      value: stats.pageCount.toString(),
+      helper: `${stats.pagesWithSeo} with SEO`,
+    },
+    {
+      label: "Assets",
+      value: stats.assets.count.toString(),
+      helper: formatBytes(stats.assets.totalBytes),
+    },
+    {
+      label: "Forms",
+      value: stats.formsCount.toString(),
+      helper: `${stats.submissionsCount} submissions`,
+    },
+    {
+      label: "Menus",
+      value: stats.menus.length.toString(),
+      helper: `${assignedMenus} assigned`,
+    },
+    {
+      label: "Templates",
+      value: `${stats.sectionTemplatesCount + stats.blockTemplatesCount}`,
+      helper: `${stats.sectionTemplatesCount} section · ${stats.blockTemplatesCount} block`,
+    },
+    {
+      label: "Products",
+      value: commerce.products.toString(),
+      helper: `${commerce.publishedProducts} live`,
+    },
+    {
+      label: "Orders",
+      value: commerce.orders.toString(),
+      helper: "All time",
+    },
   ];
 
-  ANALYTICS_CARDS.forEach((card, i) => {
-    card.value = displayStats[i]!;
-    if (card.title === "Assets")
-      card.helper = formatBytes(stats.assets.totalBytes);
-    if (card.title === "Pages") card.helper = `${stats.pagesWithSeo} with SEO`;
-    if (card.title === "Menus") card.helper = `${assignedMenus} assigned`;
-    if (card.title === "Templates")
-      card.helper = `${stats.sectionTemplatesCount} section • ${stats.blockTemplatesCount} block`;
-    if (card.title === "Products")
-      card.helper = `${commerce.publishedProducts} live`;
-  });
-
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-5 py-8 md:px-8 lg:py-12">
-      {/* Header */}
-      <header className="space-y-1.5">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
-          Dashboard
-        </h1>
-        <p className="text-base text-neutral-500">
-          Site Selected •{" "}
-          <span className="font-medium text-neutral-700">
-            {stats.site.name || "Untitled Site"}
-          </span>
-          <span className="ml-1 text-xs text-neutral-400">
-            (Ref: {site_id.slice(-8)})
-          </span>
-        </p>
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink">
+            {stats.site.name || "Untitled site"}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            Overview of everything on this site.
+          </p>
+        </div>
+        <Badge tone={hasPublished ? "live" : "draft"} dot>
+          {hasPublished ? "Published" : "Draft only"}
+        </Badge>
       </header>
 
-      {/* Stats – glass-like cards */}
-      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {ANALYTICS_CARDS.map((card) => (
-          <div
-            key={card.title}
-            className={`
-              group relative overflow-hidden rounded-2xl border border-neutral-200/70 
-              bg-white/70 backdrop-blur-xl shadow-sm transition-all duration-300
-              hover:border-neutral-300 hover:shadow-md hover:shadow-neutral-200/40
-              ${card.accent ? "ring-1 ring-blue-500/30" : ""}
-            `}
-          >
-            <div className="px-6 py-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-                {card.title}
-              </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-neutral-900">
-                {card.value}
-              </p>
-              {card.helper && (
-                <p className="mt-1.5 text-sm text-neutral-500">{card.helper}</p>
-              )}
-            </div>
-
-            {/* subtle shine / gradient accent on hover */}
-            <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-              <div className="h-full w-full bg-gradient-to-br from-blue-500/5 via-transparent to-transparent" />
-            </div>
-          </div>
+      <section
+        aria-label="Site stats"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {statCards.map((card) => (
+          <Card key={card.label} className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+              {card.label}
+            </p>
+            <p className="font-display text-3xl font-semibold text-ink">
+              {card.value}
+            </p>
+            <p className="text-sm text-muted">{card.helper}</p>
+          </Card>
         ))}
       </section>
 
-      {/* Status + Checklist + Scope – horizontal cards */}
-      <section className="grid gap-6 md:grid-cols-3">
-        {/* Publish Status */}
-        <div className="rounded-2xl border border-neutral-200/70 bg-white/70 backdrop-blur-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Publish Status
-          </h3>
-          <div className="mt-5 space-y-3 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-neutral-600">Live version</span>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`h-2.5 w-2.5 rounded-full ${hasPublished ? "bg-green-500" : "bg-amber-500"}`}
-                />
-                <span
-                  className={
-                    hasPublished
-                      ? "text-green-700"
-                      : "text-amber-700 font-medium"
-                  }
-                >
-                  {hasPublished ? "Published" : "Draft only"}
-                </span>
-              </div>
-            </div>
-            <div className="flex justify-between text-neutral-600">
-              <span>Draft snapshot</span>
-              <span>{hasDraft ? "Available" : "—"}</span>
-            </div>
-            <div className="flex justify-between text-neutral-600">
-              <span>Latest publish</span>
-              <span>{formatShortDate(stats.latestSnapshot?.created_at)}</span>
-            </div>
-            <div className="flex justify-between text-neutral-600">
-              <span>Snapshot versions</span>
-              <span>{stats.snapshotsCount}</span>
-            </div>
-          </div>
-        </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        <Card className="space-y-4">
+          <CardHeader title="Publish status" />
+          <dl className="space-y-2.5 text-sm">
+            <Row label="Live version">
+              <span className={cn(hasPublished ? "text-accent" : "text-draft")}>
+                {hasPublished ? "Published" : "Draft only"}
+              </span>
+            </Row>
+            <Row label="Draft snapshot">{hasDraft ? "Available" : "—"}</Row>
+            <Row label="Latest publish">
+              {formatShortDate(stats.latestSnapshot?.created_at)}
+            </Row>
+            <Row label="Snapshot versions">{stats.snapshotsCount}</Row>
+          </dl>
+        </Card>
 
-        {/* Quick Checklist */}
-        <div className="rounded-2xl border border-neutral-200/70 bg-white/70 backdrop-blur-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Quick Checklist
-          </h3>
-          <ul className="mt-5 space-y-2.5 text-sm text-neutral-600">
-            <li className="flex items-center gap-2">
-              <span className="text-neutral-400">•</span> Assign header & footer
-              menus
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-neutral-400">•</span> Add SEO titles &
-              descriptions
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-neutral-400">•</span> Publish after major
-              changes
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-neutral-400">•</span> Monitor asset storage
-              usage
-            </li>
+        <Card className="space-y-4">
+          <CardHeader title="Next steps" />
+          <ul className="space-y-2.5 text-sm text-muted">
+            <li>Assign header &amp; footer menus</li>
+            <li>Add SEO titles &amp; descriptions</li>
+            <li>Publish after major changes</li>
+            <li>Keep an eye on asset storage</li>
           </ul>
-        </div>
+        </Card>
 
-        {/* Context */}
-        <div className="rounded-2xl border border-neutral-200/70 bg-white/70 backdrop-blur-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-neutral-900">
-            Workspace Scope
-          </h3>
-          <div className="mt-5 space-y-3 text-sm text-neutral-600">
-            <p>
-              Showing data for site{" "}
-              <strong className="text-neutral-800">
-                {stats.site.name || "Untitled Site"}
-              </strong>
-            </p>
-            <p>
-              Store:{" "}
+        <Card className="space-y-4">
+          <CardHeader title="This site" />
+          <dl className="space-y-2.5 text-sm">
+            <Row label="Site">{stats.site.name || "Untitled site"}</Row>
+            <Row label="Store">
               {stats.site.store_id ? (
-                <span className="font-medium text-neutral-800">
-                  {commerce.storeName ||
-                    `Store ${stats.site.store_id.slice(-6)}`}
-                </span>
+                commerce.storeName ||
+                `Store ${stats.site.store_id.slice(-6)}`
               ) : (
-                <span className="italic text-neutral-400">not connected</span>
+                <span className="text-muted">Not connected</span>
               )}
-            </p>
-          </div>
-        </div>
+            </Row>
+          </dl>
+        </Card>
       </section>
 
-      {/* Navigation – grouped */}
-      <section className="space-y-8">
+      <section className="space-y-6">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.title} className="space-y-4">
-            <h2 className="text-xl font-semibold text-neutral-800">
+          <div key={section.title} className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
               {section.title}
             </h2>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {section.items.map((card) => (
                 <Link
                   key={card.title}
@@ -459,23 +396,31 @@ export default async function ContentDashboard({
                       ? card.hrefSuffix
                       : `/content/${card.hrefSuffix}?site_id=${site_id}`
                   }
-                  className={`
-                    group rounded-2xl border border-neutral-200/70 bg-white/70 
-                    px-6 py-5 shadow-sm backdrop-blur-xl transition-all duration-300
-                    hover:border-neutral-300 hover:shadow-md hover:shadow-neutral-200/50
-                    active:scale-[0.98]
-                  `}
+                  className="rounded-card border border-line bg-surface p-5 shadow-rest transition-colors hover:border-accent hover:bg-accent-soft/40"
                 >
-                  <h3 className="font-semibold text-neutral-900 group-hover:text-blue-600">
-                    {card.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-neutral-500">{card.desc}</p>
+                  <h3 className="font-medium text-ink">{card.title}</h3>
+                  <p className="mt-1 text-sm text-muted">{card.desc}</p>
                 </Link>
               ))}
             </div>
           </div>
         ))}
       </section>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-muted">{label}</dt>
+      <dd className="font-medium text-ink">{children}</dd>
     </div>
   );
 }

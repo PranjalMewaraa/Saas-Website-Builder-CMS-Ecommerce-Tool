@@ -50,6 +50,33 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 4 — Home / dashboard (`/content`) — DONE
+Rebuilt the dashboard on the design system (`Card`, `CardHeader`, `Badge`,
+`EmptyState`). All data-fetching (`getSiteStats`, `getCommerceStats`,
+formatters) kept unchanged — pure UI swap.
+- Removed glassmorphism + hardcoded neutral/blue palette → tokenized cards.
+- Header now leads with the site name + a publish-status `Badge` (live/draft).
+- Stat cards, "Publish status", "Next steps", "This site", and the grouped
+  quick-links all rebuilt as token `Card`s.
+- **5 states:** ideal (data) · loading (`content/loading.tsx` skeleton) ·
+  empty/error (site-not-found → `EmptyState`) · partial (store "Not
+  connected"). A dedicated error boundary is noted as follow-up.
+
+**Bug fixed (not just cosmetic):** the old dashboard mutated the module-level
+`ANALYTICS_CARDS` array on every request (`card.value = …`). Under concurrent
+requests this races and can render another tenant's numbers. Replaced with a
+per-render `statCards` array. _This is a correctness fix; output is otherwise
+the same._
+
+**Shared change flagged:** `content/layout.tsx` was a passthrough that wrapped
+every `/content/*` page in a second `<main>` landmark plus `bg-gray-50` /
+`bg-white` (it also imported `ContentNav` but never rendered it). Simplified to
+return children directly — fixes the duplicate-`main` a11y issue and lets the
+shell's canvas show through. Legacy content sub-pages (theme, assets, etc.,
+not yet redesigned) now sit on canvas instead of a white block; they keep
+their own surfaces so this reads fine, but it's a visual change to watch when
+those screens get their pass.
+
 ## Increment 3 — App shell: nav + Publish bar — DONE
 Rebuilt the admin chrome (`(adminPages)/shell/AdminShell.tsx`) on tokens and
 the base kit. Fixes audit findings F1–F4.
