@@ -909,12 +909,11 @@ export default function PageEditorStudioClient({
                             <button
                               type="button"
                               key={t._id}
+                              title={`Insert ${blockPreviewLabel(t.block?.type || "Block")}`}
                               className="border border-line rounded-control p-3 text-left hover:border-accent hover:bg-accent-soft transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                               onClick={() => addBlockFromTemplate(t)}
                             >
-                              <div className="h-16 rounded-control bg-canvas border border-line mb-3 flex items-center justify-center text-xs text-muted">
-                                {blockPreviewLabel(t.block?.type || "Block")}
-                              </div>
+                              <BlockGlyph type={t.block?.type || "Block"} />
                               <div className="text-sm font-medium text-ink">
                                 {t.name || "Block Template"}
                               </div>
@@ -941,15 +940,14 @@ export default function PageEditorStudioClient({
                           <button
                             type="button"
                             key={t}
+                            title={`Insert ${blockPreviewLabel(t)}`}
                             className="border border-line rounded-control p-3 text-left hover:border-accent hover:bg-accent-soft transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                             onClick={() => {
                               addBlockOfType(t);
                               setAddBlockOpen(false);
                             }}
                           >
-                            <div className="h-16 rounded-control bg-canvas border border-line mb-3 flex items-center justify-center text-xs text-muted">
-                              {blockPreviewLabel(t)}
-                            </div>
+                            <BlockGlyph type={t} />
                             <div className="text-sm font-medium text-ink">
                               {t.replace("/V1", "")}
                             </div>
@@ -1126,6 +1124,265 @@ function blockPreviewLabel(type: string) {
   if (type.startsWith("Utility/Divider")) return "Divider";
   if (type.startsWith("Utility/RichText")) return "Text";
   return "Block";
+}
+
+/* Maps a block type to a schematic wireframe "kind" used by <BlockGlyph>. */
+function blockGlyphKind(type: string): string {
+  const startsWithAny = (...prefixes: string[]) =>
+    prefixes.some((p) => type.startsWith(p));
+
+  if (startsWithAny("Header", "MegaMenu")) return "bar-top";
+  if (startsWithAny("Footer")) return "bar-bottom";
+  if (startsWithAny("Hero", "VideoHeroLite")) return "hero";
+  if (
+    startsWithAny(
+      "ProductGrid",
+      "CategoryGrid",
+      "BrandGrid",
+      "BestSellers",
+      "SpotlightCards",
+      "MediaGalleryMasonry",
+      "BentoGrid",
+      "LogosCloud",
+      "Logos",
+    )
+  )
+    return "grid";
+  if (
+    startsWithAny(
+      "ProductList",
+      "FAQAccordion",
+      "InteractiveTabs",
+      "ProcessTimeline",
+    )
+  )
+    return "list";
+  if (
+    startsWithAny(
+      "ProductDetail",
+      "ProductHighlight",
+      "BeforeAfterSlider",
+      "ContentSplitShowcase",
+    )
+  )
+    return "split";
+  if (startsWithAny("CartPage", "CartSummary", "AddToCart", "BundleOffer"))
+    return "panel";
+  if (startsWithAny("Form", "NewsletterSignup", "Newsletter")) return "form";
+  if (
+    startsWithAny(
+      "BannerCTA",
+      "Banner",
+      "FloatingCTA",
+      "StickyPromoBar",
+      "MarqueeStrip",
+      "SocialProofTicker",
+    )
+  )
+    return "banner";
+  if (startsWithAny("FeaturesGrid", "Features", "StatsCounter", "KPIRibbon"))
+    return "features";
+  if (startsWithAny("Testimonials", "TestimonialCarousel")) return "quote";
+  if (startsWithAny("PricingTable", "ComparisonTable")) return "columns";
+  if (startsWithAny("StoreLocator")) return "map";
+  if (startsWithAny("Utility/Spacer", "Atomic/Spacer")) return "spacer";
+  if (startsWithAny("Utility/Divider", "Atomic/Divider")) return "divider";
+  if (startsWithAny("Utility/RichText", "Atomic/Text")) return "text";
+  if (startsWithAny("Layout/Section", "Atomic/Group")) return "section";
+  return "generic";
+}
+
+/* A small, token-colored schematic preview of a block's layout. Decorative —
+   the human-readable label is announced via the parent's title/aria. */
+function BlockGlyph({ type }: { type: string }) {
+  const kind = blockGlyphKind(type);
+  const line = "fill-line";
+  const mut = "fill-muted/40";
+  const acc = "fill-accent";
+
+  return (
+    <div
+      className="h-16 rounded-control bg-canvas border border-line mb-3 overflow-hidden"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 120 64" className="w-full h-full" preserveAspectRatio="none">
+        {kind === "bar-top" && (
+          <>
+            <rect x="8" y="14" width="22" height="6" rx="2" className={acc} />
+            <rect x="74" y="15" width="12" height="4" rx="2" className={mut} />
+            <rect x="90" y="15" width="12" height="4" rx="2" className={mut} />
+            <rect x="0" y="30" width="120" height="1.5" className={line} />
+            <rect x="8" y="42" width="40" height="4" rx="2" className={line} />
+          </>
+        )}
+        {kind === "bar-bottom" && (
+          <>
+            <rect x="0" y="18" width="120" height="1.5" className={line} />
+            <rect x="10" y="30" width="20" height="4" rx="2" className={mut} />
+            <rect x="10" y="38" width="14" height="3" rx="1.5" className={line} />
+            <rect x="50" y="30" width="20" height="4" rx="2" className={mut} />
+            <rect x="50" y="38" width="14" height="3" rx="1.5" className={line} />
+            <rect x="90" y="30" width="20" height="4" rx="2" className={mut} />
+            <rect x="90" y="38" width="14" height="3" rx="1.5" className={line} />
+          </>
+        )}
+        {kind === "hero" && (
+          <>
+            <rect x="0" y="0" width="120" height="64" className={mut} />
+            <rect x="14" y="20" width="50" height="6" rx="3" className={line} />
+            <rect x="14" y="32" width="70" height="4" rx="2" className={line} />
+            <rect x="14" y="44" width="26" height="8" rx="4" className={acc} />
+          </>
+        )}
+        {kind === "grid" && (
+          <>
+            {[10, 47, 84].map((x) =>
+              [10, 36].map((y) => (
+                <rect
+                  key={`${x}-${y}`}
+                  x={x}
+                  y={y}
+                  width="26"
+                  height="18"
+                  rx="3"
+                  className={mut}
+                />
+              )),
+            )}
+          </>
+        )}
+        {kind === "list" && (
+          <>
+            {[10, 26, 42].map((y) => (
+              <rect
+                key={y}
+                x="10"
+                y={y}
+                width="100"
+                height="11"
+                rx="3"
+                className={mut}
+              />
+            ))}
+          </>
+        )}
+        {kind === "split" && (
+          <>
+            <rect x="10" y="12" width="46" height="40" rx="3" className={mut} />
+            <rect x="66" y="16" width="40" height="5" rx="2.5" className={line} />
+            <rect x="66" y="26" width="44" height="3" rx="1.5" className={line} />
+            <rect x="66" y="33" width="44" height="3" rx="1.5" className={line} />
+            <rect x="66" y="44" width="22" height="7" rx="3.5" className={acc} />
+          </>
+        )}
+        {kind === "panel" && (
+          <>
+            <rect x="22" y="8" width="76" height="48" rx="4" className={line} />
+            <rect x="30" y="16" width="40" height="4" rx="2" className={mut} />
+            <rect x="30" y="26" width="60" height="3" rx="1.5" className={mut} />
+            <rect x="30" y="33" width="60" height="3" rx="1.5" className={mut} />
+            <rect x="30" y="44" width="30" height="7" rx="3.5" className={acc} />
+          </>
+        )}
+        {kind === "form" && (
+          <>
+            <rect x="18" y="14" width="84" height="9" rx="3" className={line} />
+            <rect x="18" y="28" width="84" height="9" rx="3" className={line} />
+            <rect x="18" y="44" width="34" height="9" rx="3" className={acc} />
+          </>
+        )}
+        {kind === "banner" && (
+          <>
+            <rect x="10" y="22" width="100" height="20" rx="4" className={mut} />
+            <rect x="18" y="29" width="44" height="6" rx="3" className={line} />
+            <rect x="80" y="28" width="22" height="8" rx="4" className={acc} />
+          </>
+        )}
+        {kind === "features" && (
+          <>
+            {[18, 52, 86].map((x) => (
+              <g key={x}>
+                <rect x={x} y="16" width="14" height="14" rx="7" className={acc} />
+                <rect x={x - 4} y="36" width="22" height="3" rx="1.5" className={line} />
+                <rect x={x - 2} y="43" width="18" height="3" rx="1.5" className={mut} />
+              </g>
+            ))}
+          </>
+        )}
+        {kind === "quote" && (
+          <>
+            <rect x="20" y="12" width="80" height="40" rx="4" className={mut} />
+            <rect x="28" y="20" width="64" height="3" rx="1.5" className={line} />
+            <rect x="28" y="27" width="64" height="3" rx="1.5" className={line} />
+            <rect x="28" y="34" width="40" height="3" rx="1.5" className={line} />
+            <rect x="28" y="43" width="12" height="3" rx="1.5" className={acc} />
+          </>
+        )}
+        {kind === "columns" && (
+          <>
+            {[12, 47, 82].map((x, i) => (
+              <g key={x}>
+                <rect
+                  x={x}
+                  y="10"
+                  width="26"
+                  height="44"
+                  rx="3"
+                  className={i === 1 ? acc : mut}
+                />
+              </g>
+            ))}
+          </>
+        )}
+        {kind === "map" && (
+          <>
+            <rect x="8" y="10" width="104" height="44" rx="4" className={mut} />
+            <circle cx="48" cy="30" r="6" className={acc} />
+            <rect x="44" y="30" width="8" height="10" className={acc} />
+          </>
+        )}
+        {kind === "section" && (
+          <>
+            <rect
+              x="8"
+              y="10"
+              width="104"
+              height="44"
+              rx="4"
+              className={line}
+            />
+            <rect x="20" y="22" width="80" height="3" rx="1.5" className={mut} />
+            <rect x="20" y="30" width="60" height="3" rx="1.5" className={mut} />
+          </>
+        )}
+        {kind === "divider" && (
+          <rect x="10" y="31" width="100" height="2" rx="1" className={mut} />
+        )}
+        {kind === "spacer" && (
+          <>
+            <rect x="10" y="20" width="100" height="1.5" className={line} />
+            <rect x="10" y="42" width="100" height="1.5" className={line} />
+            <rect x="56" y="24" width="8" height="16" rx="2" className={mut} />
+          </>
+        )}
+        {kind === "text" && (
+          <>
+            <rect x="14" y="18" width="92" height="4" rx="2" className={mut} />
+            <rect x="14" y="28" width="92" height="3" rx="1.5" className={line} />
+            <rect x="14" y="35" width="92" height="3" rx="1.5" className={line} />
+            <rect x="14" y="42" width="58" height="3" rx="1.5" className={line} />
+          </>
+        )}
+        {kind === "generic" && (
+          <>
+            <rect x="14" y="14" width="92" height="36" rx="4" className={mut} />
+            <rect x="24" y="24" width="40" height="4" rx="2" className={line} />
+            <rect x="24" y="34" width="60" height="3" rx="1.5" className={line} />
+          </>
+        )}
+      </svg>
+    </div>
+  );
 }
 
 /* ---------------- block card & forms ---------------- */
