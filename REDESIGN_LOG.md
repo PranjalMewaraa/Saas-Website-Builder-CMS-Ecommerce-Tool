@@ -50,6 +50,33 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 9 — Inspector decomposition: commerce editors + registry (F7, step 2) — DONE
+Stood up the per-block editor registry and migrated the first batch of block
+branches out of the `BlocksPropForm.tsx` monolith into dedicated modules. This
+is the dispatch layer every future batch plugs into.
+
+This increment (behavior-preserving, the `edit` route only):
+- Added `components/inspector/types.ts` exporting `BlockEditorProps` — the
+  shared context contract each per-block editor receives (mirrors the loose
+  `any` props the monolith already passes; no stricter contract invented).
+- Added `components/inspector/editors/commerce.tsx` with the six commerce
+  editors extracted verbatim from the monolith: `ProductListV1`,
+  `ProductDetailV1`, `CartPageV1`, `CartSummaryV1`, `AddToCartV1` (carrying its
+  local `presets`), `ProductGridV1`.
+- Added `components/inspector/registry.tsx` mapping block type → editor
+  (`BLOCK_EDITORS`). `BlockPropsForm` now does one lookup after its effects and
+  before the inline if-chain: `const Editor = BLOCK_EDITORS[type]; if (Editor)
+  return <Editor {...ctx} />`. Unregistered types fall through unchanged.
+- Deleted the six now-migrated inline branches.
+- Net: `BlocksPropForm.tsx` shrank 5,716 → 5,216 lines; no behavior change.
+  Typecheck clean for the touched files (remaining tsc noise is the known
+  dev-server `.next/dev/types` JSX-prop regeneration, unrelated to this change).
+
+_Next steps (later increments): migrate the remaining ~39 branches (hero/layout,
+then marketing blocks) into editor modules behind the same registry; then build
+one superset `defaultPropsFor` and repoint `home` (and `edit`) at it with
+per-route verification since the four copies have drifted._
+
 ## Increment 8 — Inspector decomposition: shared primitives (F7, step 1) — DONE
 First step of consolidating the triplicated block-prop inspector into one
 decomposed registry. Mapping first surfaced that the inspector logic is
