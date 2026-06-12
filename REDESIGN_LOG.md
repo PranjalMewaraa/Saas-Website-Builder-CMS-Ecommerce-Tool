@@ -50,6 +50,31 @@ resolution as screens are rebuilt.
 
 ---
 
+## Increment 8 — Inspector decomposition: shared primitives (F7, step 1) — DONE
+First step of consolidating the triplicated block-prop inspector into one
+decomposed registry. Mapping first surfaced that the inspector logic is
+duplicated across three page editors — `/content/pages/edit` (uses the shared
+`BlocksPropForm.tsx`), `/content/pages/home` (own inline copy), and the
+orphaned `/content/pages/editor` "studio" (own inline copy) — with
+`defaultPropsFor` living in four drifted copies (476 / 571 / 61 / 605 lines).
+Per direction: converge on one inspector; keep the studio route for now.
+
+This increment (behavior-preserving, the `edit` route only):
+- Extracted the presentational primitives (`ICON_OPTIONS`, `IconPicker`,
+  `SocialLinksEditor`, `Field`, `NumberField`, `Select`, `RichTextEditor`)
+  from `BlocksPropForm.tsx` into a shared `components/inspector/primitives.tsx`;
+  the form now imports them. This is the shared layer the per-block editor
+  modules (and the home/studio editors, once repointed) will consume.
+- Deleted the canonical file's `defaultPropsFor` (476 lines) — it was never
+  exported or called; the live one lives in `pageEditorClient.tsx`.
+- Removed a stray `console.log(type)` and the now-unused tiptap/lucide imports.
+- Net: `BlocksPropForm.tsx` shrank 6,682 → 5,716 lines; no behavior change.
+
+_Next steps (later increments): split the ~45 per-block branches into
+per-block editor modules behind a registry; build one superset `defaultPropsFor`
+and repoint `home` (and `edit`) at it — that one needs per-route verification
+since the four copies have drifted._
+
 ## Increment 7 — Builder token parity + dead-code removal — DONE
 Brought `apps/builder` onto the same token foundation as admin and cleared
 audit finding **F8**.
