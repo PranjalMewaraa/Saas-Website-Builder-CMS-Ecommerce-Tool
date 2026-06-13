@@ -530,7 +530,7 @@ export default function PageEditorStudioClient({
                 </Button>
               </div>
             ) : mode === "visual" ? (
-              <div className="grid h-[calc(100vh-20px)] gap-4 min-h-0 grid-cols-[320px_minmax(0,1fr)] overflow-y-hidden">
+              <div className="grid h-[calc(100vh-32px)] gap-4 min-h-0 grid-cols-[320px_minmax(0,1fr)] overflow-y-hidden">
                 <div className="flex flex-col h-full min-h-0 bg-canvas border border-line rounded-card shadow-rest overflow-hidden">
                   {/* 1. Header & Primary Navigation */}
                   <div className="bg-surface border-b border-line p-3 pb-2 space-y-3">
@@ -582,7 +582,7 @@ export default function PageEditorStudioClient({
                   </div>
 
                   {/* 2. Scrollable Content Area */}
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3">
                     {leftPanelTab === "layers" ? (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between mb-3 px-1">
