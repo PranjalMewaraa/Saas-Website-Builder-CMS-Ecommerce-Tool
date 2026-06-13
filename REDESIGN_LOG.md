@@ -70,6 +70,23 @@ floor) and this log (per-increment detail, newest first).
 
 ---
 
+## Increment 19 — Page Editor Studio: stop whole-page scroll when selecting a Layout/Section — DONE
+Reported: selecting a Layout/Section block made the whole editor page gain a
+scrollbar. Two shell-sizing bugs in `pageEditorStudioClient.tsx`:
+
+- **Height mismatch.** The outer shell is `h-screen` with `p-4` (32px vertical
+  padding), but the visual-mode grid was `h-[calc(100vh-20px)]` — 12px taller
+  than the padding leaves, so the page always overflowed by ~12px. Corrected to
+  `h-[calc(100vh-32px)]`.
+- **Missing `min-h-0`.** The left panel's scroll area (`flex-1 overflow-y-auto`)
+  lacked `min-h-0`, so when the tall `LayoutInspector` mounted on selection the
+  flex child refused to shrink and pushed the shell past the viewport. Added
+  `min-h-0` so the inspector scrolls within its own panel.
+
+Layout-only (className) changes; admin `tsc` stays at the 40-error baseline.
+
+---
+
 ## Increment 18 — Form block: stop the submit button overflowing the card — DONE
 Reported via screenshot: a Form block's full-width "Send" button overflowed
 past the right edge of its rounded card. Root cause in `FormV1.tsx`: when no
